@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Newsreader, Archivo } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
   subsets: ["latin"],
+  variable: "--font-fraunces",
+  axes: ["opsz", "SOFT", "WONK"],
 });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const newsreader = Newsreader({
   subsets: ["latin"],
+  variable: "--font-newsreader",
+  style: ["normal", "italic"],
+});
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
 });
 
 export const metadata: Metadata = {
   title: "Forge & Fable",
-  description: "A cinematic D&D 5e character builder and play console.",
+  description: "A hand-bound D&D 5e character builder and play console.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${newsreader.variable} ${archivo.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

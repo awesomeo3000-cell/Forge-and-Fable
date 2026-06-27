@@ -114,8 +114,16 @@ export type Character = {
   inventory: InventoryItem[];
   spellsKnown: string[];
   customRules: CustomRule[];
+  skillProficiencies?: string[];
+  savingThrowProficiencies?: AbilityKey[];
+  deathSaves: DeathSaves;
   createdAt: string;
-};
+}
+
+export type DeathSaves = {
+  successes: number;
+  failures: number;
+};;
 
 export type PublicUser = {
   id: string;
