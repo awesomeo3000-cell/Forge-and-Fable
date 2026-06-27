@@ -2902,7 +2902,7 @@ button:disabled {
   /* the earned shadow lifts the paper off the desk */
   box-shadow: var(--sheet-shadow);
 
-  font-size: clamp(19px, 0.55vw + 15px, 25px);
+  font-size: clamp(16px, 0.45vw + 12px, 20px);
 
   display: grid;
   gap: 1px;
