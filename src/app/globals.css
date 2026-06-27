@@ -636,8 +636,10 @@ button:disabled {
 
 .studio-surface {
   min-height: calc(100dvh - 102px);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--desk);
+  padding-bottom: 40px;
 }
 
 .creator-panel,
@@ -2900,7 +2902,7 @@ button:disabled {
   /* the earned shadow lifts the paper off the desk */
   box-shadow: var(--sheet-shadow);
 
-  font-size: clamp(17px, 0.5vw + 14px, 22px);
+  font-size: clamp(19px, 0.55vw + 15px, 25px);
 
   display: grid;
   gap: 1px;
@@ -2908,7 +2910,7 @@ button:disabled {
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   overflow: hidden;
-  grid-template-columns: 156px minmax(210px, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
+  grid-template-columns: 7.6em minmax(10.5em, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
   grid-template-areas:
     "identity   identity  identity   vitals"
     "abilities  saves     attacks    attacks"
@@ -2922,7 +2924,7 @@ button:disabled {
 .cs-sheet > * {
   background: var(--ground);
   min-width: 0;
-  padding: 16px 20px;
+  padding: 0.8em 1em;
 }
 
 .cs-sheet::after {
@@ -2943,7 +2945,7 @@ button:disabled {
 }
 
 .cs-identity   { grid-area: identity; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.cs-vitals     { grid-area: vitals; display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
+.cs-vitals     { grid-area: vitals; display: grid; grid-template-columns: repeat(auto-fit, minmax(4.4em, 1fr)); gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
 .cs-abilities  { grid-area: abilities; display: grid; gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
 .cs-saves      { grid-area: saves; }
 .cs-skills     { grid-area: skills; }
@@ -2964,7 +2966,7 @@ button:disabled {
 .cs-char-name {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
-  font-size: clamp(1.953rem, 4vw, 2.8rem);
+  font-size: clamp(1.953em, 4vw, 2.8em);
   color: var(--parchment);
   line-height: 1.15;
   margin: 0;
@@ -2972,7 +2974,7 @@ button:disabled {
 
 .cs-char-subtitle {
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.95em;
   color: var(--ink-faint);
   margin: 2px 0 0;
   font-style: italic;
@@ -2983,7 +2985,7 @@ button:disabled {
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   font-family: var(--font-label);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--select);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3002,7 +3004,7 @@ button:disabled {
   background: transparent;
   color: var(--parchment-2);
   font-family: var(--font-label);
-  font-size: 0.72rem;
+  font-size: 0.72em;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -3023,7 +3025,7 @@ button:disabled {
   background: transparent;
   color: var(--ink-faint);
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.62em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -3048,7 +3050,7 @@ button:disabled {
   align-items: center;
   gap: 3px;
   font-family: var(--font-label);
-  font-size: 0.65rem;
+  font-size: 0.65em;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3059,7 +3061,7 @@ button:disabled {
 .cs-vital-cell strong {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144;
-  font-size: 1.5rem;
+  font-size: 1.5em;
   color: var(--parchment);
 }
 
@@ -3067,11 +3069,11 @@ button:disabled {
 
 .cs-vital-hp-row { display: flex; align-items: baseline; gap: 3px; }
 
-.cs-vital-hp-row strong { font-size: 1.4rem; color: var(--parchment); }
+.cs-vital-hp-row strong { font-size: 1.4em; color: var(--parchment); }
 
-.cs-vital-hp-max { font-size: 0.85rem; color: var(--ink-faint); }
+.cs-vital-hp-max { font-size: 0.85em; color: var(--ink-faint); }
 
-.cs-hp-temp { font-family: var(--font-label); font-size: 0.55rem; color: var(--accent); text-transform: uppercase; }
+.cs-hp-temp { font-family: var(--font-label); font-size: 0.55em; color: var(--accent); text-transform: uppercase; }
 
 .cs-hp-bar { height: 4px; width: 100%; border: 1px solid var(--rule-soft); border-radius: 999px; background: var(--ground); overflow: hidden; }
 
@@ -3085,7 +3087,7 @@ button:disabled {
 
 .cs-vital-death .cs-vital-label { margin-bottom: 2px; }
 
-.cs-vital-death-row { display: flex; align-items: center; gap: 3px; justify-content: center; font-size: 0.55rem; color: var(--ink-faint); font-family: var(--font-label); }
+.cs-vital-death-row { display: flex; align-items: center; gap: 3px; justify-content: center; font-size: 0.55em; color: var(--ink-faint); font-family: var(--font-label); }
 
 .cs-death-dot { width: 8px; height: 8px; border: 1px solid var(--rule-soft); border-radius: 50%; background: transparent; cursor: pointer; padding: 0; }
 
@@ -3093,7 +3095,7 @@ button:disabled {
 
 .cs-death-dot.dot-fail { background: var(--accent); border-color: var(--accent); }
 
-.cs-death-reset { border: 0; background: transparent; color: var(--ink-faint); font-family: var(--font-label); font-size: 0.5rem; cursor: pointer; padding: 0 3px; }
+.cs-death-reset { border: 0; background: transparent; color: var(--ink-faint); font-family: var(--font-label); font-size: 0.5em; cursor: pointer; padding: 0 3px; }
 
 /* ── Abilities ── */
 
@@ -3109,18 +3111,18 @@ button:disabled {
   color: inherit;
   cursor: pointer;
   font-family: inherit;
-  min-height: 60px;
+  min-height: 3em;
 }
 
 .cs-ability-cell:last-child { border-bottom: 0; }
 
 .cs-ability-cell:hover { background: rgba(0, 0, 0, 0.04); }
 
-.cs-ability-mod { font-family: var(--font-display); font-variation-settings: "opsz" 144; font-size: 1.8rem; color: var(--parchment); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.cs-ability-mod { font-family: var(--font-display); font-variation-settings: "opsz" 144; font-size: 1.8em; color: var(--parchment); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
-.cs-ability-label { font-family: var(--font-label); font-size: 0.78rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+.cs-ability-label { font-family: var(--font-label); font-size: 0.78em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
 
-.cs-ability-score { font-family: var(--font-body); font-size: 0.9rem; color: var(--parchment-2); }
+.cs-ability-score { font-family: var(--font-body); font-size: 0.9em; color: var(--parchment-2); }
 
 /* ── Section Eyebrow ── */
 
@@ -3129,7 +3131,7 @@ button:disabled {
   align-items: center;
   gap: 6px;
   font-family: var(--font-label);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3160,23 +3162,23 @@ button:disabled {
 
 .cs-save-row.cs-prof { background: rgba(201, 162, 90, 0.05); }
 
-.cs-prof-marker { font-size: 0.55rem; color: var(--ink-faint); display: grid; place-items: center; line-height: 1; }
+.cs-prof-marker { font-size: 0.55em; color: var(--ink-faint); display: grid; place-items: center; line-height: 1; }
 
 .cs-save-row.cs-prof .cs-prof-marker { color: var(--select); }
 
-.cs-save-name { font-family: var(--font-label); font-size: 0.85rem; color: var(--parchment); text-align: left; text-transform: uppercase; flex: 1; }
+.cs-save-name { font-family: var(--font-label); font-size: 0.85em; color: var(--parchment); text-align: left; text-transform: uppercase; flex: 1; }
 
-.cs-save-bonus { font-family: var(--font-body); font-size: 1.15rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
+.cs-save-bonus { font-family: var(--font-body); font-size: 1.15em; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
-.cs-rule-note { font-family: var(--font-body); font-size: 0.68rem; color: var(--select); margin-top: 6px; text-align: center; font-style: italic; }
+.cs-rule-note { font-family: var(--font-body); font-size: 0.68em; color: var(--select); margin-top: 6px; text-align: center; font-style: italic; }
 
 /* ── Senses ── */
 
 .cs-sense-list { display: grid; gap: 4px; }
 
-.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.9rem; color: var(--parchment-2); }
+.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.9em; color: var(--parchment-2); }
 
-.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.2rem; }
+.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.2em; }
 
 /* ── Proficiencies ── */
 
@@ -3184,11 +3186,11 @@ button:disabled {
 
 .cs-prof-group { display: grid; gap: 4px; }
 
-.cs-prof-cat { font-family: var(--font-label); font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.03em; }
+.cs-prof-cat { font-family: var(--font-label); font-size: 0.65em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.03em; }
 
 .cs-prof-tags { display: flex; flex-wrap: wrap; gap: 3px; }
 
-.cs-prof-chip { padding: 2px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 0.68rem; color: var(--parchment-2); }
+.cs-prof-chip { padding: 2px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 0.68em; color: var(--parchment-2); }
 
 /* ── Skills ── */
 
@@ -3196,7 +3198,7 @@ button:disabled {
 
 .cs-skill-ability-tag {
   font-family: var(--font-label);
-  font-size: 0.58rem;
+  font-size: 0.58em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3207,27 +3209,27 @@ button:disabled {
 
 .cs-skill-group { display: grid; gap: 1px; }
 
-.cs-skill-row { display: grid; grid-template-columns: 22px 1fr 46px; align-items: center; gap: 4px; padding: 5px 8px; border-radius: var(--r-sm); }
+.cs-skill-row { display: grid; grid-template-columns: 1.1em 1fr 2.4em; align-items: center; gap: 4px; padding: 0.25em 0.4em; border-radius: var(--r-sm); }
 
 .cs-skill-row:hover { background: rgba(0, 0, 0, 0.03); }
 
-.cs-prof-click { cursor: pointer; background: transparent; border: 0; padding: 0; font-size: 0.55rem; color: var(--ink-faint); display: grid; place-items: center; }
+.cs-prof-click { cursor: pointer; background: transparent; border: 0; padding: 0; font-size: 0.55em; color: var(--ink-faint); display: grid; place-items: center; }
 
 .cs-prof-click.cs-prof { color: var(--select); }
 
-.cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.92rem; cursor: pointer; text-align: left; padding: 0; }
+.cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.92em; cursor: pointer; text-align: left; padding: 0; }
 
 .cs-skill-btn:hover { color: var(--parchment); text-decoration: underline; text-decoration-color: var(--rule-soft); text-underline-offset: 2px; }
 
-.cs-skill-bonus { font-family: var(--font-body); font-size: 1.15rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
+.cs-skill-bonus { font-family: var(--font-body); font-size: 1.15em; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
 /* ── Action Table ── */
 
-.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08rem; }
+.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08em; }
 
 .cs-action-table thead { border-bottom: 1px solid var(--rule); }
 
-.cs-action-table th { padding: 9px 11px; font-family: var(--font-label); font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
+.cs-action-table th { padding: 9px 11px; font-family: var(--font-label); font-size: 0.72em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
 
 .cs-action-table td { padding: 8px 11px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
@@ -3241,15 +3243,15 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.72em; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
 
 .cs-spell-card { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); }
 
-.cs-spell-card strong { font-size: 1.05rem; color: var(--parchment); }
+.cs-spell-card strong { font-size: 1.05em; color: var(--parchment); }
 
-.cs-spell-card span { font-size: 0.88rem; color: var(--ink-faint); }
+.cs-spell-card span { font-size: 0.88em; color: var(--ink-faint); }
 
-.cs-spell-card p { font-size: 0.92rem; color: var(--parchment-2); margin-top: 4px; font-style: italic; line-height: 1.5; }
+.cs-spell-card p { font-size: 0.92em; color: var(--parchment-2); margin-top: 4px; font-style: italic; line-height: 1.5; }
 
 /* ── Inventory ── */
 
@@ -3257,11 +3259,11 @@ button:disabled {
 
 .cs-inv-row { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 10px; padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
-.cs-inv-row strong { font-size: 1.05rem; color: var(--parchment); }
+.cs-inv-row strong { font-size: 1.05em; color: var(--parchment); }
 
-.cs-inv-row span { font-size: 0.9rem; color: var(--ink-faint); }
+.cs-inv-row span { font-size: 0.9em; color: var(--ink-faint); }
 
-.cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; }
+.cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6em; color: var(--ink-faint); text-transform: uppercase; }
 
 .cs-attune { color: var(--select); }
 
@@ -3273,16 +3275,16 @@ button:disabled {
 
 .cs-feature-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
-.cs-feature-card strong { font-size: 1rem; color: var(--parchment); }
+.cs-feature-card strong { font-size: 1em; color: var(--parchment); }
 
-.cs-feature-card p { font-size: 0.92rem; color: var(--parchment-2); margin-top: 2px; line-height: 1.5; }
+.cs-feature-card p { font-size: 0.92em; color: var(--parchment-2); margin-top: 2px; line-height: 1.5; }
 
 /* ── Reference Tabs ── */
 
 .cs-reftabs { display: flex; flex-direction: column; min-height: 0; }
 .cs-reftablist { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
 .cs-reftab {
-  font-family: var(--font-label); font-size: 0.88rem; font-weight: 700;
+  font-family: var(--font-label); font-size: 0.88em; font-weight: 700;
   letter-spacing: 0.06em; text-transform: uppercase;
   display: inline-flex; align-items: center; gap: 6px;
   padding: 9px 13px; border: 0; border-bottom: 2px solid transparent;
@@ -3310,31 +3312,31 @@ button:disabled {
 
 .cs-bg-field { display: grid; gap: 4px; }
 
-.cs-bg-label { font-family: var(--font-label); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.cs-bg-label { font-family: var(--font-label); font-size: 0.72em; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
 
-.cs-bg-field p { font-family: var(--font-body); font-size: 1.05rem; color: var(--parchment-2); line-height: 1.5; }
+.cs-bg-field p { font-family: var(--font-body); font-size: 1.05em; color: var(--parchment-2); line-height: 1.5; }
 
 /* ── Console ── */
 
 .cs-console-form { display: grid; gap: 8px; }
 
-.cs-console-label { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px; font-family: var(--font-label); font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; }
+.cs-console-label { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px; font-family: var(--font-label); font-size: 0.65em; color: var(--ink-faint); text-transform: uppercase; }
 
-.cs-console-input { padding: 5px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); color: var(--parchment); font-family: var(--font-mono); font-size: 0.78rem; }
+.cs-console-input { padding: 5px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); color: var(--parchment); font-family: var(--font-mono); font-size: 0.78em; }
 
 .cs-console-log { display: flex; flex-wrap: wrap; gap: 4px; }
 
-.cs-console-log span { padding: 3px 8px; border: 1px solid var(--rule-soft); border-radius: 999px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--parchment-2); background: var(--ground-3); }
+.cs-console-log span { padding: 3px 8px; border: 1px solid var(--rule-soft); border-radius: 999px; font-family: var(--font-mono); font-size: 0.65em; color: var(--parchment-2); background: var(--ground-3); }
 
 /* ── Misc ── */
 
-.cs-muted { font-family: var(--font-body); font-size: 0.9rem; color: var(--ink-faint); font-style: italic; }
+.cs-muted { font-family: var(--font-body); font-size: 0.9em; color: var(--ink-faint); font-style: italic; }
 
 /* ── Responsive ── */
 
 @media (max-width: 1100px) {
   .cs-sheet {
-    grid-template-columns: 156px 1fr;
+    grid-template-columns: 7.6em 1fr;
     grid-template-areas:
       "identity   vitals"
       "abilities  attacks"
@@ -3358,7 +3360,7 @@ button:disabled {
   .cs-ability-cell { border-bottom: 0; border-right: 1px solid var(--rule-soft); min-height: 60px; }
   .cs-ability-cell:last-child { border-right: 0; }
   .cs-vitals { max-width: none; }
-  .cs-ability-mod { font-size: 1.5rem; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .cs-ability-mod { font-size: 1.5em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 }
 
 /* ── Saving Throws ── */
@@ -3391,7 +3393,7 @@ button:disabled {
 }
 
 .cs-prof-marker {
-  font-size: 0.55rem;
+  font-size: 0.55em;
   color: var(--ink-faint);
   display: grid;
   place-items: center;
@@ -3404,7 +3406,7 @@ button:disabled {
 
 .cs-save-name {
   font-family: var(--font-label);
-  font-size: 0.72rem;
+  font-size: 0.72em;
   color: var(--parchment);
   text-align: left;
   text-transform: uppercase;
@@ -3412,14 +3414,14 @@ button:disabled {
 
 .cs-save-bonus {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   color: var(--parchment);
   text-align: right;
 }
 
 .cs-rule-note {
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: 0.68em;
   color: var(--select);
   margin-top: 6px;
   text-align: center;
@@ -3438,7 +3440,7 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.78em;
   color: var(--parchment-2);
 }
 
@@ -3446,7 +3448,7 @@ button:disabled {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144;
   color: var(--parchment);
-  font-size: 1.05rem;
+  font-size: 1.05em;
 }
 
 /* ── Proficiencies ── */
@@ -3463,7 +3465,7 @@ button:disabled {
 
 .cs-prof-cat {
   font-family: var(--font-label);
-  font-size: 0.65rem;
+  font-size: 0.65em;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -3480,7 +3482,7 @@ button:disabled {
   border: 1px solid var(--rule-soft);
   border-radius: var(--r-sm);
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: 0.68em;
   color: var(--parchment-2);
 }
 
@@ -3497,7 +3499,7 @@ button:disabled {
 
 .cs-skill-ability-tag {
   font-family: var(--font-label);
-  font-size: 0.58rem;
+  font-size: 0.58em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3529,7 +3531,7 @@ button:disabled {
   background: transparent;
   border: 0;
   padding: 0;
-  font-size: 0.55rem;
+  font-size: 0.55em;
   color: var(--ink-faint);
   display: grid;
   place-items: center;
@@ -3544,7 +3546,7 @@ button:disabled {
   background: transparent;
   color: var(--parchment);
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.78em;
   cursor: pointer;
   text-align: left;
   padding: 0;
@@ -3559,7 +3561,7 @@ button:disabled {
 
 .cs-skill-bonus {
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.82em;
   color: var(--parchment);
   text-align: right;
 }
@@ -3570,7 +3572,7 @@ button:disabled {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.78em;
 }
 
 .cs-action-table thead {
@@ -3580,7 +3582,7 @@ button:disabled {
 .cs-action-table th {
   padding: 6px 8px;
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.62em;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3617,7 +3619,7 @@ button:disabled {
 
 .cs-spell-level-head {
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.62em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3633,17 +3635,17 @@ button:disabled {
 }
 
 .cs-spell-card strong {
-  font-size: 0.82rem;
+  font-size: 0.82em;
   color: var(--parchment);
 }
 
 .cs-spell-card span {
-  font-size: 0.68rem;
+  font-size: 0.68em;
   color: var(--ink-faint);
 }
 
 .cs-spell-card p {
-  font-size: 0.72rem;
+  font-size: 0.72em;
   color: var(--parchment-2);
   margin-top: 3px;
   font-style: italic;
@@ -3667,12 +3669,12 @@ button:disabled {
 }
 
 .cs-inv-row strong {
-  font-size: 0.82rem;
+  font-size: 0.82em;
   color: var(--parchment);
 }
 
 .cs-inv-row span {
-  font-size: 0.7rem;
+  font-size: 0.7em;
   color: var(--ink-faint);
 }
 
@@ -3681,7 +3683,7 @@ button:disabled {
   gap: 6px;
   align-items: center;
   font-family: var(--font-label);
-  font-size: 0.6rem;
+  font-size: 0.6em;
   color: var(--ink-faint);
   text-transform: uppercase;
 }
@@ -3709,12 +3711,12 @@ button:disabled {
 }
 
 .cs-feature-card strong {
-  font-size: 0.78rem;
+  font-size: 0.78em;
   color: var(--parchment);
 }
 
 .cs-feature-card p {
-  font-size: 0.72rem;
+  font-size: 0.72em;
   color: var(--parchment-2);
   margin-top: 2px;
 }
@@ -3734,7 +3736,7 @@ button:disabled {
 
 .cs-bg-label {
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.62em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3742,7 +3744,7 @@ button:disabled {
 
 .cs-bg-field p {
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.82em;
   color: var(--parchment-2);
   line-height: 1.5;
 }
@@ -3760,7 +3762,7 @@ button:disabled {
   align-items: center;
   gap: 6px;
   font-family: var(--font-label);
-  font-size: 0.65rem;
+  font-size: 0.65em;
   color: var(--ink-faint);
   text-transform: uppercase;
 }
@@ -3772,7 +3774,7 @@ button:disabled {
   background: var(--ground-3);
   color: var(--parchment);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.78em;
 }
 
 .cs-console-log {
@@ -3786,7 +3788,7 @@ button:disabled {
   border: 1px solid var(--rule-soft);
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.65em;
   color: var(--parchment-2);
   background: var(--ground-3);
 }
@@ -3795,7 +3797,7 @@ button:disabled {
 
 .cs-muted {
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.78em;
   color: var(--ink-faint);
   font-style: italic;
 }
