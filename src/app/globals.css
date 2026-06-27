@@ -88,6 +88,7 @@ body {
   color: var(--ivory);
   background: var(--ink);
   font-family: var(--font-body);
+  font-size: 17px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -2899,27 +2900,29 @@ button:disabled {
   /* the earned shadow lifts the paper off the desk */
   box-shadow: var(--sheet-shadow);
 
+  font-size: clamp(17px, 0.5vw + 14px, 22px);
+
   display: grid;
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   overflow: hidden;
-  grid-template-columns: 136px minmax(190px, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
+  grid-template-columns: 156px minmax(210px, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
   grid-template-areas:
     "identity   identity  identity   vitals"
     "abilities  saves     attacks    attacks"
     "abilities  skills    features   features"
-    "senses     skills    notes      notes"
-    "profs      skills    inventory  spells"
-    "profs      skills    background background"
+    "abilities  skills    features   features"
+    "senses     skills    notes      background"
+    "profs      skills    notes      background"
     "console    console   console    console";
 }
 
 .cs-sheet > * {
   background: var(--ground);
   min-width: 0;
-  padding: 12px 14px;
+  padding: 16px 20px;
 }
 
 .cs-sheet::after {
@@ -2940,7 +2943,7 @@ button:disabled {
 }
 
 .cs-identity   { grid-area: identity; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.cs-vitals     { grid-area: vitals; display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
+.cs-vitals     { grid-area: vitals; display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
 .cs-abilities  { grid-area: abilities; display: grid; gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
 .cs-saves      { grid-area: saves; }
 .cs-skills     { grid-area: skills; }
@@ -2961,7 +2964,7 @@ button:disabled {
 .cs-char-name {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
-  font-size: var(--step-3);
+  font-size: clamp(1.953rem, 4vw, 2.8rem);
   color: var(--parchment);
   line-height: 1.15;
   margin: 0;
@@ -2969,7 +2972,7 @@ button:disabled {
 
 .cs-char-subtitle {
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--ink-faint);
   margin: 2px 0 0;
   font-style: italic;
@@ -2980,7 +2983,7 @@ button:disabled {
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   font-family: var(--font-label);
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   color: var(--select);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2999,7 +3002,7 @@ button:disabled {
   background: transparent;
   color: var(--parchment-2);
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -3045,7 +3048,7 @@ button:disabled {
   align-items: center;
   gap: 3px;
   font-family: var(--font-label);
-  font-size: 0.55rem;
+  font-size: 0.65rem;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3056,7 +3059,7 @@ button:disabled {
 .cs-vital-cell strong {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   color: var(--parchment);
 }
 
@@ -3064,9 +3067,9 @@ button:disabled {
 
 .cs-vital-hp-row { display: flex; align-items: baseline; gap: 3px; }
 
-.cs-vital-hp-row strong { font-size: 1.2rem; color: var(--parchment); }
+.cs-vital-hp-row strong { font-size: 1.4rem; color: var(--parchment); }
 
-.cs-vital-hp-max { font-size: 0.72rem; color: var(--ink-faint); }
+.cs-vital-hp-max { font-size: 0.85rem; color: var(--ink-faint); }
 
 .cs-hp-temp { font-family: var(--font-label); font-size: 0.55rem; color: var(--accent); text-transform: uppercase; }
 
@@ -3113,11 +3116,11 @@ button:disabled {
 
 .cs-ability-cell:hover { background: rgba(0, 0, 0, 0.04); }
 
-.cs-ability-mod { font-family: var(--font-display); font-variation-settings: "opsz" 144; font-size: 1.2rem; color: var(--parchment); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.cs-ability-mod { font-family: var(--font-display); font-variation-settings: "opsz" 144; font-size: 1.8rem; color: var(--parchment); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
-.cs-ability-label { font-family: var(--font-label); font-size: 0.55rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+.cs-ability-label { font-family: var(--font-label); font-size: 0.78rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
 
-.cs-ability-score { font-family: var(--font-body); font-size: 0.65rem; color: var(--parchment-2); }
+.cs-ability-score { font-family: var(--font-body); font-size: 0.9rem; color: var(--parchment-2); }
 
 /* ── Section Eyebrow ── */
 
@@ -3126,7 +3129,7 @@ button:disabled {
   align-items: center;
   gap: 6px;
   font-family: var(--font-label);
-  font-size: 0.62rem;
+  font-size: 0.85rem;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3161,9 +3164,9 @@ button:disabled {
 
 .cs-save-row.cs-prof .cs-prof-marker { color: var(--select); }
 
-.cs-save-name { font-family: var(--font-label); font-size: 0.72rem; color: var(--parchment); text-align: left; text-transform: uppercase; flex: 1; }
+.cs-save-name { font-family: var(--font-label); font-size: 0.85rem; color: var(--parchment); text-align: left; text-transform: uppercase; flex: 1; }
 
-.cs-save-bonus { font-family: var(--font-body); font-size: 0.85rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 2.75ch; flex: 0 0 auto; }
+.cs-save-bonus { font-family: var(--font-body); font-size: 1.15rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
 .cs-rule-note { font-family: var(--font-body); font-size: 0.68rem; color: var(--select); margin-top: 6px; text-align: center; font-style: italic; }
 
@@ -3171,9 +3174,9 @@ button:disabled {
 
 .cs-sense-list { display: grid; gap: 4px; }
 
-.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.78rem; color: var(--parchment-2); }
+.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.9rem; color: var(--parchment-2); }
 
-.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.05rem; }
+.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.2rem; }
 
 /* ── Proficiencies ── */
 
@@ -3204,7 +3207,7 @@ button:disabled {
 
 .cs-skill-group { display: grid; gap: 1px; }
 
-.cs-skill-row { display: grid; grid-template-columns: 18px 1fr 38px; align-items: center; gap: 4px; padding: 3px 6px; border-radius: var(--r-sm); }
+.cs-skill-row { display: grid; grid-template-columns: 22px 1fr 46px; align-items: center; gap: 4px; padding: 5px 8px; border-radius: var(--r-sm); }
 
 .cs-skill-row:hover { background: rgba(0, 0, 0, 0.03); }
 
@@ -3212,21 +3215,21 @@ button:disabled {
 
 .cs-prof-click.cs-prof { color: var(--select); }
 
-.cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.78rem; cursor: pointer; text-align: left; padding: 0; }
+.cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.92rem; cursor: pointer; text-align: left; padding: 0; }
 
 .cs-skill-btn:hover { color: var(--parchment); text-decoration: underline; text-decoration-color: var(--rule-soft); text-underline-offset: 2px; }
 
-.cs-skill-bonus { font-family: var(--font-body); font-size: 0.82rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 2.75ch; flex: 0 0 auto; }
+.cs-skill-bonus { font-family: var(--font-body); font-size: 1.15rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
 /* ── Action Table ── */
 
-.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 0.78rem; }
+.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08rem; }
 
 .cs-action-table thead { border-bottom: 1px solid var(--rule); }
 
-.cs-action-table th { padding: 6px 8px; font-family: var(--font-label); font-size: 0.62rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
+.cs-action-table th { padding: 9px 11px; font-family: var(--font-label); font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
 
-.cs-action-table td { padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.cs-action-table td { padding: 8px 11px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
 .cs-action-row-click { cursor: pointer; }
 
@@ -3238,15 +3241,15 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.62rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
 
-.cs-spell-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); }
+.cs-spell-card { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); }
 
-.cs-spell-card strong { font-size: 0.82rem; color: var(--parchment); }
+.cs-spell-card strong { font-size: 1.05rem; color: var(--parchment); }
 
-.cs-spell-card span { font-size: 0.68rem; color: var(--ink-faint); }
+.cs-spell-card span { font-size: 0.88rem; color: var(--ink-faint); }
 
-.cs-spell-card p { font-size: 0.72rem; color: var(--parchment-2); margin-top: 3px; font-style: italic; }
+.cs-spell-card p { font-size: 0.92rem; color: var(--parchment-2); margin-top: 4px; font-style: italic; line-height: 1.5; }
 
 /* ── Inventory ── */
 
@@ -3254,9 +3257,9 @@ button:disabled {
 
 .cs-inv-row { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 10px; padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
-.cs-inv-row strong { font-size: 0.82rem; color: var(--parchment); }
+.cs-inv-row strong { font-size: 1.05rem; color: var(--parchment); }
 
-.cs-inv-row span { font-size: 0.7rem; color: var(--ink-faint); }
+.cs-inv-row span { font-size: 0.9rem; color: var(--ink-faint); }
 
 .cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; }
 
@@ -3270,9 +3273,36 @@ button:disabled {
 
 .cs-feature-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
-.cs-feature-card strong { font-size: 0.78rem; color: var(--parchment); }
+.cs-feature-card strong { font-size: 1rem; color: var(--parchment); }
 
-.cs-feature-card p { font-size: 0.72rem; color: var(--parchment-2); margin-top: 2px; }
+.cs-feature-card p { font-size: 0.92rem; color: var(--parchment-2); margin-top: 2px; line-height: 1.5; }
+
+/* ── Reference Tabs ── */
+
+.cs-reftabs { display: flex; flex-direction: column; min-height: 0; }
+.cs-reftablist { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
+.cs-reftab {
+  font-family: var(--font-label); font-size: 0.88rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 13px; border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--ink-faint); cursor: pointer;
+}
+.cs-reftab:hover { color: var(--parchment); }
+.cs-reftab.is-active { color: var(--parchment); border-bottom-color: var(--select); }
+.cs-reftab-panel {
+  overflow: auto;
+  display: grid;
+}
+
+.cs-reftab-panel > * {
+  grid-area: 1 / 1;
+}
+
+.cs-reftab-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
 
 /* ── Background / Notes ── */
 
@@ -3280,9 +3310,9 @@ button:disabled {
 
 .cs-bg-field { display: grid; gap: 4px; }
 
-.cs-bg-label { font-family: var(--font-label); font-size: 0.62rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.cs-bg-label { font-family: var(--font-label); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
 
-.cs-bg-field p { font-family: var(--font-body); font-size: 0.82rem; color: var(--parchment-2); line-height: 1.5; }
+.cs-bg-field p { font-family: var(--font-body); font-size: 1.05rem; color: var(--parchment-2); line-height: 1.5; }
 
 /* ── Console ── */
 
@@ -3298,20 +3328,19 @@ button:disabled {
 
 /* ── Misc ── */
 
-.cs-muted { font-family: var(--font-body); font-size: 0.78rem; color: var(--ink-faint); font-style: italic; }
+.cs-muted { font-family: var(--font-body); font-size: 0.9rem; color: var(--ink-faint); font-style: italic; }
 
 /* ── Responsive ── */
 
 @media (max-width: 1100px) {
   .cs-sheet {
-    grid-template-columns: 136px 1fr;
+    grid-template-columns: 156px 1fr;
     grid-template-areas:
       "identity   vitals"
       "abilities  attacks"
       "abilities  features"
       "saves      notes"
-      "skills     inventory"
-      "skills     spells"
+      "skills     background"
       "senses     background"
       "profs      background"
       "console    console";
@@ -3323,13 +3352,13 @@ button:disabled {
     grid-template-columns: 1fr;
     grid-template-areas:
       "identity" "vitals" "abilities" "saves" "skills" "senses" "profs"
-      "attacks" "features" "notes" "inventory" "spells" "background" "console";
+      "attacks" "features" "notes" "background" "console";
   }
   .cs-abilities { grid-template-columns: repeat(6, 1fr); }
-  .cs-ability-cell { border-bottom: 0; border-right: 1px solid var(--rule-soft); min-height: 52px; }
+  .cs-ability-cell { border-bottom: 0; border-right: 1px solid var(--rule-soft); min-height: 60px; }
   .cs-ability-cell:last-child { border-right: 0; }
   .cs-vitals { max-width: none; }
-  .cs-ability-mod { font-size: 1rem; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .cs-ability-mod { font-size: 1.5rem; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 }
 
 /* ── Saving Throws ── */

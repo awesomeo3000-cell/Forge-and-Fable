@@ -18,7 +18,8 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import type { FormEvent } from "react";
+import { useState } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import type { AbilityKey, AbilityScores, Character, Ruleset } from "@/types/game";
 import {
   abilityKeys,
@@ -29,6 +30,15 @@ import {
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+
+type RefTab = "features" | "traits" | "spells" | "inventory";
+
+const REF_TABS: { id: RefTab; label: string; Icon: typeof Sparkles }[] = [
+  { id: "features", label: "Features", Icon: Sparkles },
+  { id: "traits", label: "Traits", Icon: Shield },
+  { id: "spells", label: "Spells", Icon: BookOpen },
+  { id: "inventory", label: "Inventory", Icon: Backpack },
+];
 
 export default function HeroSheet(props: {
   character: Character;
@@ -149,9 +159,26 @@ export default function HeroSheet(props: {
     props.character.alignment,
   ].filter(Boolean);
 
+  /* ── Reference tab state ── */
+  const visibleTabs = REF_TABS.filter((t) => t.id !== "spells" || knownSpells.length > 0);
+  const [refTab, setRefTab] = useState<RefTab>(
+    visibleTabs.length > 0 ? visibleTabs[0].id : "features",
+  );
+
+  const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next = index;
+    if (e.key === "ArrowRight") next = (index + 1) % visibleTabs.length;
+    else if (e.key === "ArrowLeft") next = (index - 1 + visibleTabs.length) % visibleTabs.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = visibleTabs.length - 1;
+    else return;
+    e.preventDefault();
+    setRefTab(visibleTabs[next].id);
+  };
+
   return (
     <div className="cs-sheet">
-      {/* ── cs-identity: name, subtitle, level, rest/inspire/retire ── */}
+      {/* ── cs-identity ── */}
       <div className="cs-identity">
         <div className="cs-class-icon" data-class={heroClass.id}>
           <ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} />
@@ -169,7 +196,7 @@ export default function HeroSheet(props: {
         <button className="cs-retire-btn" type="button" onClick={props.onDelete}><Trash2 size={12} /></button>
       </div>
 
-      {/* ── cs-vitals: AC, Init, Speed, Prof, HP, HD, Death Saves ── */}
+      {/* ── cs-vitals ── */}
       <div className="cs-vitals">
         <div className="cs-vital-cell"><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong></div>
         <div className="cs-vital-cell"><span className="cs-vital-label"><Activity size={12} />Initiative</span><strong>{signed(initiative)}</strong></div>
@@ -198,7 +225,7 @@ export default function HeroSheet(props: {
         </div>
       </div>
 
-      {/* ── cs-abilities: vertical ability cells ── */}
+      {/* ── cs-abilities ── */}
       <div className="cs-abilities">
         {abilityKeys.map((key) => {
           const score = props.finalAbilities[key];
@@ -213,7 +240,7 @@ export default function HeroSheet(props: {
         })}
       </div>
 
-      {/* ── cs-saves: Saving Throws ── */}
+      {/* ── cs-saves ── */}
       <section className="cs-saves">
         <h3 className="cs-section-eyebrow"><Shield size={12} />Saving Throws</h3>
         <div className="cs-save-grid">
@@ -232,7 +259,7 @@ export default function HeroSheet(props: {
         {ruleSaveAll !== 0 ? <p className="cs-rule-note">All saves: {signed(ruleSaveAll)}</p> : null}
       </section>
 
-      {/* ── cs-skills: Skills ── */}
+      {/* ── cs-skills ── */}
       <section className="cs-skills">
         <h3 className="cs-section-eyebrow">Skills</h3>
         <div className="cs-skills-grid">
@@ -255,7 +282,7 @@ export default function HeroSheet(props: {
         </div>
       </section>
 
-      {/* ── cs-senses: Senses / Passives ── */}
+      {/* ── cs-senses ── */}
       <section className="cs-senses">
         <h3 className="cs-section-eyebrow">Senses</h3>
         <div className="cs-sense-list">
@@ -265,7 +292,7 @@ export default function HeroSheet(props: {
         </div>
       </section>
 
-      {/* ── cs-profs: Proficiencies & Training ── */}
+      {/* ── cs-profs ── */}
       <section className="cs-profs">
         <h3 className="cs-section-eyebrow">Proficiencies &amp; Training</h3>
         <div className="cs-prof-list">
@@ -278,7 +305,7 @@ export default function HeroSheet(props: {
         </div>
       </section>
 
-      {/* ── cs-attacks: Attacks table ── */}
+      {/* ── cs-attacks ── */}
       <section className="cs-attacks">
         <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
         {heroClass.actions.length > 0 ? (
@@ -301,20 +328,56 @@ export default function HeroSheet(props: {
         ) : <p className="cs-muted">No actions</p>}
       </section>
 
-      {/* ── cs-features: Features & Traits ── */}
-      <section className="cs-features">
-        <h3 className="cs-section-eyebrow"><Sparkles size={12} />Features &amp; Traits</h3>
-        <div className="cs-feature-list">
-          <div className="cs-feature-group">
-            <span className="cs-spell-level-head">Class Features</span>
-            {featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}
+      {/* ── cs-features: Tabbed reference container (Features / Traits / Spells / Inventory) ── */}
+      <section className="cs-features cs-reftabs">
+        <div className="cs-reftablist" role="tablist" aria-label="Character reference">
+          {visibleTabs.map((t, i) => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              className={`cs-reftab${refTab === t.id ? " is-active" : ""}`}
+              aria-selected={refTab === t.id}
+              aria-controls={`reftab-${t.id}`}
+              tabIndex={refTab === t.id ? 0 : -1}
+              onClick={() => setRefTab(t.id)}
+              onKeyDown={(e) => handleRefTabKey(e, i)}
+            >
+              <t.Icon size={13} /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
+          <div className={refTab === "features" ? "" : "cs-reftab-hidden"}>
+            <div className="cs-feature-group">
+              <span className="cs-spell-level-head">Class Features</span>
+              {featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}
+            </div>
           </div>
-          {race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : null}
-          {heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => (<div className="cs-feature-card" key={trait}><p>{trait}</p></div>))}</div>) : null}
+          <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>
+            {race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}
+            {heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => (<div className="cs-feature-card" key={trait}><p>{trait}</p></div>))}</div>) : null}
+          </div>
+          <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}>
+            <div className="cs-spell-list">
+              {Object.entries(spellsByLevel).sort(([a], [b]) => Number(a) - Number(b)).map(([level, spells]) => (
+                <div key={level} className="cs-spell-group">
+                  <span className="cs-spell-level-head">{level === "0" ? "Cantrips" : `Level ${level}`}</span>
+                  {spells.map((spell) => (<div className="cs-spell-card" key={spell.id}><strong>{spell.name}</strong><span>{spell.school} &middot; {spell.action}</span><p>{spell.summary}</p></div>))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
+            {props.character.inventory.length > 0 ? (
+              <div className="cs-inv-list">{props.character.inventory.map((item) => (<div className="cs-inv-row" key={item.id}><div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div><div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}</div></div>))}</div>
+            ) : <p className="cs-muted">No equipment</p>}
+          </div>
         </div>
       </section>
 
-      {/* ── cs-notes: Notes ── */}
+      {/* ── cs-notes ── */}
       <section className="cs-notes">
         <h3 className="cs-section-eyebrow"><PenLine size={12} />Notes</h3>
         <div className="cs-notes-block">
@@ -325,30 +388,7 @@ export default function HeroSheet(props: {
         </div>
       </section>
 
-      {/* ── cs-inventory: Inventory ── */}
-      <section className="cs-inventory">
-        <h3 className="cs-section-eyebrow"><Backpack size={12} />Inventory</h3>
-        {props.character.inventory.length > 0 ? (
-          <div className="cs-inv-list">{props.character.inventory.map((item) => (<div className="cs-inv-row" key={item.id}><div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div><div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}</div></div>))}</div>
-        ) : <p className="cs-muted">No equipment</p>}
-      </section>
-
-      {/* ── cs-spells: Spells (omitted when none known) ── */}
-      {knownSpells.length > 0 ? (
-        <section className="cs-spells">
-          <h3 className="cs-section-eyebrow"><BookOpen size={12} />Spells</h3>
-          <div className="cs-spell-list">
-            {Object.entries(spellsByLevel).sort(([a], [b]) => Number(a) - Number(b)).map(([level, spells]) => (
-              <div key={level} className="cs-spell-group">
-                <span className="cs-spell-level-head">{level === "0" ? "Cantrips" : `Level ${level}`}</span>
-                {spells.map((spell) => (<div className="cs-spell-card" key={spell.id}><strong>{spell.name}</strong><span>{spell.school} &middot; {spell.action}</span><p>{spell.summary}</p></div>))}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* ── cs-background: Background ── */}
+      {/* ── cs-background ── */}
       <section className="cs-background">
         <h3 className="cs-section-eyebrow"><UserRound size={12} />Background</h3>
         <div className="cs-bg-block">
@@ -357,7 +397,7 @@ export default function HeroSheet(props: {
         </div>
       </section>
 
-      {/* ── cs-console: Console ── */}
+      {/* ── cs-console ── */}
       <section className="cs-console">
         <h3 className="cs-section-eyebrow"><Terminal size={12} />Console</h3>
         <form className="cs-console-form" onSubmit={props.onConsoleSubmit}>
