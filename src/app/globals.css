@@ -53,6 +53,22 @@
   --font-body:    var(--font-newsreader);
   --font-label:   var(--font-archivo);
   --font-mono:    "Spline Sans Mono", ui-monospace, monospace;
+
+  /* Document ("paper") palette — used only inside .cs-sheet */
+  --paper:        #ece1c9;
+  --paper-raised: #e4d7bb;
+  --ink:          #241c12;
+  --ink-2:        #6b5d44;
+  --ink-3:        #8a7c60;
+  --doc-rule:     #c9b896;
+  --doc-rule-soft:#d8c9a8;
+  --doc-accent:   #a23f29;
+  --doc-accent-deep:#842f1d;
+  --doc-select:   #9c7a2f;
+
+  /* Desk + the one earned shadow */
+  --desk:         #1a140d;
+  --sheet-shadow: 0 26px 55px rgba(0,0,0,0.50), 0 4px 14px rgba(0,0,0,0.40);
 }
 
 * {
@@ -620,6 +636,7 @@ button:disabled {
 .studio-surface {
   min-height: calc(100dvh - 102px);
   overflow: hidden;
+  background: var(--desk);
 }
 
 .creator-panel,
@@ -2866,14 +2883,43 @@ button:disabled {
    ═══════════════════════════════════════════════════ */
 
 .cs-sheet {
+  /* remap the dark tokens to document values, scoped to the sheet subtree */
+  --ground:     var(--paper);
+  --ground-2:   var(--paper);
+  --ground-3:   var(--paper-raised);
+  --parchment:  var(--ink);
+  --parchment-2:var(--ink-2);
+  --ink-faint:  var(--ink-3);
+  --rule:       var(--doc-rule);
+  --rule-soft:  var(--doc-rule-soft);
+  --accent:     var(--doc-accent);
+  --accent-deep:var(--doc-accent-deep);
+  --select:     var(--doc-select);
+
+  /* the earned shadow lifts the paper off the desk */
+  box-shadow: var(--sheet-shadow);
+
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 1px;
+  background: var(--rule);
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
-  background: var(--ground-2);
-  position: relative;
   overflow: hidden;
+  grid-template-columns: 136px minmax(190px, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
+  grid-template-areas:
+    "identity   identity  identity   vitals"
+    "abilities  saves     attacks    attacks"
+    "abilities  skills    features   features"
+    "senses     skills    notes      notes"
+    "profs      skills    inventory  spells"
+    "profs      skills    background background"
+    "console    console   console    console";
+}
+
+.cs-sheet > * {
+  background: var(--ground);
+  min-width: 0;
+  padding: 12px 14px;
 }
 
 .cs-sheet::after {
@@ -2883,8 +2929,8 @@ button:disabled {
   content: "";
   background: var(--grain);
   background-size: 140px 140px;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
   z-index: 0;
 }
 
@@ -2893,28 +2939,24 @@ button:disabled {
   z-index: 1;
 }
 
-/* ── Header Strip ── */
+.cs-identity   { grid-area: identity; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cs-vitals     { grid-area: vitals; display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
+.cs-abilities  { grid-area: abilities; display: grid; gap: 0; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); overflow: hidden; }
+.cs-saves      { grid-area: saves; }
+.cs-skills     { grid-area: skills; }
+.cs-senses     { grid-area: senses; }
+.cs-profs      { grid-area: profs; }
+.cs-attacks    { grid-area: attacks; }
+.cs-features   { grid-area: features; }
+.cs-notes      { grid-area: notes; }
+.cs-inventory  { grid-area: inventory; }
+.cs-spells     { grid-area: spells; }
+.cs-background { grid-area: background; }
+.cs-console    { grid-area: console; }
 
-.cs-header-strip {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule);
-  flex-wrap: wrap;
-}
+/* ── Identity ── */
 
-.cs-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.cs-class-icon {
-  flex-shrink: 0;
-}
+.cs-class-icon { flex-shrink: 0; }
 
 .cs-char-name {
   font-family: var(--font-display);
@@ -2927,7 +2969,7 @@ button:disabled {
 
 .cs-char-subtitle {
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--ink-faint);
   margin: 2px 0 0;
   font-style: italic;
@@ -2945,184 +2987,28 @@ button:disabled {
   flex-shrink: 0;
 }
 
-.cs-header-right {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.cs-rest-group {
-  display: flex;
-  gap: 4px;
-}
+.cs-rest-group { display: flex; gap: 3px; }
 
 .cs-glass-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 4px;
+  padding: 4px 8px;
   border: 1px solid var(--rule-soft);
   border-radius: var(--r-sm);
   background: transparent;
   color: var(--parchment-2);
   font-family: var(--font-label);
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
   transition: border-color 120ms, color 120ms;
 }
 
-.cs-glass-btn:hover {
-  border-color: var(--rule);
-  color: var(--parchment);
-}
+.cs-glass-btn:hover { border-color: var(--rule); color: var(--parchment); }
 
-.cs-inspire-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--accent-deep);
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--accent);
-  font-family: var(--font-label);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.cs-hp-box {
-  display: grid;
-  gap: 4px;
-  padding: 8px 12px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  background: var(--ground-3);
-  min-width: 100px;
-}
-
-.cs-hp-label {
-  font-family: var(--font-label);
-  font-size: 0.65rem;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.cs-hp-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.cs-hp-current {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 144;
-  font-size: 1.4rem;
-  color: var(--parchment);
-}
-
-.cs-hp-sep {
-  color: var(--ink-faint);
-  font-size: 0.85rem;
-}
-
-.cs-hp-max {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--parchment-2);
-}
-
-.cs-hp-temp {
-  font-family: var(--font-label);
-  font-size: 0.62rem;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-
-.cs-hp-bar {
-  height: 6px;
-  border: 1px solid var(--rule-soft);
-  border-radius: 999px;
-  background: var(--ground);
-  overflow: hidden;
-}
-
-.cs-hp-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-}
-
-.cs-hp-steppers {
-  display: flex;
-  gap: 4px;
-}
-
-.cs-hp-steppers button {
-  flex: 1;
-  min-height: 24px;
-  border: 1px solid var(--rule-soft);
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--parchment-2);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-
-.cs-death-box {
-  display: grid;
-  gap: 4px;
-  padding: 8px 10px;
-  border: 1px solid var(--rule-soft);
-  border-radius: var(--r-sm);
-  background: var(--ground-3);
-}
-
-.cs-death-row {
-  display: grid;
-  grid-template-columns: 46px 1fr;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.68rem;
-  color: var(--ink-faint);
-}
-
-.cs-death-dots {
-  display: flex;
-  gap: 3px;
-}
-
-.cs-death-dot {
-  width: 10px;
-  height: 10px;
-  border: 1px solid var(--rule-soft);
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-}
-
-.cs-death-dot.dot-success {
-  background: var(--select);
-  border-color: var(--select);
-}
-
-.cs-death-dot.dot-fail {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.cs-reset-btn {
-  font-size: 0.62rem;
-  padding: 2px 6px;
-  justify-content: center;
-}
+.cs-inspire-btn { border-color: var(--accent-deep); color: var(--accent); }
 
 .cs-retire-btn {
   display: flex;
@@ -3134,100 +3020,106 @@ button:disabled {
   background: transparent;
   color: var(--ink-faint);
   font-family: var(--font-label);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   cursor: pointer;
-  align-self: flex-start;
 }
 
-.cs-retire-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
+.cs-retire-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── Stats Row ── */
+/* ── Vitals ── */
 
-.cs-stat-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr) 60px 60px 60px;
-  gap: 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  overflow: hidden;
-  background: var(--ground-2);
-}
-
-.cs-ability-cell {
+.cs-vital-cell {
   display: grid;
   justify-items: center;
-  align-content: center;
-  gap: 2px;
-  padding: 8px 4px;
-  border: 0;
+  align-content: start;
+  gap: 3px;
+  padding: 8px 6px;
   border-right: 1px solid var(--rule-soft);
   border-bottom: 1px solid var(--rule-soft);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font-family: inherit;
-  min-height: 64px;
+  min-height: 54px;
 }
 
-.cs-ability-cell:last-child {
-  border-right: 0;
-}
-
-.cs-ability-cell:hover {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.cs-ability-mod {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 144;
-  font-size: 1.35rem;
-  color: var(--parchment);
-}
-
-.cs-ability-label {
+.cs-vital-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   font-family: var(--font-label);
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.cs-ability-score {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  color: var(--parchment-2);
+.cs-vital-label svg { color: var(--accent); }
+
+.cs-vital-cell strong {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 144;
+  font-size: 1.3rem;
+  color: var(--parchment);
 }
 
-.cs-prof-cell .cs-ability-mod {
-  color: var(--select);
-}
+.cs-vital-hp { grid-column: span 2; gap: 4px; padding: 8px 12px; }
 
-/* ── Three-Column Body ── */
+.cs-vital-hp-row { display: flex; align-items: baseline; gap: 3px; }
 
-.cs-body {
+.cs-vital-hp-row strong { font-size: 1.2rem; color: var(--parchment); }
+
+.cs-vital-hp-max { font-size: 0.72rem; color: var(--ink-faint); }
+
+.cs-hp-temp { font-family: var(--font-label); font-size: 0.55rem; color: var(--accent); text-transform: uppercase; }
+
+.cs-hp-bar { height: 4px; width: 100%; border: 1px solid var(--rule-soft); border-radius: 999px; background: var(--ground); overflow: hidden; }
+
+.cs-hp-bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+
+.cs-hp-steppers { display: flex; gap: 3px; }
+
+.cs-hp-steppers button { min-height: 20px; min-width: 24px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: transparent; color: var(--parchment-2); cursor: pointer; display: grid; place-items: center; padding: 1px 4px; }
+
+.cs-vital-death { grid-column: span 2; }
+
+.cs-vital-death .cs-vital-label { margin-bottom: 2px; }
+
+.cs-vital-death-row { display: flex; align-items: center; gap: 3px; justify-content: center; font-size: 0.55rem; color: var(--ink-faint); font-family: var(--font-label); }
+
+.cs-death-dot { width: 8px; height: 8px; border: 1px solid var(--rule-soft); border-radius: 50%; background: transparent; cursor: pointer; padding: 0; }
+
+.cs-death-dot.dot-success { background: var(--select); border-color: var(--select); }
+
+.cs-death-dot.dot-fail { background: var(--accent); border-color: var(--accent); }
+
+.cs-death-reset { border: 0; background: transparent; color: var(--ink-faint); font-family: var(--font-label); font-size: 0.5rem; cursor: pointer; padding: 0 3px; }
+
+/* ── Abilities ── */
+
+.cs-ability-cell {
   display: grid;
-  grid-template-columns: 220px minmax(200px, 1fr) minmax(280px, 340px);
-  gap: 14px;
-  align-items: start;
+  justify-items: center;
+  align-content: center;
+  gap: 1px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--rule-soft);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 60px;
 }
 
-.cs-col {
-  display: grid;
-  gap: 12px;
-}
+.cs-ability-cell:last-child { border-bottom: 0; }
 
-/* ── Section Blocks ── */
+.cs-ability-cell:hover { background: rgba(0, 0, 0, 0.04); }
 
-.cs-block {
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  padding: 12px;
-  background: var(--ground-2);
-}
+.cs-ability-mod { font-family: var(--font-display); font-variation-settings: "opsz" 144; font-size: 1.2rem; color: var(--parchment); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+.cs-ability-label { font-family: var(--font-label); font-size: 0.55rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.cs-ability-score { font-family: var(--font-body); font-size: 0.65rem; color: var(--parchment-2); }
+
+/* ── Section Eyebrow ── */
 
 .cs-section-eyebrow {
   display: flex;
@@ -3245,6 +3137,203 @@ button:disabled {
 
 /* ── Saving Throws ── */
 
+.cs-save-grid { display: grid; gap: 2px; }
+
+.cs-save-row {
+  display: grid;
+  grid-template-columns: 14px 1fr 38px;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: var(--r-sm);
+}
+
+.cs-save-row:hover { background: rgba(0, 0, 0, 0.04); }
+
+.cs-save-row.cs-prof { background: rgba(201, 162, 90, 0.05); }
+
+.cs-prof-marker { font-size: 0.55rem; color: var(--ink-faint); display: grid; place-items: center; line-height: 1; }
+
+.cs-save-row.cs-prof .cs-prof-marker { color: var(--select); }
+
+.cs-save-name { font-family: var(--font-label); font-size: 0.72rem; color: var(--parchment); text-align: left; text-transform: uppercase; flex: 1; }
+
+.cs-save-bonus { font-family: var(--font-body); font-size: 0.85rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 2.75ch; flex: 0 0 auto; }
+
+.cs-rule-note { font-family: var(--font-body); font-size: 0.68rem; color: var(--select); margin-top: 6px; text-align: center; font-style: italic; }
+
+/* ── Senses ── */
+
+.cs-sense-list { display: grid; gap: 4px; }
+
+.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.78rem; color: var(--parchment-2); }
+
+.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.05rem; }
+
+/* ── Proficiencies ── */
+
+.cs-prof-list { display: grid; gap: 8px; }
+
+.cs-prof-group { display: grid; gap: 4px; }
+
+.cs-prof-cat { font-family: var(--font-label); font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.03em; }
+
+.cs-prof-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.cs-prof-chip { padding: 2px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 0.68rem; color: var(--parchment-2); }
+
+/* ── Skills ── */
+
+.cs-skills-grid { display: grid; gap: 4px; }
+
+.cs-skill-ability-tag {
+  font-family: var(--font-label);
+  font-size: 0.58rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: 1px;
+}
+
+.cs-skill-group { display: grid; gap: 1px; }
+
+.cs-skill-row { display: grid; grid-template-columns: 18px 1fr 38px; align-items: center; gap: 4px; padding: 3px 6px; border-radius: var(--r-sm); }
+
+.cs-skill-row:hover { background: rgba(0, 0, 0, 0.03); }
+
+.cs-prof-click { cursor: pointer; background: transparent; border: 0; padding: 0; font-size: 0.55rem; color: var(--ink-faint); display: grid; place-items: center; }
+
+.cs-prof-click.cs-prof { color: var(--select); }
+
+.cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.78rem; cursor: pointer; text-align: left; padding: 0; }
+
+.cs-skill-btn:hover { color: var(--parchment); text-decoration: underline; text-decoration-color: var(--rule-soft); text-underline-offset: 2px; }
+
+.cs-skill-bonus { font-family: var(--font-body); font-size: 0.82rem; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 2.75ch; flex: 0 0 auto; }
+
+/* ── Action Table ── */
+
+.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 0.78rem; }
+
+.cs-action-table thead { border-bottom: 1px solid var(--rule); }
+
+.cs-action-table th { padding: 6px 8px; font-family: var(--font-label); font-size: 0.62rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
+
+.cs-action-table td { padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+.cs-action-row-click { cursor: pointer; }
+
+.cs-action-row-click:hover td { background: rgba(201, 162, 90, 0.04); color: var(--parchment); }
+
+/* ── Spells ── */
+
+.cs-spell-list { display: grid; gap: 12px; }
+
+.cs-spell-group { display: grid; gap: 6px; }
+
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.62rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
+
+.cs-spell-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); }
+
+.cs-spell-card strong { font-size: 0.82rem; color: var(--parchment); }
+
+.cs-spell-card span { font-size: 0.68rem; color: var(--ink-faint); }
+
+.cs-spell-card p { font-size: 0.72rem; color: var(--parchment-2); margin-top: 3px; font-style: italic; }
+
+/* ── Inventory ── */
+
+.cs-inv-list { display: grid; gap: 4px; }
+
+.cs-inv-row { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 10px; padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
+
+.cs-inv-row strong { font-size: 0.82rem; color: var(--parchment); }
+
+.cs-inv-row span { font-size: 0.7rem; color: var(--ink-faint); }
+
+.cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; }
+
+.cs-attune { color: var(--select); }
+
+/* ── Features ── */
+
+.cs-feature-list { display: grid; gap: 12px; }
+
+.cs-feature-group { display: grid; gap: 6px; }
+
+.cs-feature-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
+
+.cs-feature-card strong { font-size: 0.78rem; color: var(--parchment); }
+
+.cs-feature-card p { font-size: 0.72rem; color: var(--parchment-2); margin-top: 2px; }
+
+/* ── Background / Notes ── */
+
+.cs-bg-block, .cs-notes-block { display: grid; gap: 12px; }
+
+.cs-bg-field { display: grid; gap: 4px; }
+
+.cs-bg-label { font-family: var(--font-label); font-size: 0.62rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.cs-bg-field p { font-family: var(--font-body); font-size: 0.82rem; color: var(--parchment-2); line-height: 1.5; }
+
+/* ── Console ── */
+
+.cs-console-form { display: grid; gap: 8px; }
+
+.cs-console-label { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px; font-family: var(--font-label); font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; }
+
+.cs-console-input { padding: 5px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); color: var(--parchment); font-family: var(--font-mono); font-size: 0.78rem; }
+
+.cs-console-log { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.cs-console-log span { padding: 3px 8px; border: 1px solid var(--rule-soft); border-radius: 999px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--parchment-2); background: var(--ground-3); }
+
+/* ── Misc ── */
+
+.cs-muted { font-family: var(--font-body); font-size: 0.78rem; color: var(--ink-faint); font-style: italic; }
+
+/* ── Responsive ── */
+
+@media (max-width: 1100px) {
+  .cs-sheet {
+    grid-template-columns: 136px 1fr;
+    grid-template-areas:
+      "identity   vitals"
+      "abilities  attacks"
+      "abilities  features"
+      "saves      notes"
+      "skills     inventory"
+      "skills     spells"
+      "senses     background"
+      "profs      background"
+      "console    console";
+  }
+}
+
+@media (max-width: 760px) {
+  .cs-sheet {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "identity" "vitals" "abilities" "saves" "skills" "senses" "profs"
+      "attacks" "features" "notes" "inventory" "spells" "background" "console";
+  }
+  .cs-abilities { grid-template-columns: repeat(6, 1fr); }
+  .cs-ability-cell { border-bottom: 0; border-right: 1px solid var(--rule-soft); min-height: 52px; }
+  .cs-ability-cell:last-child { border-right: 0; }
+  .cs-vitals { max-width: none; }
+  .cs-ability-mod { font-size: 1rem; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+}
+
+/* ── Saving Throws ── */
+
 .cs-save-grid {
   display: grid;
   gap: 2px;
@@ -3252,7 +3341,7 @@ button:disabled {
 
 .cs-save-row {
   display: grid;
-  grid-template-columns: 14px 36px 1fr;
+  grid-template-columns: 14px 1fr 38px;
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
@@ -3444,100 +3533,6 @@ button:disabled {
   font-size: 0.82rem;
   color: var(--parchment);
   text-align: right;
-}
-
-/* ── Right Column Badges ── */
-
-.cs-badges {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.cs-badge {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 4px;
-  padding: 14px 8px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-sm);
-  background: var(--ground-2);
-}
-
-.cs-badge svg {
-  color: var(--accent);
-}
-
-.cs-badge span {
-  font-family: var(--font-label);
-  font-size: 0.62rem;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.cs-badge strong {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 144;
-  font-size: 1.6rem;
-  color: var(--parchment);
-}
-
-/* ── Tabs ── */
-
-.cs-tablist {
-  display: flex;
-  border-bottom: 1px solid var(--rule);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.cs-tablist::-webkit-scrollbar { display: none; }
-
-.cs-tab {
-  flex-shrink: 0;
-  padding: 7px 9px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  font-family: var(--font-label);
-  font-size: 0.65rem;
-  color: var(--ink-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: color 120ms, border-color 120ms;
-}
-
-.cs-tab:hover {
-  color: var(--parchment-2);
-}
-
-.cs-tab.cs-tab-active {
-  color: var(--select);
-  border-bottom-color: var(--select);
-}
-
-.cs-tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.cs-tabpanel {
-  padding: 12px 0;
-  overflow: auto;
-  max-height: 60vh;
-}
-
-.cs-tabpanel.cs-hidden {
-  display: none;
-}
-
-.cs-tab-block {
-  min-height: 280px;
-  overflow: hidden;
 }
 
 /* ── Action Table ── */
@@ -3774,60 +3769,4 @@ button:disabled {
   font-size: 0.78rem;
   color: var(--ink-faint);
   font-style: italic;
-}
-
-/* ── Responsive ── */
-
-@media (max-width: 1220px) {
-  .cs-body {
-    grid-template-columns: 200px minmax(160px, 1fr) minmax(240px, 320px);
-    gap: 10px;
-  }
-  .cs-tabpanel {
-    max-height: 50vh;
-  }
-}
-
-@media (max-width: 900px) {
-  .cs-header-strip {
-    flex-direction: column;
-  }
-  .cs-header-left {
-    flex-wrap: wrap;
-  }
-  .cs-header-right {
-    width: 100%;
-  }
-  .cs-stat-row {
-    grid-template-columns: repeat(4, 1fr) 60px 60px;
-  }
-  .cs-body {
-    grid-template-columns: 1fr;
-  }
-  .cs-col {
-    gap: 10px;
-  }
-  .cs-skills-grid {
-    gap: 4px;
-  }
-}
-
-@media (max-width: 620px) {
-  .cs-sheet {
-    padding: 10px;
-    gap: 10px;
-  }
-  .cs-stat-row {
-    grid-template-columns: repeat(3, 1fr) 50px 50px;
-  }
-  .cs-header-right {
-    flex-direction: column;
-    gap: 6px;
-  }
-  .cs-badges {
-    grid-template-columns: 1fr 1fr;
-  }
-  .cs-ability-mod {
-    font-size: 1.15rem;
-  }
 }
