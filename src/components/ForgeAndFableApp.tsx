@@ -559,7 +559,7 @@ export default function ForgeAndFableApp() {
 
   return (
     <>
-    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} />
+    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
