@@ -50,7 +50,6 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -224,26 +223,7 @@ export default function HeroSheet(props: {
     setActiveId(event.active.id as string);
   }, []);
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-    const activeCol = findColumn(active.id as string);
-    const overCol = findColumn(over.id as string);
-    if (activeCol === -1 || overCol === -1 || activeCol === overCol) return;
-
-    const next = layout.columns.map((c) => [...c]);
-    const activeIdx = next[activeCol].indexOf(active.id as SheetSectionId);
-    if (activeIdx === -1) return;
-    next[activeCol].splice(activeIdx, 1);
-
-    const overIdx = next[overCol].indexOf(over.id as SheetSectionId);
-    next[overCol].splice(overIdx >= 0 ? overIdx : next[overCol].length, 0, active.id as SheetSectionId);
-
-    saveLayout({ ...layout, columns: next });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout.columns, saveLayout]);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveId(null);
     if (!over || active.id === over.id) return;
@@ -252,19 +232,28 @@ export default function HeroSheet(props: {
     const overCol = findColumn(over.id as string);
     if (activeCol === -1 || overCol === -1) return;
 
-    const next = layout.columns.map((c) => [...c]);
+    const current = mergeWithDefaults(props.character.sheetLayout);
+    const next = current.columns.map((c) => [...c]);
+    const activeIdStr = active.id as SheetSectionId;
+    const overIdStr = over.id as SheetSectionId;
+
     if (activeCol === overCol) {
       const col = next[activeCol];
-      const oldIdx = col.indexOf(active.id as SheetSectionId);
-      const newIdx = col.indexOf(over.id as SheetSectionId);
+      const oldIdx = col.indexOf(activeIdStr);
+      const newIdx = col.indexOf(overIdStr);
       if (oldIdx !== -1 && newIdx !== -1) {
         col.splice(oldIdx, 1);
-        col.splice(newIdx, 0, active.id as SheetSectionId);
-        saveLayout({ ...layout, columns: next });
+        col.splice(newIdx, 0, activeIdStr);
       }
+    } else {
+      const oldIdx = next[activeCol].indexOf(activeIdStr);
+      if (oldIdx !== -1) next[activeCol].splice(oldIdx, 1);
+      const newIdx = next[overCol].indexOf(overIdStr);
+      next[overCol].splice(newIdx >= 0 ? newIdx : next[overCol].length, 0, activeIdStr);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout.columns, saveLayout]);
+
+    saveLayout({ ...current, columns: next });
+  }
 
   /* ── Section content renderers (same as before) ── */
 
@@ -355,7 +344,7 @@ export default function HeroSheet(props: {
           <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}><t.Icon size={13} /> {t.label}</button>))}</div>
           <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
             <div className={refTab === "features" ? "" : "cs-reftab-hidden"}><div className="cs-feature-group"><span className="cs-spell-level-head">Class Features</span>{featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}</div></div>
-            <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => (<div className="cs-feature-card" key={trait}><p>{trait}</p></div>))}</div>) : null}</div>
+            <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => { const ci = trait.indexOf(":"); return (<div className="cs-feature-card" key={trait}>{ci > 0 ? <p><strong>{trait.slice(0, ci + 1)}</strong>{trait.slice(ci + 1)}</p> : <p>{trait}</p>}</div>); })}</div>) : null}</div>
             <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}><div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => (<div key={level} className="cs-spell-group"><span className="cs-spell-level-head">{level === "0" ? "Cantrips" : `Level ${level}`}</span>{spells.map((spell) => (<div className="cs-spell-card" key={spell.id}><strong>{spell.name}</strong><span>{spell.school} &middot; {spell.action}</span><p>{spell.summary}</p></div>))}</div>))}</div></div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>{props.character.inventory.length > 0 ? (<div className="cs-inv-list">{props.character.inventory.map((item) => (<div className="cs-inv-row" key={item.id}><div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div><div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}</div></div>))}</div>) : <p className="cs-muted">No equipment</p>}</div>
           </div>
@@ -392,7 +381,6 @@ export default function HeroSheet(props: {
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={allIds} strategy={verticalListSortingStrategy}>

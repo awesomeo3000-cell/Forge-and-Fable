@@ -2906,6 +2906,8 @@ button:disabled {
 
   font-size: clamp(16px, 0.45vw + 12px, 20px);
 
+  font-family: var(--font-body);
+
   overflow-wrap: break-word;
   word-break: break-word;
   hyphens: auto;
@@ -2916,7 +2918,6 @@ button:disabled {
   background: var(--rule);
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
-  overflow: hidden;
 }
 
 .cs-sheet-columns {
@@ -2958,7 +2959,7 @@ button:disabled {
 
 .cs-sheet-col:nth-child(1) { flex: 0 0 8.5em; }
 .cs-sheet-col:nth-child(2) { flex: 1 1 0; min-width: 10.5em; max-width: 24em; }
-.cs-sheet-col:nth-child(3) { flex: 2 1 0; min-width: 0; }
+.cs-sheet-col:nth-child(3) { flex: 2 1 0; min-width: 0; max-width: 28em; }
 
 /* Full-width pinned banners (identity + vitals on top, console below). */
 .cs-sheet-top,
@@ -2966,6 +2967,16 @@ button:disabled {
   display: flex;
   gap: 1px;
   background: var(--rule);
+}
+
+.cs-sheet-top {
+  position: relative;
+  z-index: 10;
+}
+
+.cs-sheet-bottom {
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  overflow: hidden;
 }
 
 .cs-sheet-top > .cs-section {
@@ -2980,6 +2991,7 @@ button:disabled {
 
 .cs-section.cs-pinned {
   padding: 0.8em 1em;
+  overflow: visible;
 }
 
 .cs-section {
@@ -3097,14 +3109,14 @@ button:disabled {
 .cs-skin-dropdown {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   margin-top: 4px;
   min-width: 180px;
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   background: var(--ground);
   box-shadow: var(--shadow-soft);
-  z-index: 100;
+  z-index: 200;
   overflow: hidden;
 }
 
@@ -3583,9 +3595,22 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.72em; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 3px; border-bottom: 1px solid var(--rule-soft); }
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; }
 
-.cs-spell-card { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); }
+.cs-feature-group {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.cs-feature-group:last-child {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cs-spell-card { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); display: grid; gap: 3px; }
 
 .cs-spell-card strong { font-size: 1.05em; color: var(--parchment); }
 
@@ -3599,9 +3624,9 @@ button:disabled {
 
 .cs-inv-row { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 10px; padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
-.cs-inv-row strong { font-size: 1.05em; color: var(--parchment); }
+.cs-inv-row strong { font-size: 1.05em; color: var(--parchment); display: block; }
 
-.cs-inv-row span { font-size: 0.9em; color: var(--ink-faint); }
+.cs-inv-row span { font-size: 0.9em; color: var(--ink-faint); display: block; margin-top: 2px; }
 
 .cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6em; color: var(--ink-faint); text-transform: uppercase; }
 
@@ -3610,8 +3635,6 @@ button:disabled {
 /* ── Features ── */
 
 .cs-feature-list { display: grid; gap: 12px; }
-
-.cs-feature-group { display: grid; gap: 6px; }
 
 .cs-feature-card { padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
 
@@ -3622,13 +3645,14 @@ button:disabled {
 /* ── Reference Tabs ── */
 
 .cs-reftabs { display: flex; flex-direction: column; min-height: 0; }
-.cs-reftablist { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
+.cs-reftablist { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; overflow-x: auto; }
 .cs-reftab {
-  font-family: var(--font-label); font-size: 0.88em; font-weight: 700;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 13px; border: 0; border-bottom: 2px solid transparent;
+  font-family: var(--font-label); font-size: 0.7em; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 7px 9px; border: 0; border-bottom: 2px solid transparent;
   background: transparent; color: var(--ink-faint); cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
 }
 .cs-reftab:hover { color: var(--parchment); }
 .cs-reftab.is-active { color: var(--parchment); border-bottom-color: var(--select); }
