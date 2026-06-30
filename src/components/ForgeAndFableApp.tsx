@@ -37,6 +37,7 @@ import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import HeroSheet from "@/components/HeroSheet";
+import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 
 type DraftCharacter = {
   name: string;
@@ -87,6 +88,7 @@ export default function ForgeAndFableApp() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [status, setStatus] = useState("");
+  const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroDone(true), 1650);
@@ -435,8 +437,27 @@ export default function ForgeAndFableApp() {
     setStatus(`${selected.name} retired`);
   }
 
-  function pushRoll(_label: string, sides: number, count = 1, _modifier = 0) {
-    Array.from({ length: count }, () => rollDie(sides));
+  function pushRoll(label: string, sides: number, count = 1, _modifier = 0) {
+    const newDice: RollingDie[] = Array.from({ length: count }, (_, i) => {
+      const fromLeft = Math.random() > 0.5;
+      return {
+        id: `${crypto.randomUUID()}-${i}`,
+        sides,
+        result: rollDie(sides),
+        label,
+        fromLeft,
+        startYPct: 0.15 + Math.random() * 0.35,
+        landXPct: 0.22 + Math.random() * 0.56,
+        landYPct: 0.25 + Math.random() * 0.38,
+        rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
+        delayMs: i * 220,
+      };
+    });
+    setFlyingDice((prev) => [...prev, ...newDice]);
+  }
+
+  function expireDie(id: string) {
+    setFlyingDice((prev) => prev.filter((d) => d.id !== id));
   }
 
   function executeConsole(event: FormEvent) {
@@ -507,7 +528,12 @@ export default function ForgeAndFableApp() {
   }
 
   if (!introDone || !ruleset || !draft) {
-    return <SplashScreen />;
+    return (
+      <>
+        <SplashScreen />
+        <DiceRollOverlay dice={flyingDice} onExpire={expireDie} />
+      </>
+    );
   }
 
   if (!user) {
@@ -528,6 +554,8 @@ export default function ForgeAndFableApp() {
   }
 
   return (
+    <>
+    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} />
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
@@ -635,5 +663,6 @@ export default function ForgeAndFableApp() {
         </section>
       </section>
     </main>
+    </>
   );
 }

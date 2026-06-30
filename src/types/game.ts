@@ -93,6 +93,33 @@ export type CharacterSettings = {
   modifiersTop: boolean;
 };
 
+export type ThemeFontKey =
+  | "tome"
+  | "storybook"
+  | "bubble"
+  | "script"
+  | "blackletter"
+  | "typewriter";
+
+export type ThemeBackgroundKey =
+  | "parchment"
+  | "plain"
+  | "linen"
+  | "stars"
+  | "sparkle"
+  | "forest"
+  | "dungeon";
+
+export type CharacterTheme = {
+  presetId?: string;
+  paper: string;
+  ink: string;
+  accent: string;
+  fontKey: ThemeFontKey;
+  backgroundKey: ThemeBackgroundKey;
+  backgroundOpacity?: number;
+};
+
 export type Character = {
   id: string;
   userId: string;
@@ -117,6 +144,7 @@ export type Character = {
   skillProficiencies?: string[];
   savingThrowProficiencies?: AbilityKey[];
   deathSaves: DeathSaves;
+  theme?: CharacterTheme;
   createdAt: string;
 }
 

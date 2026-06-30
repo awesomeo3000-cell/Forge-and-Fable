@@ -5,8 +5,10 @@ import {
   ArrowLeftRight,
   Backpack,
   BookOpen,
+  ChevronDown,
   Minus,
   Moon,
+  Paintbrush,
   PenLine,
   Plus,
   Shield,
@@ -29,7 +31,9 @@ import {
   signed,
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
+import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+import AppearancePanel from "@/components/AppearancePanel";
 
 type RefTab = "features" | "traits" | "spells" | "inventory";
 
@@ -176,8 +180,45 @@ export default function HeroSheet(props: {
     setRefTab(visibleTabs[next].id);
   };
 
+  /* ── Theme ── */
+  const [showPresets, setShowPresets] = useState(false);
+  const [showAppearance, setShowAppearance] = useState(false);
+  const theme = props.character.theme;
+
+  const themeVars = theme ? ({
+    "--paper": theme.paper,
+    "--paper-raised": `color-mix(in srgb, ${theme.paper} 94%, #000)`,
+    "--ink": theme.ink,
+    "--ink-2": `color-mix(in srgb, ${theme.ink} 65%, ${theme.paper})`,
+    "--ink-3": `color-mix(in srgb, ${theme.ink} 45%, ${theme.paper})`,
+    "--doc-accent": theme.accent,
+    "--doc-accent-deep": `color-mix(in srgb, ${theme.accent} 82%, #000)`,
+    "--doc-select": theme.accent,
+    "--doc-rule": `color-mix(in srgb, ${theme.ink} 40%, ${theme.paper})`,
+    // Map ALL font roles to the chosen theme font. The sheet's text uses
+    // --font-display (headings/numbers), --font-body (prose) AND --font-label
+    // (the many uppercase labels: ability names, saves, skill tags, section
+    // eyebrows) plus --font-mono (console). Overriding only body/display left
+    // every label in the default font — which is why the theme font looked
+    // like it "wasn't applied to everything".
+    "--sheet-font": FONT_STACKS[theme.fontKey],
+    "--font-body": FONT_STACKS[theme.fontKey],
+    "--font-display": FONT_STACKS[theme.fontKey],
+    "--font-label": FONT_STACKS[theme.fontKey],
+    "--font-mono": FONT_STACKS[theme.fontKey],
+    "--bg-opacity": `${theme.backgroundOpacity ?? 0.5}`,
+  } as Record<string, string>) : {};
+
+  const applyPreset = (presetId: string) => {
+    const preset = SKIN_PRESETS.find((p) => p.id === presetId);
+    if (preset) {
+      props.onUpdate({ theme: { ...preset.theme } });
+    }
+    setShowPresets(false);
+  };
+
   return (
-    <div className="cs-sheet">
+    <div className="cs-sheet" style={themeVars} data-bg={theme?.backgroundKey ?? "parchment"}>
       {/* ── cs-identity ── */}
       <div className="cs-identity">
         <div className="cs-class-icon" data-class={heroClass.id}>
@@ -193,6 +234,23 @@ export default function HeroSheet(props: {
           <button className="cs-glass-btn" type="button" title="Long rest"><Moon size={13} />Long</button>
         </div>
         <button className="cs-glass-btn cs-inspire-btn" type="button" title="Heroic Inspiration"><Sparkles size={13} />Insp</button>
+        <div style={{ position: "relative" }}>
+          <button className="cs-glass-btn cs-skin-btn" type="button" onClick={() => setShowPresets(!showPresets)} title="Appearance">
+            <Paintbrush size={13} /> Skin
+            <ChevronDown size={10} />
+          </button>
+          {showPresets ? (
+            <div className="cs-skin-dropdown">
+              {SKIN_PRESETS.map((p) => (
+                <button key={p.id} type="button" className="cs-skin-option" onClick={() => applyPreset(p.id)}>{p.name}</button>
+              ))}
+              <button key="custom" type="button" className="cs-skin-option" onClick={() => { setShowAppearance(true); setShowPresets(false); }}>Customize...</button>
+              {theme?.presetId ? (
+                <button key="reset" type="button" className="cs-skin-option" onClick={() => { props.onUpdate({ theme: undefined }); setShowPresets(false); }}>Reset to default</button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
         <button className="cs-retire-btn" type="button" onClick={props.onDelete}><Trash2 size={12} /></button>
       </div>
 
@@ -406,6 +464,9 @@ export default function HeroSheet(props: {
           <div className="cs-console-log">{props.consoleLog.map((entry, i) => (<span key={`${entry}-${i}`}>{entry}</span>))}</div>
         </form>
       </section>
+      {showAppearance ? (
+        <AppearancePanel theme={theme} onUpdate={(t) => { props.onUpdate({ theme: t }); }} onClose={() => setShowAppearance(false)} />
+      ) : null}
     </div>
   );
 }
