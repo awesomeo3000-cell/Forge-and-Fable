@@ -120,6 +120,26 @@ export type CharacterTheme = {
   backgroundOpacity?: number;
 };
 
+export type SheetSectionId =
+  | "identity"
+  | "vitals"
+  | "abilities"
+  | "saves"
+  | "skills"
+  | "senses"
+  | "profs"
+  | "attacks"
+  | "features"
+  | "notes"
+  | "background"
+  | "console";
+
+export type SheetLayout = {
+  columns: SheetSectionId[][];
+  collapsed: SheetSectionId[];
+  version: number;
+};
+
 export type Character = {
   id: string;
   userId: string;
@@ -145,6 +165,7 @@ export type Character = {
   savingThrowProficiencies?: AbilityKey[];
   deathSaves: DeathSaves;
   theme?: CharacterTheme;
+  sheetLayout?: SheetLayout;
   createdAt: string;
 }
 
