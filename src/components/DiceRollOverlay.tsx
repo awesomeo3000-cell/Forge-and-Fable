@@ -58,10 +58,8 @@ const D20_FACES: { matrix: number[]; brightness: number }[] = [
   { matrix: [0.309, 0.809, -0.5, 0, -0.1784, -0.4671, -0.866, 0, -0.9342, 0.3568, 0, 0, 32.3157, -8.9318, 5.5202, 1], brightness: 0.612 },
 ];
 
-const D20_BASE_RGB: [number, number, number] = [150, 32, 22];
-
-function d20FaceColor(brightness: number): string {
-  const [r, g, b] = D20_BASE_RGB;
+function d20FaceColor(brightness: number, baseRgb: [number, number, number]): string {
+  const [r, g, b] = baseRgb;
   if (brightness > 0.5) {
     const amt = (brightness - 0.5) * 0.7;
     return `rgb(${Math.round(r + (255 - r) * amt)}, ${Math.round(g + (255 - g) * amt)}, ${Math.round(b + (255 - b) * amt)})`;
@@ -99,14 +97,23 @@ const DIE_SHAPES: Record<number, DieShape> = {
   // 20 has no flat DieShape — it's rendered as a real 3D object by <D20Object>.
 };
 
-const DIE_COLORS: Record<number, { fill: string; stroke: string; facetStroke: string; glow: string }> = {
-  4:  { fill: "rgba(162,63,41,0.88)",  stroke: "rgba(255,200,180,0.75)", facetStroke: "rgba(255,210,190,0.28)", glow: "rgba(220,80,50,0.55)"  },
-  6:  { fill: "rgba(72,72,98,0.88)",   stroke: "rgba(210,200,240,0.75)", facetStroke: "rgba(220,210,255,0.22)", glow: "rgba(110,100,180,0.55)" },
-  8:  { fill: "rgba(100,90,76,0.88)",  stroke: "rgba(230,220,200,0.75)", facetStroke: "rgba(240,230,210,0.22)", glow: "rgba(150,130,100,0.55)" },
-  10: { fill: "rgba(60,106,100,0.88)", stroke: "rgba(190,230,225,0.75)", facetStroke: "rgba(200,240,235,0.22)", glow: "rgba(80,160,150,0.55)"  },
-  12: { fill: "rgba(170,130,50,0.88)", stroke: "rgba(255,235,180,0.75)", facetStroke: "rgba(255,240,195,0.28)", glow: "rgba(210,165,60,0.55)"  },
-  20: { fill: "rgba(140,30,20,0.92)",  stroke: "rgba(255,210,190,0.85)", facetStroke: "rgba(255,220,200,0.32)", glow: "rgba(220,60,40,0.65)"  },
-};
+function hexToRgb(hex: string): [number, number, number] {
+  const v = parseInt(hex.slice(1), 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+}
+
+function dieColors(accentHex: string): Record<number, { fill: string; stroke: string; facetStroke: string; glow: string }> {
+  const [r, g, b] = hexToRgb(accentHex);
+  const brighten = (n: number) => Math.min(255, Math.round(n * 1.35));
+  return {
+    4:  { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.28)`, glow: `rgba(${r},${g},${b},0.55)` },
+    6:  { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.22)`, glow: `rgba(${r},${g},${b},0.55)` },
+    8:  { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.22)`, glow: `rgba(${r},${g},${b},0.55)` },
+    10: { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.22)`, glow: `rgba(${r},${g},${b},0.55)` },
+    12: { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.28)`, glow: `rgba(${r},${g},${b},0.55)` },
+    20: { fill: `rgba(${r},${g},${b},0.92)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.85)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.32)`, glow: `rgba(${r},${g},${b},0.65)` },
+  };
+}
 
 function displayValue(sides: number, result: number): string {
   if (sides === 20 && result === 20) return "C";
@@ -195,11 +202,14 @@ function D20Object({
   result,
   isCrit,
   delayMs,
+  accentHex,
 }: {
   result: number;
   isCrit: boolean;
   delayMs: number;
+  accentHex: string;
 }) {
+  const baseRgb = hexToRgb(accentHex);
   const rigRef = useRef<HTMLDivElement>(null);
   const upIndex = (((result - 1) % 20) + 20) % 20;
 
@@ -266,7 +276,7 @@ function D20Object({
               className={`d20-face${isUp ? " is-up" : ""}${isUp && isCrit ? " is-crit" : ""}`}
               style={{
                 transform: `matrix3d(${face.matrix.join(",")})`,
-                ...(isUp ? null : { background: d20FaceColor(face.brightness) }),
+                ...(isUp ? null : { background: d20FaceColor(face.brightness, baseRgb) }),
               }}
             >
               {i + 1}
@@ -294,10 +304,16 @@ function ClarebearCrit({ delayMs }: { delayMs: number }) {
 export default function DiceRollOverlay({
   dice,
   onExpire,
+  accentHex,
+  fontStack,
 }: {
   dice: RollingDie[];
   onExpire: (id: string) => void;
+  accentHex?: string;
+  fontStack?: string;
 }) {
+  const accent = accentHex ?? "#a23f29";
+  const font = fontStack ?? "Georgia, 'Times New Roman', serif";
   const crits = dice.filter((d) => d.sides === 20 && d.result === 20);
 
   if (dice.length === 0) return null;
@@ -305,7 +321,7 @@ export default function DiceRollOverlay({
   return (
     <div className="dice-fly-overlay" aria-hidden="true">
       {dice.map((die) => (
-        <FlyingDie key={die.id} die={die} onExpire={onExpire} />
+        <FlyingDie key={die.id} die={die} onExpire={onExpire} accentHex={accent} fontStack={font} />
       ))}
       {crits.map((die) => (
         <ClarebearCrit key={`crit-${die.id}`} delayMs={die.delayMs + 1680} />
@@ -316,7 +332,7 @@ export default function DiceRollOverlay({
 
 /* ── Single animated die ── */
 
-function FlyingDie({ die, onExpire }: { die: RollingDie; onExpire: (id: string) => void }) {
+function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; onExpire: (id: string) => void; accentHex: string; fontStack: string }) {
   const [visible, setVisible] = useState(true);
   const totalMs = 2800 + die.delayMs;
 
@@ -331,7 +347,7 @@ function FlyingDie({ die, onExpire }: { die: RollingDie; onExpire: (id: string) 
   if (!visible) return null;
 
   const shape = DIE_SHAPES[die.sides] ?? DIE_SHAPES[8];
-  const colors = DIE_COLORS[die.sides] ?? DIE_COLORS[8];
+  const colors = dieColors(accentHex)[die.sides] ?? dieColors(accentHex)[8];
   const filterId = `glow-${die.id}`;
   const label = displayValue(die.sides, die.result);
   const isD20 = die.sides === 20;
@@ -359,6 +375,7 @@ function FlyingDie({ die, onExpire }: { die: RollingDie; onExpire: (id: string) 
           result={die.result}
           isCrit={die.result === 20}
           delayMs={die.delayMs}
+          accentHex={accentHex}
         />
       ) : (
         <svg viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
@@ -414,7 +431,7 @@ function FlyingDie({ die, onExpire }: { die: RollingDie; onExpire: (id: string) 
             fontSize={label === "C" ? shape.fontSize + 4 : shape.fontSize}
             fontWeight="bold"
             fill={label === "C" ? "#ffd700" : "#fff4da"}
-            fontFamily="Georgia, 'Times New Roman', serif"
+            fontFamily={fontStack}
             className="die-result-num"
             style={textStyle}
           >

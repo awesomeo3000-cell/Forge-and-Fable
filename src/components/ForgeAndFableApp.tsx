@@ -38,6 +38,7 @@ import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import HeroSheet from "@/components/HeroSheet";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
+import { FONT_STACKS } from "@/lib/skins";
 
 type DraftCharacter = {
   name: string;
@@ -148,6 +149,9 @@ export default function ForgeAndFableApp() {
     () => characters.find((character) => character.id === selectedId) ?? characters[0] ?? null,
     [characters, selectedId],
   );
+
+  const diceAccent = selected?.theme?.accent ?? "#a23f29";
+  const diceFont = selected?.theme ? FONT_STACKS[selected.theme.fontKey] : undefined;
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   const showCreator = creatorOpen;
@@ -531,7 +535,7 @@ export default function ForgeAndFableApp() {
     return (
       <>
         <SplashScreen />
-        <DiceRollOverlay dice={flyingDice} onExpire={expireDie} />
+    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
       </>
     );
   }
