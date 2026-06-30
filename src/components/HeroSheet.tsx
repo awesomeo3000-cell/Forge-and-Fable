@@ -22,9 +22,9 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, Character, Ruleset, SheetSectionId } from "@/types/game";
+import type { AbilityKey, AbilityScores, Character, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -34,7 +34,7 @@ import {
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
-import { DEFAULT_LAYOUT, mergeWithDefaults, SECTION_TITLES } from "@/lib/sheetLayout";
+import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
@@ -168,26 +168,44 @@ export default function HeroSheet(props: {
 
   /* ── Layout ── */
   const [editMode, setEditMode] = useState(false);
-  const layout = mergeWithDefaults(props.character.sheetLayout);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Layout lives in local state so drag/collapse update the UI instantly.
+  // It re-syncs from props whenever the saved value changes AND we're not
+  // mid-drag — done during render (React's recommended pattern) rather than
+  // in an effect, so there's no extra commit/flash.
+  const propLayout = useMemo(
+    () => mergeWithDefaults(props.character.sheetLayout),
+    [props.character.sheetLayout],
+  );
+  const [layout, setLayout] = useState(propLayout);
+  const [syncedFrom, setSyncedFrom] = useState(propLayout);
+  if (propLayout !== syncedFrom && !activeId) {
+    setSyncedFrom(propLayout);
+    setLayout(propLayout);
+  }
+
   const collapsed = layout.collapsed;
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const saveLayout = useCallback((l: typeof layout) => {
-    if (layoutTimer.current) clearTimeout(layoutTimer.current);
-    layoutTimer.current = setTimeout(() => props.onUpdate({ sheetLayout: l }), 300);
-  }, [props]);
+  // Apply immediately for feedback; persist on a debounce.
+  const saveLayout = useCallback(
+    (l: SheetLayout) => {
+      setLayout(l);
+      if (layoutTimer.current) clearTimeout(layoutTimer.current);
+      layoutTimer.current = setTimeout(() => props.onUpdate({ sheetLayout: l }), 300);
+    },
+    [props],
+  );
 
   const toggleCollapse = (id: SheetSectionId) => {
     const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
-    saveLayout({ ...layout, collapsed: next, columns: layout.columns });
+    saveLayout({ ...layout, collapsed: next });
   };
 
   const resetLayout = () => {
     saveLayout({ ...DEFAULT_LAYOUT, columns: DEFAULT_LAYOUT.columns.map((c) => [...c]) });
   };
-
-  /* ── DnD state ── */
-  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -360,7 +378,16 @@ export default function HeroSheet(props: {
   const allIds = layout.columns.flat();
 
   return (
-    <div className="cs-sheet" style={themeVars} data-bg={theme?.backgroundKey ?? "parchment"}>
+    <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundKey ?? "parchment"}>
+      {/* Full-width banner: identity + vitals (pinned, not draggable). */}
+      <div className="cs-sheet-top">
+        {PINNED_TOP.map((id) => (
+          <div className="cs-section cs-pinned" data-section-id={id} key={id}>
+            {sectionContent(id)}
+          </div>
+        ))}
+      </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -389,6 +416,16 @@ export default function HeroSheet(props: {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Full-width banner: console (pinned, not draggable). */}
+      <div className="cs-sheet-bottom">
+        {PINNED_BOTTOM.map((id) => (
+          <div className="cs-section cs-pinned" data-section-id={id} key={id}>
+            {sectionContent(id)}
+          </div>
+        ))}
+      </div>
+
       {showAppearance ? (<AppearancePanel theme={theme} onUpdate={(t) => { props.onUpdate({ theme: t }); }} onClose={() => setShowAppearance(false)} />) : null}
     </div>
   );

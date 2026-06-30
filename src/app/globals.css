@@ -2935,6 +2935,10 @@ button:disabled {
 }
 
 .cs-sheet-col:empty::after {
+  content: none;
+}
+
+.cs-editing .cs-sheet-col:empty::after {
   content: "Drop here";
   display: flex;
   align-items: center;
@@ -2953,8 +2957,30 @@ button:disabled {
 }
 
 .cs-sheet-col:nth-child(1) { flex: 0 0 8.5em; }
-.cs-sheet-col:nth-child(2) { flex: 0 0 minmax(10.5em, 0.9fr); max-width: 350px; }
-.cs-sheet-col:nth-child(3) { flex: 1; }
+.cs-sheet-col:nth-child(2) { flex: 1 1 0; min-width: 10.5em; max-width: 24em; }
+.cs-sheet-col:nth-child(3) { flex: 2 1 0; min-width: 0; }
+
+/* Full-width pinned banners (identity + vitals on top, console below). */
+.cs-sheet-top,
+.cs-sheet-bottom {
+  display: flex;
+  gap: 1px;
+  background: var(--rule);
+}
+
+.cs-sheet-top > .cs-section {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.cs-sheet-bottom > .cs-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-section.cs-pinned {
+  padding: 0.8em 1em;
+}
 
 .cs-section {
   background: var(--ground);
