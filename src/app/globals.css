@@ -2904,13 +2904,17 @@ button:disabled {
 
   font-size: clamp(16px, 0.45vw + 12px, 20px);
 
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+
   display: grid;
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   overflow: hidden;
-  grid-template-columns: 7.6em minmax(10.5em, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
+  grid-template-columns: 8.5em minmax(10.5em, 0.9fr) minmax(0, 1.3fr) minmax(0, 1.3fr);
   grid-template-areas:
     "identity   identity  identity   vitals"
     "abilities  saves     attacks    attacks"
@@ -3190,7 +3194,7 @@ button:disabled {
 
 .cs-prof-tags { display: flex; flex-wrap: wrap; gap: 3px; }
 
-.cs-prof-chip { padding: 2px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 0.68em; color: var(--parchment-2); }
+.cs-prof-chip { padding: 2px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 0.68em; color: var(--parchment-2); white-space: normal; overflow-wrap: anywhere; min-width: 0; }
 
 /* ── Skills ── */
 
@@ -3225,13 +3229,13 @@ button:disabled {
 
 /* ── Action Table ── */
 
-.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08em; }
+.cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08em; table-layout: fixed; }
 
 .cs-action-table thead { border-bottom: 1px solid var(--rule); }
 
-.cs-action-table th { padding: 9px 11px; font-family: var(--font-label); font-size: 0.72em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; }
+.cs-action-table th { padding: 9px 11px; font-family: var(--font-label); font-size: 0.72em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; font-weight: 600; overflow-wrap: anywhere; }
 
-.cs-action-table td { padding: 8px 11px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.cs-action-table td { padding: 8px 11px; border-bottom: 1px solid var(--rule-soft); color: var(--parchment-2); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; overflow-wrap: anywhere; }
 
 .cs-action-row-click { cursor: pointer; }
 
@@ -3336,7 +3340,7 @@ button:disabled {
 
 @media (max-width: 1100px) {
   .cs-sheet {
-    grid-template-columns: 7.6em 1fr;
+    grid-template-columns: 8.5em 1fr;
     grid-template-areas:
       "identity   vitals"
       "abilities  attacks"
