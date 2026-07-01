@@ -1,0 +1,1053 @@
+[
+{
+"id": "actor",
+"name": "Actor",
+"description": "+1 in Cha., advantage on Deception and Performance checks, mimic the speech of a person or the sounds made by a creature.",
+"abilityBonuses": [
+"charisma"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "alert",
+"name": "Alert",
+"description": "+5 to initiative, you can't be surprised, and creatures you don't see don't gain advantage on attack roll against you.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "artificer-initiate",
+"name": "Artificer Initiate",
+"description": "You learn one cantrip and one 1st-level artificier spell (cast without slot), proficiency with one type of artisan's tools.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "athlete",
+"name": "Athlete",
+"description": "+1 in Str. or Dex., you stand up and climb more quickly, and you can jump with only a 5-ft run.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "bountiful-luck",
+"name": "Bountiful Luck",
+"description": "You can let an ally within 30 ft of you to reroll a 1 on a d20.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "Halfling",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "charger",
+"name": "Charger",
+"description": "As part of the Dash action you can make a melee attack with a +5 bonus if you move at least 10 ft before.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "chef",
+"name": "Chef",
+"description": "+1 in Con. or Wis., proficiency with cook's utensils and cook special food to regain hp.",
+"abilityBonuses": [
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "crossbow-expert",
+"name": "Crossbow Expert",
+"description": "You ignore the loading property of crossbows and don't have disadvantage for being in contact with a creature when you shoot.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "crusher",
+"name": "Crusher",
+"description": "+1 in Str. or Con., 5 ft extra move when you hit (bludgeoning) and attacks with advantage after a critical hit.",
+"abilityBonuses": [
+"strength",
+"constitution"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "defensive-duelist",
+"name": "Defensive Duelist",
+"description": "You can add your proficiency bonus to your AC if you are wielding a finesse weapon, in reaction to a melee attack.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Dexterity 13 or higher",
+"source": "PHB"
+},
+{
+"id": "dragon-fear",
+"name": "Dragon Fear",
+"description": "+1 in Str., Con., or Cha. and your Breath Weapon can frighten instead of inflicting damages.",
+"abilityBonuses": [
+"strength",
+"constitution",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Dragonborn",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "dragon-hide",
+"name": "Dragon Hide",
+"description": "+1 in Str., Con., or Cha., your AC becomes 13+Dex. modifier and your retractable claws deal 1d4+Str. modifier slashing damage.",
+"abilityBonuses": [
+"strength",
+"constitution",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Dragonborn",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "drow-high-magic",
+"name": "Drow High Magic",
+"description": "You can cast the detect magic spell (at will) and the levitate and dispel magic spells (1/long rest).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "Elf (drow)",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "dual-wielder",
+"name": "Dual Wielder",
+"description": "+1 to AC if you're wielding a melee weapon in each hand, two-weapon fighting with non-light weapon, draw two weapons.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "dungeon-delver",
+"name": "Dungeon Delver",
+"description": "Advantage to Perception and Investigation checks, to saving throws vs traps, and search for traps at normal pace.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "durable",
+"name": "Durable",
+"description": "+1 in Con. and for each Hit Dice you regain a minimum of hit points equals to 2 x your Constitution modifier.",
+"abilityBonuses": [
+"constitution"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "dwarf-fortitude",
+"name": "Dwarf Fortitude",
+"description": "+1 in Con., and you can spend one Hit Die to heal yourself taking the Dodge action.",
+"abilityBonuses": [
+"constitution"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "Dwarf",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "eldritch-adept",
+"name": "Eldritch Adept",
+"description": "You learn one Eldritch Invocation.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Spellcasting or Pact Magic feature",
+"source": "TCoE"
+},
+{
+"id": "elemental-adept",
+"name": "Elemental Adept",
+"description": "Your spells ignore resistance to a damage type (acid, cold, fire, lightning, or thunder) and treat any 1 in damage as a 2.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "The ability to cast at least one spell",
+"source": "PHB"
+},
+{
+"id": "elven-accuracy",
+"name": "Elven Accuracy",
+"description": "+1 in Dex., Int., Wis., or Cha., and you can reroll one attack roll if you have advantage.",
+"abilityBonuses": [
+"dexterity",
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Elf or half-elf",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "ember-of-the-fire-giant",
+"name": "Ember of the Fire Giant",
+"description": "+1 in Str., Con., or Wis. ; resistance to fire damage ; 1d8+PB fire damage + blinded (15-ft-radius ; PB/day).",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Fire Strike) feat",
+"source": "GotG"
+},
+{
+"id": "fade-away",
+"name": "Fade away",
+"description": "+1 in Dex. or Int., and you can use your reaction to become invisible if you take damage.",
+"abilityBonuses": [
+"dexterity",
+"intelligence"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Gnome",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "fey-teleportation",
+"name": "Fey Teleportation",
+"description": "+1 in Int. or Cha., you speak Sylvan, and you can cast the misty step spell (1/short rest).",
+"abilityBonuses": [
+"intelligence",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Elf (high)",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "fey-touched",
+"name": "Fey Touched",
+"description": "+1 in Int., Wis., or Cha., and you learn misty step and one 1st-level spell from divination or enchantment school.",
+"abilityBonuses": [
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "fighting-initiate",
+"name": "Fighting Initiate",
+"description": "You learn one Fighting Style option from the fighter class.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with a martial weapon",
+"source": "TCoE"
+},
+{
+"id": "flames-of-phlegethos",
+"name": "Flames of Phlegethos",
+"description": "+1 in Int. or Cha., reroll any 1 on fire spell damage, and cause flames to wreathe you if you cast a fire spell.",
+"abilityBonuses": [
+"intelligence",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Tiefling",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "fury-of-the-frost-giant",
+"name": "Fury of the Frost Giant",
+"description": "+1 in Str., Con., or Wis. ; resistance to cold damage ; 1d8+PB cold damage + speed reduced to 0 (PB/day).",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Frost Strike) feat",
+"source": "GotG"
+},
+{
+"id": "gift-of-the-chromatic-dragon",
+"name": "Gift of the Chromatic Dragon",
+"description": "Extra 1d4 acid, cold, fire, lightning, or poison damage for 1 min (bonus action). Resistance to 1 of these damages (reaction).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "FToD"
+},
+{
+"id": "gift-of-the-gem-dragon",
+"name": "Gift of the Gem Dragon",
+"description": "+1 in Int., Wis., or Cha., Strength saving throw or 2d8 force damage and pushed away 10 ft in reaction to an attack (PB/day).",
+"abilityBonuses": [
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "FToD"
+},
+{
+"id": "gift-of-the-metallic-dragon",
+"name": "Gift of the Metallic Dragon",
+"description": "You can cast cure wounds (1/long rest). As a reaction to an attack, can manifest wings to get +PB to your AC (PB/day).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "FToD"
+},
+{
+"id": "grappler",
+"name": "Grappler",
+"description": "You have advantage on attack rolls when grappling, and can try to restrained a creature grappled by you.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Strength 13 or higher",
+"source": "PHB"
+},
+{
+"id": "great-weapon-master",
+"name": "Great Weapon Master",
+"description": "Extra attack after a melee critical hit and you can choose to take -5 to attack roll to add +10 to damage with an heavy weapon.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "guile-of-the-cloud-giant",
+"name": "Guile of the Cloud Giant",
+"description": "+1 in Str., Con., or Wis. ; resistance to attack's damage ; teleport within 30 ft (PB/day).",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Cloud Strike) feat",
+"source": "GotG"
+},
+{
+"id": "gunner",
+"name": "Gunner",
+"description": "+1 in Dex., proficiency with firearms, ignore loading property of firearms and no disadvantage to attacks within 5 ft.",
+"abilityBonuses": [
+"dexterity"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "healer",
+"name": "Healer",
+"description": "You can stabilize a creature and restore it to 1 hp, or restore [1d6+4+its number of Hit Dice] hp to it.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "heavily-armored",
+"name": "Heavily Armored",
+"description": "+1 in Str. and you gain proficiency with heavy armor.",
+"abilityBonuses": [
+"strength"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with medium armor",
+"source": "PHB"
+},
+{
+"id": "heavy-armor-master",
+"name": "Heavy Armor Master",
+"description": "+1 in Str. and bludgeoning, piercing, and slashing damage are reduced by 3 if you are wearing an heavy armor.",
+"abilityBonuses": [
+"strength"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with heavy armor",
+"source": "PHB"
+},
+{
+"id": "infernal-constitution",
+"name": "Infernal Constitution",
+"description": "+1 in Con., resistance to cold and poison damage, and you have advantage on saving throws against being poisoned.",
+"abilityBonuses": [
+"constitution"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "Tiefling",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "inspiring-leader",
+"name": "Inspiring Leader",
+"description": "Up to 6 creatures within 30 ft of you can gain temporary hp equal to your level + your Cha. modifier.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Charisma 13 or higher",
+"source": "PHB"
+},
+{
+"id": "keen-mind",
+"name": "Keen Mind",
+"description": "+1 in Int., you know which way is north, when is the next sunrise/sunset, and recall any events within the past month.",
+"abilityBonuses": [
+"intelligence"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "keenness-of-the-stone-giant",
+"name": "Keenness of the Stone Giant",
+"description": "+1 in Str., Con., or Wis. ; darkvision 60 ft ; 1d10 force damage with a range of 60 ft + prone (PB/day).",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Stone Strike) feat",
+"source": "GotG"
+},
+{
+"id": "lightly-armored",
+"name": "Lightly Armored",
+"description": "+1 in Str. or Dex. and you gain profociency with light armor.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "linguist",
+"name": "Linguist",
+"description": "+1 in Int., you learn three languages, and you can ably create ciphers.",
+"abilityBonuses": [
+"intelligence"
+],
+"fixedAbility": true,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "lucky",
+"name": "Lucky",
+"description": "You can reroll one d20 or force to reroll an attack roll against you (3/long rest).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "mage-slayer",
+"name": "Mage Slayer",
+"description": "You can use a reaction to make a melee attack against a spellcaster and advantage on saving throws against spell within 5 ft.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "magic-initiate",
+"name": "Magic Initiate",
+"description": "You learn two cantrips and one 1st-level spell from one class.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "martial-adept",
+"name": "Martial Adept",
+"description": "You learn two maneuvers from Battle Master archetype and gain one superiority die (d6).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "medium-armor-master",
+"name": "Medium Armor Master",
+"description": "No disadvantage to Stealth checks wearing medium armor and Dexterity bonus max to +3 instead of +2.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with medium armor",
+"source": "PHB"
+},
+{
+"id": "metamagic-adept",
+"name": "Metamagic Adept",
+"description": "You learn two metamagic options and gain 2 sorcery points.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Spellcasting or Pact Magic feature",
+"source": "TCoE"
+},
+{
+"id": "mobile",
+"name": "Mobile",
+"description": "Your speed increase by 10 ft, you can Dash on difficult terrain without malus, and don't provoke opportunity attacks in melee.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "moderately-armored",
+"name": "Moderately Armored",
+"description": "+1 in Str. or Dex. and you gain proficiency with medium armor and shields.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with light armor",
+"source": "PHB"
+},
+{
+"id": "mounted-combatant",
+"name": "Mounted Combatant",
+"description": "Advantage on melee attacks against unmounted creature and force an attack to target you instead of your mount.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "observant",
+"name": "Observant",
+"description": "+1 in Int. or Wis., you can read on lips, and you have a +5 bonus in passive Perception and passive Investigation.",
+"abilityBonuses": [
+"intelligence",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "orcish-fury",
+"name": "Orcish Fury",
+"description": "+1 in Str. or Con., add one of the weapon's damage dice, and use a reaction to attack after using Relentless Endurance.",
+"abilityBonuses": [
+"strength",
+"constitution"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Half-orc",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "piercer",
+"name": "Piercer",
+"description": "+1 in Str. or Dex., reroll one damage dice when you hit (piercing) and one additional damage dice in case of critical hit.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "poisoner",
+"name": "Poisoner",
+"description": "Proficiency with poisoner's kit, apply as a bonus action and your attacks ignore resistance to poison damage.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "polearm-master",
+"name": "Polearm Master",
+"description": "You can make an extra attack with a polearm weapon, and make an opportunity attack if a creature enter your reach.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "prodigy",
+"name": "Prodigy",
+"description": "You gain proficiency with one skill, one tool or one language, and you gain expertise with one skill.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "Half-elf, half-orc, or human",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "resilient",
+"name": "Resilient",
+"description": "+1 in one ability and you gain proficiency in saving throws using this ability.",
+"abilityBonuses": [
+"strength",
+"dexterity",
+"constitution",
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "ritual-caster",
+"name": "Ritual Caster",
+"description": "You have a ritual book with two 1-st level ritual spells from one class and you can later on add other ritual spells you found.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Intelligence or Wisdom 13 or higher",
+"source": "PHB"
+},
+{
+"id": "rune-shaper",
+"name": "Rune Shaper",
+"description": "You learn comprehend languages and 1/2 PB 1st-level spells (cast with rune or spell slot).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Spellcasting feature or Rune Carver background",
+"source": "GotG"
+},
+{
+"id": "savage-attacker",
+"name": "Savage Attacker",
+"description": "You can reroll melee weapon attack damage once per turn.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "second-chance",
+"name": "Second Chance",
+"description": "+1 in Dex., Con., or Cha., and you can force a creature to reroll its attack roll if it hits you.",
+"abilityBonuses": [
+"dexterity",
+"constitution",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Halfling",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "sentinel",
+"name": "Sentinel",
+"description": "A successful OA reduce creature's speed to 0 for this turn and possibility to make an OA even if the ennemy take Disengage.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "shadow-touched",
+"name": "Shadow Touched",
+"description": "+1 in Int., Wis., or Cha., and you learn invisibility and one 1st-level spell from illusion or necromancy school.",
+"abilityBonuses": [
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "sharpshooter",
+"name": "Sharpshooter",
+"description": "Your ranged attacks ignore some cover, no disavantage at long range, and possibility to take -5 to hit for +10 on ranged damage.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "shield-master",
+"name": "Shield Master",
+"description": "Attack also allows to shove, shield bonus to Dex. saving throws againts spells, and no 1/2 damage on successful saving throw.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "skill-expert",
+"name": "Skill Expert",
+"description": "+1 in one ability, proficiency in one skill and expertise in one other in which you have proficiency.",
+"abilityBonuses": [
+"strength",
+"dexterity",
+"constitution",
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "skilled",
+"name": "Skilled",
+"description": "You gain proficiency with three skills or tools.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "skulker",
+"name": "Skulker",
+"description": "Ranged weapon attack doesn't reveal your position and possibility to hide in a lighlly obscured area.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Dexterity 13 or higher",
+"source": "PHB"
+},
+{
+"id": "slasher",
+"name": "Slasher",
+"description": "+1 in Str. or Dex., reduce target's speed by 10 ft when you hit (slashing) and target has disadvantage on attacks rolls.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "soul-of-the-storm-giant",
+"name": "Soul of the Storm Giant",
+"description": "+1 in Str., Con., or Wis.; resistance to lightning and thunder damage ; disadvantage vs you ; 1/2 speed (PB/day).",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Storm Strike) feat",
+"source": "GotG"
+},
+{
+"id": "spell-sniper",
+"name": "Spell Sniper",
+"description": "Offensive spell's range doubled, these spells ignore some cover, and you learn one offensive cantrip.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "The ability to cast at least one spell",
+"source": "PHB"
+},
+{
+"id": "squat-nimbleness",
+"name": "Squat Nimbleness",
+"description": "+1 in Str. or Dex., your speed increases by 5 ft, and proficiency and advantage to escape with Acrobatics or Athletics checks.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "Dwarf or a Small race",
+"otherPrereq": "",
+"source": "XGtE"
+},
+{
+"id": "strike-of-the-giants",
+"name": "Strike of the Giants",
+"description": "Extra damage and additional effect when hit with a weapon attack, according to the giant type chosen (PB/day).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "Proficiency with a martial weapon or Giant Foundling background",
+"source": "GotG"
+},
+{
+"id": "tavern-brawler",
+"name": "Tavern Brawler",
+"description": "+1 in Str. or Con., proficiency with improvised weapons, d4 for unarmed strike, and grapple with a bonus action.",
+"abilityBonuses": [
+"strength",
+"constitution"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "telekinetic",
+"name": "Telekinetic",
+"description": "+1 in Int., Wis., or Cha., you learn mage hand and you can try to telekinetically shove one creature (5 ft).",
+"abilityBonuses": [
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "telepathic",
+"name": "Telepathic",
+"description": "+1 in Int., Wis., or Cha., you can cast detect thoughts and you can speak telepathically to any creature within 60 ft.",
+"abilityBonuses": [
+"intelligence",
+"wisdom",
+"charisma"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "TCoE"
+},
+{
+"id": "tough",
+"name": "Tough",
+"description": "Your hit point maximum increases by an amount equal to twice your level then by +2 at each level.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "vigor-of-the-hill-giant",
+"name": "Vigor of the Hill Giant",
+"description": "+1 in Str., Con., or Wis. ; resistance to be prone ; Hit Dice to regain additional hit points equals to your Con. modifier + PB.",
+"abilityBonuses": [
+"strength",
+"constitution",
+"wisdom"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "4th Level, Strike of the Giants (Hill Strike) feat",
+"source": "GotG"
+},
+{
+"id": "war-caster",
+"name": "War Caster",
+"description": "You have advantage on saving throws to maintain concentration and you can cast some spells as part of an OA with a reaction.",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "",
+"otherPrereq": "The ability to cast at least one spell",
+"source": "PHB"
+},
+{
+"id": "weapon-master",
+"name": "Weapon Master",
+"description": "+1 in Str. or Dex. and you gain proficiency with four weapons.",
+"abilityBonuses": [
+"strength",
+"dexterity"
+],
+"fixedAbility": false,
+"chooseAbility": true,
+"racialPrereq": "",
+"otherPrereq": "",
+"source": "PHB"
+},
+{
+"id": "wood-elf-magic",
+"name": "Wood Elf Magic",
+"description": "You learn one druid cantrip and can cast the longstrider and pass without trace spells (1/long rest).",
+"abilityBonuses": [],
+"fixedAbility": false,
+"chooseAbility": false,
+"racialPrereq": "Elf (wood)",
+"otherPrereq": "",
+"source": "XGtE"
+}
+]

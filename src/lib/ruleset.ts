@@ -986,6 +986,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: [],
       casterType: "none",
+      asiLevels: [4,8,12,16,19],
     },
     {
       id: "bard",
@@ -1013,6 +1014,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["guidance", "healing-word"],
       casterType: "full",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "charisma",
     },
     {
@@ -1041,6 +1043,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["guidance", "healing-word", "bless"],
       casterType: "full",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "wisdom",
     },
     {
@@ -1069,6 +1072,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["guidance", "healing-word"],
       casterType: "full",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "wisdom",
     },
     {
@@ -1097,6 +1101,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: [],
       casterType: "none",
+      asiLevels: [4,6,8,12,14,16,19],
     },
     {
       id: "monk",
@@ -1124,6 +1129,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: [],
       casterType: "none",
+      asiLevels: [4,8,12,16,19],
     },
     {
       id: "paladin",
@@ -1151,6 +1157,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["bless", "healing-word"],
       casterType: "half",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "charisma",
     },
     {
@@ -1179,6 +1186,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["guidance"],
       casterType: "half",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "wisdom",
     },
     {
@@ -1207,6 +1215,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: [],
       casterType: "none",
+      asiLevels: [4,8,10,12,16,19],
     },
     {
       id: "sorcerer",
@@ -1234,6 +1243,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["mage-hand", "magic-missile", "shield"],
       casterType: "full",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "charisma",
     },
     {
@@ -1262,6 +1272,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["mage-hand", "shield"],
       casterType: "pact",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "charisma",
     },
     {
@@ -1290,6 +1301,7 @@ export const ruleset: Ruleset = {
       ],
       spellSuggestions: ["mage-hand", "magic-missile", "shield"],
       casterType: "full",
+      asiLevels: [4,8,12,16,19],
       spellcastingAbility: "intelligence",
     },
   ],

@@ -3302,6 +3302,53 @@ button:disabled {
 
 .cs-skin-reset:hover { background: var(--accent); color: var(--ground); }
 
+/* ── Level Up Modal ── */
+
+.cs-levelup-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  display: grid; place-items: center;
+  background: rgba(0,0,0,0.5); padding: 20px;
+}
+
+.cs-levelup {
+  background: var(--ground); border: 1px solid var(--rule);
+  border-radius: var(--r-sm); padding: 24px;
+  max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto;
+  display: grid; gap: 16px; color: var(--parchment); font-family: var(--font-body);
+}
+
+.cs-levelup-head { display: flex; justify-content: space-between; align-items: center; }
+.cs-levelup-head h2 { font-family: var(--font-display); font-size: 1.4em; }
+
+.cs-levelup-steps { display: flex; gap: 4px; }
+.cs-lvl-step { flex: 1; padding: 6px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm);
+  background: transparent; color: var(--ink-faint); font-family: var(--font-label); font-size: 0.62em;
+  text-transform: uppercase; cursor: pointer; text-align: center; }
+.cs-lvl-step.active { border-color: var(--select); color: var(--parchment); }
+.cs-lvl-step.done { border-color: var(--accent); color: var(--accent); }
+
+.cs-levelup-body { display: grid; gap: 10px; }
+
+.cs-lvl-subclass-grid { display: grid; gap: 8px; }
+.cs-lvl-subcard { padding: 12px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm);
+  background: transparent; color: var(--parchment); text-align: left; cursor: pointer; }
+.cs-lvl-subcard strong { font-size: 0.9em; }
+.cs-lvl-subcard p { font-size: 0.78em; color: var(--parchment-2); margin-top: 4px; }
+.cs-lvl-subcard.active { border-color: var(--select); }
+
+.cs-asi-grid { display: grid; gap: 4px; }
+.cs-asi-row { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
+
+.cs-lvl-spell-grid { display: grid; gap: 4px; max-height: 300px; overflow-y: auto; }
+.cs-lvl-spell-row { display: flex; flex-direction: column; padding: 8px; border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm); background: transparent; color: var(--parchment); text-align: left; cursor: pointer; }
+.cs-lvl-spell-row small { font-size: 0.7em; color: var(--ink-faint); }
+.cs-lvl-spell-row.active { border-color: var(--select); }
+
+.cs-lvl-summary { font-size: 0.85em; }
+
+.cs-levelup-foot { display: flex; justify-content: space-between; gap: 10px; }
+
 /* ── Level stepper ── */
 
 .cs-lvl-stepper {

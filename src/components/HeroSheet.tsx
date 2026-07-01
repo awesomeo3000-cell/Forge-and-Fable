@@ -37,6 +37,7 @@ import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, parseDamageDice } from "@/lib/spells";
 import { maxSlots } from "@/lib/spellSlots";
+import { subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
@@ -113,6 +114,10 @@ export default function HeroSheet(props: {
   const knownSpells = props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[];
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
+  const subclassFeatures = props.character.subclassId
+    ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
+    : [];
+  const availableSubclasses = subclassesForClass(heroClass.id);
 
   const toggleSkillProficiency = (skillId: string) => {
     const cur = props.character.skillProficiencies ?? [];
@@ -377,7 +382,25 @@ export default function HeroSheet(props: {
         <section className="cs-reftabs">
           <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}><t.Icon size={13} /> {t.label}</button>))}</div>
           <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
-            <div className={refTab === "features" ? "" : "cs-reftab-hidden"}><div className="cs-feature-group"><span className="cs-spell-level-head">Class Features</span>{featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}</div></div>
+            <div className={refTab === "features" ? "" : "cs-reftab-hidden"}>
+              <div className="cs-feature-group">
+                <span className="cs-spell-level-head">Class Features</span>
+                {featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}
+              </div>
+              {subclassFeatures.length > 0 ? (
+                <div className="cs-feature-group">
+                  <span className="cs-spell-level-head">Subclass Features</span>
+                  {subclassFeatures.map((f, i) => (<div className="cs-feature-card" key={`sub-${f.name}-${i}`}><strong>Lv {f.level}: {f.name}</strong><p>{f.description}</p></div>))}
+                </div>
+              ) : props.character.subclassId ? (
+                <div className="cs-feature-group"><p className="cs-muted">Subclass features not yet available at this level</p></div>
+              ) : availableSubclasses.length > 0 ? (
+                <div className="cs-feature-group">
+                  <span className="cs-spell-level-head">Choose Subclass</span>
+                  <p className="cs-muted">Use the level-up button to select a subclass at level {heroClass.subclassLevel ?? 3}</p>
+                </div>
+              ) : null}
+            </div>
             <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => { const ci = trait.indexOf(":"); return (<div className="cs-feature-card" key={trait}>{ci > 0 ? <p><strong>{trait.slice(0, ci + 1)}</strong>{trait.slice(ci + 1)}</p> : <p>{trait}</p>}</div>); })}</div>) : null}</div>
             <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}>
               {casterType !== "none" && spellAbility ? (<div className="cs-spellcast-head">Spell save DC {saveDC} &middot; Spell attack {signed(spellAttack)}</div>) : null}

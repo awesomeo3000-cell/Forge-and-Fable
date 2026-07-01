@@ -36,6 +36,9 @@ export type HeroClass = {
   spellSuggestions: string[];
   casterType?: CasterType;
   spellcastingAbility?: AbilityKey;
+  asiLevels?: number[];
+  subclassLevel?: number;
+  subclassFeatureLevels?: number[];
 };
 
 export type LevelProgression = {
@@ -72,7 +75,18 @@ export type SpellData = {
   attack: string; save: string; damageEffect: string;
   ritual: boolean; concentration: boolean;
   components: SpellComponents; material: string; source: string; description: string;
+  classes: string[];
 };
+
+export type Feat = {
+  id: string; name: string; description: string;
+  abilityBonuses: AbilityKey[]; fixedAbility: boolean; chooseAbility: boolean;
+  racialPrereq: string; otherPrereq: string; source: string;
+};
+
+export type ASIChoice =
+  | { type: "asi"; level: number; increases: Partial<AbilityScores> }
+  | { type: "feat"; level: number; featId: string };
 
 export type CasterType = "full" | "half" | "third" | "pact" | "none";
 
@@ -185,6 +199,9 @@ export type Character = {
   spellSlotsUsed?: SpellSlots;
   pactSlotsUsed?: number;
   concentratingOn?: string | null;
+  subclassId?: string;
+  asiChoices?: ASIChoice[];
+  hpRolls?: number[];
   createdAt: string;
 }
 

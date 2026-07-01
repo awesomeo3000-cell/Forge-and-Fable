@@ -9,6 +9,10 @@ export function getSpell(id: string): SpellData | undefined {
   return SPELLS_BY_ID.get(id);
 }
 
+export function spellsForClass(className: string): SpellData[] {
+  return ALL_SPELLS.filter((s) => s.classes?.includes(className));
+}
+
 export function parseDamageDice(text: string): { sides: number; count: number }[] {
   const dice: { sides: number; count: number }[] = [];
   const seen = new Set<string>();
