@@ -61,6 +61,19 @@ export default function LevelUpModal({
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
 
+  const stepComplete = (s: LevelUpStep): boolean => {
+    switch (s) {
+      case "hp": return hpRolled;
+      case "subclass": return pickedSubclass !== "";
+      case "asi": return pickedFeat !== "" && (pickedFeat !== "asi" || Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2);
+      case "spells": return pickedSpells.length > 0;
+      case "summary": return true;
+    }
+  };
+
+  const canContinue = stepComplete(current);
+  const allDone = steps.slice(0, -1).every(stepComplete);
+
   const availableSpells = spellsForClass(className)
     .filter((s) => s.level <= Math.ceil(newLevel / 2) && s.level > 0)
     .filter((s) => !character.spellsKnown.includes(s.id))
@@ -213,19 +226,20 @@ export default function LevelUpModal({
         {/* Summary */}
         {current === "summary" && (
           <div className="cs-levelup-body cs-lvl-summary">
-            {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : null}
-            {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : null}
+            {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : hasHp ? <p style={{ color: "var(--accent)" }}>HP: not rolled</p> : null}
+            {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : hasSubclass ? <p style={{ color: "var(--accent)" }}>Subclass: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length > 0 ? <p>Ability Score Improvement: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
-            {hasAsi && pickedFeat && pickedFeat !== "asi" ? <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}</p> : null}
-            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned</p> : null}
-            <button className="gold-button" type="button" onClick={finish}>Confirm Level Up</button>
+            {hasAsi && pickedFeat && pickedFeat !== "asi" ? <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}</p> : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
+            {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
+            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: none chosen</p> : null}
+            <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
           </div>
         )}
 
         {step < steps.length - 1 ? (
           <div className="cs-levelup-foot">
             <button className="glass-button" type="button" onClick={() => setStep(Math.max(0, step - 1))}>Back</button>
-            <button className="gold-button" type="button" onClick={() => setStep(step + 1)}>Continue</button>
+            <button className="gold-button" type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>Continue</button>
           </div>
         ) : null}
       </div>
