@@ -72,8 +72,15 @@ export default function LevelUpModal({
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const mounted = useRef(true);
 
-  useEffect(() => () => {
-    mounted.current = false;
+  useEffect(() => {
+    // Set true on mount AND back-to-true on StrictMode's remount; only false
+    // on real unmount. (The old version only ever set it false in cleanup, so
+    // StrictMode's mount→cleanup→mount left it false and the HP roll callback
+    // bailed out — leaving the button stuck on "Rolling…".)
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
   const stepComplete = (s: LevelUpStep): boolean => {
