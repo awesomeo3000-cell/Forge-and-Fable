@@ -5,13 +5,14 @@ import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
-import { spellsForClass } from "@/lib/spells";
+import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
 import { availableFeats } from "@/lib/feats";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
 
 export default function LevelUpModal({
   character,
+  newLevel,
   finalAbilities,
   classId,
   className,
@@ -23,6 +24,7 @@ export default function LevelUpModal({
   onCancel,
 }: {
   character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[] };
+  newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
   className: string;
@@ -33,13 +35,14 @@ export default function LevelUpModal({
   onConfirm: (data: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {
-  const newLevel = character.level;
   const conMod = abilityModifier(finalAbilities.constitution);
 
   const hasHp = newLevel > 1;
   const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
   const hasAsi = asiLevels.includes(newLevel);
-  const hasSpells = casterType != null && casterType !== "none" && spellsForClass(className).length > 0;
+  // Only KNOWN casters (bard/ranger/sorcerer/warlock) and the wizard's
+  // spellbook learn individual spells here. Prepared casters skip this step.
+  const hasSpells = learnsIndividualSpells(classId, casterType) && spellsForClass(className).length > 0;
 
   const steps: LevelUpStep[] = [];
   if (hasHp) steps.push("hp");
@@ -91,7 +94,7 @@ export default function LevelUpModal({
   };
 
   const finish = () => {
-    const data: Record<string, unknown> = {};
+    const data: Record<string, unknown> = { level: newLevel };
     if (hasHp && hpRolled) {
       data.maxHp = character.maxHp + hpGained;
       data.currentHp = character.currentHp + hpGained;

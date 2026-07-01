@@ -35,9 +35,10 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
-import { getSpell, parseDamageDice } from "@/lib/spells";
+import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
 import { maxSlots } from "@/lib/spellSlots";
-import { subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
+import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
+import LevelUpModal from "@/components/LevelUpModal";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
@@ -111,13 +112,25 @@ export default function HeroSheet(props: {
   const passivePerception = 10 + skillBonus(SKILLS.find((s) => s.id === "perception")!);
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
-  const knownSpells = props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[];
+  // Prepared casters (cleric/druid/paladin/artificer) have their WHOLE class
+  // list available up to their accessible spell level — not a learned subset.
+  // Everyone else shows the spells they actually know. (Cantrips stay chosen.)
+  const _ct = heroClass.casterType ?? "none";
+  const _isPrepared = PREPARED_CASTERS.has(heroClass.id) && _ct !== "none";
+  const _maxSpellLvl = maxSlots(_ct, props.character.level).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
+  const knownSpells: SpellData[] = _isPrepared
+    ? [
+        ...(props.character.spellsKnown.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
+        ...spellsForClass(heroClass.name).filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
+      ]
+    : (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[]);
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
   const subclassFeatures = props.character.subclassId
     ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
     : [];
   const availableSubclasses = subclassesForClass(heroClass.id);
+  const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
 
   const toggleSkillProficiency = (skillId: string) => {
     const cur = props.character.skillProficiencies ?? [];
@@ -301,7 +314,7 @@ export default function HeroSheet(props: {
           <span className="cs-level-badge">
             <button className="cs-lvl-stepper" type="button" onClick={() => { const n = Math.max(1, props.character.level - 1); props.onUpdate({ level: n }); }}><Minus size={10} /></button>
             Lv {props.character.level}
-            <button className="cs-lvl-stepper" type="button" onClick={() => { const n = Math.min(20, props.character.level + 1); props.onUpdate({ level: n }); }}><Plus size={10} /></button>
+            <button className="cs-lvl-stepper" type="button" title="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
           </span>
           <div className="cs-rest-group">
             <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest"><ArrowLeftRight size={13} />Short</button>
@@ -521,6 +534,22 @@ export default function HeroSheet(props: {
             ) : null}
           </div>
         </div>
+      ) : null}
+
+      {levelUpTarget != null ? (
+        <LevelUpModal
+          character={props.character}
+          newLevel={levelUpTarget}
+          finalAbilities={props.finalAbilities}
+          classId={heroClass.id}
+          className={heroClass.name}
+          hitDie={heroClass.hitDie}
+          asiLevels={heroClass.asiLevels ?? [4, 8, 12, 16, 19]}
+          subclassLevel={getClassData(heroClass.id)?.subclassLevel}
+          casterType={heroClass.casterType}
+          onConfirm={(data) => { props.onUpdate(data); setLevelUpTarget(null); }}
+          onCancel={() => setLevelUpTarget(null)}
+        />
       ) : null}
     </div>
   );
