@@ -104,22 +104,20 @@ export default function LevelUpModal({
       data.subclassId = pickedSubclass;
     }
     if (hasAsi) {
-      // Apply ASI increases, including any from a chosen feat
-      const finalIncreases = { ...asiIncreases };
-      if (pickedFeat) {
-        const feat = feats.find((f) => f.id === pickedFeat);
-        if (feat?.abilityBonuses) {
-          for (const a of feat.abilityBonuses) {
-            finalIncreases[a] = (finalIncreases[a] ?? 0) + 1;
-          }
+      const choices = [...(character.asiChoices ?? [])];
+      if (pickedFeat === "asi") {
+        if (Object.keys(asiIncreases).length > 0) {
+          choices.push({ type: "asi" as const, level: newLevel, increases: asiIncreases });
         }
+      } else if (pickedFeat) {
+        choices.push({ type: "feat" as const, level: newLevel, featId: pickedFeat });
+        // a half-feat that also raises an ability applies that bump too
+        const feat = feats.find((f) => f.id === pickedFeat);
+        const inc: Partial<AbilityScores> = {};
+        if (feat?.abilityBonuses) for (const a of feat.abilityBonuses) inc[a] = (inc[a] ?? 0) + 1;
+        if (Object.keys(inc).length > 0) choices.push({ type: "asi" as const, level: newLevel, increases: inc });
       }
-      if (pickedFeat) {
-        data.asiChoices = [...(character.asiChoices ?? []), { type: "feat" as const, level: newLevel, featId: pickedFeat }];
-      }
-      if (Object.keys(finalIncreases).length > 0) {
-        data.asiChoices = [...(character.asiChoices ?? []), { type: "asi" as const, level: newLevel, increases: finalIncreases }];
-      }
+      if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
     }
     if (hasSpells && pickedSpells.length > 0) {
       data.spellsKnown = [...character.spellsKnown, ...pickedSpells];
@@ -138,7 +136,7 @@ export default function LevelUpModal({
         <div className="cs-levelup-steps">
           {steps.map((s, i) => (
             <button key={s} type="button" className={`cs-lvl-step${i === step ? " active" : ""}${i < step ? " done" : ""}`} onClick={() => setStep(i)}>
-              {s === "hp" ? "HP" : s === "subclass" ? "Subclass" : s === "asi" ? "ASI" : s === "spells" ? "Spells" : "Done"}
+              {s === "hp" ? "HP" : s === "subclass" ? "Subclass" : s === "asi" ? "Feat" : s === "spells" ? "Spells" : "Done"}
             </button>
           ))}
         </div>
@@ -167,34 +165,33 @@ export default function LevelUpModal({
           </div>
         )}
 
-        {/* ASI step */}
+        {/* Feat step — Ability Score Improvement is the first option in the list */}
         {current === "asi" && (
           <div className="cs-levelup-body">
-            {!pickedFeat ? (
-              <>
-                <p>Choose ASI (+2 to one, or +1 to two, max 20) or pick a feat.</p>
-                <div className="cs-asi-grid">
-                  {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as AbilityKey[]).map((a) => (
-                    <div key={a} className="cs-asi-row">
-                      <span>{abilityLabels[a]} {finalAbilities[a] + (asiIncreases[a] ?? 0)}</span>
-                      <button type="button" className="cs-lvl-stepper" onClick={() => removeAsi(a)}>−</button>
-                      <button type="button" className="cs-lvl-stepper" onClick={() => applyAsi(a)}>+</button>
-                    </div>
-                  ))}
-                </div>
-                <button type="button" className="cs-glass-btn" onClick={() => setPickedFeat(feats[0]?.id ?? "")}>Pick a Feat Instead</button>
-              </>
-            ) : (
-              <div className="cs-lvl-subclass-grid">
-                <button type="button" className="cs-glass-btn" onClick={() => setPickedFeat("")}>Back to ASI</button>
-                {feats.map((f) => (
-                  <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => setPickedFeat(f.id)}>
-                    <strong>{f.name}</strong>
-                    <p>{f.description.slice(0, 150)}</p>
-                  </button>
+            <p>Choose a feat, or take an Ability Score Improvement.</p>
+            <div className="cs-lvl-subclass-grid">
+              <button type="button" className={`cs-lvl-subcard${pickedFeat === "asi" ? " active" : ""}`} onClick={() => setPickedFeat("asi")}>
+                <strong>Ability Score Improvement</strong>
+                <p>Increase one ability score by 2, or two ability scores by 1 (max 20).</p>
+              </button>
+              {feats.map((f) => (
+                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => setPickedFeat(f.id)}>
+                  <strong>{f.name}</strong>
+                  <p>{f.description.slice(0, 150)}</p>
+                </button>
+              ))}
+            </div>
+            {pickedFeat === "asi" ? (
+              <div className="cs-asi-grid">
+                {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as AbilityKey[]).map((a) => (
+                  <div key={a} className="cs-asi-row">
+                    <span>{abilityLabels[a]} {finalAbilities[a] + (asiIncreases[a] ?? 0)}</span>
+                    <button type="button" className="cs-lvl-stepper" onClick={() => removeAsi(a)}>−</button>
+                    <button type="button" className="cs-lvl-stepper" onClick={() => applyAsi(a)}>+</button>
+                  </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -218,8 +215,8 @@ export default function LevelUpModal({
           <div className="cs-levelup-body cs-lvl-summary">
             {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : null}
             {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : null}
-            {hasAsi && Object.keys(asiIncreases).length > 0 ? <p>ASI: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
-            {hasAsi && pickedFeat ? <p>Feat: {pickedFeat}</p> : null}
+            {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length > 0 ? <p>Ability Score Improvement: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
+            {hasAsi && pickedFeat && pickedFeat !== "asi" ? <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}</p> : null}
             {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned</p> : null}
             <button className="gold-button" type="button" onClick={finish}>Confirm Level Up</button>
           </div>
