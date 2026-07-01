@@ -1,0 +1,5966 @@
+{
+  "subclassFeatures": {
+    "barbarian": {
+      "path-of-the-berserker": [
+        {
+          "level": 3,
+          "name": "Frenzy",
+          "description": "While raging, you can frenzy to gain a bonus-action melee attack each turn. When the rage ends, you suffer one level of exhaustion.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Mindless Rage",
+          "description": "While raging, you cannot be charmed or frightened. If already affected, those conditions are suppressed for the rage's duration.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Intimidating Presence",
+          "description": "As an action, force one creature within 30 ft to make a Wisdom save or be frightened for one round, repeating the save each turn.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Retaliation",
+          "description": "When you take damage from a creature within 5 ft, use your reaction to make a melee weapon attack against that creature.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-totem-warrior": [
+        {
+          "level": 3,
+          "name": "Spirit Seeker",
+          "description": "Gain beast sense and speak with animals as rituals. Choose a totem spirit (Bear, Eagle, or Wolf) granting a rage benefit.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Aspect of the Beast",
+          "description": "Gain a utility ability based on totem: Bear (double carrying capacity), Eagle (see clearly up to 1 mile), Wolf (track at fast pace).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Spirit Walker",
+          "description": "Cast commune with nature as a ritual to contact totem spirits for guidance about the land.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Totemic Attunement",
+          "description": "Gain a powerful totem-based benefit: Bear (enemies within 5 ft have disadvantage against allies), Eagle (limited flight during movement), Wolf (bonus action to knock prone).",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-ancestral-guardian": [
+        {
+          "level": 3,
+          "name": "Ancestral Protectors",
+          "description": "The first creature you hit while raging suffers disadvantage attacking anyone but you, and your allies gain resistance to that creature's damage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Spirit Shield",
+          "description": "Use your reaction while raging to reduce damage dealt to an ally within 30 ft by 2d6 (scales to 3d6 at 10th, 4d6 at 14th).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Consult the Spirits",
+          "description": "Cast augury or clairvoyance without components as a ritual.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Vengeful Ancestors",
+          "description": "When your Spirit Shield reduces damage, the attacking creature takes an equal amount of force damage.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-storm-herald": [
+        {
+          "level": 3,
+          "name": "Storm Aura",
+          "description": "While raging, project a 10-foot aura with one of three effects (Desert=fire damage, Sea=lightning damage, Tundra=temp HP to allies).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Storm Soul",
+          "description": "Gain resistance to a damage type based on environment (Desert=fire, Sea=lightning, Tundra=cold) and a terrain adaptation.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Shielding Storm",
+          "description": "Allies within your Storm Aura gain resistance to the same damage type as your Storm Soul.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Raging Storm",
+          "description": "Your Storm Aura improves: Desert pushes enemies, Sea knocks prone, Tundra reduces speed to zero on a failed save.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-zealot": [
+        {
+          "level": 3,
+          "name": "Divine Fury",
+          "description": "Once per turn while raging, deal 1d6 + half barbarian level in radiant or necrotic damage on your first weapon hit.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Warrior of the Gods",
+          "description": "Spells that return you to life require no material components when cast on you.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Fanatical Focus",
+          "description": "Once per rage, reroll a failed saving throw. Must use the new roll.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Zealous Presence",
+          "description": "As a bonus action, let up to 10 allies within 60 ft gain advantage on attack rolls and saving throws until your next turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Rage Beyond Death",
+          "description": "While raging, you stay conscious at 0 HP. Death saves still accumulate, but dying only matters when rage ends.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-beast": [
+        {
+          "level": 3,
+          "name": "Form of the Beast",
+          "description": "When raging, grow natural weapons: bite (heal on damage), claws (extra attack), or tail (reach + reaction AC boost).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Bestial Soul",
+          "description": "Your natural weapons count as magical. Adapt to environment: climb speed, swim speed, or super jump.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Infectious Fury",
+          "description": "When you hit with a natural weapon, force a Wisdom save or deal extra psychic damage and force the target to attack another creature, or take extra psychic and lose its reaction.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Call the Hunt",
+          "description": "As a bonus action, give allies within 30 ft temp HP and advantage on attack rolls against one creature per turn for 1 minute.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "path-of-wild-magic": [
+        {
+          "level": 3,
+          "name": "Magic Awareness",
+          "description": "As an action, sense the presence of magic within 60 ft for 1 minute.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Wild Surge",
+          "description": "When you enter rage, roll on a wild magic table for an effect such as teleporting, dealing force damage, summoning flumphs, or granting yourself a random bonus.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Bolstering Magic",
+          "description": "As an action, touch a creature to give it a d3 bonus to attack rolls/ability checks for 10 minutes, or recover one spell slot of up to 3rd level.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Unstable Backlash",
+          "description": "When you take damage or fail a save while raging, use your reaction to roll on the Wild Surge table again.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Controlled Surge",
+          "description": "When you roll on the Wild Surge table, roll twice and pick either result.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "path-of-the-giant": [
+        {
+          "level": 3,
+          "name": "Giant Power",
+          "description": "Learn Giant language and one skill from a giant-kin list. While raging, your reach extends by 5 ft and you can throw weapons using Strength for ranged attacks.",
+          "source": "BGG",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Elemental Cleaver",
+          "description": "While raging, your thrown weapons return to hand and deal +1d6 elemental damage (acid, cold, fire, thunder, or lightning).",
+          "source": "BGG",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Mighty Impel",
+          "description": "While raging, use a bonus action to throw a willing Medium or smaller creature up to 30 ft. If it lands on a creature, the target must save or be knocked prone.",
+          "source": "BGG",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Demiurgic Colossus",
+          "description": "Your rage makes you Huge (if room allows), your reach grows, your weapon damage die increases one size, and you can use Mighty Impel on Large creatures.",
+          "source": "BGG",
+          "uncertain": false
+        }
+      ]
+    },
+    "bard": {
+      "college-of-lore": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with three skills of your choice.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Cutting Words",
+          "description": "Use a Bardic Inspiration die to subtract from an enemy's attack roll, ability check, or damage roll within 60 ft.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Additional Magical Secrets",
+          "description": "Learn two spells from any class list. These count as bard spells for you.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Peerless Skill",
+          "description": "When you make an ability check, expend a Bardic Inspiration die to add the result to your roll (even after seeing the d20 but before knowing success/failure).",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "college-of-valor": [
+        {
+          "level": 3,
+          "name": "Combat Inspiration",
+          "description": "Allies can add your Bardic Inspiration die to weapon damage rolls or to their AC against one attack.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with medium armor, shields, and martial weapons.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Battle Magic",
+          "description": "When you cast a bard spell as an action, make one weapon attack as a bonus action.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "college-of-glamour": [
+        {
+          "level": 3,
+          "name": "Mantle of Inspiration",
+          "description": "As a bonus action, expend one Bardic Inspiration to give allies within 60 ft temp HP and allow them to use their reaction to move without provoking opportunity attacks.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Enthralling Performance",
+          "description": "Over 1 minute, perform to charm a number of humanoids up to your Charisma modifier for 1 hour.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Mantle of Majesty",
+          "description": "Cast command as a bonus action for 1 minute (concentration), no spell slot needed.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Unbreakable Majesty",
+          "description": "As a bonus action, gain an aura for 1 minute that forces attackers to make a Charisma save or target someone else, and gain advantage on Charisma saves.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "college-of-swords": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with medium armor and the scimitar. Your weapon can serve as a spellcasting focus.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Fighting Style",
+          "description": "Choose Dueling or Two-Weapon Fighting style.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Blade Flourish",
+          "description": "Expend a Bardic Inspiration when you hit with a weapon to add the die to damage and apply an effect (Defensive=add to AC, Slashing=damage nearby foe, Mobile=push target).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Master's Flourish",
+          "description": "Your Blade Flourishes no longer cost a Bardic Inspiration die; you can use a d6 instead.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "college-of-whispers": [
+        {
+          "level": 3,
+          "name": "Psychic Blades",
+          "description": "When you hit with a weapon, expend a Bardic Inspiration to deal extra psychic damage (2d6, scaling to 8d6 at 15th).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Words of Terror",
+          "description": "Spend 1 minute talking to a humanoid alone; it must succeed on a Wisdom save or become frightened of one creature you specify for up to 1 hour.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Mantle of Whispers",
+          "description": "When a humanoid dies within 30 ft, you can magically capture its shadow. Using an action, you shapechange into that person for 1 hour, gaining enough of their memories to pass as them.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Shadow Lore",
+          "description": "Speak to a creature alone for 1 minute; it must make a Wisdom save or be charmed, obeying your whispered commands for 8 hours.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "college-of-creation": [
+        {
+          "level": 3,
+          "name": "Mote of Potential",
+          "description": "When you give a creature a Bardic Inspiration die, it gains an extra benefit: Auditory (re-roll), Visual (cannot be blinded), or Kinetic (temp HP equal to die + Cha).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Performance of Creation",
+          "description": "As an action, create a non-magical object worth no more than 20× your bard level gp within 10 ft. Lasts for hours equal to your proficiency bonus. Cannot create items requiring expensive materials.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Animating Performance",
+          "description": "As an action, animate a non-magical Large or smaller object you can see. It becomes a Dancing Item that fights for you for 1 hour.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Creative Crescendo",
+          "description": "You can create up to Profiency Bonus items simultaneously with Performance of Creation. Items can be up to Huge size. You cannot create items whose total value exceeds 20× your bard level × your proficiency bonus.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "college-of-eloquence": [
+        {
+          "level": 3,
+          "name": "Silver Tongue",
+          "description": "Your minimum roll on Persuasion and Deception checks is 10 on the die.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Unsettling Words",
+          "description": "As a bonus action, expend a Bardic Inspiration die to subtract it from the next saving throw a creature makes before your next turn.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Unfailing Inspiration",
+          "description": "When a creature adds your Bardic Inspiration die and still fails, the die is not expended.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Universal Speech",
+          "description": "As an action, choose creatures equal to your Charisma modifier within 60 ft. For 1 hour, they understand you regardless of language, and you understand them.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Infectious Inspiration",
+          "description": "When a creature uses your Bardic Inspiration, you can use your reaction to give another creature within 60 ft a die without expending additional uses.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "college-of-spirits": [
+        {
+          "level": 3,
+          "name": "Guiding Whispers",
+          "description": "Gain the guidance cantrip. It has a range of 60 ft for you.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Spiritual Focus",
+          "description": "You can use a candle, crystal ball, skull, spirit board, or similar item as your spellcasting focus. You learn one necromancy or divination cantrip from any class.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Tales from Beyond",
+          "description": "Use your Spiritual Focus to channel a random Tale from the Beyond, granting a special effect when you grant Bardic Inspiration. Roll a Bardic Inspiration die to determine the tale.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Spirit Session",
+          "description": "At the end of a short or long rest, you and allies can conduct a 1-hour ritual to channel spirits, letting you learn one divination or necromancy spell of appropriate level temporarily.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Mystical Connection",
+          "description": "When you roll on the Tales from Beyond table, you can roll twice and pick either result. You also gain a flying speed of 30 ft for 10 minutes after using Tales from Beyond.",
+          "source": "VRGtR",
+          "uncertain": false
+        }
+      ]
+    },
+    "cleric": {
+      "life-domain": [
+        {
+          "level": 1,
+          "name": "Disciple of Life",
+          "description": "Healing spells of 1st level or higher restore additional HP equal to 2 + the spell's level.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: bless, cure wounds at 1st; lesser restoration, spiritual weapon at 3rd; beacon of hope, revivify at 5th; death ward, guardian of faith at 7th; mass cure wounds, raise dead at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Preserve Life",
+          "description": "As an action, distribute up to 5× cleric level HP among creatures within 30 ft, restoring them to at most half their maximum.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Blessed Healer",
+          "description": "When you cast a healing spell of 1st level or higher that targets others, you regain HP equal to 2 + spell level.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 radiant damage on a weapon hit (2d8 at 14th).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Supreme Healing",
+          "description": "When you cast a healing spell using a spell slot, you always heal for the maximum amount possible instead of rolling.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "light-domain": [
+        {
+          "level": 1,
+          "name": "Bonus Cantrip",
+          "description": "Gain the light cantrip.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Warding Flare",
+          "description": "As a reaction, impose disadvantage on an attack roll against you from a creature within 30 ft that you can see. Usable Wisdom-mod times per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: burning hands, faerie fire at 1st; flaming sphere, scorching ray at 3rd; daylight, fireball at 5th; guardian of faith, wall of fire at 7th; flame strike, scrying at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Radiance of the Dawn",
+          "description": "As an action, dispel magical darkness within 30 ft. Hostile creatures in that area must save or take 2d10 + cleric level radiant damage.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Improved Flare",
+          "description": "Your Warding Flare can also protect allies within 30 ft.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Potent Spellcasting",
+          "description": "Add Wisdom modifier to the damage of your cleric cantrips.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Corona of Light",
+          "description": "As an action, emit bright light for 60 ft (dim 60 more) for 1 minute. Enemies in bright light have disadvantage on saves against spells dealing fire or radiant damage.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "trickery-domain": [
+        {
+          "level": 1,
+          "name": "Blessing of the Trickster",
+          "description": "As an action, give a creature advantage on Dexterity (Stealth) checks for 1 hour.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: charm person, disguise self at 1st; mirror image, pass without trace at 3rd; blink, dispel magic at 5th; dimension door, polymorph at 7th; dominate person, modify memory at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Invoke Duplicity",
+          "description": "Create a perfect illusion of yourself within 30 ft for 1 minute (concentration). Cast spells as though you were in the duplicate's space and gain advantage on attacks if both you and the duplicate are within 5 ft of the target.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Channel Divinity: Cloak of Shadows",
+          "description": "As an action, become invisible until your next turn or until you attack or cast a spell.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 poison damage on a weapon hit (2d8 at 14th).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Improved Duplicity",
+          "description": "Create up to four duplicates with Channel Divinity: Invoke Duplicity instead of one. As a bonus action, you can move any of them and swap their positions.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "war-domain": [
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: divine favor, shield of faith at 1st; magic weapon, spiritual weapon at 3rd; crusader's mantle, spirit guardians at 5th; freedom of movement, stoneskin at 7th; flame strike, hold monster at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "War Priest",
+          "description": "When you take the Attack action, use your bonus action to make one extra weapon attack. Uses equal to Wisdom modifier per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with martial weapons and heavy armor.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Guided Strike",
+          "description": "Add +10 to one attack roll you make.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Channel Divinity: War God's Blessing",
+          "description": "When a creature within 30 ft makes an attack roll, use your reaction to give it +10 to that roll.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 extra weapon damage of the weapon's type (2d8 at 14th).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Avatar of Battle",
+          "description": "Gain resistance to non-magical bludgeoning, piercing, and slashing damage.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "knowledge-domain": [
+        {
+          "level": 1,
+          "name": "Blessings of Knowledge",
+          "description": "Learn two languages of your choice and gain double proficiency bonus for two of the following skills: Arcana, History, Nature, or Religion.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: command, identify at 1st; augury, suggestion at 3rd; nondetection, speak with dead at 5th; arcane eye, confusion at 7th; legend lore, scrying at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Knowledge of the Ages",
+          "description": "As an action, gain proficiency with one skill or tool of your choice for 10 minutes.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Channel Divinity: Read Thoughts",
+          "description": "As an action, read the surface thoughts of a creature within 60 ft for 1 minute, and you can cast suggestion on it without a spell slot.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Potent Spellcasting",
+          "description": "Add Wisdom modifier to the damage of your cleric cantrips.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Visions of the Past",
+          "description": "Spend 1 minute meditating to perceive an object or area's history—either the past 24 hours of an object or the most recent significant event tied to an area.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "nature-domain": [
+        {
+          "level": 1,
+          "name": "Acolyte of Nature",
+          "description": "Gain one druid cantrip of your choice and proficiency in one of Animal Handling, Nature, or Survival.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Bonus Proficiency",
+          "description": "Gain proficiency with heavy armor.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: animal friendship, speak with animals at 1st; barkskin, spike growth at 3rd; plant growth, wind wall at 5th; dominate beast, grasping vine at 7th; insect plague, tree stride at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Charm Animals and Plants",
+          "description": "As an action, charm any number of beasts and plants within 30 ft for 1 minute or until they take damage.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Dampen Elements",
+          "description": "As a reaction, grant a creature within 30 ft resistance to acid, cold, fire, lightning, or thunder damage from an attack or effect.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 cold, fire, or lightning damage with a weapon hit (2d8 at 14th).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Master of Nature",
+          "description": "Command beasts and plants in your Charm Animals and Plants aura to use their reaction to move or attack as directed.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "tempest-domain": [
+        {
+          "level": 1,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with martial weapons and heavy armor.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Wrath of the Storm",
+          "description": "As a reaction when hit by a creature within 5 ft, you can deal 2d8 lightning or thunder damage (Dex save for half). Uses equal to Wisdom modifier per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: fog cloud, thunderwave at 1st; gust of wind, shatter at 3rd; call lightning, sleet storm at 5th; control water, ice storm at 7th; destructive wave, insect plague at 9th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Destructive Wrath",
+          "description": "When you roll lightning or thunder damage, you can use your Channel Divinity to deal maximum damage instead of rolling.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Thunderbolt Strike",
+          "description": "When you deal lightning damage to a Large or smaller creature, push it up to 10 ft away.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 thunder damage with a weapon hit (2d8 at 14th).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Stormborn",
+          "description": "Gain a flying speed equal to your walking speed whenever you are outdoors and above ground.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "death-domain": [
+        {
+          "level": 1,
+          "name": "Reaper",
+          "description": "Learn one necromancy cantrip from any class. When you cast a necromancy cantrip that targets one creature, you can target a second creature within 5 ft.",
+          "source": "DMG",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: false life, ray of sickness at 1st; blindness/deafness, ray of enfeeblement at 3rd; animate dead, vampiric touch at 5th; blight, death ward at 7th; antilife shell, cloudkill at 9th.",
+          "source": "DMG",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Touch of Death",
+          "description": "When you hit with a melee attack, add 5 + twice your cleric level in necrotic damage.",
+          "source": "DMG",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Inescapable Destruction",
+          "description": "When you deal necrotic damage, ignore resistance to necrotic damage.",
+          "source": "DMG",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 necrotic damage with a weapon hit (2d8 at 14th).",
+          "source": "DMG",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Improved Reaper",
+          "description": "When you cast a necromancy spell of 1st–5th level that targets one creature, you can target two creatures within 5 ft of each other instead.",
+          "source": "DMG",
+          "uncertain": false
+        }
+      ],
+      "forge-domain": [
+        {
+          "level": 1,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with heavy armor and smith's tools.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Blessing of the Forge",
+          "description": "At the end of a long rest, touch one non-magical weapon or suit of armor to make it a +1 magic item until your next long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: identify, searing smite at 1st; heat metal, magic weapon at 3rd; elemental weapon, protection from energy at 5th; fabricate, wall of fire at 7th; animate objects, creation at 9th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Artisan's Blessing",
+          "description": "Conduct a 1-hour ritual to create a non-magical item containing metal worth up to 100 gp.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Soul of the Forge",
+          "description": "Gain resistance to fire damage. While wearing heavy armor, gain +1 AC.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Divine Strike",
+          "description": "Once per turn, deal +1d8 fire damage with a weapon hit (2d8 at 14th).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Saint of Forge and Fire",
+          "description": "Gain immunity to fire damage. While wearing heavy armor, resistance to non-magical bludgeoning, piercing, and slashing damage.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "grave-domain": [
+        {
+          "level": 1,
+          "name": "Circle of Mortality",
+          "description": "When you cast a healing spell to restore HP to a creature at 0 HP, you always heal the maximum amount. Gain spare the dying as a bonus cantrip with a range of 30 ft.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Eyes of the Grave",
+          "description": "As an action, sense the presence of undead within 60 ft for 1 minute.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Domain Spells",
+          "description": "Gain always-prepared spells: bane, false life at 1st; gentle repose, ray of enfeeblement at 3rd; revivify, vampiric touch at 5th; blight, death ward at 7th; antilife shell, raise dead at 9th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Channel Divinity: Path to the Grave",
+          "description": "As an action, curse a creature within 30 ft. The next hit against it before the end of your next turn makes it vulnerable to all of that attack's damage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Sentinel at Death's Door",
+          "description": "As a reaction, turn a critical hit against a creature within 30 ft into a normal hit. Usable Wisdom-mod times per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 8,
+          "name": "Potent Spellcasting",
+          "description": "Add Wisdom modifier to the damage of your cleric cantrips.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Keeper of Souls",
+          "description": "When a creature within 30 ft of you dies, you gain HP equal to the number of its Hit Dice.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ]
+    },
+    "druid": {
+      "circle-of-the-land": [
+        {
+          "level": 2,
+          "name": "Bonus Cantrip",
+          "description": "Learn one additional druid cantrip.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Natural Recovery",
+          "description": "During a short rest, recover spell slots with a combined level equal to half your druid level (rounded up). Cannot recover 6th-level or higher slots.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Druid Circle Spells",
+          "description": "Choose a land type (Arctic, Coast, Desert, Forest, Grassland, Mountain, Swamp, Underdark). You gain associated spells at 3rd, 5th, 7th, and 9th levels.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Land's Stride",
+          "description": "Non-magical difficult terrain costs no extra movement. Advantage on saves against magically created plants that hinder movement.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Nature's Ward",
+          "description": "Cannot be charmed or frightened by elementals or fey. Immune to poison and disease.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Nature's Sanctuary",
+          "description": "When beasts or plants attack you, they must make a Wisdom save or their attack is wasted. Once a creature succeeds, this does not affect it again.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "circle-of-the-moon": [
+        {
+          "level": 2,
+          "name": "Combat Wild Shape",
+          "description": "Wild Shape as a bonus action. While transformed, expend a spell slot to heal 1d8 per level of the slot. Can transform into beasts with a challenge rating up to 1 (ignoring the CR restrictions of normal Wild Shape).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Circle Forms",
+          "description": "At 2nd level, CR 1 max. At 6th: CR = druid level/3. You cannot fly until 8th level.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Primal Strike",
+          "description": "Your attacks in Wild Shape count as magical for overcoming resistance and immunity.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Elemental Wild Shape",
+          "description": "Expend both uses of Wild Shape to transform into an air, earth, fire, or water elemental.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Thousand Forms",
+          "description": "Cast alter self at will.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "circle-of-the-shepherd": [
+        {
+          "level": 2,
+          "name": "Speech of the Woods",
+          "description": "Learn Sylvan. Can communicate simple ideas with beasts through sounds and gestures.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Spirit Totem",
+          "description": "As a bonus action, summon a spirit in a 30-ft aura for 1 minute: Bear (temp HP + advantage on Strength), Hawk (reaction to grant advantage on attack), Unicorn (advantage on ability checks to detect + healing spells heal extra HP equal to your druid level).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Mighty Summoner",
+          "description": "Beasts and fey you conjure get +2 HP per Hit Die. Their natural attacks count as magical.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Guardian Spirit",
+          "description": "Creatures in your Spirit Totem heal for half your druid level at the end of each of their turns while the totem is active.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Faithful Summons",
+          "description": "If you drop to 0 HP, four CR 2 beasts appear within 20 ft to protect you for 1 hour. Usable once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "circle-of-spores": [
+        {
+          "level": 2,
+          "name": "Halo of Spores",
+          "description": "As a reaction, deal 1d4 poison (Con save) to a creature entering or starting within 10 ft. Damage scales to 1d6 at 6th, 1d8 at 10th, 1d10 at 14th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Symbiotic Entity",
+          "description": "As an action, expend a Wild Shape to gain temp HP = 4× druid level, add 1d6 poison to melee weapon attacks, and double Halo of Spores damage for 10 minutes.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Fungal Infestation",
+          "description": "When a Small or Medium beast or humanoid dies within 10 ft, use your reaction to reanimate it as a zombie for 1 hour. Usable Wisdom-mod times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Spreading Spores",
+          "description": "As a bonus action while Symbiotic Entity is active, hurl spores up to 30 ft to create a 10-ft cube that deals your Halo of Spores damage each round for 1 minute.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Fungal Body",
+          "description": "Cannot be blinded, deafened, frightened, or poisoned. Critical hits against you become normal hits unless you are incapacitated.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "circle-of-stars": [
+        {
+          "level": 2,
+          "name": "Star Map",
+          "description": "Create a star chart. You know the guidance cantrip and guiding bolt (cast proficiency-bonus times for free per long rest without expending a spell slot).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Starry Form",
+          "description": "As a bonus action, expend a Wild Shape to enter a glowing celestial form for 10 minutes: Archer (bonus-action radiant damage shot), Chalice (extra healing d8 on healing spells), Dragon (Int/Wis checks and concentration saves get a floor of 10).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Cosmic Omen",
+          "description": "At the end of a long rest, roll a die. Even = Weal (add d6 to ally's roll as a reaction), Odd = Woe (subtract d6 from enemy's roll as a reaction).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Twinkling Constellations",
+          "description": "At the start of each turn in Starry Form, you can switch between Archer, Chalice, and Dragon forms.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Full of Stars",
+          "description": "While in Starry Form, gain resistance to bludgeoning, piercing, and slashing damage, and you emit bright light for 10 ft and dim light for 10 more.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "circle-of-wildfire": [
+        {
+          "level": 2,
+          "name": "Summon Wildfire Spirit",
+          "description": "As an action, summon a fiery spirit companion for 1 hour. It can teleport allies and deal fire damage. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Circle Spells",
+          "description": "Gain always-prepared spells: burning hands, cure wounds at 2nd; flaming sphere, scorching ray at 3rd; plant growth, revivify at 5th; aura of life, fire shield at 7th; flame strike, mass cure wounds at 9th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Enhanced Bond",
+          "description": "When you cast a spell that deals fire damage or restores HP, add a d8 to one damage or healing roll.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Cauterizing Flames",
+          "description": "When a creature within 30 ft of your Wildfire Spirit dies, the spirit can use its reaction to restore HP equal to 2d10 + your Wisdom modifier to a creature near it.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Blazing Revival",
+          "description": "If you drop to 0 HP and the Wildfire Spirit is within 120 ft, you automatically lose the spirit and regain half your maximum HP.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "fighter": {
+      "battle-master": [
+        {
+          "level": 3,
+          "name": "Combat Superiority",
+          "description": "Gain four d8 superiority dice. Learn three maneuvers (precision attack, trip attack, riposte, etc.) that add the die to attack, damage, or effects. Dice become d10 at 10th, d12 at 18th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Student of War",
+          "description": "Gain proficiency with one artisan's tools.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Know Your Enemy",
+          "description": "Spend 1 minute observing a creature outside combat to learn whether it is your superior, inferior, or equal in two of: Strength, Dexterity, Constitution, AC, current HP, class levels, or Fighter class levels.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Improved Combat Superiority",
+          "description": "Your superiority dice become d10s.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Relentless",
+          "description": "When you roll initiative with no superiority dice remaining, regain one die.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "champion": [
+        {
+          "level": 3,
+          "name": "Improved Critical",
+          "description": "Your weapon attacks score a critical hit on a 19 or 20.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Remarkable Athlete",
+          "description": "Add half your proficiency bonus (rounded up) to any Strength, Dexterity, or Constitution check you are not already proficient in. Running long jump distance increases by your Strength modifier in feet.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Additional Fighting Style",
+          "description": "Choose a second option from the Fighting Style class feature. Cannot pick the same style twice.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Superior Critical",
+          "description": "Your weapon attacks score a critical hit on an 18–20.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Survivor",
+          "description": "At the start of each turn, if you have no more than half your HP remaining, regain 5 + Constitution modifier HP.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "eldritch-knight": [
+        {
+          "level": 3,
+          "name": "Spellcasting",
+          "description": "Learn two wizard cantrips and three 1st-level wizard spells (abjuration/evocation until higher levels). Use Intelligence as your spellcasting ability. Spell slots follow the one-third caster table.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Weapon Bond",
+          "description": "Perform a 1-hour ritual to bond with up to two weapons. You cannot be disarmed of bonded weapons unless incapacitated, and you can summon them to your hand as a bonus action if on the same plane.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "War Magic",
+          "description": "When you use your action to cast a cantrip, make one weapon attack as a bonus action.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Eldritch Strike",
+          "description": "When you hit a creature with a weapon attack, it has disadvantage on the next saving throw it makes against a spell you cast before the end of your next turn.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Arcane Charge",
+          "description": "When you use Action Surge, teleport up to 30 ft to a space you can see.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Improved War Magic",
+          "description": "When you use your action to cast a spell, make one weapon attack as a bonus action.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "arcane-archer": [
+        {
+          "level": 3,
+          "name": "Arcane Arrow",
+          "description": "Learn two Arcane Shot options. When you fire an arrow from a shortbow or longbow, you can apply one of these magical effects, dealing an extra 2d6 force damage plus a special effect like banishing, bursting, grasping, or seeking. Two uses per short rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Magic Arrow",
+          "description": "Your non-magical ammunition counts as magical for overcoming resistance. Learn one more Arcane Shot option.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Ever-Ready Shot",
+          "description": "When you roll initiative with no Arcane Shot uses, regain one use.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Curving Shot",
+          "description": "If you miss with an arrow, use a bonus action to reroll against a different target within 60 ft.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "cavalier": [
+        {
+          "level": 3,
+          "name": "Born to the Saddle",
+          "description": "Advantage on saves to avoid falling from your mount. Mounting/dismounting costs only 5 ft of movement.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Unwavering Mark",
+          "description": "When you hit with a melee weapon, mark the target. While marked, it has disadvantage on attacks against anyone but you, and if it damages another creature, you can make a bonus-action attack with advantage next turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Warding Maneuver",
+          "description": "If you or a creature within 5 ft is hit, use your reaction to add 1d8 to the target's AC, potentially turning the hit into a miss.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Hold the Line",
+          "description": "Creatures provoke an opportunity attack from you when they move 5 ft or more while within your reach. If you hit, the target's speed drops to 0 for the rest of the turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Ferocious Charger",
+          "description": "When you move 10 ft straight toward a creature and hit it, it must save or be knocked prone. You can do this once per turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Vigilant Defender",
+          "description": "In combat, you get one special reaction each turn that can be used only for opportunity attacks. This reaction can't be used on the same turn as your normal reaction.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "samurai": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiency",
+          "description": "Gain proficiency in one of History, Insight, Performance, or Persuasion, or learn one language.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Fighting Spirit",
+          "description": "As a bonus action, gain advantage on all weapon attacks and 5 temp HP until the end of the current turn. Three uses per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Elegant Courtier",
+          "description": "Add Wisdom modifier (min 1) to Persuasion checks. Gain proficiency in Wisdom saving throws (or Intelligence or Charisma if you already have Wisdom).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Tireless Spirit",
+          "description": "When you roll initiative with no Fighting Spirit uses, regain one use.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Rapid Strike",
+          "description": "Once per turn, when you have advantage on a weapon attack, you can forgo the advantage to make an additional weapon attack as part of the same action.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Strength before Death",
+          "description": "When you take damage reducing you to 0 HP, use your reaction to take an entire extra turn before falling unconscious. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "echo-knight": [
+        {
+          "level": 3,
+          "name": "Manifest Echo",
+          "description": "As a bonus action, create a translucent echo of yourself within 15 ft. You can attack from its space, teleport to swap places with it as a bonus action, and it can make opportunity attacks. It is destroyed when it takes any damage. Unlimited uses.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Unleash Incarnation",
+          "description": "When you take the Attack action, you can make one additional attack from your echo's position. Usable Constitution-modifier times per long rest.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Echo Avatar",
+          "description": "As an action, see and hear through your echo for up to 10 minutes while you are deafened and blinded to your own senses.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Shadow Martyr",
+          "description": "When an ally within 30 ft is attacked, use your reaction to have your echo take the attack instead, teleporting to intercept.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Reclaim Potential",
+          "description": "When your echo is destroyed, gain temp HP equal to 2d6 + Constitution modifier.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Legion of One",
+          "description": "When you summon your echo, create two echoes instead of one. Can use Unleash Incarnation with each.",
+          "source": "EGW",
+          "uncertain": false
+        }
+      ],
+      "rune-knight": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with smith's tools and learn Giant language.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Rune Carver",
+          "description": "Learn two runes from a list (Fire, Cloud, Frost, Stone, Hill, Storm). Each rune grants a passive benefit and an activated effect. Rune uses recharge on short or long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Giant's Might",
+          "description": "As a bonus action, become Large (if space allows) for 1 minute. Gain advantage on Strength checks and saves, and +1d6 damage once per turn. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Runic Shield",
+          "description": "As a reaction, force a creature within 60 ft that hits an ally to reroll the attack. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Great Stature",
+          "description": "Your height increases 3d4 inches. Giant's Might damage increases to 1d8 (1d10 at 18th).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Master of Runes",
+          "description": "Each rune you carve can be activated twice per rest instead of once.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "psi-warrior": [
+        {
+          "level": 3,
+          "name": "Psionic Power",
+          "description": "Gain a pool of Psionic Energy dice equal to twice your proficiency bonus (d6, scales to d8 at 5th, d10 at 11th, d12 at 17th). Spend dice on Psionic Strike (add to damage and force/prone), Protective Field (reduce ally damage), or Telekinetic Movement (move object/creature).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Telekinetic Adept",
+          "description": "Gain Psionic Thrust (push/prone Large or smaller) and Psi-Powered Leap (gain flying speed equal to twice walking speed until end of turn).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Guarded Mind",
+          "description": "When you fail an Intelligence, Wisdom, or Charisma save, spend a Psionic Energy die to reroll, adding the die to the new roll.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Bulwark of Force",
+          "description": "As an action, give allies within 30 ft half cover for 1 minute, and spend a Psionic Energy die to apply it to yourself too.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "monk": {
+      "way-of-the-open-hand": [
+        {
+          "level": 3,
+          "name": "Open Hand Technique",
+          "description": "When you hit with a Flurry of Blows attack, you can impose one of: target must succeed on Dex save or be knocked prone; target must succeed on Str save or be pushed 15 ft; target cannot take reactions until the end of your next turn.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Wholeness of Body",
+          "description": "As an action, regain HP equal to 3× your monk level. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Tranquility",
+          "description": "Gain the effect of a sanctuary spell that lasts until the start of your next long rest (the save DC increasing to 8 + Wis + proficiency).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Quivering Palm",
+          "description": "When you hit with an unarmed strike, spend 3 ki to set up lethal vibrations. The target must make a Constitution save. On failure it drops to 0 HP; on success it takes 10d10 necrotic damage. You can trigger the vibrations on any subsequent turn as an action.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-shadow": [
+        {
+          "level": 3,
+          "name": "Shadow Arts",
+          "description": "Learn the minor illusion cantrip. Spend 2 ki to cast darkness, darkvision, pass without trace, or silence.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Shadow Step",
+          "description": "As a bonus action, teleport up to 60 ft from one area of dim light or darkness to another. Gain advantage on your first melee attack made before the end of your turn.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Cloak of Shadows",
+          "description": "As an action, become invisible for 1 minute in dim light or darkness (no concentration required).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Opportunist",
+          "description": "When a creature within 5 ft is hit by an attack from someone other than you, use your reaction to make a melee attack against it.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-four-elements": [
+        {
+          "level": 3,
+          "name": "Disciple of the Elements",
+          "description": "Learn the elemental attunement discipline and one other elemental discipline, spending ki to produce effects like Fangs of the Fire Snake, Water Whip, or Fist of Unbroken Air.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Additional Elemental Discipline",
+          "description": "Learn one more elemental discipline.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Additional Elemental Discipline",
+          "description": "Learn one more elemental discipline. You can now spend up to 4 ki on a discipline.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Additional Elemental Discipline",
+          "description": "Learn one more elemental discipline. You can now spend up to 6 ki on a discipline.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-kensei": [
+        {
+          "level": 3,
+          "name": "Path of the Kensei",
+          "description": "Choose two types of weapons (one melee, one ranged) to be your kensei weapons. Gain proficiency with them if needed. When you make an unarmed strike while holding a kensei weapon, gain +2 AC until your next turn. Gain Agile Parry.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Kensei's Shot",
+          "description": "As a bonus action, add 1d4 damage to your ranged kensei weapon attacks until the end of your turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "One with the Blade",
+          "description": "Your kensei weapon attacks count as magical. Spend 1 ki to add your Martial Arts die to one weapon damage roll (once per turn). Deft Strike: add a martial arts die to damage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Sharpen the Blade",
+          "description": "As a bonus action, spend up to 3 ki to give one kensei weapon a bonus to attack and damage rolls equal to the ki spent for 1 minute.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Unerring Accuracy",
+          "description": "Once per turn, when you miss with a weapon attack, reroll the attack.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-drunken-master": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with brewer's supplies and the Performance skill.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Drunken Technique",
+          "description": "When you use Flurry of Blows, gain the benefits of the Disengage action and increase your walking speed by 10 ft until the end of your turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Tipsy Sway",
+          "description": "Spend 1 ki to redirect a missed melee attack against you to another creature within 5 ft. Also, stand up from prone using only 5 ft of movement.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Drunkard's Luck",
+          "description": "Spend 2 ki to cancel disadvantage on a d20 roll (ability check, attack, or save).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Intoxicated Frenzy",
+          "description": "When you use Flurry of Blows, make up to five extra attacks instead of two, each against a different creature.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-sun-soul": [
+        {
+          "level": 3,
+          "name": "Radiant Sun Bolt",
+          "description": "As an attack action, hurl bolts of radiant energy with a range of 30 ft. Use Dexterity for attack and damage. You can spend 1 ki to make two additional bolts as a bonus action.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Searing Arc Strike",
+          "description": "When you take the Attack action, spend 1 ki to cast burning hands (2 ki for higher levels).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Searing Sunburst",
+          "description": "Spend up to 3 ki to create a burst of radiant energy within 150 ft. Each creature in a 20-ft-radius sphere makes a Con save, taking 2d6 radiant damage per ki spent, or half on a save.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Sun Shield",
+          "description": "Emit bright light for 30 ft and dim light for 30 more. When a creature within 5 ft hits you, use your reaction to deal 5 + Wisdom modifier radiant damage.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "way-of-mercy": [
+        {
+          "level": 3,
+          "name": "Implements of Mercy",
+          "description": "Gain proficiency with Insight and Medicine skills, and with the herbalism kit.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Hands of Healing",
+          "description": "Spend 1 ki to replace one of your Flurry of Blows attacks with a touch that restores HP equal to a roll of your Martial Arts die + Wisdom modifier.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Hands of Harm",
+          "description": "When you hit with an unarmed strike, spend 1 ki to deal extra necrotic damage equal to one roll of your Martial Arts die + Wisdom modifier.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Physician's Touch",
+          "description": "When you use Hands of Healing, you can also end one disease or one of the blinded, deafened, paralyzed, poisoned, or stunned conditions.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Flurry of Healing and Harm",
+          "description": "When using Flurry of Blows, you can replace each unarmed strike with a Hands of Healing use without spending additional ki for the healing.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Hand of Ultimate Mercy",
+          "description": "As an action, touch a creature that has died within the last 24 hours. Spend 5 ki to return it to life with HP equal to 4d10 + your Wisdom modifier. Once per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-astral-self": [
+        {
+          "level": 3,
+          "name": "Arms of the Astral Self",
+          "description": "Spend 1 ki to summon spectral arms for 10 minutes. Gain reach of 10 ft with unarmed strikes, use Wisdom for attack and damage, and deal force damage.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Visage of the Astral Self",
+          "description": "Summon a spectral visage. Gain the ability to see in magical darkness, advantage on Insight and Intimidation, and redirect one missed attack per turn as a reaction.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Body of the Astral Self",
+          "description": "Summon a full astral body. Deflect Misses works against energy damage (not just ranged weapon attacks).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Awakened Astral Self",
+          "description": "When all three astral parts are active, gain +2 AC, +1 extra attack per Attack action, and absorb energy to reduce damage.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "way-of-the-ascendant-dragon": [
+        {
+          "level": 3,
+          "name": "Draconic Disciple",
+          "description": "Learn Draconic language. When you damage a target with an unarmed strike, you can change the damage type to acid, cold, fire, lightning, or poison.",
+          "source": "FToD",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Breath of the Dragon",
+          "description": "When you take the Attack action, replace one attack with a breath weapon (20-ft cone or 30-ft line). Each creature takes damage equal to two rolls of your Martial Arts die of a chosen element (Dex save for half). Usable proficiency-bonus times per long rest.",
+          "source": "FToD",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Wings Unfurled",
+          "description": "When you use Step of the Wind, gain a flying speed equal to your walking speed for the turn.",
+          "source": "FToD",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Aspect of the Wyrm",
+          "description": "Create a 30-ft aura for 1 minute. Allies in the aura gain resistance to one element and deal an extra martial arts die of that damage type once per turn.",
+          "source": "FToD",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Ascendant Aspect",
+          "description": "Your Breath of the Dragon damage increases to three Martial Arts dice. You gain blindsight 30 ft and can see invisible creatures within 30 ft.",
+          "source": "FToD",
+          "uncertain": false
+        }
+      ]
+    },
+    "paladin": {
+      "oath-of-devotion": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: protection from evil and good, sanctuary at 3rd; lesser restoration, zone of truth at 5th; beacon of hope, dispel magic at 9th; freedom of movement, guardian of faith at 13th; commune, flame strike at 17th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Sacred Weapon: as an action, add Charisma modifier to attack rolls with one weapon for 1 minute; Turn the Unholy: as an action, fiends and undead within 30 ft must save or be turned.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of Devotion",
+          "description": "You and friendly creatures within 10 ft cannot be charmed while you are conscious. Radius increases to 30 ft at 18th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Purity of Spirit",
+          "description": "You are always under the effects of a protection from evil and good spell.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Holy Nimbus",
+          "description": "As an action, emit an aura of sunlight for 1 minute giving advantage on saves against spells from fiends/undead, and enemies within it take 10 radiant damage per turn. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "oath-of-the-ancients": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: ensnaring strike, speak with animals at 3rd; moonbeam, misty step at 5th; plant growth, protection from energy at 9th; ice storm, stoneskin at 13th; commune with nature, tree stride at 17th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Nature's Wrath: vines restrain a creature (Str save); Turn the Faithless: fey and fiends within 30 ft must save or be turned.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of Warding",
+          "description": "You and friendly creatures within 10 ft gain resistance to damage from spells. Radius increases to 30 ft at 18th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Undying Sentinel",
+          "description": "When reduced to 0 HP, you can instead drop to 1 HP. Once per long rest. Also, you suffer none of the drawbacks of old age.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Elder Champion",
+          "description": "As an action, become a force of nature for 1 minute: regain 10 HP per turn, cast paladin spells as a bonus action, and enemies within 10 ft have disadvantage on saves. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "oath-of-vengeance": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: bane, hunter's mark at 3rd; hold person, misty step at 5th; haste, protection from energy at 9th; banishment, dimension door at 13th; hold monster, scrying at 17th.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Abjure Enemy: one creature must save or be frightened, speed 0 for 1 minute; Vow of Enmity: as a bonus action, gain advantage on attacks against one creature for 1 minute.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Relentless Avenger",
+          "description": "When you hit with an opportunity attack, you can move up to half your speed immediately without provoking reactions.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Soul of Vengeance",
+          "description": "When a creature under your Vow of Enmity makes an attack, you can use your reaction to make a melee weapon attack against that creature.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Avenging Angel",
+          "description": "As an action, grow spectral wings for 1 hour: gain 60-ft fly speed and emit a frightful presence aura within 30 ft. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "oath-of-conquest": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: armor of agathys, command at 3rd; hold person, spiritual weapon at 5th; bestow curse, fear at 9th; dominate beast, stoneskin at 13th; cloudkill, dominate person at 17th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Conquering Presence: as an action, creatures within 30 ft must save or be frightened of you; Guided Strike: +10 to one attack roll.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of Conquest",
+          "description": "Frightened creatures within 10 ft of you have speed 0 and take psychic damage equal to half your paladin level at the start of their turns. Radius increases to 30 ft at 18th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Scornful Rebuke",
+          "description": "When a creature hits you, it takes psychic damage equal to your Charisma modifier.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Invincible Conqueror",
+          "description": "As an action, gain resistance to all damage, make one additional attack per Attack action, and crit on 19-20 for 1 minute. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "oath-of-redemption": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: sanctuary, sleep at 3rd; calm emotions, hold person at 5th; counterspell, hypnotic pattern at 9th; Otiluke's resilient sphere, stoneskin at 13th; hold monster, wall of force at 17th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Emissary of Peace: +5 to Persuasion checks for 10 minutes; Rebuke the Violent: as a reaction, when an attacker damages an ally, the attacker takes the same damage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of the Guardian",
+          "description": "As a reaction, you can magically take the damage dealt to a creature within 10 ft, instead of that creature taking it. Radius increases to 30 ft at 18th.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Protective Spirit",
+          "description": "Regain 1d6 + half paladin level HP at the start of each turn while you have fewer than half HP.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Emissary of Redemption",
+          "description": "Gain resistance to all damage from creatures. When a creature hits you, it takes the same amount of radiant damage. This benefit ends if you attack or cast a spell on a creature.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "oath-of-glory": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: guiding bolt, heroism at 3rd; enhance ability, magic weapon at 5th; haste, protection from energy at 9th; compulsion, freedom of movement at 13th; commune, flame strike at 17th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Peerless Athlete: as a bonus action, advantage on Athletics/Acrobatics + double carry/push/drag/lift + increase jump distance for 10 minutes; Inspiring Smite: when you use Divine Smite, distribute 2d8+paladin-level temp HP among allies within 30 ft.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of Alacrity",
+          "description": "Your walking speed increases by 5 ft. When you aren't incapacitated, friendly creatures within 10 ft gain +10 ft walking speed. Radius increases to 30 ft at 18th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Glorious Defense",
+          "description": "When a creature you can see within 10 ft is hit, you can grant a +Cha AC bonus as a reaction, possibly causing the attack to miss.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Living Legend",
+          "description": "As a bonus action, become a living legend for 1 minute: reroll one failed save per turn, gain advantage on Charisma checks, and when you hit with a weapon attack, you can choose to automatically succeed on a Str/Dex save, auto-crit once per turn, or impose disadvantage on saves against your spells.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "oath-of-the-watchers": [
+        {
+          "level": 3,
+          "name": "Oath Spells",
+          "description": "Gain always-prepared spells: alarm, detect magic at 3rd; moonbeam, see invisibility at 5th; counterspell, nondetection at 9th; aura of purity, banishment at 13th; hold monster, scrying at 17th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Channel Divinity",
+          "description": "Watcher's Will: give allies within 30 ft advantage on Int/Wis/Cha saves for 1 minute; Abjure the Extraplanar: turn aberrations, celestials, elementals, fey, and fiends within 30 ft.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Aura of the Sentinel",
+          "description": "You and allies within 10 ft add your proficiency bonus to initiative rolls. Radius increases to 30 ft at 18th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Vigilant Rebuke",
+          "description": "When you or an ally succeeds on an Int/Wis/Cha save, deal force damage equal to 2d8 + your Charisma modifier to the source creature.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 20,
+          "name": "Mortal Bulwark",
+          "description": "As an action, gain truesight 120 ft, advantage on attack rolls against aberrations/celestials/elementals/fey/fiends, and banish them on a crit for 1 minute. Once per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "ranger": {
+      "hunter": [
+        {
+          "level": 3,
+          "name": "Hunter's Prey",
+          "description": "Choose one: Colossus Slayer (+1d8 once per turn to wounded targets), Giant Killer (reaction attack against Large or larger creatures that attack you), or Horde Breaker (extra attack against a different creature within 5 ft of first target).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Defensive Tactics",
+          "description": "Choose one: Escape the Horde (opportunity attacks against you have disadvantage), Multiattack Defense (+4 AC against subsequent attacks from the same creature), or Steel Will (advantage on saves against being frightened).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Multiattack",
+          "description": "Choose Volley (ranged attack against every creature in a 10-ft radius) or Whirlwind Attack (melee attack against every creature within 5 ft).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Superior Hunter's Defense",
+          "description": "Choose one: Evasion (Dex saves for half become half on fail, none on success), Stand Against the Tide (when a creature misses you, redirect its attack to another creature), or Uncanny Dodge (halve damage from one attack per round as a reaction).",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "beast-master": [
+        {
+          "level": 3,
+          "name": "Ranger's Companion",
+          "description": "Gain a beast companion of CR 1/4 or lower. It obeys your commands as a bonus action, adds your proficiency to AC/damage, and can be revived after a long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Exceptional Training",
+          "description": "Your companion can use its action to Dash, Disengage, or Help as a bonus action. Its attacks count as magical.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Bestial Fury",
+          "description": "When you command your companion to Attack, it makes two attacks instead of one.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Share Spells",
+          "description": "When you cast a spell targeting yourself, you can also affect your beast companion if it is within 30 ft.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "gloom-stalker": [
+        {
+          "level": 3,
+          "name": "Dread Ambusher",
+          "description": "Add Wisdom modifier to initiative. On your first turn of combat, your walking speed increases by 10 ft and when you take the Attack action, you make one extra attack dealing +1d8 damage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Umbral Sight",
+          "description": "Gain darkvision 60 ft (or extend existing darkvision by 30 ft). While in darkness, you are invisible to creatures that rely on darkvision to see you.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Iron Mind",
+          "description": "Gain proficiency in Wisdom saving throws (or Intelligence/Charisma if you already have Wisdom).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Stalker's Flurry",
+          "description": "Once per turn, when you miss with a weapon attack, make one additional weapon attack as part of the same action.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Shadowy Dodge",
+          "description": "When a creature makes an attack roll against you and doesn't have advantage, use your reaction to impose disadvantage on that attack roll.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "horizon-walker": [
+        {
+          "level": 3,
+          "name": "Detect Portal",
+          "description": "As an action, sense the distance and direction of the nearest planar portal within 1 mile. Once per short rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Planar Warrior",
+          "description": "As a bonus action, choose a creature within 30 ft. The next time you hit it with a weapon attack, all the damage becomes force and you deal an extra 1d8 force (2d8 at 11th).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Ethereal Step",
+          "description": "As a bonus action, cast etherealness and return at the end of the current turn. Once per short rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Distant Strike",
+          "description": "When you take the Attack action, you can teleport up to 10 ft before each attack. If you attack two different creatures, you can make one additional attack.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Spectral Defense",
+          "description": "As a reaction when you take damage, gain resistance to all the triggering attack's damage for that attack only.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "monster-slayer": [
+        {
+          "level": 3,
+          "name": "Hunter's Sense",
+          "description": "As an action, learn a creature's damage resistances, immunities, and vulnerabilities. Usable Wisdom-mod times per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Slayer's Prey",
+          "description": "As a bonus action, designate one creature you can see within 60 ft as your prey. The first hit each turn against it deals +1d6 damage. Lasts until you finish a short or long rest or designate a new target.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Supernatural Defense",
+          "description": "When your Slayer's Prey forces you to make a saving throw or a grapple escape check, you can add 1d6 to the roll.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Magic-User's Nemesis",
+          "description": "When a creature within 60 ft casts a spell or teleports, use your reaction to make a weapon attack against it. If it is concentrating, it has disadvantage on the save.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Slayer's Counter",
+          "description": "When your Slayer's Prey forces you to make a saving throw, you can use your reaction to make an attack against it. If your attack hits, you automatically succeed on the save.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "fey-wanderer": [
+        {
+          "level": 3,
+          "name": "Dreadful Strikes",
+          "description": "Once per turn, add 1d4 psychic damage to a weapon hit (1d6 at 11th).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Otherworldly Glamour",
+          "description": "Add Wisdom modifier (min 1) to all Charisma checks. Gain proficiency in one of Deception, Performance, or Persuasion.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Beguiling Twist",
+          "description": "When you or an ally within 120 ft succeeds on a save against being charmed or frightened, use your reaction to force a different creature within 120 ft to make a Wisdom save or be charmed or frightened of you for 1 minute.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Fey Reinforcements",
+          "description": "Learn the summon fey spell and can cast it without a material component. You can also cast it without concentration at 3rd level. At the end of its duration, it lasts 1 minute per slot level used.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Misty Wanderer",
+          "description": "Cast misty step proficiency-bonus times per long rest without a spell slot.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "swarmkeeper": [
+        {
+          "level": 3,
+          "name": "Gathered Swarm",
+          "description": "Once per turn when you hit, a swarm of nature spirits attaches to the target. Choose: deal +1d6 piercing damage, move the target 15 ft (Str save), or move yourself 5 ft horizontally.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Swarmkeeper Magic",
+          "description": "Gain always-prepared spells: faerie fire, mage hand at 3rd; web at 5th; gaseous form at 9th; arcane eye at 13th; insect plague at 17th.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 7,
+          "name": "Writhing Tide",
+          "description": "As a bonus action, use your swarm to gain a 10-ft hover fly speed for 1 minute. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 11,
+          "name": "Mighty Swarm",
+          "description": "Your Gathered Swarm improves: damage becomes d8, push knocks prone, or move becomes self-teleport 10 ft.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 15,
+          "name": "Swarming Dispersal",
+          "description": "When you take damage, use your reaction to teleport to an unoccupied space within 30 ft and gain resistance to the triggering damage. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "rogue": {
+      "thief": [
+        {
+          "level": 3,
+          "name": "Fast Hands",
+          "description": "Use Cunning Action to make a Sleight of Hand check, use thieves' tools to disarm a trap or open a lock, or take the Use an Object action.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Second-Story Work",
+          "description": "Climbing no longer costs extra movement. Running long jump distance increases by Dexterity modifier in feet.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Supreme Sneak",
+          "description": "Gain advantage on Stealth checks when moving no more than half your speed on your turn.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Use Magic Device",
+          "description": "Ignore all class, race, and level requirements on the use of magic items.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Thief's Reflexes",
+          "description": "Take two turns during the first round of combat.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "assassin": [
+        {
+          "level": 3,
+          "name": "Bonus Proficiencies",
+          "description": "Gain proficiency with the disguise kit and poisoner's kit.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Assassinate",
+          "description": "Advantage on attack rolls against creatures that haven't taken a turn yet in combat. Any hit against a surprised creature is a critical hit.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Infiltration Expertise",
+          "description": "Spend 7 days and 25 gp to create a false identity that holds up to basic scrutiny.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Impostor",
+          "description": "Spend 3 hours to mimic a person's speech, writing, and behavior after observing them.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Death Strike",
+          "description": "When you hit a surprised creature, it must make a Constitution save (DC 8 + Dex + proficiency) or take double damage.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "arcane-trickster": [
+        {
+          "level": 3,
+          "name": "Spellcasting",
+          "description": "Learn three wizard cantrips (including mage hand, which becomes invisible and can perform additional tricks). Learn wizard spells from enchantment and illusion schools. Use Intelligence as spellcasting ability. Follows one-third caster progression.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Mage Hand Legerdemain",
+          "description": "Your mage hand is invisible and can stow/retrieve objects, use thieves' tools, and pick locks at range.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Magical Ambush",
+          "description": "If hidden when you cast a spell, the target has disadvantage on the first saving throw.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Versatile Trickster",
+          "description": "As a bonus action, distract a creature within 5 ft of your mage hand, giving you advantage on attack rolls against it.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Spell Thief",
+          "description": "When a creature casts a spell targeting you, use your reaction to force it to make a save. On failure, you steal knowledge of that spell for 8 hours, preventing the creature from casting it. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "inquisitive": [
+        {
+          "level": 3,
+          "name": "Ear for Deceit",
+          "description": "When making a Wisdom (Insight) check to determine if a creature is lying, treat a roll of 7 or lower as an 8.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Eye for Detail",
+          "description": "As a bonus action, make a Perception check to spot a hidden creature or object, or an Investigation check to uncover clues.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Insightful Fighting",
+          "description": "As a bonus action, make an Insight check contested by the target's Deception. On success, you can Sneak Attack that target for 1 minute without needing advantage.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Steady Eye",
+          "description": "Gain advantage on Perception and Investigation checks when you move no more than half your speed.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Unerring Eye",
+          "description": "As an action, sense the presence of illusions, shapechangers, and other deceptions within 30 ft. Wisdom-mod times per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Eye for Weakness",
+          "description": "When you deal Sneak Attack damage, add an extra 3d6 on top of your normal Sneak Attack dice.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "mastermind": [
+        {
+          "level": 3,
+          "name": "Master of Intrigue",
+          "description": "Gain proficiency with the disguise kit, forgery kit, and one gaming set. Learn two languages. Mimic a creature's speech or accent you've heard for at least 1 minute.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Master of Tactics",
+          "description": "As a bonus action, use the Help action to aid an ally's attack within 30 ft.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Insightful Manipulator",
+          "description": "Spend 1 minute observing a creature to learn two of: Intelligence score, Wisdom score, Charisma score, or class levels relative to yours.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Misdirection",
+          "description": "When attacked while a creature provides you cover, use your reaction to redirect the attack to that creature.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Soul of Deceit",
+          "description": "Your thoughts cannot be read by telepathy or magic unless you allow it. You can present false thoughts to anyone attempting to read your mind.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "scout": [
+        {
+          "level": 3,
+          "name": "Skirmisher",
+          "description": "As a reaction when a creature ends its turn within 5 ft, move up to half your speed without provoking opportunity attacks.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Survivalist",
+          "description": "Gain proficiency and expertise in Nature and Survival.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Superior Mobility",
+          "description": "Your walking speed increases by 10 ft. Climbing and swimming don't cost extra movement.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Ambush Master",
+          "description": "Advantage on initiative rolls. The first creature you hit in the first round grants advantage to all allies' attacks against it until your next turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Sudden Strike",
+          "description": "When you take the Attack action, you can make a second attack as a bonus action. Both attacks can use Sneak Attack (against different targets).",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "swashbuckler": [
+        {
+          "level": 3,
+          "name": "Fancy Footwork",
+          "description": "Creatures you make melee attacks against can't make opportunity attacks against you for the rest of the turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Rakish Audacity",
+          "description": "Add Charisma modifier to initiative rolls. Sneak Attack works against creatures within 5 ft as long as no other creature is within 5 ft of you.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Panache",
+          "description": "As an action, make a Persuasion check against a creature's Insight. On success: hostile creatures have disadvantage against others; non-hostile become charmed for 1 minute.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Elegant Maneuver",
+          "description": "As a bonus action, gain advantage on the next Acrobatics or Athletics check before the end of your turn.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Master Duelist",
+          "description": "Once per short rest, if you miss with an attack, reroll with advantage.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "phantom": [
+        {
+          "level": 3,
+          "name": "Whispers of the Dead",
+          "description": "At the end of a short or long rest, gain one skill or tool proficiency of your choice for that rest period, channeling a deceased spirit.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Wails from the Grave",
+          "description": "When you deal Sneak Attack damage, a second creature within 30 ft takes half your Sneak Attack dice in necrotic damage. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Tokens of the Departed",
+          "description": "When a creature dies within 30 ft, capture a soul trinket. As a reaction when making a death save or attacking, destroy a trinket: succeed on the death save or gain advantage on the attack.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Ghost Walk",
+          "description": "As a bonus action, enter a spectral state for 10 minutes: fly 10 ft, pass through objects/creatures, take 1d10 force per turn inside objects. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Death's Friend",
+          "description": "When using Wails from the Grave, you can now deal full Sneak Attack necrotic damage to the secondary target.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "soulknife": [
+        {
+          "level": 3,
+          "name": "Psionic Power",
+          "description": "Gain Psionic Energy dice equal to twice your proficiency bonus (d6, d8 at 5th, d10 at 11th, d12 at 17th). Use them for Psi-Bolstered Knack (add to failed ability check), Psychic Whispers (telepathy with allies), or Psychic Blades.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 3,
+          "name": "Psychic Blades",
+          "description": "As an attack, manifest psychic blades in your hands dealing 1d6 psychic (d4 offhand). They leave no mark and vanish after hitting or missing.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 9,
+          "name": "Soul Blades",
+          "description": "Your Psychic Blades can be thrown (60 ft range). After attacking with a blade, use a bonus action to make a ranged attack with a second blade.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 13,
+          "name": "Psychic Veil",
+          "description": "As an action, become invisible for 1 hour (or until you attack, force a save, or your concentration is broken). Once per long rest or spend a Psionic Energy die.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 17,
+          "name": "Rend Mind",
+          "description": "When you deal Sneak Attack with your Psychic Blades, the target must save or be stunned until the end of your next turn. Usable proficiency-bonus times per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "sorcerer": {
+      "draconic-bloodline": [
+        {
+          "level": 1,
+          "name": "Dragon Ancestor",
+          "description": "Choose a dragon type. Learn Draconic language. When making Charisma checks interacting with dragons, double proficiency bonus.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Draconic Resilience",
+          "description": "+1 HP per sorcerer level. AC = 13 + Dexterity modifier when not wearing armor.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Elemental Affinity",
+          "description": "When casting a spell dealing damage of your dragon's type, add Charisma modifier to one damage roll. Spend 1 sorcery point to gain resistance to that damage type for 1 hour.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Dragon Wings",
+          "description": "As a bonus action, grow dragon wings granting a flying speed equal to your current speed. Lasts until dismissed.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Draconic Presence",
+          "description": "Spend 5 sorcery points to project a 60-ft aura of awe or fear for 1 minute. Affected creatures are charmed or frightened (Wisdom save).",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "wild-magic": [
+        {
+          "level": 1,
+          "name": "Wild Magic Surge",
+          "description": "After casting a spell of 1st level or higher, the DM can have you roll a d20. On a 1, roll on the Wild Magic Surge table for a random effect.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Tides of Chaos",
+          "description": "Gain advantage on one attack roll, ability check, or saving throw. DM can trigger a Wild Magic Surge to reset this. Recharges on long rest or when DM triggers surge.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Bend Luck",
+          "description": "Spend 2 sorcery points as a reaction to add or subtract 1d4 from another creature's attack roll, ability check, or saving throw.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Controlled Chaos",
+          "description": "When rolling on the Wild Magic Surge table, roll twice and choose either result.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Spell Bombardment",
+          "description": "When rolling damage for a spell, if any die rolls maximum, you can reroll it once and add the new roll to the total. Once per turn.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "divine-soul": [
+        {
+          "level": 1,
+          "name": "Divine Magic",
+          "description": "Choose a divine source (good, evil, law, chaos, or neutral) linked to a cleric domain. Learn one additional spell based on alignment. You can learn spells from the cleric spell list.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Favored by the Gods",
+          "description": "When you fail a saving throw or miss with an attack roll, add 2d4 to the roll. Once per short or long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Empowered Healing",
+          "description": "Spend 1 sorcery point to reroll any number of dice for a healing spell cast by you.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Otherworldly Wings",
+          "description": "As a bonus action, manifest spectral wings granting a flying speed of 30 ft for up to 1 hour per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Unearthly Recovery",
+          "description": "As a bonus action, regain HP equal to half your maximum. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "shadow-magic": [
+        {
+          "level": 1,
+          "name": "Eyes of the Dark",
+          "description": "Gain darkvision 120 ft. At 3rd level, learn darkness and can cast it with sorcery points; when you do, you can see through the darkness.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Strength of the Grave",
+          "description": "When reduced to 0 HP, make a Charisma save (DC 5 + damage taken). On success, drop to 1 HP instead. Cannot use if damage is radiant or a critical hit. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Hound of Ill Omen",
+          "description": "Spend 3 sorcery points to summon a shadowy hound for 5 minutes. It targets one creature you choose, moving toward it and attacking. The target has disadvantage on saves against your spells while within 5 ft of the hound.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Shadow Walk",
+          "description": "As a bonus action, teleport up to 120 ft from one area of dim light/darkness to another.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Umbral Form",
+          "description": "Spend 6 sorcery points to become a shadow for 1 minute: resistance to all damage except force and radiant, and you can move through creatures and objects (treated as difficult terrain).",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "storm-sorcery": [
+        {
+          "level": 1,
+          "name": "Wind Speaker",
+          "description": "Learn Primordial language. Understand and speak Auran, Aquan, Ignan, and Terran.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Tempestuous Magic",
+          "description": "Before or after casting a spell of 1st level or higher, use a bonus action to fly 10 ft without provoking opportunity attacks.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Heart of the Storm",
+          "description": "Gain resistance to lightning and thunder. When you cast a spell dealing lightning or thunder, creatures within 10 ft take half your sorcerer level in that damage type.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Storm Guide",
+          "description": "Control the wind and rain within a small radius. Stop rain, change wind direction, or force ranged attacks to have disadvantage when flying.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Storm's Fury",
+          "description": "When hit by a melee attack, use your reaction to deal lightning damage equal to your sorcerer level and push the attacker 20 ft (Str save for half and no push).",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Wind Soul",
+          "description": "Gain immunity to lightning and thunder. Gain a flying speed of 60 ft. Allies within 30 ft gain a flying speed of 30 ft while with you.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "aberrant-mind": [
+        {
+          "level": 1,
+          "name": "Psionic Spells",
+          "description": "Learn additional spells: arms of hadar, dissonant whispers, detect thoughts, calm emotions, hunger of hadar, sending, Evard's black tentacles, summon aberration, Rary's telepathic bond, telekinesis. These are sorcerer spells for you.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Telepathic Speech",
+          "description": "As a bonus action, establish a telepathic link with a creature within 30 ft for proficiency-bonus minutes. You don't need a shared language.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Psionic Sorcery",
+          "description": "When you cast a Psionic Spell using sorcery points, it requires no verbal, somatic, or material components (unless consumed by the spell).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Revelation in Flesh",
+          "description": "Spend sorcery points to transform your body: gain swimming speed = 2× walk and water breathing, fly speed = 2× walk, see invisible creatures within 60 ft, or become amorphous (slip through 1-inch gaps).",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Warping Implosion",
+          "description": "As an action, spend 5 sorcery points to create a warp at a point within 120 ft. Creatures in a 30-ft radius take 3d10 force and must save or be pulled to the center and take an additional 5d10 force. Once per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "clockwork-soul": [
+        {
+          "level": 1,
+          "name": "Clockwork Magic",
+          "description": "Learn additional spells: alarm, protection from evil and good, aid, lesser restoration, dispel magic, protection from energy, freedom of movement, summon construct, greater restoration, wall of force. These are sorcerer spells for you.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Restore Balance",
+          "description": "When a creature within 60 ft makes a roll with advantage or disadvantage, use your reaction to cancel the advantage or disadvantage. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Bastion of Law",
+          "description": "As an action, spend up to 5 sorcery points to create a protective ward on yourself or an ally, reducing damage by 1d8 per point spent until the ward absorbs that much damage.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Trance of Order",
+          "description": "As a bonus action, for 1 minute, attack rolls, ability checks, and saving throws have a floor of 10 on the d20. Once per long rest or spend 5 sorcery points.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 18,
+          "name": "Clockwork Cavalcade",
+          "description": "As an action, spend 5 sorcery points to summon a sphere of order for 1 minute. Allies in a 30-ft cube regain 100 HP, end all spells of 6th level or lower, and broken/ruined objects within the cube are repaired.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ]
+    },
+    "warlock": {
+      "the-fiend": [
+        {
+          "level": 1,
+          "name": "Dark One's Blessing",
+          "description": "When you reduce a hostile creature to 0 HP, gain temporary HP equal to your Charisma modifier + warlock level.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add burning hands, command at 1st; blindness/deafness, scorching ray at 3rd; fireball, stinking cloud at 5th; fire shield, wall of fire at 7th; flame strike, hallow at 9th to your warlock spell list.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Dark One's Own Luck",
+          "description": "Add 1d10 to one ability check or saving throw. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Fiendish Resilience",
+          "description": "At the end of a short or long rest, choose one damage type to gain resistance to until you choose another.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Hurl Through Hell",
+          "description": "When you hit a creature, you can send it through the lower planes. It disappears until the end of your next turn, then returns taking 10d10 psychic damage. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "the-archfey": [
+        {
+          "level": 1,
+          "name": "Fey Presence",
+          "description": "As an action, force creatures in a 10-ft cube to make a Wisdom save or be charmed or frightened of you until the end of your next turn. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add faerie fire, sleep at 1st; calm emotions, phantasmal force at 3rd; blink, plant growth at 5th; dominate beast, greater invisibility at 7th; dominate person, seeming at 9th to your warlock spell list.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Misty Escape",
+          "description": "When you take damage, use your reaction to teleport 60 ft and become invisible until the start of your next turn. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Beguiling Defenses",
+          "description": "You are immune to being charmed. When a creature tries to charm you, you can use your reaction to turn the charm back on it.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Dark Delirium",
+          "description": "As an action, plunge a creature within 60 ft into an illusory realm for 1 minute (Wisdom save). While affected, it is charmed or frightened and cannot perceive the real world. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "the-great-old-one": [
+        {
+          "level": 1,
+          "name": "Awakened Mind",
+          "description": "Telepathically communicate with any creature within 30 ft that can understand at least one language.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add dissonant whispers, Tasha's hideous laughter at 1st; detect thoughts, phantasmal force at 3rd; clairvoyance, sending at 5th; dominate beast, Evard's black tentacles at 7th; dominate person, telekinesis at 9th to your warlock spell list.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Entropic Ward",
+          "description": "When a creature makes an attack roll against you, use your reaction to impose disadvantage. If it misses, your next attack against it has advantage. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Thought Shield",
+          "description": "Your thoughts cannot be read without your consent. You have resistance to psychic damage, and when a creature deals psychic damage to you, it takes the same amount.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Create Thrall",
+          "description": "Touch an incapacitated humanoid to charm it indefinitely. It obeys you telepathically until you use this feature again or remove the effect with an action. Once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "the-celestial": [
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add cure wounds, guiding bolt at 1st; flaming sphere, lesser restoration at 3rd; daylight, revivify at 5th; guardian of faith, wall of fire at 7th; flame strike, greater restoration at 9th to your warlock spell list.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Healing Light",
+          "description": "Gain a pool of d6s equal to 1 + warlock level. As a bonus action, spend up to Charisma modifier dice to heal a creature within 60 ft. Recharges on long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Radiant Soul",
+          "description": "Gain resistance to radiant damage. When you cast a spell dealing radiant or fire damage, add Charisma modifier to one radiant or fire damage roll.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Celestial Resilience",
+          "description": "At the end of a short or long rest, allies within 30 ft gain temp HP equal to half your warlock level + Charisma modifier.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Searing Vengeance",
+          "description": "When reduced to 0 HP but not killed outright, drop to half your maximum HP instead, regain half your spell slots, and creatures of your choice within 30 ft take 2d8 + Charisma modifier radiant damage and are blinded until the end of your next turn. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "the-hexblade": [
+        {
+          "level": 1,
+          "name": "Hexblade's Curse",
+          "description": "As a bonus action, curse a creature within 30 ft for 1 minute. You crit on 19-20 against it and add your proficiency bonus to damage. If it dies, you regain HP equal to warlock level + Charisma modifier. Once per short or long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Hex Warrior",
+          "description": "Gain proficiency with medium armor, shields, and martial weapons. When you finish a long rest, touch one weapon to use Charisma for attack and damage rolls with it.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add shield, wrathful smite at 1st; blur, branding smite at 3rd; blink, elemental weapon at 5th; phantasmal killer, staggering smite at 7th; banishing smite, cone of cold at 9th to your warlock spell list.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Accursed Specter",
+          "description": "When you slay a humanoid, raise its spirit as a specter under your control. It lasts until the end of your next long rest. Once per long rest.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Armor of Hexes",
+          "description": "When your Hexblade's Curse target hits you, roll a d6. On a 4+, the attack misses instead.",
+          "source": "XGtE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Master of Hexes",
+          "description": "When your Hexblade's Curse target dies, use your reaction to transfer the curse to a different creature within 30 ft without expending a use.",
+          "source": "XGtE",
+          "uncertain": false
+        }
+      ],
+      "the-fathomless": [
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add create or destroy water, thunderwave at 1st; gust of wind, silence at 3rd; lightning bolt, sleet storm at 5th; control water, summon elemental at 7th; Bigby's hand, cone of cold at 9th to your warlock spell list.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Tentacle of the Deeps",
+          "description": "As a bonus action, summon a spectral tentacle within 60 ft for 1 minute. As a bonus action each turn, it can strike a creature within 10 ft dealing 1d8 cold damage and reducing its speed 10 ft. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Oceanic Soul",
+          "description": "Gain resistance to cold damage. You can breathe underwater and gain a swimming speed of 40 ft.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Guardian Coil",
+          "description": "When a creature within 10 ft of your tentacle takes damage, use your reaction to reduce the damage by 1d8 + your Charisma modifier. At the same time, the attacker takes the same amount of cold damage.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Fathomless Plunge",
+          "description": "As an action, teleport yourself and up to 5 willing creatures within 30 ft to a body of water you've seen on the same plane. Once per short or long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "the-genie": [
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Varies by genie type: Dao (bludgeoning/earth), Djinni (thunder/air), Efreeti (fire), Marid (cold/water). Add spells like detect evil and good, phantasmal force, create food and water, stone shape, creation, etc., varying by patron.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Genie's Vessel",
+          "description": "Gain a Tiny object (ring or lamp) as a vessel. As an action, enter the vessel; its interior is a 20-ft-radius cylinder furnished comfortably. You can remain inside for proficiency-bonus × 2 hours before being ejected. You can hear what's happening outside.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Bottled Respite",
+          "description": "When you enter your vessel, you can take up to 5 willing creatures with you. Your vessel's AC equals your spell save DC. If it's destroyed, you appear in the nearest unoccupied space.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Elemental Gift",
+          "description": "Gain resistance to your genie's element (acid/dao, lightning/djinni, fire/efreeti, cold/marid). As a bonus action, gain a 30-ft fly speed for 10 minutes. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Sanctuary Vessel",
+          "description": "When entering your vessel, you and companions can take a short rest in 10 minutes. After leaving, each creature gains temp HP equal to your proficiency bonus + Charisma modifier.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Limited Wish",
+          "description": "As an action, duplicate the effect of any 6th-level-or-lower spell from any class. The spell takes effect as part of this action. Once per 1d4 long rests.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "the-undead": [
+        {
+          "level": 1,
+          "name": "Expanded Spell List",
+          "description": "Add bane, false life at 1st; blindness/deafness, phantasmal force at 3rd; phantom steed, speak with dead at 5th; death ward, greater invisibility at 7th; antilife shell, cloudkill at 9th to your warlock spell list.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 1,
+          "name": "Form of Dread",
+          "description": "As a bonus action, transform for 1 minute. Gain temp HP equal to 1d10 + warlock level. Once per turn when you hit with an attack, the target must save or be frightened. Immune to frightened condition.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Grave Touched",
+          "description": "When you deal damage while in Form of Dread, you can change the damage type to necrotic. While transformed, you don't need to eat, drink, or breathe.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Necrotic Husk",
+          "description": "Gain resistance to necrotic damage. When reduced to 0 HP, you can instead drop to 1 HP and deal 2d10 + warlock level necrotic to creatures of your choice within 30 ft. Once per long rest.",
+          "source": "VRGtR",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Spirit Projection",
+          "description": "As an action, your spirit leaves your body for 1 hour. You gain a fly speed of 30 ft (hover), resistance to bludgeoning/piercing/slashing from non-magical sources, and your body gains resistance to all damage. Once per long rest.",
+          "source": "VRGtR",
+          "uncertain": false
+        }
+      ]
+    },
+    "wizard": {
+      "school-of-evocation": [
+        {
+          "level": 2,
+          "name": "Evocation Savant",
+          "description": "Time and gold spent to copy evocation spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Sculpt Spells",
+          "description": "When casting an evocation spell, choose 1 + spell level creatures to automatically succeed on saves and take no damage instead of half.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Potent Cantrip",
+          "description": "When a creature succeeds on a save against your cantrip, it still takes half the damage (no other effects).",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Empowered Evocation",
+          "description": "Add Intelligence modifier to one damage roll of any wizard evocation spell.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Overchannel",
+          "description": "When casting a wizard evocation spell of 5th level or lower, you can deal maximum damage. After the first use each day, subsequent uses deal 2d12 necrotic per slot level to you. You can only overchannel a given spell level once per long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-abjuration": [
+        {
+          "level": 2,
+          "name": "Abjuration Savant",
+          "description": "Time and gold spent to copy abjuration spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Arcane Ward",
+          "description": "When you cast an abjuration spell of 1st level or higher, create a magical ward with HP equal to 2 × wizard level + Intelligence modifier. It absorbs damage before your HP, and regenerates HP equal to twice the spell level when you cast another abjuration spell.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Projected Ward",
+          "description": "As a reaction, direct your Arcane Ward to protect a creature within 30 ft, taking the damage for them.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Improved Abjuration",
+          "description": "When casting an abjuration spell that requires an ability check (such as counterspell or dispel magic), add your proficiency bonus to the check.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Spell Resistance",
+          "description": "Gain advantage on saving throws against spells and resistance to damage from spells.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-divination": [
+        {
+          "level": 2,
+          "name": "Divination Savant",
+          "description": "Time and gold spent to copy divination spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Portent",
+          "description": "After a long rest, roll two d20s and record the results. Before the end of your next long rest, you can replace any attack roll, saving throw, or ability check made by you or a creature you can see with one of these rolls.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Expert Divination",
+          "description": "When you cast a divination spell of 2nd level or higher, regain a spell slot of one level lower.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "The Third Eye",
+          "description": "As an action, gain one of the following for 1 minute: darkvision 60 ft, ethereal sight 60 ft, see invisible creatures within 10 ft, or read all languages.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Greater Portent",
+          "description": "You now roll three Portent dice instead of two at the end of a long rest.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-enchantment": [
+        {
+          "level": 2,
+          "name": "Enchantment Savant",
+          "description": "Time and gold spent to copy enchantment spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Hypnotic Gaze",
+          "description": "As an action, charm a creature within 5 ft into a dazed stupor until the end of your next turn (Wisdom save). Its speed becomes 0 and it cannot take actions. Requires your action each turn to maintain.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Instinctive Charm",
+          "description": "When a creature within 30 ft attacks you, use your reaction to force it to make a Wisdom save or redirect the attack to another creature of your choice within its reach.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Split Enchantment",
+          "description": "When casting an enchantment spell that targets one creature, you can target a second creature.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Alter Memories",
+          "description": "When you charm a creature, you can erase its memory of the time it was charmed for up to 1 + Charisma modifier hours. Once per long rest per creature.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-illusion": [
+        {
+          "level": 2,
+          "name": "Illusion Savant",
+          "description": "Time and gold spent to copy illusion spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Improved Minor Illusion",
+          "description": "Learn minor illusion; if you already know it, learn a different cantrip. You can create both a sound and an image simultaneously.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Malleable Illusions",
+          "description": "As an action, change the nature of an illusion spell you cast with a duration of 1 minute or longer, provided you can see it.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Illusory Self",
+          "description": "When a creature makes an attack roll against you, use your reaction to create an illusory duplicate. The attack automatically misses. Once per short or long rest.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Illusory Reality",
+          "description": "When you cast an illusion spell of 1st level or higher, use a bonus action to make one non-magical object in the illusion real for 1 minute. The object cannot deal damage.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-necromancy": [
+        {
+          "level": 2,
+          "name": "Necromancy Savant",
+          "description": "Time and gold spent to copy necromancy spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Grim Harvest",
+          "description": "When you kill a creature with a spell of 1st level or higher, regain HP equal to twice the spell level (3× for necromancy spells). Does not work on constructs or undead.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Undead Thralls",
+          "description": "Add animate dead to your spellbook if you don't have it. Animated undead gain +wizard level HP and +proficiency bonus to weapon damage. Create an additional undead when casting animate dead.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Inured to Undeath",
+          "description": "Gain resistance to necrotic damage. Your HP maximum cannot be reduced.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Command Undead",
+          "description": "As an action, charm one undead within 60 ft that you can see (Intelligence save). If its Intelligence is below 12, it is permanently charmed; otherwise it repeats the save each hour.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-transmutation": [
+        {
+          "level": 2,
+          "name": "Transmutation Savant",
+          "description": "Time and gold spent to copy transmutation spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Minor Alchemy",
+          "description": "Spend 10 minutes to temporarily change the physical properties of one non-magical object, such as wood to stone or iron to silver, for 1 hour.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Transmuter's Stone",
+          "description": "Spend 8 hours creating a stone that grants a benefit when held: darkvision 60 ft, +10 ft speed, proficiency in Constitution saves, or resistance to one element. Only one stone can exist at a time.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Shapechanger",
+          "description": "Cast polymorph on yourself once per short rest, but only to become a beast of CR 1 or lower.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Master Transmuter",
+          "description": "Destroy your transmuter's stone to: transform any non-magical object (up to 5 ft cube) into another material, cure all curses/diseases/poisons on one creature, raise dead (as the raise dead spell without a spell slot), or make one creature appear 3d10 years younger. When the stone is destroyed, you must create a new one.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "school-of-conjuration": [
+        {
+          "level": 2,
+          "name": "Conjuration Savant",
+          "description": "Time and gold spent to copy conjuration spells into your spellbook is halved.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Minor Conjuration",
+          "description": "As an action, conjure a non-magical object you have seen before in your hand or on the ground. It glows dimly and lasts 1 hour. Weight limit 10 lbs and max 3 ft in any dimension. One at a time.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Benign Transposition",
+          "description": "As an action, teleport up to 30 ft or swap places with a willing Small or Medium creature within 30 ft. Once per long rest or when you cast a conjuration spell of 1st level or higher.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Focused Conjuration",
+          "description": "Your concentration on conjuration spells cannot be broken by taking damage.",
+          "source": "PHB",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Durable Summons",
+          "description": "Creatures you conjure gain 30 temporary HP when they appear.",
+          "source": "PHB",
+          "uncertain": false
+        }
+      ],
+      "bladesinging": [
+        {
+          "level": 2,
+          "name": "Training in War and Song",
+          "description": "Gain proficiency with light armor and one one-handed melee weapon of your choice. Gain proficiency in Performance.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Bladesong",
+          "description": "As a bonus action, enter a trance for 1 minute (proficiency-bonus uses per long rest). Gain +Int to AC, +10 ft walking speed, advantage on Acrobatics, and +Int to Constitution saves for concentration. Ends if you use two hands to attack, wear medium/heavy armor, or use a shield.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Extra Attack",
+          "description": "Attack twice when you take the Attack action. One of these attacks can be a cantrip.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Song of Defense",
+          "description": "When you take damage while Bladesong is active, spend a spell slot to reduce the damage by 5 × slot level.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Song of Victory",
+          "description": "While Bladesong is active, add your Intelligence modifier to melee weapon damage rolls.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "order-of-scribes": [
+        {
+          "level": 2,
+          "name": "Wizardly Quill",
+          "description": "Magically create a quill that requires no ink. Copying spells takes 2 minutes per spell level instead of 2 hours.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Awakened Spellbook",
+          "description": "Your spellbook becomes a sentient magic item and spellcasting focus. When you finish a short rest, swap the damage type of a spell you cast with that of another spell in your book at the same level. Once per short rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Manifest Mind",
+          "description": "As a bonus action, summon a spectral mind within 60 ft for proficiency-bonus minutes. You can see/hear through it and cast spells as though you were in its space. Proficiency-bonus uses per long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Master Scrivener",
+          "description": "Create scrolls faster. When you finish a long rest, you can create one 1st or 2nd-level spell scroll by expending a spell slot. The scroll's spell attack/save uses your stats and lasts until your next long rest.",
+          "source": "TCoE",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "One with the Word",
+          "description": "When your spectral mind would take damage, you can negate it by temporarily erasing the mind, then resummoning it. Also, when you would drop to 0 HP, you can instead sacrifice spells from your spellbook to stay up.",
+          "source": "TCoE",
+          "uncertain": false
+        }
+      ],
+      "chronurgy-magic": [
+        {
+          "level": 2,
+          "name": "Chronal Shift",
+          "description": "As a reaction, force a creature within 30 ft to reroll a d20 after seeing the result but before the outcome is declared. Twice per long rest.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 2,
+          "name": "Temporal Awareness",
+          "description": "Add your Intelligence modifier to initiative rolls.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Momentary Stasis",
+          "description": "As an action, force a Large or smaller creature within 60 ft to make a Constitution save or be frozen in time until the end of your next turn. Proficiency-bonus uses per long rest.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Arcane Abeyance",
+          "description": "When you cast a spell of 4th level or lower, condense its magic into a bead. A creature holding the bead can release it as an action to take effect. Lasts 1 hour before dissipating.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Convergent Future",
+          "description": "As a reaction, force a d20 roll made within 60 ft to succeed or fail. Each use after the first per long rest gives you a level of exhaustion.",
+          "source": "EGW",
+          "uncertain": false
+        }
+      ],
+      "graviturgy-magic": [
+        {
+          "level": 2,
+          "name": "Adjust Density",
+          "description": "As an action, magically alter a creature's density within 30 ft for 1 minute. Halve or double its weight, granting advantage/disadvantage on Dexterity checks, Acrobatics, and Stealth. Proficiency-bonus uses per long rest.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 6,
+          "name": "Gravity Well",
+          "description": "When you cast a spell on a creature, you can move the target 5 ft vertically or horizontally.",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 10,
+          "name": "Violent Attraction",
+          "description": "When a creature within 60 ft is hit by a bludgeoning, piercing, or slashing attack, use your reaction to increase the attack's damage by 1d10. Alternatively, when a creature within 60 ft falls, you can amplify the impact (save or take extra damage).",
+          "source": "EGW",
+          "uncertain": false
+        },
+        {
+          "level": 14,
+          "name": "Event Horizon",
+          "description": "As an action, create a singularity point within 60 ft. Creatures within 30 ft must save or take 2d10 force and be pulled in. Maintain concentration up to 1 minute.",
+          "source": "EGW",
+          "uncertain": false
+        }
+      ]
+    }
+  },
+  "spellClassLists": {
+    "Acid Splash": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Blade Ward": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Booming Blade": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Chill Touch": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Control Flames": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Create Bonfire": [
+      "Artificer",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Dancing Lights": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Druidcraft": [
+      "Druid"
+    ],
+    "Eldritch Blast": [
+      "Warlock"
+    ],
+    "Encode Thoughts": [
+      "Wizard"
+    ],
+    "Fire Bolt": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Friends": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Frostbite": [
+      "Artificer",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Green-Flame Blade": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Guidance": [
+      "Artificer",
+      "Cleric",
+      "Druid"
+    ],
+    "Gust": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Infestation": [
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Light": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Lightning Lure": [
+      "Artificer",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mage Hand": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Magic Stone": [
+      "Artificer",
+      "Druid",
+      "Warlock"
+    ],
+    "Mending": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Message": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Mind Sliver": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Minor Illusion": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mold Earth": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Poison Spray": [
+      "Artificer",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Prestidigitation": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Primal Savagery": [
+      "Druid"
+    ],
+    "Produce Flame": [
+      "Artificer",
+      "Druid"
+    ],
+    "Ray of Frost": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Resistance": [
+      "Artificer",
+      "Cleric",
+      "Druid"
+    ],
+    "Sacred Flame": [
+      "Cleric"
+    ],
+    "Sapping Sting": [
+      "Druid",
+      "Wizard"
+    ],
+    "Shape Water": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Shillelagh": [
+      "Druid"
+    ],
+    "Shocking Grasp": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Spare the Dying": [
+      "Artificer",
+      "Cleric"
+    ],
+    "Sword Burst": [
+      "Artificer",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Thaumaturgy": [
+      "Cleric"
+    ],
+    "Thorn Whip": [
+      "Artificer",
+      "Druid"
+    ],
+    "Thunderclap": [
+      "Artificer",
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Toll the Dead": [
+      "Cleric",
+      "Warlock",
+      "Wizard"
+    ],
+    "True Strike": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Vicious Mockery": [
+      "Bard"
+    ],
+    "Word of Radiance": [
+      "Cleric"
+    ],
+    "Absorb Elements": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Alarm": [
+      "Artificer",
+      "Ranger",
+      "Wizard"
+    ],
+    "Animal Friendship": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Armor of Agathys": [
+      "Warlock"
+    ],
+    "Arms of Hadar": [
+      "Warlock"
+    ],
+    "Bane": [
+      "Bard",
+      "Cleric"
+    ],
+    "Beast Bond": [
+      "Druid",
+      "Ranger"
+    ],
+    "Bless": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Burning Hands": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Catapult": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Cause Fear": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Ceremony": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Chaos Bolt": [
+      "Sorcerer"
+    ],
+    "Charm Person": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Chromatic Orb": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Color Spray": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Command": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Compelled Duel": [
+      "Paladin"
+    ],
+    "Comprehend Languages": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Create or Destroy Water": [
+      "Cleric",
+      "Druid"
+    ],
+    "Cure Wounds": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger"
+    ],
+    "Detect Evil and Good": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Detect Magic": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Detect Poison and Disease": [
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger"
+    ],
+    "Disguise Self": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Dissonant Whispers": [
+      "Bard"
+    ],
+    "Divine Favor": [
+      "Paladin"
+    ],
+    "Earth Tremor": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Ensnaring Strike": [
+      "Ranger"
+    ],
+    "Entangle": [
+      "Druid"
+    ],
+    "Expeditious Retreat": [
+      "Artificer",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Faerie Fire": [
+      "Artificer",
+      "Bard",
+      "Druid"
+    ],
+    "False Life": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Feather Fall": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Find Familiar": [
+      "Wizard"
+    ],
+    "Fog Cloud": [
+      "Cleric",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Goodberry": [
+      "Druid",
+      "Ranger"
+    ],
+    "Grease": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Guiding Bolt": [
+      "Cleric"
+    ],
+    "Hail of Thorns": [
+      "Ranger"
+    ],
+    "Healing Word": [
+      "Bard",
+      "Cleric",
+      "Druid"
+    ],
+    "Hellish Rebuke": [
+      "Warlock"
+    ],
+    "Heroism": [
+      "Bard",
+      "Paladin"
+    ],
+    "Hex": [
+      "Warlock"
+    ],
+    "Hunter's Mark": [
+      "Ranger"
+    ],
+    "Ice Knife": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Identify": [
+      "Artificer",
+      "Bard",
+      "Wizard"
+    ],
+    "Illusory Script": [
+      "Bard",
+      "Warlock",
+      "Wizard"
+    ],
+    "Inflict Wounds": [
+      "Cleric"
+    ],
+    "Jump": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Longstrider": [
+      "Artificer",
+      "Bard",
+      "Druid",
+      "Ranger",
+      "Wizard"
+    ],
+    "Mage Armor": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Magic Missile": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Protection from Evil and Good": [
+      "Cleric",
+      "Paladin",
+      "Warlock",
+      "Wizard"
+    ],
+    "Purify Food and Drink": [
+      "Artificer",
+      "Cleric",
+      "Druid",
+      "Paladin"
+    ],
+    "Ray of Sickness": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Sanctuary": [
+      "Artificer",
+      "Cleric"
+    ],
+    "Searing Smite": [
+      "Paladin"
+    ],
+    "Shield": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Shield of Faith": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Silent Image": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Sleep": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Snare": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Wizard"
+    ],
+    "Speak with Animals": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Tasha's Caustic Brew": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Tasha's Hideous Laughter": [
+      "Bard",
+      "Wizard"
+    ],
+    "Tenser's Floating Disk": [
+      "Wizard"
+    ],
+    "Thunderous Smite": [
+      "Paladin"
+    ],
+    "Thunderwave": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Unseen Servant": [
+      "Bard",
+      "Warlock",
+      "Wizard"
+    ],
+    "Witch Bolt": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Wrathful Smite": [
+      "Paladin"
+    ],
+    "Zephyr Strike": [
+      "Ranger"
+    ],
+    "Aganazzar's Scorcher": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Aid": [
+      "Artificer",
+      "Cleric",
+      "Paladin"
+    ],
+    "Alter Self": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Animal Messenger": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Arcane Lock": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Augury": [
+      "Cleric"
+    ],
+    "Barkskin": [
+      "Druid",
+      "Ranger"
+    ],
+    "Beast Sense": [
+      "Druid",
+      "Ranger"
+    ],
+    "Blindness/Deafness": [
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Blur": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Branding Smite": [
+      "Paladin"
+    ],
+    "Calm Emotions": [
+      "Bard",
+      "Cleric"
+    ],
+    "Cloud of Daggers": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Continual Flame": [
+      "Artificer",
+      "Cleric",
+      "Wizard"
+    ],
+    "Cordon of Arrows": [
+      "Ranger"
+    ],
+    "Crown of Madness": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Darkness": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Darkvision": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Detect Thoughts": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Dragon's Breath": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Dust Devil": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Earthbind": [
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Enhance Ability": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Sorcerer"
+    ],
+    "Enlarge/Reduce": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Enthrall": [
+      "Bard",
+      "Warlock"
+    ],
+    "Find Steed": [
+      "Paladin"
+    ],
+    "Find Traps": [
+      "Cleric",
+      "Druid",
+      "Ranger"
+    ],
+    "Flame Blade": [
+      "Druid"
+    ],
+    "Flaming Sphere": [
+      "Druid",
+      "Wizard"
+    ],
+    "Gentle Repose": [
+      "Cleric",
+      "Wizard"
+    ],
+    "Gift of Gab": [
+      "Bard",
+      "Wizard"
+    ],
+    "Gust of Wind": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Heat Metal": [
+      "Artificer",
+      "Bard",
+      "Druid"
+    ],
+    "Hold Person": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Invisibility": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Knock": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Lesser Restoration": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger"
+    ],
+    "Levitate": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Locate Animals or Plants": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Locate Object": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger",
+      "Wizard"
+    ],
+    "Magic Mouth": [
+      "Artificer",
+      "Bard",
+      "Wizard"
+    ],
+    "Magic Weapon": [
+      "Artificer",
+      "Paladin",
+      "Wizard"
+    ],
+    "Maximillian's Earthen Grasp": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Melf's Acid Arrow": [
+      "Wizard"
+    ],
+    "Mind Spike": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mirror Image": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Misty Step": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Moonbeam": [
+      "Druid"
+    ],
+    "Nystul's Magic Aura": [
+      "Wizard"
+    ],
+    "Pass without Trace": [
+      "Druid",
+      "Ranger"
+    ],
+    "Phantasmal Force": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Prayer of Healing": [
+      "Cleric"
+    ],
+    "Protection from Poison": [
+      "Artificer",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger"
+    ],
+    "Pyrotechnics": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Ray of Enfeeblement": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Rope Trick": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Scorching Ray": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "See Invisibility": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Shadow Blade": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Shatter": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Silence": [
+      "Bard",
+      "Cleric",
+      "Ranger"
+    ],
+    "Skywrite": [
+      "Artificer",
+      "Bard",
+      "Druid",
+      "Wizard"
+    ],
+    "Snilloc's Snowball Storm": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Spider Climb": [
+      "Artificer",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Spike Growth": [
+      "Druid",
+      "Ranger"
+    ],
+    "Spiritual Weapon": [
+      "Cleric"
+    ],
+    "Suggestion": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Beast": [
+      "Druid",
+      "Ranger"
+    ],
+    "Tasha's Mind Whip": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Warding Bond": [
+      "Cleric"
+    ],
+    "Warding Wind": [
+      "Bard",
+      "Druid",
+      "Sorcerer"
+    ],
+    "Web": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Zone of Truth": [
+      "Bard",
+      "Cleric",
+      "Paladin"
+    ],
+    "Animate Dead": [
+      "Cleric",
+      "Wizard"
+    ],
+    "Aura of Vitality": [
+      "Paladin"
+    ],
+    "Beacon of Hope": [
+      "Cleric"
+    ],
+    "Bestow Curse": [
+      "Bard",
+      "Cleric",
+      "Wizard"
+    ],
+    "Blinding Smite": [
+      "Paladin"
+    ],
+    "Blink": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Call Lightning": [
+      "Druid"
+    ],
+    "Catnap": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Clairvoyance": [
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Conjure Animals": [
+      "Druid",
+      "Ranger"
+    ],
+    "Conjure Barrage": [
+      "Ranger"
+    ],
+    "Counterspell": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Create Food and Water": [
+      "Artificer",
+      "Cleric",
+      "Paladin"
+    ],
+    "Crusader's Mantle": [
+      "Paladin"
+    ],
+    "Daylight": [
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger",
+      "Sorcerer"
+    ],
+    "Dispel Magic": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Elemental Weapon": [
+      "Artificer",
+      "Paladin"
+    ],
+    "Enemies Abound": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Erupting Earth": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Fear": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Feign Death": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Wizard"
+    ],
+    "Fireball": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Flame Arrows": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Fly": [
+      "Artificer",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Gaseous Form": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Glyph of Warding": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Wizard"
+    ],
+    "Haste": [
+      "Artificer",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Hunger of Hadar": [
+      "Warlock"
+    ],
+    "Hypnotic Pattern": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Intellect Fortress": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Leomund's Tiny Hut": [
+      "Bard",
+      "Wizard"
+    ],
+    "Life Transference": [
+      "Cleric",
+      "Wizard"
+    ],
+    "Lightning Arrow": [
+      "Ranger"
+    ],
+    "Lightning Bolt": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Magic Circle": [
+      "Cleric",
+      "Paladin",
+      "Warlock",
+      "Wizard"
+    ],
+    "Major Image": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mass Healing Word": [
+      "Cleric"
+    ],
+    "Meld into Stone": [
+      "Cleric",
+      "Druid"
+    ],
+    "Nondetection": [
+      "Bard",
+      "Ranger",
+      "Wizard"
+    ],
+    "Phantom Steed": [
+      "Wizard"
+    ],
+    "Plant Growth": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Protection from Energy": [
+      "Artificer",
+      "Cleric",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Remove Curse": [
+      "Cleric",
+      "Paladin",
+      "Warlock",
+      "Wizard"
+    ],
+    "Revivify": [
+      "Artificer",
+      "Cleric",
+      "Paladin"
+    ],
+    "Sending": [
+      "Bard",
+      "Cleric",
+      "Wizard"
+    ],
+    "Sleet Storm": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Slow": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Speak with Dead": [
+      "Bard",
+      "Cleric"
+    ],
+    "Speak with Plants": [
+      "Bard",
+      "Druid",
+      "Ranger"
+    ],
+    "Spirit Guardians": [
+      "Cleric"
+    ],
+    "Stinking Cloud": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Summon Fey": [
+      "Druid",
+      "Ranger",
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Lesser Demons": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Shadowspawn": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Undead": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Thunder Step": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Tidal Wave": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Tiny Servant": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Tongues": [
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Vampiric Touch": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Wall of Sand": [
+      "Wizard"
+    ],
+    "Wall of Water": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Water Breathing": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Water Walk": [
+      "Artificer",
+      "Cleric",
+      "Druid",
+      "Ranger",
+      "Sorcerer"
+    ],
+    "Wind Wall": [
+      "Druid",
+      "Ranger"
+    ],
+    "Arcane Eye": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Aura of Life": [
+      "Paladin"
+    ],
+    "Aura of Purity": [
+      "Paladin"
+    ],
+    "Banishment": [
+      "Cleric",
+      "Paladin",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Blight": [
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Charm Monster": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Compulsion": [
+      "Bard"
+    ],
+    "Confusion": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Conjure Minor Elementals": [
+      "Druid",
+      "Wizard"
+    ],
+    "Conjure Woodland Beings": [
+      "Druid",
+      "Ranger"
+    ],
+    "Control Water": [
+      "Cleric",
+      "Druid",
+      "Wizard"
+    ],
+    "Death Ward": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Dimension Door": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Divination": [
+      "Cleric"
+    ],
+    "Dominate Beast": [
+      "Druid",
+      "Sorcerer"
+    ],
+    "Elemental Bane": [
+      "Artificer",
+      "Druid",
+      "Warlock",
+      "Wizard"
+    ],
+    "Evard's Black Tentacles": [
+      "Wizard"
+    ],
+    "Fabricate": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Find Greater Steed": [
+      "Paladin"
+    ],
+    "Fire Shield": [
+      "Wizard"
+    ],
+    "Freedom of Movement": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Ranger"
+    ],
+    "Giant Insect": [
+      "Druid"
+    ],
+    "Grasping Vine": [
+      "Druid",
+      "Ranger"
+    ],
+    "Greater Invisibility": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Guardian of Faith": [
+      "Cleric"
+    ],
+    "Guardian of Nature": [
+      "Druid",
+      "Ranger"
+    ],
+    "Hallucinatory Terrain": [
+      "Bard",
+      "Druid",
+      "Warlock",
+      "Wizard"
+    ],
+    "Ice Storm": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Leomund's Secret Chest": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Locate Creature": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Ranger",
+      "Wizard"
+    ],
+    "Mordenkainen's Faithful Hound": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Mordenkainen's Private Sanctum": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Otiluke's Resilient Sphere": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Phantasmal Killer": [
+      "Wizard"
+    ],
+    "Polymorph": [
+      "Bard",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Shadow of Moil": [
+      "Warlock"
+    ],
+    "Sickening Radiance": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Staggering Smite": [
+      "Paladin"
+    ],
+    "Stone Shape": [
+      "Artificer",
+      "Cleric",
+      "Druid",
+      "Wizard"
+    ],
+    "Stoneskin": [
+      "Artificer",
+      "Druid",
+      "Ranger",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Storm Sphere": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Summon Aberration": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Construct": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Summon Elemental": [
+      "Druid",
+      "Ranger",
+      "Wizard"
+    ],
+    "Summon Greater Demon": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Vitriolic Sphere": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Wall of Fire": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Watery Sphere": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Animate Objects": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Antilife Shell": [
+      "Druid"
+    ],
+    "Awaken": [
+      "Bard",
+      "Druid"
+    ],
+    "Banishing Smite": [
+      "Paladin"
+    ],
+    "Bigby's Hand": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Circle of Power": [
+      "Paladin"
+    ],
+    "Cloudkill": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Commune": [
+      "Cleric"
+    ],
+    "Commune with Nature": [
+      "Druid",
+      "Ranger"
+    ],
+    "Cone of Cold": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Conjure Elemental": [
+      "Druid",
+      "Wizard"
+    ],
+    "Contact Other Plane": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Contagion": [
+      "Cleric",
+      "Druid"
+    ],
+    "Control Winds": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Creation": [
+      "Artificer",
+      "Wizard"
+    ],
+    "Danse Macabre": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Dawn": [
+      "Cleric",
+      "Wizard"
+    ],
+    "Destructive Wave": [
+      "Paladin"
+    ],
+    "Dispel Evil and Good": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Dominate Person": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Dream": [
+      "Bard",
+      "Warlock",
+      "Wizard"
+    ],
+    "Enervation": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Far Step": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Flame Strike": [
+      "Cleric"
+    ],
+    "Geas": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Paladin",
+      "Wizard"
+    ],
+    "Greater Restoration": [
+      "Artificer",
+      "Bard",
+      "Cleric",
+      "Druid"
+    ],
+    "Hallow": [
+      "Cleric"
+    ],
+    "Hold Monster": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Holy Weapon": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Immolation": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Infernal Calling": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Insect Plague": [
+      "Cleric",
+      "Druid",
+      "Sorcerer"
+    ],
+    "Legend Lore": [
+      "Bard",
+      "Cleric",
+      "Wizard"
+    ],
+    "Maelstrom": [
+      "Druid"
+    ],
+    "Mass Cure Wounds": [
+      "Bard",
+      "Cleric",
+      "Druid"
+    ],
+    "Mislead": [
+      "Bard",
+      "Wizard"
+    ],
+    "Modify Memory": [
+      "Bard",
+      "Wizard"
+    ],
+    "Negative Energy Flood": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Passwall": [
+      "Wizard"
+    ],
+    "Planar Binding": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Wizard"
+    ],
+    "Raise Dead": [
+      "Bard",
+      "Cleric",
+      "Paladin"
+    ],
+    "Rary's Telepathic Bond": [
+      "Wizard"
+    ],
+    "Reincarnate": [
+      "Druid"
+    ],
+    "Scrying": [
+      "Bard",
+      "Cleric",
+      "Druid",
+      "Warlock",
+      "Wizard"
+    ],
+    "Seeming": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Skill Empowerment": [
+      "Artificer",
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Steel Wind Strike": [
+      "Ranger",
+      "Wizard"
+    ],
+    "Summon Celestial": [
+      "Cleric",
+      "Paladin"
+    ],
+    "Summon Draconic Spirit": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Swift Quiver": [
+      "Ranger"
+    ],
+    "Synaptic Static": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Telekinesis": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Teleportation Circle": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Transmute Rock": [
+      "Artificer",
+      "Druid",
+      "Wizard"
+    ],
+    "Tree Stride": [
+      "Druid",
+      "Ranger"
+    ],
+    "Wall of Force": [
+      "Wizard"
+    ],
+    "Wall of Light": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Wall of Stone": [
+      "Artificer",
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Wrath of Nature": [
+      "Druid",
+      "Ranger"
+    ],
+    "Arcane Gate": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Blade Barrier": [
+      "Cleric"
+    ],
+    "Bones of the Earth": [
+      "Druid"
+    ],
+    "Chain Lightning": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Circle of Death": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Conjure Fey": [
+      "Druid"
+    ],
+    "Contingency": [
+      "Wizard"
+    ],
+    "Create Homunculus": [
+      "Wizard"
+    ],
+    "Create Undead": [
+      "Cleric",
+      "Warlock",
+      "Wizard"
+    ],
+    "Disintegrate": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Drawmij's Instant Summons": [
+      "Wizard"
+    ],
+    "Druid Grove": [
+      "Druid"
+    ],
+    "Eyebite": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Find the Path": [
+      "Bard",
+      "Cleric",
+      "Druid"
+    ],
+    "Flesh to Stone": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Forbiddance": [
+      "Cleric"
+    ],
+    "Globe of Invulnerability": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Guards and Wards": [
+      "Bard",
+      "Wizard"
+    ],
+    "Harm": [
+      "Cleric"
+    ],
+    "Heal": [
+      "Cleric",
+      "Druid"
+    ],
+    "Heroes' Feast": [
+      "Cleric",
+      "Druid"
+    ],
+    "Investiture of Flame": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Investiture of Ice": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Investiture of Stone": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Investiture of Wind": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Magic Jar": [
+      "Wizard"
+    ],
+    "Mass Suggestion": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mental Prison": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Move Earth": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Otiluke's Freezing Sphere": [
+      "Wizard"
+    ],
+    "Otto's Irresistible Dance": [
+      "Bard",
+      "Wizard"
+    ],
+    "Planar Ally": [
+      "Cleric"
+    ],
+    "Primordial Ward": [
+      "Druid"
+    ],
+    "Programmed Illusion": [
+      "Bard",
+      "Wizard"
+    ],
+    "Scatter": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Soul Cage": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Summon Fiend": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Sunbeam": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Tasha's Otherworldly Guise": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Tenser's Transformation": [
+      "Wizard"
+    ],
+    "Transport via Plants": [
+      "Druid"
+    ],
+    "True Seeing": [
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Wall of Ice": [
+      "Wizard"
+    ],
+    "Wall of Thorns": [
+      "Druid"
+    ],
+    "Wind Walk": [
+      "Druid"
+    ],
+    "Word of Recall": [
+      "Cleric"
+    ],
+    "Conjure Celestial": [
+      "Cleric"
+    ],
+    "Crown of Stars": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Delayed Blast Fireball": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Divine Word": [
+      "Cleric"
+    ],
+    "Dream of the Blue Veil": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Etherealness": [
+      "Bard",
+      "Cleric",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Finger of Death": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Fire Storm": [
+      "Cleric",
+      "Druid",
+      "Sorcerer"
+    ],
+    "Forcecage": [
+      "Bard",
+      "Warlock",
+      "Wizard"
+    ],
+    "Mirage Arcane": [
+      "Bard",
+      "Druid",
+      "Wizard"
+    ],
+    "Mordenkainen's Magnificent Mansion": [
+      "Bard",
+      "Wizard"
+    ],
+    "Mordenkainen's Sword": [
+      "Bard",
+      "Wizard"
+    ],
+    "Plane Shift": [
+      "Cleric",
+      "Druid",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Power Word Pain": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Prismatic Spray": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Project Image": [
+      "Bard",
+      "Wizard"
+    ],
+    "Regenerate": [
+      "Bard",
+      "Cleric",
+      "Druid"
+    ],
+    "Resurrection": [
+      "Bard",
+      "Cleric"
+    ],
+    "Reverse Gravity": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Sequester": [
+      "Wizard"
+    ],
+    "Simulacrum": [
+      "Wizard"
+    ],
+    "Symbol": [
+      "Bard",
+      "Cleric",
+      "Wizard"
+    ],
+    "Teleport": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Temple of the Gods": [
+      "Cleric"
+    ],
+    "Whirlwind": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Abi-Dalzim's Horrid Wilting": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Animal Shapes": [
+      "Druid"
+    ],
+    "Antimagic Field": [
+      "Cleric",
+      "Wizard"
+    ],
+    "Antipathy/Sympathy": [
+      "Bard",
+      "Druid",
+      "Wizard"
+    ],
+    "Clone": [
+      "Wizard"
+    ],
+    "Control Weather": [
+      "Cleric",
+      "Druid",
+      "Wizard"
+    ],
+    "Dark Star": [
+      "Wizard"
+    ],
+    "Demiplane": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Dominate Monster": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Earthquake": [
+      "Cleric",
+      "Druid",
+      "Sorcerer"
+    ],
+    "Feeblemind": [
+      "Bard",
+      "Druid",
+      "Warlock",
+      "Wizard"
+    ],
+    "Glibness": [
+      "Bard",
+      "Warlock"
+    ],
+    "Holy Aura": [
+      "Cleric"
+    ],
+    "Illusory Dragon": [
+      "Wizard"
+    ],
+    "Incendiary Cloud": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Maddening Darkness": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Maze": [
+      "Wizard"
+    ],
+    "Mighty Fortress": [
+      "Wizard"
+    ],
+    "Mind Blank": [
+      "Bard",
+      "Wizard"
+    ],
+    "Power Word Stun": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Reality Break": [
+      "Wizard"
+    ],
+    "Sunburst": [
+      "Druid",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Telepathy": [
+      "Wizard"
+    ],
+    "Tsunami": [
+      "Druid"
+    ],
+    "Astral Projection": [
+      "Cleric",
+      "Warlock",
+      "Wizard"
+    ],
+    "Blade of Disaster": [
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Foresight": [
+      "Bard",
+      "Druid",
+      "Warlock",
+      "Wizard"
+    ],
+    "Gate": [
+      "Cleric",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Imprisonment": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Invulnerability": [
+      "Wizard"
+    ],
+    "Mass Heal": [
+      "Cleric"
+    ],
+    "Mass Polymorph": [
+      "Bard",
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Meteor Swarm": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "Power Word Heal": [
+      "Bard"
+    ],
+    "Power Word Kill": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Prismatic Wall": [
+      "Wizard"
+    ],
+    "Psychic Scream": [
+      "Bard",
+      "Sorcerer",
+      "Warlock",
+      "Wizard"
+    ],
+    "Ravenous Void": [
+      "Wizard"
+    ],
+    "Shapechange": [
+      "Druid",
+      "Wizard"
+    ],
+    "Storm of Vengeance": [
+      "Druid"
+    ],
+    "Time Ravage": [
+      "Wizard"
+    ],
+    "Time Stop": [
+      "Sorcerer",
+      "Wizard"
+    ],
+    "True Polymorph": [
+      "Bard",
+      "Warlock",
+      "Wizard"
+    ],
+    "True Resurrection": [
+      "Cleric",
+      "Druid"
+    ],
+    "Weird": [
+      "Warlock",
+      "Wizard"
+    ],
+    "Wish": [
+      "Sorcerer",
+      "Wizard"
+    ]
+  }
+}
