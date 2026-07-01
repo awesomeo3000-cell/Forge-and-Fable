@@ -4195,6 +4195,110 @@ button:disabled {
   text-shadow: 0 0 8px #ffd700, 0 0 18px rgba(255, 140, 40, 0.9);
 }
 
+.poly-die-stage {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  perspective: 340px;
+  perspective-origin: 50% 42%;
+}
+
+@keyframes poly-die-settle {
+  0% {
+    transform: rotateX(420deg) rotateY(-310deg) rotateZ(22deg) scale(0.84);
+  }
+  58% {
+    transform: rotateX(-24deg) rotateY(34deg) rotateZ(-8deg) scale(1.06);
+  }
+  75% {
+    transform: rotateX(-10deg) rotateY(20deg) rotateZ(4deg) scale(0.98);
+  }
+  100% {
+    transform: rotateX(-14deg) rotateY(24deg) rotateZ(-4deg) scale(1);
+  }
+}
+
+.poly-die-rig {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+  animation: poly-die-settle 1.65s cubic-bezier(0.19, 0.86, 0.22, 1) both;
+  animation-delay: var(--poly-delay, 0ms);
+}
+
+.poly-die-object {
+  position: absolute;
+  inset: 11px;
+  transform-style: preserve-3d;
+}
+
+.poly-die-face,
+.poly-die-facet {
+  position: absolute;
+  inset: 0;
+  clip-path: var(--poly-shape);
+  backface-visibility: hidden;
+}
+
+.poly-die-face {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border: 1.8px solid var(--poly-stroke);
+  background:
+    radial-gradient(circle at 38% 24%, rgba(255, 244, 218, 0.34), transparent 28%),
+    radial-gradient(circle at 58% 66%, rgba(255, 210, 122, 0.22), transparent 38%),
+    var(--poly-fill);
+  transform: translateZ(24px);
+  box-shadow:
+    inset 0 0 18px rgba(255, 244, 218, 0.15),
+    inset -14px -16px 28px rgba(0, 0, 0, 0.32),
+    0 0 28px var(--poly-glow);
+}
+
+.poly-die-face b {
+  color: #fff4da;
+  font-family: var(--poly-font, Georgia, "Times New Roman", serif);
+  font-size: 1.72rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 210, 122, 0.7), 0 2px 4px rgba(0, 0, 0, 0.72);
+}
+
+.poly-die-facet {
+  border: 1px solid var(--poly-facet);
+  background:
+    linear-gradient(135deg, rgba(255, 244, 218, 0.16), rgba(0, 0, 0, 0.22)),
+    var(--poly-fill);
+  opacity: 0.82;
+}
+
+.poly-die-back {
+  transform: translateZ(-16px) scale(0.82);
+  opacity: 0.48;
+}
+
+.poly-die-left {
+  transform: rotateY(-38deg) translateX(-16px) translateZ(8px);
+  transform-origin: left center;
+}
+
+.poly-die-right {
+  transform: rotateY(38deg) translateX(16px) translateZ(8px);
+  transform-origin: right center;
+}
+
+.poly-die-top {
+  transform: rotateX(38deg) translateY(-16px) translateZ(8px);
+  transform-origin: center top;
+}
+
+.poly-die-bottom {
+  transform: rotateX(-38deg) translateY(16px) translateZ(8px);
+  transform-origin: center bottom;
+}
+
 @keyframes crit-flash {
   0%   { opacity: 0;    transform: translate(-50%, -50%) scale(0.55) rotate(-4deg); }
   12%  { opacity: 1;    transform: translate(-50%, -50%) scale(1.08) rotate(1.5deg); }
@@ -4255,6 +4359,7 @@ button:disabled {
   .die-result-num,
   .die-roll-label,
   .d20-rig,
+  .poly-die-rig,
   .crit-banner::before,
   .crit-text {
     animation: none;

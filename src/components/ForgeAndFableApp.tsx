@@ -453,12 +453,17 @@ export default function ForgeAndFableApp() {
     modifier = 0,
     onResult?: (outcome: RollOutcome) => void,
   ) {
+    const rolls = Array<number>(count).fill(0);
+    const finishedIndices = new Set<number>();
+    let finished = 0;
+
     const newDice: RollingDie[] = Array.from({ length: count }, (_, i) => {
       const fromLeft = Math.random() > 0.5;
+      const result = rollDie(sides);
       return {
         id: `${crypto.randomUUID()}-${i}`,
         sides,
-        result: rollDie(sides),
+        result,
         label,
         fromLeft,
         startYPct: 0.15 + Math.random() * 0.35,
@@ -466,20 +471,25 @@ export default function ForgeAndFableApp() {
         landYPct: 0.25 + Math.random() * 0.38,
         rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
         delayMs: i * 220,
+        onFinish: onResult
+          ? (settledResult) => {
+              if (finishedIndices.has(i)) return;
+              finishedIndices.add(i);
+              rolls[i] = settledResult;
+              finished += 1;
+
+              if (finished === count) {
+                onResult({
+                  rolls: [...rolls],
+                  modifier,
+                  total: rolls.reduce((sum, value) => sum + value, modifier),
+                });
+              }
+            }
+          : undefined,
       };
     });
-    const rolls = newDice.map((die) => die.result);
     setFlyingDice((prev) => [...prev, ...newDice]);
-
-    if (onResult) {
-      window.setTimeout(() => {
-        onResult({
-          rolls,
-          modifier,
-          total: rolls.reduce((sum, result) => sum + result, modifier),
-        });
-      }, 2800 + Math.max(0, count - 1) * 220);
-    }
   }
 
   function expireDie(id: string) {
