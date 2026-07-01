@@ -985,6 +985,7 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: [],
+      casterType: "none",
     },
     {
       id: "bard",
@@ -1011,6 +1012,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["guidance", "healing-word"],
+      casterType: "full",
+      spellcastingAbility: "charisma",
     },
     {
       id: "cleric",
@@ -1037,6 +1040,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["guidance", "healing-word", "bless"],
+      casterType: "full",
+      spellcastingAbility: "wisdom",
     },
     {
       id: "druid",
@@ -1063,6 +1068,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["guidance", "healing-word"],
+      casterType: "full",
+      spellcastingAbility: "wisdom",
     },
     {
       id: "fighter",
@@ -1089,6 +1096,7 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: [],
+      casterType: "none",
     },
     {
       id: "monk",
@@ -1115,6 +1123,7 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: [],
+      casterType: "none",
     },
     {
       id: "paladin",
@@ -1141,6 +1150,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["bless", "healing-word"],
+      casterType: "half",
+      spellcastingAbility: "charisma",
     },
     {
       id: "ranger",
@@ -1167,6 +1178,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["guidance"],
+      casterType: "half",
+      spellcastingAbility: "wisdom",
     },
     {
       id: "rogue",
@@ -1193,6 +1206,7 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: [],
+      casterType: "none",
     },
     {
       id: "sorcerer",
@@ -1219,6 +1233,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["mage-hand", "magic-missile", "shield"],
+      casterType: "full",
+      spellcastingAbility: "charisma",
     },
     {
       id: "warlock",
@@ -1245,6 +1261,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["mage-hand", "shield"],
+      casterType: "pact",
+      spellcastingAbility: "charisma",
     },
     {
       id: "wizard",
@@ -1271,6 +1289,8 @@ export const ruleset: Ruleset = {
         },
       ],
       spellSuggestions: ["mage-hand", "magic-missile", "shield"],
+      casterType: "full",
+      spellcastingAbility: "intelligence",
     },
   ],
   spells: [

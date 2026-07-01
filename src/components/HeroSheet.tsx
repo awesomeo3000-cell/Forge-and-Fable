@@ -35,6 +35,9 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
+import { getSpell, parseDamageDice } from "@/lib/spells";
+import { maxSlots } from "@/lib/spellSlots";
+import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
@@ -107,8 +110,8 @@ export default function HeroSheet(props: {
   const passivePerception = 10 + skillBonus(SKILLS.find((s) => s.id === "perception")!);
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
-  const knownSpells = props.ruleset.spells.filter((s) => props.character.spellsKnown.includes(s.id));
-  const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, typeof knownSpells>);
+  const knownSpells = props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[];
+  const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
 
   const toggleSkillProficiency = (skillId: string) => {
@@ -185,6 +188,33 @@ export default function HeroSheet(props: {
   }
 
   const collapsed = layout.collapsed;
+
+  /* ── Spell slots & detail ── */
+  const [spellDetail, setSpellDetail] = useState<SpellData | null>(null);
+  const casterType = heroClass.casterType ?? "none";
+  const spellAbility = heroClass.spellcastingAbility;
+  const slotMax = maxSlots(casterType, props.character.level);
+  const slotsUsed = props.character.spellSlotsUsed ?? {};
+  const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
+  const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
+
+  const spendSlot = (lvl: number) => {
+    const next: SpellSlots = { ...slotsUsed };
+    next[lvl] = Math.min((next[lvl] ?? 0) + 1, slotMax[lvl - 1] ?? 0);
+    props.onUpdate({ spellSlotsUsed: next });
+  };
+  const recoverSlot = (lvl: number) => {
+    const next: SpellSlots = { ...slotsUsed };
+    next[lvl] = Math.max((next[lvl] ?? 0) - 1, 0);
+    props.onUpdate({ spellSlotsUsed: next });
+  };
+  const doShortRest = () => {
+    if (casterType === "pact") props.onUpdate({ pactSlotsUsed: 0 });
+  };
+  const doLongRest = () => {
+    props.onUpdate({ spellSlotsUsed: {}, pactSlotsUsed: 0 });
+  };
+
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Apply immediately for feedback; persist on a debounce.
@@ -263,10 +293,14 @@ export default function HeroSheet(props: {
         <div className="cs-identity">
           <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
           <div><h1 className="cs-char-name">{props.character.name}</h1><p className="cs-char-subtitle">{subtitleParts.join(" / ")}</p></div>
-          <span className="cs-level-badge">Lv {props.character.level}</span>
+          <span className="cs-level-badge">
+            <button className="cs-lvl-stepper" type="button" onClick={() => { const n = Math.max(1, props.character.level - 1); props.onUpdate({ level: n }); }}><Minus size={10} /></button>
+            Lv {props.character.level}
+            <button className="cs-lvl-stepper" type="button" onClick={() => { const n = Math.min(20, props.character.level + 1); props.onUpdate({ level: n }); }}><Plus size={10} /></button>
+          </span>
           <div className="cs-rest-group">
-            <button className="cs-glass-btn" type="button" title="Short rest"><ArrowLeftRight size={13} />Short</button>
-            <button className="cs-glass-btn" type="button" title="Long rest"><Moon size={13} />Long</button>
+            <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest"><ArrowLeftRight size={13} />Short</button>
+            <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest"><Moon size={13} />Long</button>
           </div>
           <button className="cs-glass-btn cs-inspire-btn" type="button" title="Heroic Inspiration"><Sparkles size={13} />Insp</button>
           <div style={{ position: "relative" }}>
@@ -345,7 +379,21 @@ export default function HeroSheet(props: {
           <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
             <div className={refTab === "features" ? "" : "cs-reftab-hidden"}><div className="cs-feature-group"><span className="cs-spell-level-head">Class Features</span>{featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}</div></div>
             <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => { const ci = trait.indexOf(":"); return (<div className="cs-feature-card" key={trait}>{ci > 0 ? <p><strong>{trait.slice(0, ci + 1)}</strong>{trait.slice(ci + 1)}</p> : <p>{trait}</p>}</div>); })}</div>) : null}</div>
-            <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}><div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => (<div key={level} className="cs-spell-group"><span className="cs-spell-level-head">{level === "0" ? "Cantrips" : `Level ${level}`}</span>{spells.map((spell) => (<div className="cs-spell-card" key={spell.id}><strong>{spell.name}</strong><span>{spell.school} &middot; {spell.action}</span><p>{spell.summary}</p></div>))}</div>))}</div></div>
+            <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}>
+              {casterType !== "none" && spellAbility ? (<div className="cs-spellcast-head">Spell save DC {saveDC} &middot; Spell attack {signed(spellAttack)}</div>) : null}
+              <div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
+                const lvlNum = Number(level);
+                const max = slotMax[lvlNum - 1] ?? 0;
+                const used = slotsUsed[lvlNum] ?? 0;
+                return (<div key={level} className="cs-spell-group">
+                  <span className="cs-spell-level-head">
+                    {level === "0" ? "Cantrips" : `Level ${level}`}
+                    {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
+                  </span>
+                  {spells.map((spell) => (<div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}><strong>{spell.name}</strong><span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span><p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p></div>))}
+                </div>);
+              })}</div>
+            </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>{props.character.inventory.length > 0 ? (<div className="cs-inv-list">{props.character.inventory.map((item) => (<div className="cs-inv-row" key={item.id}><div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div><div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}</div></div>))}</div>) : <p className="cs-muted">No equipment</p>}</div>
           </div>
         </section>
@@ -415,6 +463,42 @@ export default function HeroSheet(props: {
       </div>
 
       {showAppearance ? (<AppearancePanel theme={theme} onUpdate={(t) => { props.onUpdate({ theme: t }); }} onClose={() => setShowAppearance(false)} />) : null}
+      {spellDetail ? (
+        <div className="cs-spell-detail-overlay" onClick={() => setSpellDetail(null)}>
+          <div className="cs-spell-detail" onClick={(e) => e.stopPropagation()}>
+            <button className="cs-spell-detail-close" type="button" onClick={() => setSpellDetail(null)}>×</button>
+            <h3 className="cs-section-eyebrow">{spellDetail.name}</h3>
+            <p className="cs-spell-detail-meta">{spellDetail.level === 0 ? "Cantrip" : `Level ${spellDetail.level}`} {spellDetail.school}{spellDetail.ritual ? " (ritual)" : ""}{spellDetail.concentration ? " · Concentration" : ""}</p>
+            <div className="cs-spell-detail-grid">
+              <span><strong>Casting Time</strong> {spellDetail.castingTime}</span>
+              <span><strong>Range</strong> {spellDetail.range || "—"}</span>
+              <span><strong>Duration</strong> {spellDetail.duration || "—"}</span>
+              <span><strong>Area</strong> {spellDetail.area || "—"}</span>
+              <span><strong>Components</strong> {[spellDetail.components.verbal ? "V" : "", spellDetail.components.somatic ? "S" : "", spellDetail.components.material ? `M (${spellDetail.material})` : ""].filter(Boolean).join(", ") || "—"}</span>
+              <span><strong>Source</strong> {spellDetail.source}</span>
+            </div>
+            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" onClick={() => props.onRoll(`${spellDetail.name} attack`, 20, 1, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
+            {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
+            <p className="cs-spell-detail-desc">{spellDetail.description}</p>
+            {spellDetail.level > 0 && casterType !== "none" ? (
+              <div className="cs-spell-detail-cast">
+                {(() => {
+                  const dice = parseDamageDice(spellDetail.description);
+                  if (dice.length === 0) return null;
+                  return (
+                    <div className="cs-spell-damage-dice">
+                      <strong>Damage:</strong> {spellDetail.damageEffect ? `${spellDetail.damageEffect} — ` : ""}
+                      {dice.map((d, i) => (
+                        <button key={i} className="cs-glass-btn" type="button" onClick={() => props.onRoll(`${spellDetail.name} damage`, d.sides, d.count, 0)}>{d.count}d{d.sides}</button>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

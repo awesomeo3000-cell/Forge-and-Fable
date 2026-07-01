@@ -3302,6 +3302,136 @@ button:disabled {
 
 .cs-skin-reset:hover { background: var(--accent); color: var(--ground); }
 
+/* ── Level stepper ── */
+
+.cs-lvl-stepper {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--select);
+  cursor: pointer;
+}
+
+/* ── Spellcast header ── */
+
+.cs-spellcast-head {
+  font-family: var(--font-label);
+  font-size: 0.7em;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* ── Slot pips ── */
+
+.cs-slot-pips {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 8px;
+}
+
+.cs-slot-pip {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cs-slot-pip.cs-slot-used {
+  background: var(--select);
+  border-color: var(--select);
+}
+
+/* ── Spell detail overlay ── */
+
+.cs-spell-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.4);
+  padding: 24px;
+}
+
+.cs-spell-detail {
+  position: relative;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--ground);
+  color: var(--parchment);
+  font-family: var(--font-body);
+}
+
+.cs-spell-detail-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.cs-spell-detail-meta {
+  font-family: var(--font-label);
+  font-size: 0.75em;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+
+.cs-spell-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+}
+
+.cs-spell-detail-grid span strong {
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 0.7em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.cs-spell-detail-roll {
+  font-size: 0.88em;
+  margin-bottom: 8px;
+}
+
+.cs-spell-detail-desc {
+  font-size: 0.88em;
+  color: var(--parchment-2);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.cs-spell-damage-dice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 0.85em;
+}
+
 .cs-skin-btn {
   border-color: var(--accent-deep) !important;
   color: var(--accent) !important;
