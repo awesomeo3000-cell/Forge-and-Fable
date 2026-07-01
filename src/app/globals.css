@@ -2900,10 +2900,15 @@ button:disabled {
   --select:     var(--doc-select);
 
   --sheet-font: var(--font-body);
+  --skin-bg-pattern: var(--grain);
+  --skin-bg-size: 140px 140px;
+  --skin-bg-opacity: 0.08;
 
   /* the earned shadow lifts the paper off the desk */
   box-shadow: var(--sheet-shadow);
 
+  position: relative;
+  isolation: isolate;
   font-size: clamp(16px, 0.45vw + 12px, 20px);
 
   overflow-wrap: break-word;
@@ -2956,9 +2961,56 @@ button:disabled {
 .cs-sheet-col:nth-child(2) { flex: 0 0 minmax(10.5em, 0.9fr); max-width: 350px; }
 .cs-sheet-col:nth-child(3) { flex: 1; }
 
+.cs-sheet-tools {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 42px;
+  padding: 7px 10px;
+  background: var(--ground);
+  border-bottom: 1px solid var(--rule);
+}
+
+.cs-sheet[data-bg] .cs-sheet-tools::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  background-image: var(--skin-bg-pattern);
+  background-size: var(--skin-bg-size);
+  opacity: calc(var(--skin-bg-opacity) * 0.75);
+}
+
+.cs-sheet-tools > * {
+  position: relative;
+  z-index: 1;
+}
+
 .cs-section {
+  position: relative;
   background: var(--ground);
   overflow: hidden;
+}
+
+.cs-sheet[data-bg] .cs-section::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  background-image: var(--skin-bg-pattern);
+  background-size: var(--skin-bg-size);
+  opacity: var(--skin-bg-opacity);
+}
+
+.cs-sheet[data-bg] .cs-section > * {
+  position: relative;
+  z-index: 1;
 }
 
 .cs-section-header {
@@ -3049,37 +3101,86 @@ button:disabled {
   border-color: var(--accent-deep) !important;
 }
 
-.cs-sheet[data-bg="sparkle"]::before { background: repeating-radial-gradient(circle at 20% 30%, rgba(255,200,230,0.15) 0, transparent 8px); opacity: var(--bg-opacity, 0.5); }
-.cs-sheet[data-bg="linen"]::before   { background: repeating-linear-gradient(90deg, transparent 0, rgba(0,0,0,0.03) 1px, transparent 3px); opacity: var(--bg-opacity, 0.5); }
-.cs-sheet[data-bg="stars"]::before   { background: radial-gradient(1px 1px at 10% 15%, rgba(255,255,220,0.3) 50%, transparent 50%), radial-gradient(1px 1px at 30% 40%, rgba(255,255,220,0.3) 50%, transparent 50%), radial-gradient(1px 1px at 55% 25%, rgba(255,255,220,0.3) 50%, transparent 50%), radial-gradient(1px 1px at 70% 60%, rgba(255,255,220,0.3) 50%, transparent 50%), radial-gradient(1px 1px at 85% 35%, rgba(255,255,220,0.3) 50%, transparent 50%); opacity: var(--bg-opacity, 0.5); }
-.cs-sheet[data-bg="forest"]::before  { background: repeating-linear-gradient(0deg, transparent 0, rgba(60,100,40,0.08) 2px, transparent 4px), repeating-linear-gradient(90deg, transparent 0, rgba(40,80,30,0.04) 1px, transparent 3px); opacity: var(--bg-opacity, 0.5); }
-.cs-sheet[data-bg="dungeon"]::before { background: repeating-linear-gradient(45deg, transparent 0, rgba(40,30,20,0.08) 1px, transparent 4px); opacity: var(--bg-opacity, 0.5); }
-.cs-sheet[data-bg="parchment"]::before { background: var(--grain); background-size: 140px 140px; opacity: 0.06; }
-.cs-sheet[data-bg="plain"]::before   { background: none; }
-
-.cs-sheet[data-bg]::before {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  content: "";
-  mix-blend-mode: multiply;
-  z-index: 0;
+.cs-sheet[data-bg="parchment"],
+.cs-bg-swatch[data-bg="parchment"] {
+  --skin-bg-pattern: var(--grain);
+  --skin-bg-size: 140px 140px;
 }
+
+.cs-sheet[data-bg="plain"],
+.cs-bg-swatch[data-bg="plain"] {
+  --skin-bg-pattern: none;
+}
+
+.cs-sheet[data-bg="linen"],
+.cs-bg-swatch[data-bg="linen"] {
+  --skin-bg-pattern:
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1px);
+  --skin-bg-size: 9px 9px;
+}
+
+.cs-sheet[data-bg="stars"],
+.cs-bg-swatch[data-bg="stars"] {
+  --skin-bg-pattern:
+    radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--accent) 62%, transparent) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 35% 44%, color-mix(in srgb, var(--ink) 34%, transparent) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 24%, color-mix(in srgb, var(--accent) 54%, transparent) 0 1.25px, transparent 2.25px),
+    radial-gradient(circle at 84% 68%, color-mix(in srgb, var(--ink) 30%, transparent) 0 1px, transparent 2px);
+  --skin-bg-size: 112px 88px;
+}
+
+.cs-sheet[data-bg="sparkle"],
+.cs-bg-swatch[data-bg="sparkle"] {
+  --skin-bg-pattern:
+    radial-gradient(circle at 22% 30%, color-mix(in srgb, var(--accent) 68%, transparent) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--accent) 30%, transparent) 0 1px, transparent 7px),
+    radial-gradient(circle at 48% 76%, color-mix(in srgb, var(--ink) 18%, transparent) 0 1px, transparent 8px),
+    linear-gradient(135deg, transparent 0 46%, color-mix(in srgb, var(--accent) 22%, transparent) 47% 49%, transparent 50% 100%);
+  --skin-bg-size: 86px 86px;
+}
+
+.cs-sheet[data-bg="forest"],
+.cs-bg-swatch[data-bg="forest"] {
+  --skin-bg-pattern:
+    radial-gradient(ellipse at 32% 28%, rgba(79, 125, 51, 0.28) 0 7px, transparent 8px),
+    radial-gradient(ellipse at 70% 74%, rgba(43, 94, 54, 0.24) 0 9px, transparent 10px),
+    repeating-linear-gradient(112deg, transparent 0 13px, rgba(43, 94, 54, 0.16) 14px 16px, transparent 17px 34px);
+  --skin-bg-size: 96px 112px;
+}
+
+.cs-sheet[data-bg="dungeon"],
+.cs-bg-swatch[data-bg="dungeon"] {
+  --skin-bg-pattern:
+    linear-gradient(color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 0 47%, color-mix(in srgb, var(--ink) 12%, transparent) 48% 50%, transparent 51% 100%);
+  --skin-bg-size: 34px 26px, 34px 26px, 68px 52px;
+}
+
+.cs-sheet[data-bg="plain"] {
+  --skin-bg-opacity: 0;
+}
+
+.cs-sheet[data-bg="parchment"] { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.18); }
+.cs-sheet[data-bg="linen"]     { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.65); }
+.cs-sheet[data-bg="stars"]     { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.9); }
+.cs-sheet[data-bg="sparkle"]   { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.95); }
+.cs-sheet[data-bg="forest"]    { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.8); }
+.cs-sheet[data-bg="dungeon"]   { --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.85); }
 
 /* ── Skin dropdown ── */
 
 .cs-skin-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
+  position: fixed;
   min-width: 180px;
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
   background: var(--ground);
   box-shadow: var(--shadow-soft);
-  z-index: 100;
-  overflow: hidden;
+  z-index: 10000;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .cs-skin-option {
@@ -3223,16 +3324,41 @@ button:disabled {
 }
 
 .cs-bg-swatch {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  --skin-bg-pattern: none;
+  --skin-bg-size: 80px 80px;
+  --skin-bg-opacity: 0.78;
   padding: 10px;
   border: 2px solid transparent;
   border-radius: var(--r-sm);
-  background: var(--ground-3);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ground-3) 88%, var(--accent)), var(--ground-3));
   cursor: pointer;
   text-align: center;
   font-family: var(--font-label);
   font-size: 0.72em;
   color: var(--parchment-2);
   transition: border-color 120ms;
+}
+
+.cs-bg-swatch::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  background-image: var(--skin-bg-pattern);
+  background-size: var(--skin-bg-size);
+  opacity: var(--skin-bg-opacity);
+}
+
+.cs-bg-swatch span {
+  position: relative;
+  z-index: 1;
+  padding: 2px 5px;
+  background: color-mix(in srgb, var(--ground-3) 72%, transparent);
 }
 
 .cs-bg-swatch:hover { border-color: var(--rule); }

@@ -22,8 +22,9 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
-import type { FormEvent, KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
 import type { AbilityKey, AbilityScores, Character, Ruleset, SheetSectionId } from "@/types/game";
 import {
   abilityKeys,
@@ -59,6 +60,7 @@ import {
 } from "@dnd-kit/sortable";
 
 type RefTab = "features" | "traits" | "spells" | "inventory";
+type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
 
 const REF_TABS: { id: RefTab; label: string; Icon: typeof Sparkles }[] = [
   { id: "features", label: "Features", Icon: Sparkles },
@@ -148,6 +150,9 @@ export default function HeroSheet(props: {
   /* ── Theme ── */
   const [showPresets, setShowPresets] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
+  const skinButtonRef = useRef<HTMLButtonElement | null>(null);
+  const skinMenuRef = useRef<HTMLDivElement | null>(null);
+  const [skinMenuPosition, setSkinMenuPosition] = useState<SkinMenuPosition | null>(null);
   const theme = props.character.theme;
   const themeVars = theme ? ({
     "--paper": theme.paper, "--paper-raised": `color-mix(in srgb, ${theme.paper} 94%, #000)`,
@@ -164,6 +169,47 @@ export default function HeroSheet(props: {
     const p = SKIN_PRESETS.find((x) => x.id === id);
     if (p) props.onUpdate({ theme: { ...p.theme } });
     setShowPresets(false);
+  };
+  const updateSkinMenuPosition = useCallback(() => {
+    const button = skinButtonRef.current;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+    const gutter = 12;
+    const minWidth = Math.max(180, rect.width);
+    const maxLeft = Math.max(gutter, window.innerWidth - minWidth - gutter);
+    const top = Math.min(rect.bottom + 6, window.innerHeight - gutter);
+
+    setSkinMenuPosition({
+      top,
+      left: Math.min(Math.max(gutter, rect.right - minWidth), maxLeft),
+      minWidth,
+      maxHeight: Math.max(140, window.innerHeight - top - gutter),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showPresets) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (skinButtonRef.current?.contains(target) || skinMenuRef.current?.contains(target)) return;
+      setShowPresets(false);
+    };
+
+    window.addEventListener("resize", updateSkinMenuPosition);
+    window.addEventListener("scroll", updateSkinMenuPosition, true);
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("resize", updateSkinMenuPosition);
+      window.removeEventListener("scroll", updateSkinMenuPosition, true);
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [showPresets, updateSkinMenuPosition]);
+  const toggleSkinMenu = () => {
+    if (!showPresets) updateSkinMenuPosition();
+    setShowPresets((open) => !open);
   };
 
   /* ── Layout ── */
@@ -262,13 +308,7 @@ export default function HeroSheet(props: {
             <button className="cs-glass-btn" type="button" title="Long rest"><Moon size={13} />Long</button>
           </div>
           <button className="cs-glass-btn cs-inspire-btn" type="button" title="Heroic Inspiration"><Sparkles size={13} />Insp</button>
-          <div style={{ position: "relative" }}>
-            <button className="cs-glass-btn cs-skin-btn" type="button" onClick={() => setShowPresets(!showPresets)} title="Appearance"><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>
-            {showPresets ? (<div className="cs-skin-dropdown">{SKIN_PRESETS.map((p) => (<button key={p.id} type="button" className="cs-skin-option" onClick={() => applyPreset(p.id)}>{p.name}</button>))}<button key="custom" type="button" className="cs-skin-option" onClick={() => { setShowAppearance(true); setShowPresets(false); }}>Customize...</button>{theme?.presetId ? (<button key="reset" type="button" className="cs-skin-option" onClick={() => { props.onUpdate({ theme: undefined }); setShowPresets(false); }}>Reset to default</button>) : null}</div>) : null}
-          </div>
           <button className="cs-retire-btn" type="button" onClick={props.onDelete}><Trash2 size={12} /></button>
-          <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout"><GripHorizontal size={13} />Layout</button>
-          {editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} /></button> : null}
         </div>
       );
       case "vitals": return (
@@ -358,9 +398,53 @@ export default function HeroSheet(props: {
 
   /* ── Render ── */
   const allIds = layout.columns.flat();
+  const skinMenuThemeVars = theme ? {
+    ...themeVars,
+    "--ground": "var(--paper)",
+    "--ground-2": "var(--paper)",
+    "--ground-3": "var(--paper-raised)",
+    "--parchment": "var(--ink)",
+    "--parchment-2": "var(--ink-2)",
+    "--ink-faint": "var(--ink-3)",
+    "--rule": "var(--doc-rule)",
+    "--rule-soft": "var(--doc-rule-soft)",
+    "--accent": "var(--doc-accent)",
+    "--accent-deep": "var(--doc-accent-deep)",
+    "--select": "var(--doc-select)",
+  } : {};
+  const skinMenuStyle = skinMenuPosition ? ({
+    ...skinMenuThemeVars,
+    top: skinMenuPosition.top,
+    left: skinMenuPosition.left,
+    minWidth: skinMenuPosition.minWidth,
+    maxHeight: skinMenuPosition.maxHeight,
+  } as CSSProperties) : undefined;
+  const skinPresetMenu = showPresets && skinMenuPosition ? createPortal(
+    <div ref={skinMenuRef} className="cs-skin-dropdown" style={skinMenuStyle} role="menu" aria-label="Skin presets">
+      {SKIN_PRESETS.map((p) => (
+        <button key={p.id} type="button" className="cs-skin-option" role="menuitem" onClick={() => applyPreset(p.id)}>
+          {p.name}
+        </button>
+      ))}
+      <button key="custom" type="button" className="cs-skin-option" role="menuitem" onClick={() => { setShowAppearance(true); setShowPresets(false); }}>
+        Customize...
+      </button>
+      {theme?.presetId ? (
+        <button key="reset" type="button" className="cs-skin-option" role="menuitem" onClick={() => { props.onUpdate({ theme: undefined }); setShowPresets(false); }}>
+          Reset to default
+        </button>
+      ) : null}
+    </div>,
+    document.body,
+  ) : null;
 
   return (
     <div className="cs-sheet" style={themeVars} data-bg={theme?.backgroundKey ?? "parchment"}>
+      <div className="cs-sheet-tools" role="toolbar" aria-label="Sheet tools">
+        <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>
+        <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>
+        {editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} />Reset</button> : null}
+      </div>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -389,6 +473,7 @@ export default function HeroSheet(props: {
           ) : null}
         </DragOverlay>
       </DndContext>
+      {skinPresetMenu}
       {showAppearance ? (<AppearancePanel theme={theme} onUpdate={(t) => { props.onUpdate({ theme: t }); }} onClose={() => setShowAppearance(false)} />) : null}
     </div>
   );

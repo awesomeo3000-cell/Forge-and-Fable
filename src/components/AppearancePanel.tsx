@@ -125,7 +125,7 @@ export default function AppearancePanel(props: {
         <span className="cs-skin-label">Background</span>
         <div className="cs-preset-grid cs-bg-grid">
           {BACKGROUNDS.map((k) => (
-            <button key={k} type="button" className={`cs-bg-swatch${bgKey === k ? " active" : ""}`} onClick={() => { setBgKey(k); save({ backgroundKey: k }); }}>
+            <button key={k} type="button" className={`cs-bg-swatch${bgKey === k ? " active" : ""}`} data-bg={k} onClick={() => { setBgKey(k); save({ backgroundKey: k }); }}>
               <span>{BACKGROUND_LABELS[k]}</span>
             </button>
           ))}
