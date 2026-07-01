@@ -66,6 +66,11 @@ type DraftCharacter = {
 type StatMethod = "point-buy" | "standard-array" | "roll";
 type AuthMode = "login" | "register";
 type BuildMode = "standard" | "quickbuilder" | "premade";
+type RollOutcome = {
+  rolls: number[];
+  modifier: number;
+  total: number;
+};
 
 export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
@@ -441,7 +446,13 @@ export default function ForgeAndFableApp() {
     setStatus(`${selected.name} retired`);
   }
 
-  function pushRoll(label: string, sides: number, count = 1, _modifier = 0) {
+  function pushRoll(
+    label: string,
+    sides: number,
+    count = 1,
+    modifier = 0,
+    onResult?: (outcome: RollOutcome) => void,
+  ) {
     const newDice: RollingDie[] = Array.from({ length: count }, (_, i) => {
       const fromLeft = Math.random() > 0.5;
       return {
@@ -457,7 +468,18 @@ export default function ForgeAndFableApp() {
         delayMs: i * 220,
       };
     });
+    const rolls = newDice.map((die) => die.result);
     setFlyingDice((prev) => [...prev, ...newDice]);
+
+    if (onResult) {
+      window.setTimeout(() => {
+        onResult({
+          rolls,
+          modifier,
+          total: rolls.reduce((sum, result) => sum + result, modifier),
+        });
+      }, 2800 + Math.max(0, count - 1) * 220);
+    }
   }
 
   function expireDie(id: string) {

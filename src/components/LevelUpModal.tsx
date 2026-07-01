@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
@@ -9,6 +9,12 @@ import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
 import { availableFeats } from "@/lib/feats";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
+type HpRollRequest = {
+  label: string;
+  sides: number;
+  modifier: number;
+  onResult: (result: { roll: number; total: number }) => void;
+};
 
 export default function LevelUpModal({
   character,
@@ -20,6 +26,7 @@ export default function LevelUpModal({
   asiLevels,
   subclassLevel,
   casterType,
+  onHpRoll,
   onConfirm,
   onCancel,
 }: {
@@ -32,6 +39,7 @@ export default function LevelUpModal({
   asiLevels: number[];
   subclassLevel?: number;
   casterType?: string;
+  onHpRoll?: (request: HpRollRequest) => void;
   onConfirm: (data: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {
@@ -55,11 +63,18 @@ export default function LevelUpModal({
   const current = steps[step];
 
   const [hpRolled, setHpRolled] = useState(false);
+  const [hpRolling, setHpRolling] = useState(false);
+  const [hpDieRoll, setHpDieRoll] = useState<number | null>(null);
   const [hpGained, setHpGained] = useState(0);
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
+  const mounted = useRef(true);
+
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
 
   const stepComplete = (s: LevelUpStep): boolean => {
     switch (s) {
@@ -82,9 +97,30 @@ export default function LevelUpModal({
   const feats = availableFeats();
 
   const rollHp = () => {
-    const gained = Math.max(1, rollDie(hitDie) + conMod);
-    setHpGained(gained);
-    setHpRolled(true);
+    if (hpRolling || hpRolled) return;
+
+    const applyResult = (roll: number, total: number) => {
+      if (!mounted.current) return;
+      const gained = Math.max(1, total);
+      setHpDieRoll(roll);
+      setHpGained(gained);
+      setHpRolled(true);
+      setHpRolling(false);
+    };
+
+    if (onHpRoll) {
+      setHpRolling(true);
+      onHpRoll({
+        label: `${className} Hit Points`,
+        sides: hitDie,
+        modifier: conMod,
+        onResult: ({ roll, total }) => applyResult(roll, total),
+      });
+      return;
+    }
+
+    const roll = rollDie(hitDie);
+    applyResult(roll, roll + conMod);
   };
 
   const applyAsi = (ability: AbilityKey) => {
@@ -157,11 +193,18 @@ export default function LevelUpModal({
         {/* HP step */}
         {current === "hp" && (
           <div className="cs-levelup-body">
-            <p>Roll {hitDie}d{hitDie} + {signed(conMod)} to determine your hit point increase.</p>
+            <p>Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.</p>
             {!hpRolled ? (
-              <button className="cs-glass-btn" type="button" onClick={rollHp}>Roll HP</button>
+              <button className="cs-glass-btn" type="button" onClick={rollHp} disabled={hpRolling}>
+                {hpRolling ? "Rolling..." : "Roll HP"}
+              </button>
             ) : (
-              <p><strong>+{hpGained} HP</strong> (max {character.maxHp} → {character.maxHp + hpGained})</p>
+              <p>
+                <strong>+{hpGained} HP</strong>
+                {" "}
+                ({hpDieRoll ?? hpGained} {signed(conMod)}
+                {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""}; max {character.maxHp} → {character.maxHp + hpGained})
+              </p>
             )}
           </div>
         )}

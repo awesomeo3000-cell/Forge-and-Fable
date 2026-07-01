@@ -13,16 +13,17 @@ export type RollingDie = {
   landYPct: number;
   rotations: number;
   delayMs: number;
+  onFinish?: (result: number) => void;
 };
 
 /* ── Die shapes ── */
 
-type DieShape = {
-  outer: string;          // polygon points for the face outline
-  facets?: string[];      // extra inner lines as polygon point strings
-  textX: number;
-  textY: number;
-  fontSize: number;
+const POLY_DIE_SHAPES: Record<number, string> = {
+  4: "polygon(50% 4%, 96% 88%, 4% 88%)",
+  6: "polygon(12% 12%, 88% 12%, 88% 88%, 12% 88%)",
+  8: "polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%)",
+  10: "polygon(50% 4%, 91% 30%, 78% 91%, 22% 91%, 9% 30%)",
+  12: "polygon(50% 3%, 78% 14%, 97% 42%, 90% 76%, 65% 97%, 35% 97%, 10% 76%, 3% 42%, 22% 14%)",
 };
 
 /* Icosahedron rendered as 20 *actual* triangular faces positioned in
@@ -68,7 +69,7 @@ function d20FaceColor(brightness: number, baseRgb: [number, number, number]): st
   return `rgb(${Math.round(r * (1 - amt))}, ${Math.round(g * (1 - amt))}, ${Math.round(b * (1 - amt))})`;
 }
 
-const DIE_SHAPES: Record<number, DieShape> = {
+const DIE_SHAPES = {
   4: {
     outer: "50,7 93,85 7,85",
     facets: ["50,32 74,72 26,72"],
@@ -338,18 +339,16 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
 
   useEffect(() => {
     const t = setTimeout(() => {
+      die.onFinish?.(die.result);
       setVisible(false);
       onExpire(die.id);
     }, totalMs + 100);
     return () => clearTimeout(t);
-  }, [die.id, onExpire, totalMs]);
+  }, [die, onExpire, totalMs]);
 
   if (!visible) return null;
 
-  const shape = DIE_SHAPES[die.sides] ?? DIE_SHAPES[8];
   const colors = dieColors(accentHex)[die.sides] ?? dieColors(accentHex)[8];
-  const filterId = `glow-${die.id}`;
-  const label = displayValue(die.sides, die.result);
   const isD20 = die.sides === 20;
 
   const style = {

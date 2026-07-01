@@ -65,6 +65,7 @@ import {
 
 type RefTab = "features" | "traits" | "spells" | "inventory";
 type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
+type RollOutcome = { rolls: number[]; modifier: number; total: number };
 
 const REF_TABS: { id: RefTab; label: string; Icon: typeof Sparkles }[] = [
   { id: "features", label: "Features", Icon: Sparkles },
@@ -77,7 +78,7 @@ export default function HeroSheet(props: {
   character: Character;
   finalAbilities: AbilityScores;
   ruleset: Ruleset;
-  onRoll: (label: string, sides: number, count?: number, modifier?: number) => void;
+  onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
   consoleInput: string;
@@ -632,6 +633,11 @@ export default function HeroSheet(props: {
           asiLevels={heroClass.asiLevels ?? [4, 8, 12, 16, 19]}
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
+          onHpRoll={({ label, sides, modifier, onResult }) => {
+            props.onRoll(label, sides, 1, modifier, ({ rolls, total }) => {
+              onResult({ roll: rolls[0] ?? 1, total });
+            });
+          }}
           onConfirm={(data) => { props.onUpdate(data); setLevelUpTarget(null); }}
           onCancel={() => setLevelUpTarget(null)}
         />
