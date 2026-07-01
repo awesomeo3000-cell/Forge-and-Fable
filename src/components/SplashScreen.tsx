@@ -2,7 +2,9 @@
 
 import { Crown } from "lucide-react";
 
-export default function SplashScreen() {
+import { memo } from "react";
+
+export default memo(function SplashScreen() {
   return (
     <main className="splash-screen">
       <div className="splash-mark">
@@ -17,4 +19,4 @@ export default function SplashScreen() {
       </div>
     </main>
   );
-}
+})

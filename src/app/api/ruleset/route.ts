@@ -4,5 +4,12 @@ import { ruleset } from "@/lib/ruleset";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(ruleset);
+  try {
+    return NextResponse.json(ruleset);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not load ruleset." },
+      { status: 500 },
+    );
+  }
 }

@@ -28,6 +28,22 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# environment variables
+.env
+.env*.local
+
+# user vault data — contains password hashes and character data
+data/forge-vault.json
+data/forge-vault-backup-*.json
+
+# TypeScript build info
+*.tsbuildinfo
+
+# misc
+Thumbs.db
+*.swp
+*.swo
 .pnpm-debug.log*
 dev-server.log
 

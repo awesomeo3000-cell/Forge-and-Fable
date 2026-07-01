@@ -6,7 +6,9 @@ import { createPortal } from "react-dom";
 import type { HeroClass } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 
-export default function ClassLearnModal(props: {
+import { memo } from "react";
+
+export default memo(function ClassLearnModal(props: {
   heroClass: HeroClass;
   selected: boolean;
   onClose: () => void;
@@ -97,4 +99,4 @@ export default function ClassLearnModal(props: {
     </div>,
     document.body,
   );
-}
+})

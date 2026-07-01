@@ -1,0 +1,84 @@
+import { ALLOWED_PATCH_FIELDS } from "@/app/api/characters/[id]/route";
+
+const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+
+function assertString(val: unknown, name: string, maxLen?: number): asserts val is string {
+  if (typeof val !== "string") throw new Error(`"${name}" must be a string.`);
+  if (maxLen !== undefined && val.length > maxLen) throw new Error(`"${name}" must be at most ${maxLen} characters.`);
+}
+
+function assertInteger(val: unknown, name: string, min?: number, max?: number): asserts val is number {
+  if (typeof val !== "number" || !Number.isFinite(val) || !Number.isInteger(val)) {
+    throw new Error(`"${name}" must be an integer.`);
+  }
+  if (min !== undefined && val < min) throw new Error(`"${name}" must be at least ${min}.`);
+  if (max !== undefined && val > max) throw new Error(`"${name}" must be at most ${max}.`);
+}
+
+function assertArray(val: unknown, name: string): asserts val is unknown[] {
+  if (!Array.isArray(val)) throw new Error(`"${name}" must be an array.`);
+}
+
+/** Validate a character creation payload or partial update patch. */
+export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("Body must be a JSON object.");
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const sanitized: Record<string, unknown> = {};
+
+  for (const key of Object.keys(obj)) {
+    if (!ALLOWED_PATCH_FIELDS.has(key)) {
+      throw new Error(`Field "${key}" is not allowed.`);
+    }
+
+    const val = obj[key];
+
+    switch (key) {
+      case "name":
+        if (!isPatch) assertString(val, "name", 100);
+        else if (val !== undefined) assertString(val, "name", 100);
+        break;
+      case "level":
+        if (!isPatch) assertInteger(val, "level", 1, 20);
+        else if (val !== undefined) assertInteger(val, "level", 1, 20);
+        break;
+      case "currentHp":
+      case "tempHp":
+        if (val !== undefined) assertInteger(val, key, 0, 999);
+        break;
+      case "maxHp":
+        if (val !== undefined) assertInteger(val, "maxHp", 1, 999);
+        break;
+      case "abilities":
+        if (val !== undefined) {
+          if (typeof val !== "object" || val === null) throw new Error(`"abilities" must be an object.`);
+          const abilities = val as Record<string, unknown>;
+          for (const a of ABILITY_KEYS) {
+            if (typeof abilities[a] === "number") {
+              assertInteger(abilities[a], `abilities.${a}`, 1, 30);
+            }
+          }
+        }
+        break;
+      case "inventory":
+      case "spellsKnown":
+      case "skillProficiencies":
+        if (val !== undefined) assertArray(val, key);
+        break;
+      case "customRules":
+        if (val !== undefined) assertArray(val, "customRules");
+        break;
+    }
+
+    sanitized[key] = val;
+  }
+
+  // Full creation requires a name
+  if (!isPatch && !sanitized.name) {
+    throw new Error(`"name" is required.`);
+  }
+
+  return sanitized;
+}

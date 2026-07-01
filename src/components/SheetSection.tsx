@@ -5,7 +5,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ReactNode } from "react";
 
-export default function SheetSection({
+import { memo } from "react";
+
+export default memo(function SheetSection({
   id,
   title,
   collapsed,
@@ -78,4 +80,4 @@ export default function SheetSection({
       </div>
     </section>
   );
-}
+})

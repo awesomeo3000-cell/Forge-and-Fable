@@ -1,11 +1,11 @@
 "use client";
 
 import { ArrowRight, LockKeyhole, Sparkles, UserPlus, Vault } from "lucide-react";
+import { memo } from "react";
 import type { FormEvent } from "react";
+import type { AuthMode } from "@/types/game";
 
-type AuthMode = "login" | "register";
-
-export default function AuthScreen(props: {
+export default memo(function AuthScreen(props: {
   mode: AuthMode;
   name: string;
   email: string;
@@ -82,4 +82,4 @@ export default function AuthScreen(props: {
       </form>
     </main>
   );
-}
+})

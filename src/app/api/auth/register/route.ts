@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { registerUser } from "@/lib/vaultStore";
+import { signToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,9 @@ export async function POST(request: Request) {
       password: String(body.password ?? ""),
     });
 
-    return NextResponse.json({ user });
+    const token = await signToken({ userId: user.id });
+
+    return NextResponse.json({ user, token });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create vault." },

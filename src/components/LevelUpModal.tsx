@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
@@ -16,7 +16,7 @@ type HpRollRequest = {
   onResult: (result: { roll: number; total: number }) => void;
 };
 
-export default function LevelUpModal({
+export default memo(function LevelUpModal({
   character,
   newLevel,
   finalAbilities,
@@ -167,11 +167,6 @@ export default function LevelUpModal({
         }
       } else if (pickedFeat) {
         choices.push({ type: "feat" as const, level: newLevel, featId: pickedFeat });
-        // a half-feat that also raises an ability applies that bump too
-        const feat = feats.find((f) => f.id === pickedFeat);
-        const inc: Partial<AbilityScores> = {};
-        if (feat?.abilityBonuses) for (const a of feat.abilityBonuses) inc[a] = (inc[a] ?? 0) + 1;
-        if (Object.keys(inc).length > 0) choices.push({ type: "asi" as const, level: newLevel, increases: inc });
       }
       if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
     }
@@ -295,4 +290,4 @@ export default function LevelUpModal({
       </div>
     </div>
   );
-}
+})

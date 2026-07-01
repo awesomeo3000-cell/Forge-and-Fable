@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export type RollingDie = {
   id: string;
@@ -201,8 +201,33 @@ function restQuatForMatrix(m: number[]): Quat {
   );
 }
 
+type MeshFace = {
+  matrix: number[];
+  brightness: number;
+  clipPath: string;
+  width: number;
+  height: number;
+  label: string;
+};
+
 function dot3(a: Vec3, b: Vec3): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function add3(a: Vec3, b: Vec3): Vec3 {
+  return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+}
+
+function sub3(a: Vec3, b: Vec3): Vec3 {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function scale3(v: Vec3, scale: number): Vec3 {
+  return [v[0] * scale, v[1] * scale, v[2] * scale];
+}
+
+function negate3(v: Vec3): Vec3 {
+  return [-v[0], -v[1], -v[2]];
 }
 
 function cross3(a: Vec3, b: Vec3): Vec3 {
@@ -213,61 +238,15 @@ function cross3(a: Vec3, b: Vec3): Vec3 {
   ];
 }
 
-function matrixForNormal(normal: Vec3, radius: number): number[] {
-  const z = normalize3(normal);
-  const seed: Vec3 = Math.abs(z[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
-  const x = normalize3(cross3(seed, z));
-  const y = normalize3(cross3(z, x));
-  const c: Vec3 = [z[0] * radius, z[1] * radius, z[2] * radius];
-  return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, c[0], c[1], c[2], 1];
-}
-
 const STUDIO_LIGHT = normalize3([-0.36, -0.54, 0.76]);
 
 function brightnessForNormal(normal: Vec3): number {
   return Math.max(0, Math.min(1, dot3(normalize3(normal), STUDIO_LIGHT) * 0.5 + 0.5));
 }
 
-function normalsForDie(sides: number): Vec3[] {
-  const phi = (1 + Math.sqrt(5)) / 2;
-  const d10Normals = Array.from({ length: 10 }, (_, i) => {
-    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
-    const z = i % 2 === 0 ? 0.42 : -0.42;
-    return normalize3([Math.cos(angle), Math.sin(angle), z]);
-  });
-
-  switch (sides) {
-    case 4: {
-      const points: Vec3[] = [[1, 1, 1], [-1, -1, 1], [-1, 1, -1], [1, -1, -1]];
-      return points.map(normalize3);
-    }
-    case 6: {
-      const points: Vec3[] = [[0, 0, 1], [1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0], [0, 0, -1]];
-      return points.map(normalize3);
-    }
-    case 8: {
-      const points: Vec3[] = [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]];
-      return points.map(normalize3);
-    }
-    case 10:
-    case 100:
-      return d10Normals;
-    case 12: {
-      const points: Vec3[] = [
-        [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
-        [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
-        [phi, 0, 1], [-phi, 0, 1], [phi, 0, -1], [-phi, 0, -1],
-      ];
-      return points.map(normalize3);
-    }
-    default:
-      return normalsForDie(8);
-  }
-}
-
 function dieFaceIndex(sides: number, result: number, faceCount: number): number {
   if (sides === 100) {
-    return Math.max(0, Math.min(faceCount - 1, Math.ceil(result / 10) - 1));
+    return Math.floor((result % 100) / 10);
   }
   return (((result - 1) % faceCount) + faceCount) % faceCount;
 }
@@ -277,22 +256,282 @@ function inactiveFaceLabel(sides: number, index: number): string {
   return String(index + 1);
 }
 
-function geometryForDie(sides: number) {
-  switch (sides) {
-    case 4:
-      return { radius: 27, faceWidth: 68, faceHeight: 60, className: "is-d4" };
-    case 6:
-      return { radius: 30, faceWidth: 58, faceHeight: 58, className: "is-d6" };
-    case 8:
-      return { radius: 30, faceWidth: 66, faceHeight: 58, className: "is-d8" };
-    case 10:
-    case 100:
-      return { radius: 31, faceWidth: 64, faceHeight: 74, className: sides === 100 ? "is-d100" : "is-d10" };
-    case 12:
-      return { radius: 32, faceWidth: 62, faceHeight: 62, className: "is-d12" };
-    default:
-      return { radius: 30, faceWidth: 66, faceHeight: 58, className: "is-d8" };
+type MeshInput = {
+  vertices: Vec3[];
+  faces: number[][];
+  className: string;
+};
+
+function average3(points: Vec3[]): Vec3 {
+  return scale3(
+    points.reduce((sum, point) => add3(sum, point), [0, 0, 0] as Vec3),
+    1 / points.length,
+  );
+}
+
+function scaleVerticesToRadius(vertices: Vec3[], radius: number): Vec3[] {
+  const maxLen = Math.max(...vertices.map((vertex) => Math.hypot(vertex[0], vertex[1], vertex[2])));
+  const scale = radius / (maxLen || 1);
+  return vertices.map((vertex) => scale3(vertex, scale));
+}
+
+function orderFaceIndices(vertices: Vec3[], indices: number[], outwardNormal: Vec3): number[] {
+  const points = indices.map((index) => vertices[index]);
+  const center = average3(points);
+  const normal = dot3(outwardNormal, center) < 0 ? negate3(outwardNormal) : outwardNormal;
+  const xAxis = normalize3(sub3(points[0], center));
+  const yAxis = normalize3(cross3(normal, xAxis));
+
+  return [...indices].sort((a, b) => {
+    const av = sub3(vertices[a], center);
+    const bv = sub3(vertices[b], center);
+    return Math.atan2(dot3(av, yAxis), dot3(av, xAxis)) - Math.atan2(dot3(bv, yAxis), dot3(bv, xAxis));
+  });
+}
+
+function supportFaces(vertices: Vec3[], faceSize: number): number[][] {
+  const faces = new Map<string, number[]>();
+  const eps = 0.001;
+
+  for (let i = 0; i < vertices.length - 2; i++) {
+    for (let j = i + 1; j < vertices.length - 1; j++) {
+      for (let k = j + 1; k < vertices.length; k++) {
+        const raw = cross3(sub3(vertices[j], vertices[i]), sub3(vertices[k], vertices[i]));
+        if (Math.hypot(raw[0], raw[1], raw[2]) < eps) continue;
+
+        const baseNormal = normalize3(raw);
+        for (const normal of [baseNormal, negate3(baseNormal)]) {
+          const maxDot = Math.max(...vertices.map((vertex) => dot3(vertex, normal)));
+          const ids = vertices
+            .map((vertex, index) => ({ index, offset: Math.abs(maxDot - dot3(vertex, normal)) }))
+            .filter((item) => item.offset < eps)
+            .map((item) => item.index);
+
+          if (ids.length !== faceSize) continue;
+
+          const key = [...ids].sort((a, b) => a - b).join("-");
+          if (!faces.has(key)) {
+            faces.set(key, orderFaceIndices(vertices, ids, normal));
+          }
+        }
+      }
+    }
   }
+
+  return [...faces.values()];
+}
+
+function facePlane(vertices: Vec3[], indices: number[]): { normal: Vec3; distance: number } {
+  const points = indices.map((index) => vertices[index]);
+  let normal = normalize3(cross3(sub3(points[1], points[0]), sub3(points[2], points[0])));
+  const center = average3(points);
+
+  if (dot3(normal, center) < 0) {
+    normal = negate3(normal);
+  }
+
+  const distance = dot3(normal, points[0]);
+  return distance < 0 ? { normal: negate3(normal), distance: -distance } : { normal, distance };
+}
+
+function faceFromIndices(vertices: Vec3[], indices: number[], label: string): MeshFace {
+  let points = indices.map((index) => vertices[index]);
+  let normal = normalize3(cross3(sub3(points[1], points[0]), sub3(points[2], points[0])));
+  const center = average3(points);
+
+  if (dot3(normal, center) < 0) {
+    points = [...points].reverse();
+    normal = negate3(normal);
+  }
+
+  const xAxis = normalize3(sub3(points[1], points[0]));
+  const yAxis = normalize3(cross3(normal, xAxis));
+  const projections = points.map((point) => [dot3(point, xAxis), dot3(point, yAxis)] as [number, number]);
+  const minX = Math.min(...projections.map(([x]) => x));
+  const maxX = Math.max(...projections.map(([x]) => x));
+  const minY = Math.min(...projections.map(([, y]) => y));
+  const maxY = Math.max(...projections.map(([, y]) => y));
+  const pad = 0.35;
+  const width = maxX - minX + pad * 2;
+  const height = maxY - minY + pad * 2;
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+  const planeOffset = dot3(normal, points[0]);
+  const faceCenter = add3(
+    add3(scale3(xAxis, centerX), scale3(yAxis, centerY)),
+    scale3(normal, planeOffset),
+  );
+  const clipPath = `polygon(${projections
+    .map(([x, y]) => `${(((x - minX + pad) / width) * 100).toFixed(3)}% ${(((y - minY + pad) / height) * 100).toFixed(3)}%`)
+    .join(", ")})`;
+
+  return {
+    matrix: [
+      xAxis[0], xAxis[1], xAxis[2], 0,
+      yAxis[0], yAxis[1], yAxis[2], 0,
+      normal[0], normal[1], normal[2], 0,
+      faceCenter[0], faceCenter[1], faceCenter[2], 1,
+    ],
+    brightness: brightnessForNormal(normal),
+    clipPath,
+    width,
+    height,
+    label,
+  };
+}
+
+function pentagonalTrapezohedron(radius: number): MeshInput {
+  const count = 5;
+  const height = 0.46;
+  const vertices: Vec3[] = [];
+
+  for (let i = 0; i < count; i++) {
+    vertices.push([Math.cos((i / count) * Math.PI * 2), Math.sin((i / count) * Math.PI * 2), -height]);
+  }
+
+  for (let i = 0; i < count; i++) {
+    vertices.push([
+      Math.cos(((i + 0.5) / count) * Math.PI * 2),
+      Math.sin(((i + 0.5) / count) * Math.PI * 2),
+      height,
+    ]);
+  }
+
+  const antiprismFaces: number[][] = [
+    Array.from({ length: count }, (_, i) => count - 1 - i),
+    Array.from({ length: count }, (_, i) => count + i),
+  ];
+
+  for (let i = 0; i < count; i++) {
+    const next = (i + 1) % count;
+    antiprismFaces.push([i, next, count + i]);
+    antiprismFaces.push([count + i, next, count + next]);
+  }
+
+  const dualVertices = antiprismFaces.map((face) => {
+    const { normal, distance } = facePlane(vertices, face);
+    return scale3(normal, 1 / (distance || 1));
+  });
+  const dualFaces = vertices.map((vertex, vertexIndex) => {
+    const adjacent = antiprismFaces
+      .map((face, faceIndex) => (face.includes(vertexIndex) ? faceIndex : -1))
+      .filter((faceIndex) => faceIndex >= 0);
+    return orderFaceIndices(dualVertices, adjacent, normalize3(vertex));
+  });
+
+  return {
+    vertices: scaleVerticesToRadius(dualVertices, radius),
+    faces: dualFaces,
+    className: "is-d10",
+  };
+}
+
+function meshInputForDie(sides: number): MeshInput {
+  const phi = (1 + Math.sqrt(5)) / 2;
+
+  switch (sides) {
+    case 4: {
+      const vertices: Vec3[] = [
+        [1, 1, 1],
+        [-1, -1, 1],
+        [-1, 1, -1],
+        [1, -1, -1],
+      ];
+      return { vertices: scaleVerticesToRadius(vertices, 38), faces: supportFaces(vertices, 3), className: "is-d4" };
+    }
+    case 6: {
+      const vertices: Vec3[] = [
+        [-1, -1, -1],
+        [1, -1, -1],
+        [1, 1, -1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+        [1, -1, 1],
+        [1, 1, 1],
+        [-1, 1, 1],
+      ];
+      return { vertices: scaleVerticesToRadius(vertices, 42), faces: supportFaces(vertices, 4), className: "is-d6" };
+    }
+    case 8: {
+      const vertices: Vec3[] = [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ];
+      return { vertices: scaleVerticesToRadius(vertices, 40), faces: supportFaces(vertices, 3), className: "is-d8" };
+    }
+    case 10:
+    case 100: {
+      const input = pentagonalTrapezohedron(41);
+      return { ...input, className: sides === 100 ? "is-d100" : "is-d10" };
+    }
+    case 12: {
+      const vertices: Vec3[] = [
+        [1, 1, 1],
+        [1, 1, -1],
+        [1, -1, 1],
+        [1, -1, -1],
+        [-1, 1, 1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+        [-1, -1, -1],
+        [0, 1 / phi, phi],
+        [0, 1 / phi, -phi],
+        [0, -1 / phi, phi],
+        [0, -1 / phi, -phi],
+        [1 / phi, phi, 0],
+        [1 / phi, -phi, 0],
+        [-1 / phi, phi, 0],
+        [-1 / phi, -phi, 0],
+        [phi, 0, 1 / phi],
+        [phi, 0, -1 / phi],
+        [-phi, 0, 1 / phi],
+        [-phi, 0, -1 / phi],
+      ];
+      return { vertices: scaleVerticesToRadius(vertices, 40), faces: supportFaces(vertices, 5), className: "is-d12" };
+    }
+    default:
+      return meshInputForDie(8);
+  }
+}
+
+function meshForDie(sides: number, result: number): { faces: MeshFace[]; upIndex: number; className: string } {
+  const input = meshInputForDie(sides);
+  const upIndex = dieFaceIndex(sides, result, input.faces.length);
+
+  return {
+    className: input.className,
+    upIndex,
+    faces: input.faces.map((face, i) =>
+      faceFromIndices(input.vertices, face, i === upIndex ? displayValue(sides, result) : inactiveFaceLabel(sides, i)),
+    ),
+  };
+}
+
+// ── Computation caches (avoid recalculating identical geometry/colours) ──
+
+const meshCache = new Map<string, { faces: MeshFace[]; upIndex: number; className: string }>();
+function getCachedMesh(sides: number, result: number) {
+  const key = `${sides}-${result}`;
+  let entry = meshCache.get(key);
+  if (!entry) {
+    entry = meshForDie(sides, result);
+    meshCache.set(key, entry);
+  }
+  return entry;
+}
+
+const colorCache = new Map<string, Record<number, { fill: string; stroke: string; facetStroke: string; glow: string }>>();
+function getCachedColors(accentHex: string) {
+  let entry = colorCache.get(accentHex);
+  if (!entry) {
+    entry = dieColors(accentHex);
+    colorCache.set(accentHex, entry);
+  }
+  return entry;
 }
 
 function tumbleFrames(rest: Quat): Keyframe[] {
@@ -307,9 +546,10 @@ function tumbleFrames(rest: Quat): Keyframe[] {
   const c1 = 0.9, c3 = c1 + 1;
   const easeOutBack = (o: number) => 1 + c3 * Math.pow(o - 1, 3) + c1 * Math.pow(o - 1, 2);
   const frames: Keyframe[] = [];
+  const steps = 20; // reduced from 60 — visually identical, much cheaper
 
-  for (let i = 0; i <= 60; i++) {
-    const o = i / 60;
+  for (let i = 0; i <= steps; i++) {
+    const o = i / steps;
     const k = 1 - easeOutBack(o);
     const spin = quatMul(quatAxisAngle(axis1, phiMax * k), quatAxisAngle(axis2, psiMax * k));
     frames.push({ transform: matrix3dFromQuat(quatMul(rest, spin)), offset: o, easing: "linear" });
@@ -332,22 +572,15 @@ function PolyhedralDieObject({
   fontStack: string;
 }) {
   const baseRgb = hexToRgb(accentHex);
-  const colors = dieColors(accentHex)[sides] ?? dieColors(accentHex)[sides === 100 ? 10 : 8];
+  const colors = getCachedColors(accentHex)[sides] ?? getCachedColors(accentHex)[sides === 100 ? 10 : 8];
   const rigRef = useRef<HTMLDivElement>(null);
-  const geometry = useMemo(() => geometryForDie(sides), [sides]);
-  const normals = useMemo(() => normalsForDie(sides), [sides]);
-  const upIndex = useMemo(() => dieFaceIndex(sides, result, normals.length), [normals.length, result, sides]);
-  const faces = useMemo(() => normals.map((normal, i) => ({
-    matrix: matrixForNormal(normal, geometry.radius),
-    brightness: brightnessForNormal(normal),
-    label: i === upIndex ? displayValue(sides, result) : inactiveFaceLabel(sides, i),
-  })), [geometry.radius, normals, result, sides, upIndex]);
+  const mesh = useMemo(() => getCachedMesh(sides, result), [result, sides]);
 
   useLayoutEffect(() => {
     const rig = rigRef.current;
     if (!rig) return;
 
-    const rest = restQuatForMatrix(faces[upIndex].matrix);
+    const rest = restQuatForMatrix(mesh.faces[mesh.upIndex].matrix);
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -366,26 +599,29 @@ function PolyhedralDieObject({
       easing: "linear",
     });
     return () => anim.cancel();
-  }, [delayMs, faces, upIndex]);
+  }, [delayMs, mesh]);
 
   const style = {
-    "--dnd-face-w": `${geometry.faceWidth}px`,
-    "--dnd-face-h": `${geometry.faceHeight}px`,
     "--dnd-die-font": fontStack,
     "--dnd-die-fill": colors.fill,
     "--dnd-die-stroke": colors.stroke,
   } as React.CSSProperties;
 
   return (
-    <div className={`dnd-die-stage ${geometry.className}`} style={style}>
+    <div className={`dnd-die-stage ${mesh.className}`} style={style}>
       <div className="dnd-die-rig" ref={rigRef}>
-        {faces.map((face, i) => {
-          const isUp = i === upIndex;
+        {mesh.faces.map((face, i) => {
+          const isUp = i === mesh.upIndex;
           return (
             <div
               key={i}
               className={`dnd-die-face${isUp ? " is-up" : ""}`}
               style={{
+                width: `${face.width}px`,
+                height: `${face.height}px`,
+                marginLeft: `${face.width / -2}px`,
+                marginTop: `${face.height / -2}px`,
+                clipPath: face.clipPath,
                 transform: `matrix3d(${face.matrix.join(",")})`,
                 ...(isUp ? null : { background: dieFaceColor(face.brightness, baseRgb) }),
               }}
@@ -445,7 +681,7 @@ function D20Object({
     const easeOutBack = (o: number) =>
       1 + c3 * Math.pow(o - 1, 3) + c1 * Math.pow(o - 1, 2);
 
-    const N = 60;
+    const N = 20; // reduced from 60 — visually identical
     const frames: Keyframe[] = [];
     for (let i = 0; i <= N; i++) {
       const o = i / N;
@@ -502,7 +738,7 @@ function ClarebearCrit({ delayMs }: { delayMs: number }) {
 
 /* ── Main overlay ── */
 
-export default function DiceRollOverlay({
+export default memo(function DiceRollOverlay({
   dice,
   onExpire,
   accentHex,
@@ -529,7 +765,7 @@ export default function DiceRollOverlay({
       ))}
     </div>
   );
-}
+})
 
 /* ── Single animated die ── */
 
@@ -548,7 +784,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
 
   if (!visible) return null;
 
-  const colors = dieColors(accentHex)[die.sides] ?? dieColors(accentHex)[die.sides === 100 ? 10 : 8];
+  const colors = getCachedColors(accentHex)[die.sides] ?? getCachedColors(accentHex)[die.sides === 100 ? 10 : 8];
   const shape = DIE_SHAPES[die.sides as keyof typeof DIE_SHAPES] ?? DIE_SHAPES[8];
   const filterId = `glow-${die.id}`;
   const label = displayValue(die.sides, die.result);

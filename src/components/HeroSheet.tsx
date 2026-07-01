@@ -22,7 +22,7 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
 import type { AbilityKey, AbilityScores, Character, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
@@ -74,10 +74,12 @@ const REF_TABS: { id: RefTab; label: string; Icon: typeof Sparkles }[] = [
   { id: "inventory", label: "Inventory", Icon: Backpack },
 ];
 
-export default function HeroSheet(props: {
+export default memo(function HeroSheet(props: {
   character: Character;
   finalAbilities: AbilityScores;
   ruleset: Ruleset;
+  featInitiativeBonus?: number;
+  featAcBonus?: number;
   onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
@@ -95,9 +97,9 @@ export default function HeroSheet(props: {
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
 
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
-  const armorClass = 10 + dexMod + ruleAc;
+  const armorClass = 10 + dexMod + ruleAc + (props.featAcBonus ?? 0);
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
-  const initiative = dexMod + ruleInit;
+  const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0);
   const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0);
   const ruleSaveAll = props.character.customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
 
@@ -280,6 +282,39 @@ export default function HeroSheet(props: {
     props.onUpdate({ spellSlotsUsed: {}, pactSlotsUsed: 0 });
   };
 
+  const handleLevelDown = () => {
+    const level = props.character.level;
+    if (level <= 1) return;
+    const newLevel = level - 1;
+    if (!window.confirm(`Revert to level ${newLevel}? This undoes the HP, feat, and subclass gains from the removed level.`)) return;
+
+    const patch: Record<string, unknown> = { level: newLevel };
+
+    // Remove last HP roll
+    const hpRolls = props.character.hpRolls ?? [];
+    if (hpRolls.length > 0) {
+      const lastHp = hpRolls[hpRolls.length - 1];
+      patch.hpRolls = hpRolls.slice(0, -1);
+      patch.maxHp = Math.max(1, props.character.maxHp - lastHp);
+      patch.currentHp = Math.max(1, props.character.currentHp - lastHp);
+    }
+
+    // Remove ASI/feat choices from the level being removed
+    const asiChoices = props.character.asiChoices ?? [];
+    const remainingAsi = asiChoices.filter((c) => c.level !== level);
+    if (remainingAsi.length < asiChoices.length) {
+      patch.asiChoices = remainingAsi;
+    }
+
+    // Clear subclass if gained at a level now above newLevel
+    const subclassLevel = heroClass.subclassLevel ?? 3;
+    if (props.character.subclassId && subclassLevel > newLevel) {
+      patch.subclassId = undefined;
+    }
+
+    props.onUpdate(patch as Partial<Omit<Character, "id" | "userId" | "createdAt">>);
+  };
+
   const layoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Apply immediately for feedback; persist on a debounce.
@@ -359,7 +394,7 @@ export default function HeroSheet(props: {
           <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
           <div><h1 className="cs-char-name">{props.character.name}</h1><p className="cs-char-subtitle">{subtitleParts.join(" / ")}</p></div>
           <span className="cs-level-badge">
-            <button className="cs-lvl-stepper" type="button" onClick={() => { const n = Math.max(1, props.character.level - 1); props.onUpdate({ level: n }); }}><Minus size={10} /></button>
+            <button className="cs-lvl-stepper" type="button" onClick={handleLevelDown}><Minus size={10} /></button>
             Lv {props.character.level}
             <button className="cs-lvl-stepper" type="button" title="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
           </span>
@@ -644,4 +679,4 @@ export default function HeroSheet(props: {
       ) : null}
     </div>
   );
-}
+})

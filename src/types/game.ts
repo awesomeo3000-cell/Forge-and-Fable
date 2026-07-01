@@ -208,7 +208,7 @@ export type Character = {
 export type DeathSaves = {
   successes: number;
   failures: number;
-};;
+};
 
 export type PublicUser = {
   id: string;
@@ -223,4 +223,40 @@ export type Ruleset = {
   items: InventoryItem[];
   backgrounds: string[];
   alignments: string[];
+};
+
+// ──── App-level shared types ────
+
+/** In-progress character being built in the creator wizard. */
+export type DraftCharacter = {
+  name: string;
+  level: number;
+  alignment: string;
+  background: string;
+  physicalCharacteristics: string;
+  personalCharacteristics: string;
+  generalNotes: string;
+  raceId: string;
+  classId: string;
+  sourceIds: string[];
+  settings: CharacterSettings;
+  abilities: AbilityScores;
+  currentHp: number;
+  maxHp: number;
+  tempHp: number;
+  inventory: InventoryItem[];
+  spellsKnown: string[];
+  customRules: CustomRule[];
+  skillProficiencies: string[];
+  deathSaves: DeathSaves;
+};
+
+export type StatMethod = "point-buy" | "standard-array" | "roll";
+export type AuthMode = "login" | "register";
+export type BuildMode = "standard" | "quickbuilder" | "premade";
+
+export type RollOutcome = {
+  rolls: number[];
+  modifier: number;
+  total: number;
 };

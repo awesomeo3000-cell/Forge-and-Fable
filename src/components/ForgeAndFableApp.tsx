@@ -11,12 +11,17 @@ import type { FormEvent } from "react";
 import type {
   AbilityKey,
   AbilityScores,
+  AuthMode,
+  BuildMode,
   Character,
   CharacterSettings,
   CustomRule,
+  DraftCharacter,
   InventoryItem,
   PublicUser,
+  RollOutcome,
   Ruleset,
+  StatMethod,
 } from "@/types/game";
 import {
   abilityKeys,
@@ -39,38 +44,16 @@ import CreatorPanel from "@/components/CreatorPanel";
 import HeroSheet from "@/components/HeroSheet";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import { FONT_STACKS } from "@/lib/skins";
+import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
+import { computeFeatBonuses } from "@/lib/featBonuses";
 
-type DraftCharacter = {
-  name: string;
-  level: number;
-  alignment: string;
-  background: string;
-  physicalCharacteristics: string;
-  personalCharacteristics: string;
-  generalNotes: string;
-  raceId: string;
-  classId: string;
-  sourceIds: string[];
-  settings: CharacterSettings;
-  abilities: AbilityScores;
-  currentHp: number;
-  maxHp: number;
-  tempHp: number;
-  inventory: InventoryItem[];
-  spellsKnown: string[];
-  customRules: CustomRule[];
-  skillProficiencies: string[];
-  deathSaves: { successes: number; failures: number };
-};
-
-type StatMethod = "point-buy" | "standard-array" | "roll";
-type AuthMode = "login" | "register";
-type BuildMode = "standard" | "quickbuilder" | "premade";
-type RollOutcome = {
-  rolls: number[];
-  modifier: number;
-  total: number;
-};
+function authHeaders(): Record<string, string> {
+  const token = typeof window !== "undefined" ? window.localStorage.getItem("forge-and-fable-token") : "";
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token ?? ""}`,
+  };
+}
 
 export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
@@ -87,7 +70,7 @@ export default function ForgeAndFableApp() {
   const [standardAssignments, setStandardAssignments] = useState(defaultAssignments);
   const [rolledScores, setRolledScores] = useState([15, 14, 13, 12, 10, 8]);
   const [rolledAssignments, setRolledAssignments] = useState(defaultAssignments);
-  const [consoleInput, setConsoleInput] = useState("add-ac 2");
+  const [consoleInput, setConsoleInput] = useState("");
   const [consoleLog, setConsoleLog] = useState<string[]>(["Console online"]);
   const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [authName, setAuthName] = useState("");
@@ -95,20 +78,30 @@ export default function ForgeAndFableApp() {
   const [authPassword, setAuthPassword] = useState("");
   const [status, setStatus] = useState("");
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
+  const [isRulesetLoading, setIsRulesetLoading] = useState(true);
+  const [isCharactersLoading, setIsCharactersLoading] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntroDone(true), 1650);
+    const timer = window.setTimeout(() => setIntroDone(true), SPLASH_DURATION_MS);
     fetch("/api/ruleset")
       .then((response) => response.json())
       .then((data: Ruleset) => {
         setRuleset(data);
         setDraft(createInitialDraft(data) as DraftCharacter);
       })
-      .catch(() => setStatus("Ruleset failed to load."));
+      .catch(() => setStatus("Ruleset failed to load."))
+      .finally(() => setIsRulesetLoading(false));
 
-    const stored = window.localStorage.getItem("forge-and-fable-user");
-    if (stored) {
-      queueMicrotask(() => setUser(JSON.parse(stored) as PublicUser));
+    const storedUser = window.localStorage.getItem("forge-and-fable-user");
+    const storedToken = window.localStorage.getItem("forge-and-fable-token");
+    if (storedUser && storedToken) {
+      try {
+        const parsed = JSON.parse(storedUser) as PublicUser;
+        queueMicrotask(() => setUser(parsed));
+      } catch {
+        window.localStorage.removeItem("forge-and-fable-user");
+        window.localStorage.removeItem("forge-and-fable-token");
+      }
     }
 
     return () => window.clearTimeout(timer);
@@ -120,28 +113,34 @@ export default function ForgeAndFableApp() {
     }
 
     let mounted = true;
+    queueMicrotask(() => { if (mounted) setIsCharactersLoading(true); });
 
     fetch("/api/characters", {
       headers: {
-        "x-user-id": user.id,
+        Authorization: `Bearer ${window.localStorage.getItem("forge-and-fable-token") ?? ""}`,
       },
     })
       .then((response) => {
+        if (response.status === 401) {
+          if (mounted) logOut();
+          setStatus("Session expired — please log in again.");
+          return;
+        }
         if (!response.ok) {
           throw new Error("Vault session could not load.");
         }
         return response.json() as Promise<{ characters: Character[] }>;
       })
       .then((data) => {
-        if (!mounted) {
-          return;
-        }
+        if (!data || !mounted) return;
         setCharacters(data.characters);
         setSelectedId((current) => current || data.characters[0]?.id || "");
+        if (mounted) setIsCharactersLoading(false);
       })
       .catch((error: Error) => {
         if (mounted) {
           setStatus(error.message);
+          setIsCharactersLoading(false);
         }
       });
 
@@ -164,8 +163,21 @@ export default function ForgeAndFableApp() {
     if (!selected || !ruleset) {
       return null;
     }
-    return applyRaceBonuses(selected.abilities, selected.raceId, ruleset);
+    const raced = applyRaceBonuses(selected.abilities, selected.raceId, ruleset);
+    // Apply ASI and feat ability score increases
+    const featInfo = computeFeatBonuses(selected.asiChoices);
+    for (const key of abilityKeys) {
+      const bonus = featInfo.abilityIncreases[key] ?? 0;
+      if (bonus > 0) raced[key] += bonus;
+    }
+    return raced;
   }, [selected, ruleset]);
+
+  const selectedFeatBonuses = useMemo(() => {
+    if (!selected) return null;
+    return computeFeatBonuses(selected.asiChoices);
+  }, [selected]);
+
   const draftFinalAbilities = useMemo(() => {
     if (!draft || !ruleset) {
       return null;
@@ -175,7 +187,7 @@ export default function ForgeAndFableApp() {
   const pointSpent = draft
     ? abilityKeys.reduce((sum, key) => sum + (pointCosts[draft.abilities[key]] ?? 99), 0)
     : 0;
-  const pointRemaining = 27 - pointSpent;
+  const pointRemaining = POINT_BUY_BUDGET - pointSpent;
 
   async function authRequest(event: FormEvent) {
     event.preventDefault();
@@ -193,15 +205,16 @@ export default function ForgeAndFableApp() {
       }),
     });
 
-    const data = (await response.json()) as { user?: PublicUser; error?: string };
+    const data = (await response.json()) as { user?: PublicUser; token?: string; error?: string };
 
-    if (!response.ok || !data.user) {
+    if (!response.ok || !data.user || !data.token) {
       setStatus(data.error ?? "Vault access failed.");
       return;
     }
 
     setUser(data.user);
     window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
+    window.localStorage.setItem("forge-and-fable-token", data.token);
     setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
   }
 
@@ -212,6 +225,7 @@ export default function ForgeAndFableApp() {
     setCreationPromptOpen(false);
     setCreatorOpen(false);
     window.localStorage.removeItem("forge-and-fable-user");
+    window.localStorage.removeItem("forge-and-fable-token");
     setStatus("Tome sealed");
   }
 
@@ -312,7 +326,7 @@ export default function ForgeAndFableApp() {
     };
     const nextSpent = abilityKeys.reduce((sum, key) => sum + (pointCosts[nextAbilities[key]] ?? 99), 0);
 
-    if (nextSpent > 27) {
+    if (nextSpent > POINT_BUY_BUDGET) {
       return;
     }
 
@@ -373,14 +387,17 @@ export default function ForgeAndFableApp() {
 
     const response = await fetch("/api/characters", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-id": user.id,
-      },
+      headers: authHeaders(),
       body: JSON.stringify(characterPayload(draft, ruleset)),
     });
 
     const data = (await response.json()) as { character?: Character; error?: string };
+
+    if (response.status === 401) {
+      logOut();
+      setStatus("Session expired — please log in again.");
+      return;
+    }
 
     if (!response.ok || !data.character) {
       setStatus(data.error ?? "Hero could not be forged.");
@@ -404,13 +421,16 @@ export default function ForgeAndFableApp() {
 
     const response = await fetch(`/api/characters/${selected.id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-id": user.id,
-      },
+      headers: authHeaders(),
       body: JSON.stringify(patch),
     });
     const data = (await response.json()) as { character?: Character; error?: string };
+
+    if (response.status === 401) {
+      logOut();
+      setStatus("Session expired — please log in again.");
+      return;
+    }
 
     if (!response.ok || !data.character) {
       setStatus(data.error ?? "Update failed.");
@@ -431,10 +451,14 @@ export default function ForgeAndFableApp() {
 
     const response = await fetch(`/api/characters/${selected.id}`, {
       method: "DELETE",
-      headers: {
-        "x-user-id": user.id,
-      },
+      headers: authHeaders(),
     });
+
+    if (response.status === 401) {
+      logOut();
+      setStatus("Session expired — please log in again.");
+      return;
+    }
 
     if (!response.ok) {
       setStatus("Hero could not be retired.");
@@ -687,6 +711,8 @@ export default function ForgeAndFableApp() {
               character={selected}
               finalAbilities={selectedFinalAbilities}
               ruleset={ruleset}
+              featInitiativeBonus={selectedFeatBonuses?.initiativeBonus}
+              featAcBonus={selectedFeatBonuses?.acBonus}
               onRoll={pushRoll}
               onUpdate={updateSelected}
               onDelete={deleteSelected}

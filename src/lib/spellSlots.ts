@@ -16,7 +16,9 @@ export function maxSlots(casterType: CasterType, level: number): number[] {
     const count = level >= 17 ? 4 : level >= 11 ? 3 : level >= 2 ? 2 : 1;
     return Array(9).fill(0).map((_, i) => i + 1 === slotLevel ? count : 0);
   }
-  const effectiveLevel = casterType === "half" ? Math.floor(level / 2) : level;
+  const effectiveLevel = casterType === "half"
+    ? (level < 2 ? 0 : Math.ceil(level / 2))
+    : level;
   if (effectiveLevel < 1) return [];
   const idx = Math.min(effectiveLevel, 20) - 1;
   const base = FULL_CASTER_SLOTS[idx];

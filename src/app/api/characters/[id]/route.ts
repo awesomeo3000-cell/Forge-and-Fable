@@ -1,31 +1,76 @@
 import { NextResponse } from "next/server";
 import { deleteCharacter, getCharacter, updateCharacter } from "@/lib/vaultStore";
+import { authenticateRequest, AuthError } from "@/lib/auth";
+import { validateCharacterInput } from "@/lib/validateCharacter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getUserId(request: Request) {
-  return request.headers.get("x-user-id")?.trim() ?? "";
+/** Fields that may be updated via PATCH. id, userId, and createdAt are immutable. */
+export const ALLOWED_PATCH_FIELDS = new Set([
+  "name", "level", "alignment", "background",
+  "physicalCharacteristics", "personalCharacteristics", "generalNotes",
+  "raceId", "classId", "sourceIds", "settings",
+  "abilities", "currentHp", "maxHp", "tempHp",
+  "inventory", "spellsKnown", "customRules",
+  "skillProficiencies", "savingThrowProficiencies",
+  "deathSaves", "theme", "sheetLayout",
+  "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
+  "subclassId", "asiChoices", "hpRolls",
+]);
+
+function sanitizePatch(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("Patch body must be a JSON object.");
+  }
+
+  const patch = raw as Record<string, unknown>;
+  const sanitized: Record<string, unknown> = {};
+
+  for (const key of Object.keys(patch)) {
+    if (!ALLOWED_PATCH_FIELDS.has(key)) {
+      throw new Error(`Field "${key}" cannot be modified.`);
+    }
+    sanitized[key] = patch[key];
+  }
+
+  if (Object.keys(sanitized).length === 0) {
+    throw new Error("Patch body contains no updatable fields.");
+  }
+
+  return sanitized;
+}
+
+function handleAuthError(error: unknown) {
+  if (error instanceof AuthError) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+  return null;
 }
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const userId = getUserId(request);
-  const { id } = await context.params;
+  try {
+    const userId = await authenticateRequest(request);
+    const { id } = await context.params;
 
-  if (!userId) {
-    return NextResponse.json({ error: "Vault session required." }, { status: 401 });
+    const character = await getCharacter(userId, id);
+
+    if (!character) {
+      return NextResponse.json({ error: "Character not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({ character });
+  } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not load character." },
+      { status: 500 },
+    );
   }
-
-  const character = await getCharacter(userId, id);
-
-  if (!character) {
-    return NextResponse.json({ error: "Character not found." }, { status: 404 });
-  }
-
-  return NextResponse.json({ character });
 }
 
 export async function PUT(
@@ -33,18 +78,18 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userId = getUserId(request);
+    const userId = await authenticateRequest(request);
     const { id } = await context.params;
 
-    if (!userId) {
-      return NextResponse.json({ error: "Vault session required." }, { status: 401 });
-    }
-
-    const patch = await request.json();
+    const raw = await request.json();
+    const patch = sanitizePatch(raw);
+    validateCharacterInput(patch, true);
     const character = await updateCharacter(userId, id, patch);
 
     return NextResponse.json({ character });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not update character." },
       { status: 400 },
@@ -57,16 +102,14 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userId = getUserId(request);
+    const userId = await authenticateRequest(request);
     const { id } = await context.params;
-
-    if (!userId) {
-      return NextResponse.json({ error: "Vault session required." }, { status: 401 });
-    }
 
     await deleteCharacter(userId, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not delete character." },
       { status: 400 },

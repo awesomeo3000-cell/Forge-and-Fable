@@ -1,7 +1,8 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import type { Character, PublicUser } from "@/types/game";
+import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -23,12 +24,41 @@ function emptyVault(): VaultData {
   };
 }
 
+function validateVaultStructure(data: unknown): data is VaultData {
+  if (!data || typeof data !== "object") return false;
+  const candidate = data as Record<string, unknown>;
+  return Array.isArray(candidate.users) && Array.isArray(candidate.characters);
+}
+
 async function readVault(): Promise<VaultData> {
   try {
     const raw = await readFile(vaultFile, "utf8");
-    return JSON.parse(raw) as VaultData;
-  } catch {
-    return emptyVault();
+    const parsed = JSON.parse(raw);
+
+    if (!validateVaultStructure(parsed)) {
+      throw new Error("Vault data has an unexpected structure.");
+    }
+
+    return parsed;
+  } catch (error) {
+    // File not found is expected on first run — return a fresh vault.
+    if (error instanceof Error && "code" in error && (error as NodeJS.ErrnoException).code === "ENOENT") {
+      return emptyVault();
+    }
+
+    // Corrupted file: back it up so it's never silently overwritten.
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const backupFile = vaultFile.replace(".json", `-backup-${timestamp}.json`);
+      await copyFile(vaultFile, backupFile);
+      console.error(`⚠️ Corrupted vault backed up to ${backupFile}`);
+    } catch {
+      // If backup itself fails (e.g. file truly gone), at least don't destroy data.
+    }
+
+    throw new Error(
+      `The vault file is corrupted and could not be read. A backup has been saved. Original error: ${error instanceof Error ? error.message : "unknown"}`,
+    );
   }
 }
 
@@ -57,8 +87,8 @@ export async function registerUser(input: {
   const name = input.name.trim() || "Adventurer";
   const email = normalizeEmail(input.email);
 
-  if (!email.includes("@") || input.password.length < 6) {
-    throw new Error("Use an email address and a password with at least 6 characters.");
+  if (!email.includes("@") || input.password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Use an email address and a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
 
   const vault = await readVault();
@@ -72,7 +102,7 @@ export async function registerUser(input: {
     id: crypto.randomUUID(),
     name,
     email,
-    passwordHash: await bcrypt.hash(input.password, 10),
+    passwordHash: await bcrypt.hash(input.password, BCRYPT_ROUNDS),
     createdAt: new Date().toISOString(),
   };
 

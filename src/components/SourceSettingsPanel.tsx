@@ -3,7 +3,9 @@
 import type { CharacterSettings } from "@/types/game";
 import { sourceOptions } from "@/lib/utils";
 
-export default function SourceSettingsPanel(props: {
+import { memo } from "react";
+
+export default memo(function SourceSettingsPanel(props: {
   selectedSourceIds: string[];
   settings: CharacterSettings;
   onToggleSource: (sourceId: string) => void;
@@ -240,4 +242,4 @@ export default function SourceSettingsPanel(props: {
       </section>
     </div>
   );
-}
+})

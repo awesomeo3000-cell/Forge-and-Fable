@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { CharacterTheme, ThemeBackgroundKey, ThemeFontKey } from "@/types/game";
 import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
@@ -22,7 +22,7 @@ function contrastRatio(hex1: string, hex2: string) {
 
 const BACKGROUNDS: ThemeBackgroundKey[] = ["parchment", "plain", "linen", "stars", "sparkle", "forest", "dungeon"];
 
-export default function AppearancePanel(props: {
+export default memo(function AppearancePanel(props: {
   theme: CharacterTheme | undefined;
   onUpdate: (theme: CharacterTheme | undefined) => void;
   onClose: () => void;
@@ -143,4 +143,4 @@ export default function AppearancePanel(props: {
       </button>
     </div>
   );
-}
+})

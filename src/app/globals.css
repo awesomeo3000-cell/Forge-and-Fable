@@ -4102,7 +4102,8 @@ button:disabled {
   left: 0;
   pointer-events: none;
   animation: die-fly 2.8s cubic-bezier(0.18, 0.82, 0.28, 1) forwards;
-  filter: drop-shadow(0 8px 22px var(--die-glow, rgba(200, 150, 60, 0.5)));
+  will-change: transform;
+  contain: layout style paint;
 }
 
 .die-result-num {
@@ -4269,6 +4270,16 @@ button:disabled {
 
 .dnd-die-stage.is-d100 .dnd-die-face.is-up {
   font-size: 17px;
+}
+
+.dnd-die-stage.is-d4 .dnd-die-face,
+.dnd-die-stage.is-d6 .dnd-die-face,
+.dnd-die-stage.is-d8 .dnd-die-face,
+.dnd-die-stage.is-d10 .dnd-die-face,
+.dnd-die-stage.is-d100 .dnd-die-face,
+.dnd-die-stage.is-d12 .dnd-die-face {
+  align-items: center;
+  padding: 4px;
 }
 
 .poly-die-stage {

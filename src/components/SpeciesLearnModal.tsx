@@ -6,7 +6,9 @@ import { createPortal } from "react-dom";
 import type { Race } from "@/types/game";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 
-export default function SpeciesLearnModal(props: {
+import { memo } from "react";
+
+export default memo(function SpeciesLearnModal(props: {
   species: Race;
   selected: boolean;
   onClose: () => void;
@@ -98,4 +100,4 @@ export default function SpeciesLearnModal(props: {
     </div>,
     document.body,
   );
-}
+})

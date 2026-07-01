@@ -1,4 +1,5 @@
-import type { AbilityKey, AbilityScores, Character, InventoryItem, Ruleset } from "@/types/game";
+import type { AbilityKey, AbilityScores, Character, CharacterSettings, CustomRule, InventoryItem, Ruleset } from "@/types/game";
+import { DEFAULT_STARTING_HP } from "@/lib/constants";
 
 export const abilityKeys: AbilityKey[] = [
   "strength",
@@ -141,12 +142,12 @@ export function createInitialDraft(ruleset: Ruleset) {
     sourceIds: [] as string[],
     settings: defaultCharacterSettings(),
     abilities: { ...emptyAbilities },
-    currentHp: 8,
-    maxHp: 8,
+    currentHp: DEFAULT_STARTING_HP,
+    maxHp: DEFAULT_STARTING_HP,
     tempHp: 0,
     inventory: [] as InventoryItem[],
     spellsKnown: [] as string[],
-    customRules: [] as import("@/types/game").CustomRule[],
+    customRules: [] as CustomRule[],
     skillProficiencies: [] as string[],
     deathSaves: { successes: 0, failures: 0 },
   };
@@ -192,14 +193,14 @@ export function characterPayload(
     raceId: string;
     classId: string;
     sourceIds: string[];
-    settings: import("@/types/game").CharacterSettings;
+    settings: CharacterSettings;
     abilities: AbilityScores;
     currentHp: number;
     maxHp: number;
     tempHp: number;
     inventory: InventoryItem[];
     spellsKnown: string[];
-    customRules: import("@/types/game").CustomRule[];
+    customRules: CustomRule[];
     skillProficiencies: string[];
     deathSaves: { successes: number; failures: number };
   },
@@ -216,7 +217,7 @@ export function characterPayload(
     currentHp: maxHp,
     maxHp,
     tempHp: 0,
-    inventory: [...classGear, ...ruleset.items.slice(0, 1)],
+    inventory: classGear,
     spellsKnown: heroClass.spellSuggestions.slice(0, 3),
     customRules: [],
   };

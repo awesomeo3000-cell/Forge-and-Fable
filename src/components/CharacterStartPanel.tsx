@@ -1,11 +1,11 @@
 "use client";
 
 import { ChevronRight, CircleGauge, ShieldCheck, Swords } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 type BuildMode = "standard" | "quickbuilder" | "premade";
 
-export default function CharacterStartPanel(props: {
+export default memo(function CharacterStartPanel(props: {
   onSelectBuild: (mode: BuildMode) => void;
 }) {
   const [selectedMode, setSelectedMode] = useState<BuildMode | null>(null);
@@ -72,4 +72,4 @@ export default function CharacterStartPanel(props: {
       </div>
     </div>
   );
-}
+})

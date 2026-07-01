@@ -12,8 +12,8 @@ import {
   ScrollText,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
-import type { AbilityKey, AbilityScores, CharacterSettings, Ruleset } from "@/types/game";
+import { memo, useState } from "react";
+import type { AbilityKey, AbilityScores, BuildMode, CharacterSettings, DraftCharacter, Ruleset, StatMethod } from "@/types/game";
 import { abilityKeys, abilityLabels, abilityNames, classArtById, standardArray, sourceOptions } from "@/lib/utils";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
@@ -22,35 +22,9 @@ import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import { signed } from "@/lib/utils";
 
-type DraftCharacter = {
-  name: string;
-  level: number;
-  alignment: string;
-  background: string;
-  physicalCharacteristics: string;
-  personalCharacteristics: string;
-  generalNotes: string;
-  raceId: string;
-  classId: string;
-  sourceIds: string[];
-  settings: CharacterSettings;
-  abilities: AbilityScores;
-  currentHp: number;
-  maxHp: number;
-  tempHp: number;
-  inventory: import("@/types/game").InventoryItem[];
-  spellsKnown: string[];
-  customRules: import("@/types/game").CustomRule[];
-  skillProficiencies: string[];
-  deathSaves: import("@/types/game").DeathSaves;
-};
-
-type StatMethod = "point-buy" | "standard-array" | "roll";
 type AssignmentMap = Record<AbilityKey, number>;
 
-type BuildMode = "standard" | "quickbuilder" | "premade";
-
-export default function CreatorPanel(props: {
+export default memo(function CreatorPanel(props: {
   draft: DraftCharacter;
   finalAbilities: AbilityScores;
   ruleset: Ruleset;
@@ -545,4 +519,4 @@ export default function CreatorPanel(props: {
       ) : null}
     </>
   );
-}
+})

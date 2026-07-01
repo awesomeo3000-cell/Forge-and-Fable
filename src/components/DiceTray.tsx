@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Dices } from "lucide-react";
 import { signed } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ type RollEntry = {
   createdAt: string;
 };
 
-export default function DiceTray(props: {
+export default memo(function DiceTray(props: {
   rolls: RollEntry[];
   onRoll: (label: string, sides: number, count?: number, modifier?: number) => void;
 }) {
@@ -48,4 +49,4 @@ export default function DiceTray(props: {
       </div>
     </aside>
   );
-}
+})
