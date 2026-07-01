@@ -4195,6 +4195,82 @@ button:disabled {
   text-shadow: 0 0 8px #ffd700, 0 0 18px rgba(255, 140, 40, 0.9);
 }
 
+.dnd-die-stage {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  perspective: 300px;
+  perspective-origin: 50% 42%;
+}
+
+.dnd-die-rig {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.dnd-die-face {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--dnd-face-w);
+  height: var(--dnd-face-h);
+  margin-left: calc(var(--dnd-face-w) / -2);
+  margin-top: calc(var(--dnd-face-h) / -2);
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 210, 190, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: rgba(255, 244, 218, 0.78);
+  font-family: var(--dnd-die-font, Georgia, "Times New Roman", serif);
+  font-weight: 800;
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+  backface-visibility: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.62);
+}
+
+.dnd-die-face.is-up {
+  background:
+    radial-gradient(circle at 48% 56%, rgba(255, 236, 190, 0.95) 0%, rgba(255, 190, 92, 0.86) 24%, transparent 25%),
+    radial-gradient(circle at 50% 62%, #ffce7a 0%, #d8421f 70%, #9a2414 100%);
+  border-color: rgba(255, 236, 200, 0.9);
+  color: #fff7e8;
+  font-size: 18px;
+  text-shadow: 0 0 6px rgba(255, 180, 70, 0.9), 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+.dnd-die-stage.is-d4 .dnd-die-face,
+.dnd-die-stage.is-d8 .dnd-die-face {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  align-items: flex-end;
+  padding-bottom: 8px;
+}
+
+.dnd-die-stage.is-d6 .dnd-die-face {
+  clip-path: polygon(8% 8%, 92% 8%, 92% 92%, 8% 92%);
+}
+
+.dnd-die-stage.is-d10 .dnd-die-face,
+.dnd-die-stage.is-d100 .dnd-die-face {
+  clip-path: polygon(50% 0%, 92% 30%, 75% 100%, 25% 100%, 8% 30%);
+}
+
+.dnd-die-stage.is-d12 .dnd-die-face {
+  clip-path: polygon(50% 0%, 96% 35%, 78% 92%, 22% 92%, 4% 35%);
+}
+
+.dnd-die-stage.is-d100 .dnd-die-face.is-up {
+  font-size: 17px;
+}
+
 .poly-die-stage {
   position: relative;
   width: 100px;
@@ -4359,6 +4435,7 @@ button:disabled {
   .die-result-num,
   .die-roll-label,
   .d20-rig,
+  .dnd-die-rig,
   .poly-die-rig,
   .crit-banner::before,
   .crit-text {

@@ -16,7 +16,7 @@ export default function DiceTray(props: {
   rolls: RollEntry[];
   onRoll: (label: string, sides: number, count?: number, modifier?: number) => void;
 }) {
-  const dice = [20, 12, 10, 8, 6, 4];
+  const dice = [20, 12, 10, 100, 8, 6, 4];
 
   return (
     <aside className="dice-panel">

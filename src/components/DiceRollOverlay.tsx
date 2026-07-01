@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export type RollingDie = {
   id: string;
@@ -51,7 +51,7 @@ const D20_FACES: { matrix: number[]; brightness: number }[] = [
   { matrix: [0.309, 0.809, -0.5, 0, -0.1784, -0.4671, -0.866, 0, -0.9342, 0.3568, 0, 0, 32.3157, -8.9318, 5.5202, 1], brightness: 0.612 },
 ];
 
-function d20FaceColor(brightness: number, baseRgb: [number, number, number]): string {
+function dieFaceColor(brightness: number, baseRgb: [number, number, number]): string {
   const [r, g, b] = baseRgb;
   if (brightness > 0.5) {
     const amt = (brightness - 0.5) * 0.7;
@@ -105,11 +105,13 @@ function dieColors(accentHex: string): Record<number, { fill: string; stroke: st
     10: { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.22)`, glow: `rgba(${r},${g},${b},0.55)` },
     12: { fill: `rgba(${r},${g},${b},0.88)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.28)`, glow: `rgba(${r},${g},${b},0.55)` },
     20: { fill: `rgba(${r},${g},${b},0.92)`,  stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.85)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.32)`, glow: `rgba(${r},${g},${b},0.65)` },
+    100: { fill: `rgba(${r},${g},${b},0.88)`, stroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.75)`, facetStroke: `rgba(${brighten(r)},${brighten(g)},${brighten(b)},0.22)`, glow: `rgba(${r},${g},${b},0.55)` },
   };
 }
 
 function displayValue(sides: number, result: number): string {
   if (sides === 20 && result === 20) return "C";
+  if (sides === 100) return result === 100 ? "00" : String(result).padStart(2, "0");
   return String(result);
 }
 
@@ -191,6 +193,212 @@ function restQuatForFace(faceIndex: number): Quat {
   );
 }
 
+function restQuatForMatrix(m: number[]): Quat {
+  return quatFromColumns(
+    [m[0], m[4], m[8]],
+    [m[1], m[5], m[9]],
+    [m[2], m[6], m[10]],
+  );
+}
+
+function dot3(a: Vec3, b: Vec3): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function cross3(a: Vec3, b: Vec3): Vec3 {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+}
+
+function matrixForNormal(normal: Vec3, radius: number): number[] {
+  const z = normalize3(normal);
+  const seed: Vec3 = Math.abs(z[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+  const x = normalize3(cross3(seed, z));
+  const y = normalize3(cross3(z, x));
+  const c: Vec3 = [z[0] * radius, z[1] * radius, z[2] * radius];
+  return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, c[0], c[1], c[2], 1];
+}
+
+const STUDIO_LIGHT = normalize3([-0.36, -0.54, 0.76]);
+
+function brightnessForNormal(normal: Vec3): number {
+  return Math.max(0, Math.min(1, dot3(normalize3(normal), STUDIO_LIGHT) * 0.5 + 0.5));
+}
+
+function normalsForDie(sides: number): Vec3[] {
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const d10Normals = Array.from({ length: 10 }, (_, i) => {
+    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const z = i % 2 === 0 ? 0.42 : -0.42;
+    return normalize3([Math.cos(angle), Math.sin(angle), z]);
+  });
+
+  switch (sides) {
+    case 4: {
+      const points: Vec3[] = [[1, 1, 1], [-1, -1, 1], [-1, 1, -1], [1, -1, -1]];
+      return points.map(normalize3);
+    }
+    case 6: {
+      const points: Vec3[] = [[0, 0, 1], [1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0], [0, 0, -1]];
+      return points.map(normalize3);
+    }
+    case 8: {
+      const points: Vec3[] = [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]];
+      return points.map(normalize3);
+    }
+    case 10:
+    case 100:
+      return d10Normals;
+    case 12: {
+      const points: Vec3[] = [
+        [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
+        [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
+        [phi, 0, 1], [-phi, 0, 1], [phi, 0, -1], [-phi, 0, -1],
+      ];
+      return points.map(normalize3);
+    }
+    default:
+      return normalsForDie(8);
+  }
+}
+
+function dieFaceIndex(sides: number, result: number, faceCount: number): number {
+  if (sides === 100) {
+    return Math.max(0, Math.min(faceCount - 1, Math.ceil(result / 10) - 1));
+  }
+  return (((result - 1) % faceCount) + faceCount) % faceCount;
+}
+
+function inactiveFaceLabel(sides: number, index: number): string {
+  if (sides === 100) return index === 0 ? "00" : String(index * 10).padStart(2, "0");
+  return String(index + 1);
+}
+
+function geometryForDie(sides: number) {
+  switch (sides) {
+    case 4:
+      return { radius: 27, faceWidth: 68, faceHeight: 60, className: "is-d4" };
+    case 6:
+      return { radius: 30, faceWidth: 58, faceHeight: 58, className: "is-d6" };
+    case 8:
+      return { radius: 30, faceWidth: 66, faceHeight: 58, className: "is-d8" };
+    case 10:
+    case 100:
+      return { radius: 31, faceWidth: 64, faceHeight: 74, className: sides === 100 ? "is-d100" : "is-d10" };
+    case 12:
+      return { radius: 32, faceWidth: 62, faceHeight: 62, className: "is-d12" };
+    default:
+      return { radius: 30, faceWidth: 66, faceHeight: 58, className: "is-d8" };
+  }
+}
+
+function tumbleFrames(rest: Quat): Keyframe[] {
+  const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+  const s1 = Math.random() < 0.5 ? -1 : 1;
+  const s2 = Math.random() < 0.5 ? -1 : 1;
+  const axis1: Vec3 = [1, rnd(0.2, 0.5), rnd(0.1, 0.3)];
+  const axis2: Vec3 = [rnd(0.1, 0.35), 1, rnd(0.3, 0.6)];
+  const tau = Math.PI * 2;
+  const phiMax = s1 * rnd(3, 4.5) * tau;
+  const psiMax = s2 * rnd(2, 3.2) * tau;
+  const c1 = 0.9, c3 = c1 + 1;
+  const easeOutBack = (o: number) => 1 + c3 * Math.pow(o - 1, 3) + c1 * Math.pow(o - 1, 2);
+  const frames: Keyframe[] = [];
+
+  for (let i = 0; i <= 60; i++) {
+    const o = i / 60;
+    const k = 1 - easeOutBack(o);
+    const spin = quatMul(quatAxisAngle(axis1, phiMax * k), quatAxisAngle(axis2, psiMax * k));
+    frames.push({ transform: matrix3dFromQuat(quatMul(rest, spin)), offset: o, easing: "linear" });
+  }
+
+  return frames;
+}
+
+function PolyhedralDieObject({
+  sides,
+  result,
+  delayMs,
+  accentHex,
+  fontStack,
+}: {
+  sides: number;
+  result: number;
+  delayMs: number;
+  accentHex: string;
+  fontStack: string;
+}) {
+  const baseRgb = hexToRgb(accentHex);
+  const colors = dieColors(accentHex)[sides] ?? dieColors(accentHex)[sides === 100 ? 10 : 8];
+  const rigRef = useRef<HTMLDivElement>(null);
+  const geometry = useMemo(() => geometryForDie(sides), [sides]);
+  const normals = useMemo(() => normalsForDie(sides), [sides]);
+  const upIndex = useMemo(() => dieFaceIndex(sides, result, normals.length), [normals.length, result, sides]);
+  const faces = useMemo(() => normals.map((normal, i) => ({
+    matrix: matrixForNormal(normal, geometry.radius),
+    brightness: brightnessForNormal(normal),
+    label: i === upIndex ? displayValue(sides, result) : inactiveFaceLabel(sides, i),
+  })), [geometry.radius, normals, result, sides, upIndex]);
+
+  useLayoutEffect(() => {
+    const rig = rigRef.current;
+    if (!rig) return;
+
+    const rest = restQuatForMatrix(faces[upIndex].matrix);
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce) {
+      rig.style.transform = matrix3dFromQuat(rest);
+      return;
+    }
+
+    const frames = tumbleFrames(rest);
+    rig.style.transform = frames[0].transform as string;
+    const anim = rig.animate(frames, {
+      duration: 1500,
+      delay: delayMs,
+      fill: "forwards",
+      easing: "linear",
+    });
+    return () => anim.cancel();
+  }, [delayMs, faces, upIndex]);
+
+  const style = {
+    "--dnd-face-w": `${geometry.faceWidth}px`,
+    "--dnd-face-h": `${geometry.faceHeight}px`,
+    "--dnd-die-font": fontStack,
+    "--dnd-die-fill": colors.fill,
+    "--dnd-die-stroke": colors.stroke,
+  } as React.CSSProperties;
+
+  return (
+    <div className={`dnd-die-stage ${geometry.className}`} style={style}>
+      <div className="dnd-die-rig" ref={rigRef}>
+        {faces.map((face, i) => {
+          const isUp = i === upIndex;
+          return (
+            <div
+              key={i}
+              className={`dnd-die-face${isUp ? " is-up" : ""}`}
+              style={{
+                transform: `matrix3d(${face.matrix.join(",")})`,
+                ...(isUp ? null : { background: dieFaceColor(face.brightness, baseRgb) }),
+              }}
+            >
+              {face.label}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function D20Object({
   result,
   isCrit,
@@ -269,7 +477,7 @@ function D20Object({
               className={`d20-face${isUp ? " is-up" : ""}${isUp && isCrit ? " is-crit" : ""}`}
               style={{
                 transform: `matrix3d(${face.matrix.join(",")})`,
-                ...(isUp ? null : { background: d20FaceColor(face.brightness, baseRgb) }),
+                ...(isUp ? null : { background: dieFaceColor(face.brightness, baseRgb) }),
               }}
             >
               {i + 1}
@@ -340,7 +548,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
 
   if (!visible) return null;
 
-  const colors = dieColors(accentHex)[die.sides] ?? dieColors(accentHex)[8];
+  const colors = dieColors(accentHex)[die.sides] ?? dieColors(accentHex)[die.sides === 100 ? 10 : 8];
   const shape = DIE_SHAPES[die.sides as keyof typeof DIE_SHAPES] ?? DIE_SHAPES[8];
   const filterId = `glow-${die.id}`;
   const label = displayValue(die.sides, die.result);
@@ -361,6 +569,25 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
     animationDelay: `${die.delayMs}ms`,
     animationDuration: "2.8s",
   } as React.CSSProperties;
+
+  if (!isD20) {
+    return (
+      <div className="flying-die" style={style}>
+        <PolyhedralDieObject
+          sides={die.sides}
+          result={die.result}
+          delayMs={die.delayMs}
+          accentHex={accentHex}
+          fontStack={fontStack}
+        />
+
+        <div className="die-roll-label" style={textStyle}>
+          <span className="die-roll-label-name">{die.label}</span>
+          <span className="die-roll-label-die">d{die.sides}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flying-die" style={style}>
