@@ -18,14 +18,6 @@ export type RollingDie = {
 
 /* ── Die shapes ── */
 
-const POLY_DIE_SHAPES: Record<number, string> = {
-  4: "polygon(50% 4%, 96% 88%, 4% 88%)",
-  6: "polygon(12% 12%, 88% 12%, 88% 88%, 12% 88%)",
-  8: "polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%)",
-  10: "polygon(50% 4%, 91% 30%, 78% 91%, 22% 91%, 9% 30%)",
-  12: "polygon(50% 3%, 78% 14%, 97% 42%, 90% 76%, 65% 97%, 35% 97%, 10% 76%, 3% 42%, 22% 14%)",
-};
-
 /* Icosahedron rendered as 20 *actual* triangular faces positioned in
    real 3D space with CSS `matrix3d`, inside a `transform-style:
    preserve-3d` rig — a true volumetric d20, not a flat drawing of one.
@@ -291,49 +283,6 @@ function D20Object({
 
 /* ── Crit banner ── */
 
-function PolyDieObject({
-  sides,
-  result,
-  delayMs,
-  accentHex,
-  fontStack,
-}: {
-  sides: number;
-  result: number;
-  delayMs: number;
-  accentHex: string;
-  fontStack: string;
-}) {
-  const colors = dieColors(accentHex)[sides] ?? dieColors(accentHex)[8];
-  const shape = POLY_DIE_SHAPES[sides] ?? POLY_DIE_SHAPES[8];
-  const style = {
-    "--poly-shape": shape,
-    "--poly-fill": colors.fill,
-    "--poly-stroke": colors.stroke,
-    "--poly-facet": colors.facetStroke,
-    "--poly-glow": colors.glow,
-    "--poly-delay": `${delayMs}ms`,
-    "--poly-font": fontStack,
-  } as React.CSSProperties;
-
-  return (
-    <div className="poly-die-stage" style={style}>
-      <div className="poly-die-rig">
-        <div className="poly-die-object">
-          <span className="poly-die-facet poly-die-back" />
-          <span className="poly-die-facet poly-die-left" />
-          <span className="poly-die-facet poly-die-right" />
-          <span className="poly-die-facet poly-die-top" />
-          <span className="poly-die-facet poly-die-bottom" />
-          <span className="poly-die-face">
-            <b>{result}</b>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ClarebearCrit({ delayMs }: { delayMs: number }) {
   const style = { "--crit-delay": `${delayMs}ms` } as React.CSSProperties;
   return (
@@ -423,15 +372,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
           accentHex={accentHex}
         />
       ) : (
-        <>
-          <PolyDieObject
-            sides={die.sides}
-            result={die.result}
-            delayMs={die.delayMs}
-            accentHex={accentHex}
-            fontStack={fontStack}
-          />
-        <svg viewBox="0 0 100 100" width="100" height="100" aria-hidden="true" style={{ display: "none" }}>
+        <svg viewBox="0 0 100 100" width="100" height="100" aria-hidden="true">
           <defs>
             <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
@@ -491,7 +432,6 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
             {label}
           </text>
         </svg>
-        </>
       )}
 
       <div className="die-roll-label" style={textStyle}>
