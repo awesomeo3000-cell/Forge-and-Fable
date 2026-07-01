@@ -78,8 +78,7 @@ export default function ForgeAndFableApp() {
   const [authPassword, setAuthPassword] = useState("");
   const [status, setStatus] = useState("");
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
-  const [isRulesetLoading, setIsRulesetLoading] = useState(true);
-  const [isCharactersLoading, setIsCharactersLoading] = useState(false);
+
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroDone(true), SPLASH_DURATION_MS);
@@ -90,7 +89,7 @@ export default function ForgeAndFableApp() {
         setDraft(createInitialDraft(data) as DraftCharacter);
       })
       .catch(() => setStatus("Ruleset failed to load."))
-      .finally(() => setIsRulesetLoading(false));
+      .catch(() => {}); // already handled above
 
     const storedUser = window.localStorage.getItem("forge-and-fable-user");
     const storedToken = window.localStorage.getItem("forge-and-fable-token");
@@ -113,7 +112,6 @@ export default function ForgeAndFableApp() {
     }
 
     let mounted = true;
-    queueMicrotask(() => { if (mounted) setIsCharactersLoading(true); });
 
     fetch("/api/characters", {
       headers: {
@@ -122,8 +120,10 @@ export default function ForgeAndFableApp() {
     })
       .then((response) => {
         if (response.status === 401) {
-          if (mounted) logOut();
-          setStatus("Session expired — please log in again.");
+          if (mounted) {
+            logOut();
+            setStatus("Session expired — please log in again.");
+          }
           return;
         }
         if (!response.ok) {
@@ -135,13 +135,9 @@ export default function ForgeAndFableApp() {
         if (!data || !mounted) return;
         setCharacters(data.characters);
         setSelectedId((current) => current || data.characters[0]?.id || "");
-        if (mounted) setIsCharactersLoading(false);
       })
       .catch((error: Error) => {
-        if (mounted) {
-          setStatus(error.message);
-          setIsCharactersLoading(false);
-        }
+        if (mounted) setStatus(error.message);
       });
 
     return () => {

@@ -1,23 +1,10 @@
 import { NextResponse } from "next/server";
 import { deleteCharacter, getCharacter, updateCharacter } from "@/lib/vaultStore";
 import { authenticateRequest, AuthError } from "@/lib/auth";
-import { validateCharacterInput } from "@/lib/validateCharacter";
+import { validateCharacterInput, ALLOWED_PATCH_FIELDS } from "@/lib/validateCharacter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-/** Fields that may be updated via PATCH. id, userId, and createdAt are immutable. */
-export const ALLOWED_PATCH_FIELDS = new Set([
-  "name", "level", "alignment", "background",
-  "physicalCharacteristics", "personalCharacteristics", "generalNotes",
-  "raceId", "classId", "sourceIds", "settings",
-  "abilities", "currentHp", "maxHp", "tempHp",
-  "inventory", "spellsKnown", "customRules",
-  "skillProficiencies", "savingThrowProficiencies",
-  "deathSaves", "theme", "sheetLayout",
-  "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
-  "subclassId", "asiChoices", "hpRolls",
-]);
 
 function sanitizePatch(raw: unknown): Record<string, unknown> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {

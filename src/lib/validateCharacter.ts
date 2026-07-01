@@ -1,5 +1,3 @@
-import { ALLOWED_PATCH_FIELDS } from "@/app/api/characters/[id]/route";
-
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
 function assertString(val: unknown, name: string, maxLen?: number): asserts val is string {
@@ -18,6 +16,19 @@ function assertInteger(val: unknown, name: string, min?: number, max?: number): 
 function assertArray(val: unknown, name: string): asserts val is unknown[] {
   if (!Array.isArray(val)) throw new Error(`"${name}" must be an array.`);
 }
+
+/** Fields that may be updated via PATCH or set at creation. id, userId, and createdAt are immutable. */
+export const ALLOWED_PATCH_FIELDS = new Set([
+  "name", "level", "alignment", "background",
+  "physicalCharacteristics", "personalCharacteristics", "generalNotes",
+  "raceId", "classId", "sourceIds", "settings",
+  "abilities", "currentHp", "maxHp", "tempHp",
+  "inventory", "spellsKnown", "customRules",
+  "skillProficiencies", "savingThrowProficiencies",
+  "deathSaves", "theme", "sheetLayout",
+  "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
+  "subclassId", "asiChoices", "hpRolls",
+]);
 
 /** Validate a character creation payload or partial update patch. */
 export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<string, unknown> {
@@ -56,7 +67,10 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
           if (typeof val !== "object" || val === null) throw new Error(`"abilities" must be an object.`);
           const abilities = val as Record<string, unknown>;
           for (const a of ABILITY_KEYS) {
-            if (typeof abilities[a] === "number") {
+            // Assert every present key is an integer 1–30 regardless of type.
+            // Previously we only checked if typeof === "number", which let
+            // non-number values (e.g. "cat") through silently.
+            if (a in abilities) {
               assertInteger(abilities[a], `abilities.${a}`, 1, 30);
             }
           }

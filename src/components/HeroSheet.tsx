@@ -307,9 +307,11 @@ export default memo(function HeroSheet(props: {
     }
 
     // Clear subclass if gained at a level now above newLevel
+    // Use "" not undefined — JSON.stringify drops undefined keys, so the
+    // server would never see the field and keep the old value.
     const subclassLevel = heroClass.subclassLevel ?? 3;
     if (props.character.subclassId && subclassLevel > newLevel) {
-      patch.subclassId = undefined;
+      patch.subclassId = "";
     }
 
     props.onUpdate(patch as Partial<Omit<Character, "id" | "userId" | "createdAt">>);
