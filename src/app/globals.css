@@ -5401,3 +5401,124 @@ button:disabled {
   color: var(--ink-2);
 }
 .paper-surface .class-detail-card summary { color: var(--ink); }
+
+/* ── Paper-surface: full sweep of hardcoded dark-chrome colors ──
+   Every rule here mirrors a builder style that hardcodes cream text,
+   white-glass borders, or dark-glass fills that wash out on paper. */
+
+/* Start panel */
+.paper-surface .start-copy p { color: var(--ink-2); }
+.paper-surface .build-mode-card {
+  border: 1px solid var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: none;
+}
+.paper-surface .build-mode-card strong { color: var(--ink); }
+.paper-surface .build-mode-card span { color: var(--ink-2); }
+.paper-surface .build-mode-card svg { color: var(--doc-accent); }
+.paper-surface .build-mode-card.active {
+  border-color: var(--doc-accent);
+  background: color-mix(in srgb, var(--doc-accent) 8%, var(--paper));
+}
+
+/* Wizard preview column */
+.paper-surface .hero-summary {
+  border-color: var(--doc-rule);
+  box-shadow: none;
+}
+.paper-surface .hero-summary strong,
+.paper-surface .hero-summary span { text-shadow: none; }
+.paper-surface .summary-token-row em {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink-2);
+}
+.paper-surface .preview-stat-strip span {
+  border-color: var(--doc-rule);
+  box-shadow: none;
+}
+.paper-surface .species-signal { border-color: var(--doc-rule); }
+.paper-surface .species-signal > span { background: var(--paper-raised); }
+.paper-surface .species-signal strong { color: var(--ink); }
+.paper-surface .class-icon-stage::before { border-color: var(--doc-rule); }
+
+/* Controls column */
+.paper-surface .creator-controls { background: transparent; }
+.paper-surface .attribute-card strong { color: var(--ink); }
+.paper-surface .source-card {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
+.paper-surface .source-card strong { color: var(--ink); }
+.paper-surface .settings-section {
+  border-color: var(--doc-rule);
+  background: transparent;
+}
+.paper-surface .settings-heading h3 { color: var(--ink); }
+.paper-surface .checkbox-row {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
+.paper-surface .checkbox-row strong { color: var(--ink); }
+
+/* Quickbuilder */
+.paper-surface .qb-name-row label { color: var(--ink-2); }
+
+/* Learn modals */
+.paper-surface.class-modal {
+  background: var(--paper);
+  border-color: var(--doc-rule);
+}
+.paper-surface .class-modal-hero h3 { color: var(--ink); }
+.paper-surface .level-row {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
+.paper-surface .feature-unlock b { color: var(--ink); }
+
+/* Buttons */
+.paper-surface .gold-button[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.paper-surface .danger-button { color: var(--doc-accent-deep); }
+
+/* Paper-surface: soft/dim text tokens */
+.paper-surface { --soft: var(--ink-2); --ivory-dim: var(--ink-2); }
+.paper-surface .checkbox-row small,
+.paper-surface .checkbox-row span { color: var(--ink-2); }
+.paper-surface .control-field span { color: var(--ink-2); }
+
+/* Paper-surface: stat method row + steppers */
+.paper-surface .method-row button {
+  color: var(--ink-2);
+  border: 1px solid var(--doc-rule);
+  background: transparent;
+}
+.paper-surface .method-row button.active {
+  color: var(--paper);
+  background: var(--doc-accent);
+  border-color: var(--doc-accent-deep);
+}
+.paper-surface .mini-stepper button {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+.paper-surface .mini-stepper b {
+  color: var(--ink);
+  background: transparent;
+  border-color: var(--doc-rule);
+}
+.paper-surface .points-chip,
+.paper-surface .method-row > span {
+  color: var(--doc-accent-deep);
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
+.paper-surface .points-pill {
+  color: var(--doc-accent-deep);
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
