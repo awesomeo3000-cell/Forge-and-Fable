@@ -5009,6 +5009,13 @@ button:disabled {
   --skin-bg-size: cover;
 }
 .cs-sheet[data-bg="custom"] .cs-section::before {
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.cs-sheet[data-bg="custom"] .cs-sheet-tools::before {
+  background-attachment: fixed;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -5522,3 +5529,21 @@ button:disabled {
   border-color: var(--doc-rule);
   background: var(--paper-raised);
 }
+
+/* Paper-surface: wizard preview column — dark gradient fills → paper */
+.paper-surface .species-signal {
+  background: var(--paper-raised);
+}
+.paper-surface .species-signal strong { color: var(--ink); }
+.paper-surface .species-signal small { color: var(--ink-2); }
+.paper-surface .hero-summary {
+  background: var(--paper-raised);
+}
+.paper-surface .hero-summary strong { color: var(--ink); }
+.paper-surface .hero-summary span { color: var(--ink-2); text-shadow: none; }
+.paper-surface .preview-stat-strip span {
+  background: var(--paper-raised);
+  border-color: var(--doc-rule);
+  color: var(--ink-3);
+}
+.paper-surface .preview-stat-strip strong { color: var(--ink); }
