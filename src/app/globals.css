@@ -977,6 +977,13 @@ button:disabled {
   filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 22%, transparent));
 }
 
+.class-symbol-mask {
+  flex: 0 0 auto;
+  background: currentColor;
+  mask: var(--class-icon-url) center / contain no-repeat;
+  -webkit-mask: var(--class-icon-url) center / contain no-repeat;
+}
+
 .preview-identity-row {
   position: relative;
   z-index: 2;
