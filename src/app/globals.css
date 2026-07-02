@@ -5554,3 +5554,16 @@ button:disabled {
   color: var(--ink-3);
 }
 .paper-surface .preview-stat-strip strong { color: var(--ink); }
+
+/* Paper-surface: class tiles carry their class hue as heraldry — a left
+   accent bar and a tinted icon chip. Cards stay paper; selection stays
+   on the app accent so color never competes with state. */
+.paper-surface .class-choice[data-class] {
+  border-left: 4px solid color-mix(in srgb, var(--class-a, var(--doc-rule)) 60%, var(--paper));
+}
+.paper-surface .class-choice .choice-avatar {
+  background: color-mix(in srgb, var(--class-a, var(--doc-accent)) 14%, var(--paper));
+  border-color: color-mix(in srgb, var(--class-a, var(--doc-rule)) 40%, var(--paper));
+  color: color-mix(in srgb, var(--class-a, var(--doc-accent)) 78%, var(--ink));
+}
+.paper-surface .class-choice strong { color: var(--ink); }

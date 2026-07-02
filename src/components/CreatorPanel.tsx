@@ -198,6 +198,7 @@ export default memo(function CreatorPanel(props: {
                   <div
                     key={candidate.id}
                     className={`choice-tile class-choice ${selected ? "active" : ""}`}
+                    data-class={candidate.id}
                   >
                     <button
                       className="class-card-select"
