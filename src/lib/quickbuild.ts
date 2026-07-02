@@ -1,5 +1,5 @@
 import type { AbilityKey, AbilityScores, DraftCharacter, Ruleset } from "@/types/game";
-import { abilityKeys, emptyAbilities } from "@/lib/utils";
+import { abilityKeys, defaultCharacterSettings, emptyAbilities } from "@/lib/utils";
 
 // ──── Quickbuilder question flow ────
 
@@ -90,20 +90,7 @@ export function buildQuickDraft(ruleset: Ruleset, classId: string, raceId: strin
     raceId,
     classId,
     sourceIds: ["5e-core"],
-    settings: {
-      diceRollingEnabled: false,
-      optionalClassFeatures: false,
-      customizeOrigin: false,
-      advancementType: "milestone",
-      hitPointType: "fixed",
-      usePrerequisites: false,
-      useFeatPrerequisites: false,
-      useMulticlassPrerequisites: false,
-      showLevelScaledSpells: false,
-      encumbranceType: "none",
-      ignoreCoinWeight: false,
-      modifiersTop: false,
-    },
+    settings: defaultCharacterSettings(),
     abilities,
     currentHp: 8,
     maxHp: 8,

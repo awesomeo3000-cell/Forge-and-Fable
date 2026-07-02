@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { RotateCcw, X } from "lucide-react";
 import type { CharacterTheme, ThemeBackgroundKey, ThemeFontKey } from "@/types/game";
-import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
+import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS, loadUserPresets, saveUserPreset, deleteUserPreset, encodeSkinCode, decodeSkinCode, isValidBackgroundImageUrl } from "@/lib/skins";
 
 function contrastRatio(hex1: string, hex2: string) {
   const lum = (h: string) => {
@@ -20,7 +20,24 @@ function contrastRatio(hex1: string, hex2: string) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+function normalizeHex(raw: string, fallback: string): string {
+  let h = raw.trim();
+  if (!h.startsWith("#")) h = "#" + h;
+  if (/^#[0-9a-fA-F]{6}$/.test(h)) return h.toLowerCase();
+  return fallback;
+}
+
 const BACKGROUNDS: ThemeBackgroundKey[] = ["parchment", "plain", "linen", "stars", "sparkle", "forest", "dungeon"];
+
+function userIdFromStorage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("forge-and-fable-user");
+    if (!raw) return null;
+    const u = JSON.parse(raw) as { id?: string };
+    return u.id ?? null;
+  } catch { return null; }
+}
 
 export default memo(function AppearancePanel(props: {
   theme: CharacterTheme | undefined;
@@ -34,9 +51,25 @@ export default memo(function AppearancePanel(props: {
   const [fontKey, setFontKey] = useState<ThemeFontKey>(current.fontKey);
   const [bgKey, setBgKey] = useState<ThemeBackgroundKey>(current.backgroundKey);
   const [bgOpacity, setBgOpacity] = useState(current.backgroundOpacity ?? 0.5);
+  const [paperHex, setPaperHex] = useState(current.paper);
+  const [inkHex, setInkHex] = useState(current.ink);
+  const [accentHex, setAccentHex] = useState(current.accent);
+  const [fontScale, setFontScale] = useState(current.fontScale ?? 1);
+  const [bgUrl, setBgUrl] = useState(current.backgroundImageUrl ?? "");
+  const [importCode, setImportCode] = useState("");
+  const [shareStatus, setShareStatus] = useState("");
+  const [presetName, setPresetName] = useState("");
+  const [userPresets, setUserPresets] = useState<{ id: string; name: string; theme: CharacterTheme }[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const snapshotRef = useRef<CharacterTheme | undefined>(props.theme);
 
-  const save = (override?: Partial<CharacterTheme>) => {
+  // Load user presets on mount
+  useEffect(() => {
+    const uid = userIdFromStorage();
+    if (uid) setUserPresets(loadUserPresets(uid));
+  }, []);
+
+  const save = useCallback((override?: Partial<CharacterTheme>) => {
     const data: CharacterTheme = {
       presetId: undefined,
       paper,
@@ -45,47 +78,160 @@ export default memo(function AppearancePanel(props: {
       fontKey,
       backgroundKey: bgKey,
       backgroundOpacity: bgOpacity,
+      fontScale: fontScale !== 1 ? fontScale : undefined,
+      backgroundImageUrl: isValidBackgroundImageUrl(bgUrl) ? bgUrl : undefined,
       ...override,
     };
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => props.onUpdate(data), 300);
+  }, [paper, ink, accent, fontKey, bgKey, bgOpacity, fontScale, bgUrl, props]);
+
+  const applyPreset = useCallback((theme: CharacterTheme) => {
+    setPaper(theme.paper);
+    setInk(theme.ink);
+    setAccent(theme.accent);
+    setFontKey(theme.fontKey);
+    setBgKey(theme.backgroundKey);
+    setBgOpacity(theme.backgroundOpacity ?? 0.5);
+    setPaperHex(theme.paper);
+    setInkHex(theme.ink);
+    setAccentHex(theme.accent);
+    setFontScale(theme.fontScale ?? 1);
+    setBgUrl(theme.backgroundImageUrl ?? "");
+    if (timer.current) clearTimeout(timer.current);
+    props.onUpdate({ ...theme });
+  }, [props]);
+
+  const handleApplyPreset = (presetId: string) => {
+    // Check built-ins first, then user presets
+    const builtin = SKIN_PRESETS.find((p) => p.id === presetId);
+    if (builtin) { applyPreset(builtin.theme); return; }
+    const user = userPresets.find((p) => p.id === presetId);
+    if (user) applyPreset(user.theme);
   };
 
-  const applyPreset = (presetId: string) => {
-    const preset = SKIN_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
-    const t = preset.theme;
-    setPaper(t.paper);
-    setInk(t.ink);
-    setAccent(t.accent);
-    setFontKey(t.fontKey);
-    setBgKey(t.backgroundKey);
-    setBgOpacity(t.backgroundOpacity ?? 0.5);
-    props.onUpdate({ ...t });
+  const handleSavePreset = () => {
+    const uid = userIdFromStorage();
+    if (!uid || !presetName.trim()) return;
+    const theme: CharacterTheme = {
+      presetId: undefined,
+      paper,
+      ink,
+      accent,
+      fontKey,
+      backgroundKey: bgKey,
+      backgroundOpacity: bgOpacity,
+      fontScale: fontScale !== 1 ? fontScale : undefined,
+      backgroundImageUrl: isValidBackgroundImageUrl(bgUrl) ? bgUrl : undefined,
+    };
+    const updated = saveUserPreset(uid, presetName, theme);
+    setUserPresets(updated);
+    setPresetName("");
   };
 
-  const ratio = contrastRatio(ink, paper);
-  const warn = ratio < 4.5;
+  const handleDeletePreset = (id: string) => {
+    if (!window.confirm("Delete this preset?")) return;
+    const uid = userIdFromStorage();
+    if (!uid) return;
+    const updated = deleteUserPreset(uid, id);
+    setUserPresets(updated);
+  };
+
+  const handleRevert = () => {
+    const snap = snapshotRef.current;
+    if (timer.current) clearTimeout(timer.current);
+    if (snap) {
+      applyPreset(snap);
+    } else {
+      // No theme when opened — reset to default
+      props.onUpdate(undefined);
+      props.onClose();
+    }
+  };
+
+  const handleHex = (hex: string, setColor: (v: string) => void, setHex: (v: string) => void, field: keyof CharacterTheme) => {
+    setHex(hex);
+    const normalized = normalizeHex(hex, "");
+    if (normalized) {
+      setColor(normalized);
+      save({ [field]: normalized } as Partial<CharacterTheme>);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    const code = encodeSkinCode({
+      paper, ink, accent, fontKey,
+      backgroundKey: bgKey, backgroundOpacity: bgOpacity,
+      fontScale: fontScale !== 1 ? fontScale : undefined,
+      backgroundImageUrl: isValidBackgroundImageUrl(bgUrl) ? bgUrl : undefined,
+    });
+    try {
+      await navigator.clipboard.writeText(code);
+      setShareStatus("Skin code copied to clipboard");
+    } catch {
+      setShareStatus(code); // clipboard blocked — show the code for manual copy
+    }
+  };
+
+  const handleImportCode = () => {
+    const theme = decodeSkinCode(importCode);
+    if (!theme) {
+      setShareStatus("That skin code could not be read");
+      return;
+    }
+    applyPreset(theme);
+    setImportCode("");
+    setShareStatus("Skin applied");
+  };
+
+  const bgUrlInvalid = bgUrl.trim() !== "" && !isValidBackgroundImageUrl(bgUrl.trim());
+
+  const inkPaperRatio = contrastRatio(ink, paper);
+  const accentPaperRatio = contrastRatio(accent, paper);
+  const inkWarn = inkPaperRatio < 4.5;
+  const accentWarn = accentPaperRatio < 3.0;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  // Sync hex fields when color pickers change externally
+  useEffect(() => { setPaperHex(paper); }, [paper]);
+  useEffect(() => { setInkHex(ink); }, [ink]);
+  useEffect(() => { setAccentHex(accent); }, [accent]);
+
+  const allPresets = [...SKIN_PRESETS, ...userPresets];
 
   return (
     <div className="cs-skin-panel">
       <div className="cs-skin-head">
         <h3>Appearance</h3>
-        <button type="button" className="cs-glass-btn" onClick={props.onClose}><X size={14} />Close</button>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button type="button" className="cs-glass-btn" onClick={handleRevert} title="Revert to how this looked when opened"><RotateCcw size={14} />Revert</button>
+          <button type="button" className="cs-glass-btn" onClick={props.onClose}><X size={14} />Close</button>
+        </div>
       </div>
 
       <div className="cs-skin-section">
         <span className="cs-skin-label">Preset</span>
         <div className="cs-preset-grid">
-          {SKIN_PRESETS.map((p) => (
-            <button key={p.id} type="button" className="cs-preset-swatch" onClick={() => applyPreset(p.id)}
+          {allPresets.map((p) => (
+            <button key={p.id} type="button" className="cs-preset-swatch" onClick={() => handleApplyPreset(p.id)}
               style={{ background: p.theme.paper, color: p.theme.ink, fontFamily: FONT_STACKS[p.theme.fontKey] }}>
-              {p.name}
+              <span className="cs-preset-accent-bar" style={{ background: p.theme.accent }} />
+              <span className="cs-preset-name">{p.name}</span>
+              <span className="cs-preset-stat" style={{ color: p.theme.accent }}>+3</span>
+              {userPresets.some((u) => u.id === p.id) ? (
+                <button type="button" className="cs-preset-del" title="Delete preset" onClick={(e) => { e.stopPropagation(); handleDeletePreset(p.id); }}>×</button>
+              ) : null}
             </button>
           ))}
+        </div>
+        <div className="cs-preset-save-row">
+          <input type="text" className="qb-name-input" placeholder="Preset name..." value={presetName}
+            onChange={(e) => setPresetName(e.target.value)} maxLength={50} />
+          <button type="button" className="cs-glass-btn" disabled={!presetName.trim()} onClick={handleSavePreset}>
+            Save as preset
+          </button>
         </div>
       </div>
 
@@ -95,17 +241,27 @@ export default memo(function AppearancePanel(props: {
           <label className="cs-color-field">
             <span>Parchment</span>
             <input type="color" value={paper} onChange={(e) => { setPaper(e.target.value); save({ paper: e.target.value }); }} />
+            <input type="text" className="cs-hex-input" value={paperHex}
+              onChange={(e) => handleHex(e.target.value, setPaper, setPaperHex, "paper")}
+              onBlur={() => setPaperHex(paper)} maxLength={7} />
           </label>
           <label className="cs-color-field">
             <span>Ink</span>
             <input type="color" value={ink} onChange={(e) => { setInk(e.target.value); save({ ink: e.target.value }); }} />
+            <input type="text" className="cs-hex-input" value={inkHex}
+              onChange={(e) => handleHex(e.target.value, setInk, setInkHex, "ink")}
+              onBlur={() => setInkHex(ink)} maxLength={7} />
           </label>
           <label className="cs-color-field">
             <span>Accent</span>
             <input type="color" value={accent} onChange={(e) => { setAccent(e.target.value); save({ accent: e.target.value }); }} />
+            <input type="text" className="cs-hex-input" value={accentHex}
+              onChange={(e) => handleHex(e.target.value, setAccent, setAccentHex, "accent")}
+              onBlur={() => setAccentHex(accent)} maxLength={7} />
           </label>
         </div>
-        {warn ? <p className="cs-skin-warn">Low contrast — text may be hard to read</p> : null}
+        {inkWarn ? <p className="cs-skin-warn">Low contrast — text may be hard to read</p> : null}
+        {accentWarn ? <p className="cs-skin-warn">Accent has low contrast against the parchment — small labels may be hard to read</p> : null}
       </div>
 
       <div className="cs-skin-section">
@@ -119,6 +275,12 @@ export default memo(function AppearancePanel(props: {
             </button>
           ))}
         </div>
+        <label className="cs-opacity-row">
+          <span>Text size</span>
+          <input type="range" min="0.85" max="1.25" step="0.05" value={fontScale}
+            onChange={(e) => { const v = Number(e.target.value); setFontScale(v); save({ fontScale: v !== 1 ? v : undefined }); }} />
+          <span>{Math.round(fontScale * 100)}%</span>
+        </label>
       </div>
 
       <div className="cs-skin-section">
@@ -136,9 +298,27 @@ export default memo(function AppearancePanel(props: {
             onChange={(e) => { const v = Number(e.target.value); setBgOpacity(v); save({ backgroundOpacity: v }); }} />
           <span>{Math.round(bgOpacity * 100)}%</span>
         </label>
+        <div className="cs-bgurl-row">
+          <input type="text" className="qb-name-input" placeholder="Image URL (https://...) — overrides texture" value={bgUrl}
+            onChange={(e) => { const v = e.target.value; setBgUrl(v); const trimmed = v.trim(); if (trimmed === "") { save({ backgroundImageUrl: undefined }); } else if (isValidBackgroundImageUrl(trimmed)) { save({ backgroundImageUrl: trimmed }); } }}
+            maxLength={500} />
+          {bgUrl ? <button type="button" className="cs-glass-btn" onClick={() => { setBgUrl(""); save({ backgroundImageUrl: undefined }); }}>Clear</button> : null}
+        </div>
+        {bgUrlInvalid ? <p className="cs-skin-warn">Enter a full https:// image link (max 500 characters)</p> : null}
       </div>
 
-      <button className="cs-skin-reset" type="button" onClick={() => { props.onUpdate(undefined); props.onClose(); }}>
+      <div className="cs-skin-section">
+        <span className="cs-skin-label">Share</span>
+        <div className="cs-share-row">
+          <button type="button" className="cs-glass-btn" onClick={handleCopyCode}>Copy skin code</button>
+          <input type="text" className="qb-name-input" placeholder="Paste a skin code..." value={importCode}
+            onChange={(e) => setImportCode(e.target.value)} />
+          <button type="button" className="cs-glass-btn" disabled={!importCode.trim()} onClick={handleImportCode}>Apply</button>
+        </div>
+        {shareStatus ? <p className="cs-share-status">{shareStatus}</p> : null}
+      </div>
+
+      <button className="cs-skin-reset" type="button" onClick={() => { if (timer.current) clearTimeout(timer.current); props.onUpdate(undefined); props.onClose(); }}>
         Reset to default
       </button>
     </div>

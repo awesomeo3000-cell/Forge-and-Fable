@@ -154,6 +154,10 @@ export type CharacterTheme = {
   fontKey: ThemeFontKey;
   backgroundKey: ThemeBackgroundKey;
   backgroundOpacity?: number;
+  /** Sheet text scale multiplier, 0.85–1.25. Default 1. */
+  fontScale?: number;
+  /** https URL painted as the section background (overrides backgroundKey). */
+  backgroundImageUrl?: string;
 };
 
 export type SheetSectionId =
@@ -175,6 +179,10 @@ export type SheetLayout = {
   columns: SheetSectionId[][];
   collapsed: SheetSectionId[];
   version: number;
+  /** Sections the user has hidden from the sheet (still reorderable in edit mode). */
+  hidden?: SheetSectionId[];
+  /** Column widths as percentages (one per column, ~summing to 100). Unset = CSS defaults. */
+  columnWidths?: number[];
 };
 
 export type Character = {
@@ -201,7 +209,8 @@ export type Character = {
   skillProficiencies?: string[];
   savingThrowProficiencies?: AbilityKey[];
   deathSaves: DeathSaves;
-  theme?: CharacterTheme;
+  /** null = explicitly cleared (JSON drops undefined, so reset PUTs null). */
+  theme?: CharacterTheme | null;
   sheetLayout?: SheetLayout;
   spellSlotsUsed?: SpellSlots;
   pactSlotsUsed?: number;
@@ -212,6 +221,7 @@ export type Character = {
   equipment?: Equipment;
   preparedSpells?: string[];
   hitDiceSpent?: number;
+  heroicInspiration?: boolean;
   createdAt: string;
 }
 

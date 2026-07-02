@@ -2,27 +2,22 @@
 
 import {
   Activity,
-  ArrowLeftRight,
-  Backpack,
-  BookOpen,
   ChevronDown,
   GripHorizontal,
   Minus,
-  Moon,
   Paintbrush,
   PenLine,
   Plus,
   RotateCcw,
   Shield,
   Skull,
-  Sparkles,
   Swords,
   Terminal,
   Trash2,
   UserRound,
   Zap,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
 import type { AbilityKey, AbilityScores, Character, Equipment, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
@@ -34,7 +29,7 @@ import {
   signed,
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
-import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
+import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
 import { ARMORS, WEAPONS, computeArmorClass, getWeapon, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
@@ -68,11 +63,11 @@ type RefTab = "features" | "traits" | "spells" | "inventory";
 type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
 type RollOutcome = { rolls: number[]; modifier: number; total: number };
 
-const REF_TABS: { id: RefTab; label: string; Icon: typeof Sparkles }[] = [
-  { id: "features", label: "Features", Icon: Sparkles },
-  { id: "traits", label: "Traits", Icon: Shield },
-  { id: "spells", label: "Spells", Icon: BookOpen },
-  { id: "inventory", label: "Inventory", Icon: Backpack },
+const REF_TABS: { id: RefTab; label: string }[] = [
+  { id: "features", label: "Features" },
+  { id: "traits", label: "Traits" },
+  { id: "spells", label: "Spells" },
+  { id: "inventory", label: "Inventory" },
 ];
 
 export default memo(function HeroSheet(props: {
@@ -84,6 +79,7 @@ export default memo(function HeroSheet(props: {
   onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
+  onNotify?: (message: string) => void;
   consoleInput: string;
   consoleLog: string[];
   onConsoleInput: (value: string) => void;
@@ -203,14 +199,34 @@ export default memo(function HeroSheet(props: {
     "--ink-3": `color-mix(in srgb, ${theme.ink} 45%, ${theme.paper})`,
     "--doc-accent": theme.accent, "--doc-accent-deep": `color-mix(in srgb, ${theme.accent} 82%, #000)`,
     "--doc-select": theme.accent, "--doc-rule": `color-mix(in srgb, ${theme.ink} 40%, ${theme.paper})`,
+    // Theme the body + display faces only. Labels (small caps) and the console's
+    // mono stay on their defaults — theming those flattened the sheet's type
+    // system and made decorative fonts (blackletter, script) unreadable at 0.65em.
     "--sheet-font": FONT_STACKS[theme.fontKey],
     "--font-body": FONT_STACKS[theme.fontKey], "--font-display": FONT_STACKS[theme.fontKey],
-    "--font-label": FONT_STACKS[theme.fontKey], "--font-mono": FONT_STACKS[theme.fontKey],
     "--bg-opacity": `${theme.backgroundOpacity ?? 0.5}`,
+    "--sheet-scale": `${theme.fontScale ?? 1}`,
+    ...(theme.backgroundImageUrl
+      ? { "--skin-bg-image": `url("${theme.backgroundImageUrl.replace(/["\\)]/g, "")}")` }
+      : {}),
   } as Record<string, string>) : {};
   const applyPreset = (id: string) => {
-    const p = SKIN_PRESETS.find((x) => x.id === id);
-    if (p) props.onUpdate({ theme: { ...p.theme } });
+    // Check built-ins first, then user presets
+    const builtin = SKIN_PRESETS.find((x) => x.id === id);
+    if (builtin) { props.onUpdate({ theme: { ...builtin.theme } }); setShowPresets(false); return; }
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("forge-and-fable-user");
+        if (raw) {
+          const u = JSON.parse(raw) as { id?: string };
+          if (u.id) {
+            const userPresets = loadUserPresets(u.id);
+            const user = userPresets.find((x) => x.id === id);
+            if (user) { props.onUpdate({ theme: { ...user.theme } }); setShowPresets(false); return; }
+          }
+        }
+      } catch { /* ignore */ }
+    }
     setShowPresets(false);
   };
   const updateSkinMenuPosition = useCallback(() => {
@@ -283,12 +299,14 @@ export default memo(function HeroSheet(props: {
   const [invName, setInvName] = useState("");
   const [invRarity, setInvRarity] = useState<"Common" | "Uncommon" | "Rare">("Common");
   const [invNotes, setInvNotes] = useState("");
+  const hitDiceRolling = useRef(false);
   const casterType = heroClass.casterType ?? "none";
   const isPactCaster = casterType === "pact";
   const spellAbility = heroClass.spellcastingAbility;
   const slotMax = maxSlots(casterType, props.character.level);
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
-  const pactMax = isPactCaster ? (slotMax[0] ?? 0) : 0;
+  // Pact slots live at the first non-zero entry of slotMax (index = slotLevel - 1), not always [0].
+  const pactMax = isPactCaster ? (slotMax.find((c) => c > 0) ?? 0) : 0;
   const pactUsed = Math.min(props.character.pactSlotsUsed ?? 0, pactMax);
   const slotsUsed = props.character.spellSlotsUsed ?? {};
   const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
@@ -313,18 +331,30 @@ export default memo(function HeroSheet(props: {
     }
   };
   const doShortRest = () => {
-    if (isPactCaster) props.onUpdate({ pactSlotsUsed: 0 });
+    const available = props.character.level - (props.character.hitDiceSpent ?? 0);
+    if (isPactCaster) {
+      props.onUpdate({ pactSlotsUsed: 0 });
+      props.onNotify?.(`Short rest — pact slots recovered. ${available} hit dice available (roll them in the Hit Dice vital).`);
+    } else if (available > 0) {
+      props.onNotify?.(`Short rest — ${available} hit dice available.`);
+    } else {
+      props.onNotify?.("Short rest — no hit dice remaining.");
+    }
   };
   const doLongRest = () => {
+    if (!window.confirm("Take a long rest? HP and spell slots will be restored.")) return;
     const level = props.character.level;
     const spent = props.character.hitDiceSpent ?? 0;
     const recovered = Math.max(1, Math.floor(level / 2));
     props.onUpdate({
+      currentHp: props.character.maxHp,
+      tempHp: 0,
       spellSlotsUsed: {},
       pactSlotsUsed: 0,
       concentratingOn: null,
       hitDiceSpent: Math.max(0, spent - recovered),
     });
+    props.onNotify?.("Long rest complete — HP and slots restored");
   };
 
   /* ── Equipment ── */
@@ -421,6 +451,53 @@ export default memo(function HeroSheet(props: {
     saveLayout({ ...DEFAULT_LAYOUT, columns: DEFAULT_LAYOUT.columns.map((c) => [...c]) });
   };
 
+  const hiddenIds = layout.hidden ?? [];
+  const toggleHidden = (id: SheetSectionId) => {
+    const next = hiddenIds.includes(id) ? hiddenIds.filter((x) => x !== id) : [...hiddenIds, id];
+    saveLayout({ ...layout, hidden: next });
+  };
+
+  /* Column resize: drag the divider between columns in edit mode. Widths are
+     stored as percentages; unset means the stylesheet's default proportions. */
+  const columnsRef = useRef<HTMLDivElement | null>(null);
+  const startColumnDrag = (dividerIndex: number, e: React.PointerEvent<HTMLDivElement>) => {
+    const container = columnsRef.current;
+    if (!container) return;
+    e.preventDefault();
+    const handle = e.currentTarget;
+    try { handle.setPointerCapture(e.pointerId); } catch { /* synthetic events lack a real pointerId */ }
+    const cols = [...container.querySelectorAll<HTMLElement>(":scope > .cs-sheet-col")];
+    const containerWidth = container.getBoundingClientRect().width;
+    // Below ~700px the columns stack vertically — width percentages measured
+    // there are meaningless (and would persist as garbage), so don't resize.
+    if (!containerWidth || containerWidth < 700 || cols.length < 2) return;
+    const raw =
+      layout.columnWidths && layout.columnWidths.length === cols.length
+        ? [...layout.columnWidths]
+        : cols.map((c) => (c.getBoundingClientRect().width / containerWidth) * 100);
+    // Normalize so the widths always sum to 100 regardless of source.
+    const rawSum = raw.reduce((s, w) => s + w, 0) || 1;
+    const startWidths = raw.map((w) => (w / rawSum) * 100);
+    const startX = e.clientX;
+    const a = dividerIndex;
+    const b = dividerIndex + 1;
+    const onMove = (ev: PointerEvent) => {
+      const deltaPct = ((ev.clientX - startX) / containerWidth) * 100;
+      // Clamp so neither neighbor goes under 12% of the sheet.
+      const moved = Math.max(-(startWidths[a] - 12), Math.min(deltaPct, startWidths[b] - 12));
+      const next = [...startWidths];
+      next[a] = Math.round((startWidths[a] + moved) * 10) / 10;
+      next[b] = Math.round((startWidths[b] - moved) * 10) / 10;
+      saveLayout({ ...layout, columnWidths: next });
+    };
+    const onUp = () => {
+      handle.removeEventListener("pointermove", onMove);
+      handle.removeEventListener("pointerup", onUp);
+    };
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
@@ -484,17 +561,17 @@ export default memo(function HeroSheet(props: {
             <button className="cs-lvl-stepper" type="button" title="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
           </span>
           <div className="cs-rest-group">
-            <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest"><ArrowLeftRight size={13} />Short</button>
-            <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest"><Moon size={13} />Long</button>
+            <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest">Short Rest</button>
+            <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest">Long Rest</button>
           </div>
-          <button className="cs-glass-btn cs-inspire-btn" type="button" title="Heroic Inspiration"><Sparkles size={13} />Insp</button>
+          <button className={`cs-glass-btn cs-inspire-btn${props.character.heroicInspiration ? " cs-inspire-on" : ""}`} type="button" aria-pressed={!!props.character.heroicInspiration} title="Heroic Inspiration" onClick={() => props.onUpdate({ heroicInspiration: !props.character.heroicInspiration })}>{props.character.heroicInspiration ? "✦ " : ""}Inspiration</button>
           <button className="cs-retire-btn" type="button" onClick={props.onDelete}><Trash2 size={12} /></button>
         </div>
       );
       case "vitals": return (
         <div className="cs-vitals">
           <div className="cs-vital-cell" title={acInfo.label}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></div>
-          <div className="cs-vital-cell"><span className="cs-vital-label"><Activity size={12} />Initiative</span><strong>{signed(initiative)}</strong></div>
+          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => props.onRoll("Initiative", 20, 1, initiative)} aria-label={`Roll initiative, ${signed(initiative)}`} title="Click to roll initiative"><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
           <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong>{race.speed}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
           <div className="cs-vital-cell cs-vital-hp">
@@ -508,7 +585,7 @@ export default memo(function HeroSheet(props: {
             </div>
           </div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie}</strong>
-            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} title={`Spend 1 hit die: 1d${heroClass.hitDie}+${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); }); }}>Roll</button>
+            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling.current} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling.current) return; hitDiceRolling.current = true; const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); hitDiceRolling.current = false; }); }}>Roll</button>
           </div>
           <div className="cs-vital-cell cs-vital-death">
             <span className="cs-vital-label"><Skull size={12} />Death Saves</span>
@@ -597,14 +674,15 @@ export default memo(function HeroSheet(props: {
             });
         return (
           <section className="cs-block">
-            <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks{weaponDefs.length === 0 && rows.length > 0 ? <span className="cs-muted"> (class defaults — equip weapons to customize)</span> : null}</h3>
+            <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
             {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.name} className="cs-action-row-click" onClick={() => props.onRoll(row.name, 20, 1, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(row.name, 20, 1, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+            {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
       }
       case "features": return (
         <section className="cs-reftabs">
-          <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}><t.Icon size={13} /> {t.label}</button>))}</div>
+          <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}>{t.label}</button>))}</div>
           <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
             <div className={refTab === "features" ? "" : "cs-reftab-hidden"}>
               <div className="cs-feature-group">
@@ -699,7 +777,7 @@ export default memo(function HeroSheet(props: {
   };
 
   /* ── Render ── */
-  const allIds = layout.columns.flat();
+  const allIds = layout.columns.flat().filter((id) => !hiddenIds.includes(id));
   const skinMenuThemeVars = theme ? {
     ...themeVars,
     "--ground": "var(--paper)",
@@ -728,11 +806,33 @@ export default memo(function HeroSheet(props: {
           {p.name}
         </button>
       ))}
+      {(() => {
+        if (typeof window === "undefined") return null;
+        try {
+          const raw = localStorage.getItem("forge-and-fable-user");
+          if (!raw) return null;
+          const u = JSON.parse(raw) as { id?: string };
+          if (!u.id) return null;
+          const userPresets = loadUserPresets(u.id);
+          if (userPresets.length === 0) return null;
+          return (
+            <>
+              <div className="cs-skin-dropdown-divider" />
+              {userPresets.map((p) => (
+                <button key={p.id} type="button" className="cs-skin-option" role="menuitem" onClick={() => applyPreset(p.id)}>
+                  {p.name}
+                </button>
+              ))}
+            </>
+          );
+        } catch { return null; }
+      })()}
+      <div className="cs-skin-dropdown-divider" />
       <button key="custom" type="button" className="cs-skin-option" role="menuitem" onClick={() => { setShowAppearance(true); setShowPresets(false); }}>
         Customize...
       </button>
-      {theme?.presetId ? (
-        <button key="reset" type="button" className="cs-skin-option" role="menuitem" onClick={() => { props.onUpdate({ theme: undefined }); setShowPresets(false); }}>
+      {theme ? (
+        <button key="reset" type="button" className="cs-skin-option" role="menuitem" onClick={() => { props.onUpdate({ theme: null }); setShowPresets(false); }}>
           Reset to default
         </button>
       ) : null}
@@ -741,7 +841,7 @@ export default memo(function HeroSheet(props: {
   ) : null;
 
   return (
-    <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundKey ?? "parchment"}>
+    <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment"}>
       <div className="cs-sheet-tools" role="toolbar" aria-label="Sheet tools">
         <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>
         <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>
@@ -763,15 +863,34 @@ export default memo(function HeroSheet(props: {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
-          <div className="cs-sheet-columns">
+          <div className="cs-sheet-columns" ref={columnsRef}>
             {layout.columns.map((col, ci) => (
-              <div className="cs-sheet-col" key={ci}>
-                {col.map((id) => (
-                  <SheetSection key={id} id={id} title={SECTION_TITLES[id]} collapsed={collapsed.includes(id)} onToggle={() => toggleCollapse(id)} editMode={editMode}>
-                    {sectionContent(id)}
-                  </SheetSection>
-                ))}
-              </div>
+              <Fragment key={ci}>
+                <div
+                  className="cs-sheet-col"
+                  style={layout.columnWidths ? { flex: `0 0 ${layout.columnWidths[ci]}%`, maxWidth: "none", minWidth: 0 } : undefined}
+                >
+                  {/* Divider lives INSIDE the column (absolute, right edge): a
+                      sibling element would shift the :nth-child width rules. */}
+                  {editMode && ci < layout.columns.length - 1 ? (
+                    <div className="cs-col-divider" role="separator" aria-orientation="vertical" title="Drag to resize columns" onPointerDown={(e) => startColumnDrag(ci, e)} />
+                  ) : null}
+                  {col.map((id) =>
+                    hiddenIds.includes(id) ? (
+                      editMode ? (
+                        <div className="cs-section cs-hidden-ghost" key={id}>
+                          <span className="cs-section-title">{SECTION_TITLES[id]}</span>
+                          <button type="button" className="cs-glass-btn" onClick={() => toggleHidden(id)}>Show</button>
+                        </div>
+                      ) : null
+                    ) : (
+                      <SheetSection key={id} id={id} title={SECTION_TITLES[id]} collapsed={collapsed.includes(id)} onToggle={() => toggleCollapse(id)} editMode={editMode} onHide={() => toggleHidden(id)}>
+                        {sectionContent(id)}
+                      </SheetSection>
+                    ),
+                  )}
+                </div>
+              </Fragment>
             ))}
           </div>
         </SortableContext>
@@ -794,7 +913,7 @@ export default memo(function HeroSheet(props: {
         ))}
       </div>
 
-      {showAppearance ? (<AppearancePanel theme={theme} onUpdate={(t) => { props.onUpdate({ theme: t }); }} onClose={() => setShowAppearance(false)} />) : null}
+      {showAppearance ? (<AppearancePanel theme={theme ?? undefined} onUpdate={(t) => { props.onUpdate({ theme: t ?? null }); }} onClose={() => setShowAppearance(false)} />) : null}
       {spellDetail ? (
         <div className="cs-spell-detail-overlay" onClick={() => setSpellDetail(null)}>
           <div className="cs-spell-detail" onClick={(e) => e.stopPropagation()}>

@@ -4,7 +4,7 @@ export const SECTION_TITLES: Record<SheetSectionId, string> = {
   identity: "Character",
   vitals: "Vitals",
   abilities: "Abilities",
-  saves: "Saving Throws",
+  saves: "Saves",
   skills: "Skills",
   senses: "Senses",
   profs: "Proficiencies & Training",
@@ -25,9 +25,9 @@ const PINNED = new Set<SheetSectionId>([...PINNED_TOP, ...PINNED_BOTTOM]);
 
 export const DEFAULT_LAYOUT: SheetLayout = {
   columns: [
-    ["abilities", "senses", "profs"],
-    ["saves", "skills"],
-    ["equipment", "attacks", "features", "notes", "background"],
+    ["abilities", "saves", "senses"],
+    ["skills", "background", "notes"],
+    ["equipment", "attacks", "features", "profs"],
   ],
   collapsed: [],
   version: 1,
@@ -71,10 +71,23 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
     }
   }
 
+  const hidden = (saved.hidden ?? []).filter((id) => allKnown.has(id) && !PINNED.has(id));
+  const widths = saved.columnWidths;
+  const widthsSum = Array.isArray(widths) ? widths.reduce((s, w) => s + (typeof w === "number" ? w : NaN), 0) : NaN;
+  const columnWidths =
+    Array.isArray(widths) &&
+    widths.length === DEFAULT_LAYOUT.columns.length &&
+    widths.every((w) => typeof w === "number" && Number.isFinite(w) && w >= 5) &&
+    widthsSum >= 90 && widthsSum <= 110
+      ? widths
+      : undefined;
+
   return {
     columns: mergedColumns,
     collapsed: saved.collapsed.filter((id) => allKnown.has(id)),
     version: saved.version,
+    hidden,
+    columnWidths,
   };
 }
 

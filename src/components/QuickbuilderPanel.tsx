@@ -41,7 +41,7 @@ export default memo(function QuickbuilderPanel(props: {
   }, [isPremade, step, fightStyle, classId, raceId, charName]);
 
   const handleFinish = useCallback(() => {
-    const draft = buildQuickDraft(ruleset, classId, raceId, charName.trim() || "Hero");
+    const draft = buildQuickDraft(ruleset, classId, raceId, charName.trim());
     onComplete(draft);
   }, [ruleset, classId, raceId, charName, onComplete]);
 

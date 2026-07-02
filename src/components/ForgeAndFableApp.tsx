@@ -44,6 +44,7 @@ import CreatorPanel from "@/components/CreatorPanel";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
+import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
@@ -79,6 +80,20 @@ export default function ForgeAndFableApp() {
   const [authPassword, setAuthPassword] = useState("");
   const [status, setStatus] = useState("");
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
+  const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
+
+  const recordHistory = (label: string, detail: string, total: number) => {
+    setRollHistory((prev) => [
+      {
+        id: crypto.randomUUID(),
+        label,
+        detail,
+        total,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+      ...prev,
+    ].slice(0, 30));
+  };
 
 
   useEffect(() => {
@@ -489,6 +504,17 @@ export default function ForgeAndFableApp() {
     const rolls = Array<number>(count).fill(0);
     const finishedIndices = new Set<number>();
     let finished = 0;
+    // Include modifier in the label so users see the full roll info (e.g. "1d20+5")
+    const fullLabel = `${label}${modifier !== 0 ? ` ${signed(modifier)}` : ""}`;
+    const diceNotation = count > 1 ? `${count}d${sides}` : `d${sides}`;
+
+    const recordResult = (outcome: RollOutcome) => {
+      const parts = outcome.rolls.join("+");
+      const totalStr = modifier !== 0 ? `${parts}${signed(modifier)} = ${outcome.total}` : `${parts} = ${outcome.total}`;
+      setConsoleLog((prev) => [`${diceNotation}${modifier !== 0 ? signed(modifier) : ""}  →  ${totalStr}  (${label})`, ...prev].slice(0, 20));
+      recordHistory(label, `${diceNotation}${modifier !== 0 ? signed(modifier) : ""}: ${totalStr}`, outcome.total);
+      onResult?.(outcome);
+    };
 
     const newDice: RollingDie[] = Array.from({ length: count }, (_, i) => {
       const fromLeft = Math.random() > 0.5;
@@ -497,31 +523,75 @@ export default function ForgeAndFableApp() {
         id: `${crypto.randomUUID()}-${i}`,
         sides,
         result,
-        label,
+        label: fullLabel,
         fromLeft,
         startYPct: 0.15 + Math.random() * 0.35,
         landXPct: 0.22 + Math.random() * 0.56,
         landYPct: 0.25 + Math.random() * 0.38,
         rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
         delayMs: i * 220,
-        onFinish: onResult
-          ? (settledResult) => {
-              if (finishedIndices.has(i)) return;
-              finishedIndices.add(i);
-              rolls[i] = settledResult;
-              finished += 1;
+        onFinish: (settledResult) => {
+          if (finishedIndices.has(i)) return;
+          finishedIndices.add(i);
+          rolls[i] = settledResult;
+          finished += 1;
 
-              if (finished === count) {
-                onResult({
-                  rolls: [...rolls],
-                  modifier,
-                  total: rolls.reduce((sum, value) => sum + value, modifier),
-                });
-              }
-            }
-          : undefined,
+          if (finished === count) {
+            recordResult({
+              rolls: [...rolls],
+              modifier,
+              total: rolls.reduce((sum, value) => sum + value, modifier),
+            });
+          }
+        },
       };
     });
+    setFlyingDice((prev) => [...prev, ...newDice]);
+  }
+
+  /** Roll a mixed pool (e.g. 2d6 + 1d20 + mod) as one flight of dice and one
+      history entry. Used by the roll drawer's ad-hoc pool builder. */
+  function pushPool(groups: { sides: number; count: number }[], modifier: number, label: string) {
+    const cleaned = groups.filter((g) => g.count > 0);
+    const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
+    if (totalCount === 0 || totalCount > 40) return;
+
+    const settled = new Map<number, { sides: number; value: number }>();
+    const newDice: RollingDie[] = [];
+    let index = 0;
+
+    for (const group of cleaned) {
+      for (let i = 0; i < group.count; i++) {
+        const dieIndex = index++;
+        const fromLeft = Math.random() > 0.5;
+        newDice.push({
+          id: `${crypto.randomUUID()}-${dieIndex}`,
+          sides: group.sides,
+          result: rollDie(group.sides),
+          label,
+          fromLeft,
+          startYPct: 0.15 + Math.random() * 0.35,
+          landXPct: 0.22 + Math.random() * 0.56,
+          landYPct: 0.25 + Math.random() * 0.38,
+          rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
+          delayMs: dieIndex * 180,
+          onFinish: (settledResult) => {
+            if (settled.has(dieIndex)) return;
+            settled.set(dieIndex, { sides: group.sides, value: settledResult });
+
+            if (settled.size === totalCount) {
+              const values = [...settled.values()];
+              const total = values.reduce((sum, v) => sum + v.value, modifier);
+              const detail = cleaned
+                .map((g) => `${g.count}d${g.sides} [${values.filter((v) => v.sides === g.sides).map((v) => v.value).join(", ")}]`)
+                .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
+              setConsoleLog((prev) => [`${label}  →  ${total}`, ...prev].slice(0, 20));
+              recordHistory(label, detail, total);
+            }
+          },
+        });
+      }
+    }
     setFlyingDice((prev) => [...prev, ...newDice]);
   }
 
@@ -625,6 +695,7 @@ export default function ForgeAndFableApp() {
   return (
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
+    <RollDrawer history={rollHistory} onRollPool={pushPool} />
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
@@ -693,15 +764,15 @@ export default function ForgeAndFableApp() {
         </aside>
 
         <section className="studio-surface">
-          {showCreationPrompt ? (
-            <CharacterStartPanel onSelectBuild={beginBuild} />
-          ) : buildMode !== "standard" && !creatorOpen ? (
+          {buildMode !== "standard" && !creatorOpen ? (
             <QuickbuilderPanel
               ruleset={ruleset}
               mode={buildMode}
               onComplete={handleQuickbuildComplete}
               onCancel={() => { setCreationPromptOpen(true); setBuildMode("standard"); }}
             />
+          ) : showCreationPrompt ? (
+            <CharacterStartPanel onSelectBuild={beginBuild} />
           ) : showCreator && draftFinalAbilities ? (
             <CreatorPanel
               draft={draft}
@@ -732,6 +803,7 @@ export default function ForgeAndFableApp() {
               onRoll={pushRoll}
               onUpdate={updateSelected}
               onDelete={deleteSelected}
+              onNotify={setStatus}
               consoleInput={consoleInput}
               consoleLog={consoleLog}
               onConsoleInput={setConsoleInput}

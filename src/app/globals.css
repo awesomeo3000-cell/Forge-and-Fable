@@ -46,12 +46,12 @@
   --step-6: clamp(3rem, 7vw, 5.96rem);
 
   /* Fonts */
-  --font-fraunces:   var(--font-fraunces), Georgia, serif;
-  --font-newsreader: var(--font-newsreader), Georgia, serif;
-  --font-archivo:    var(--font-archivo), system-ui, sans-serif;
-  --font-display: var(--font-fraunces);
-  --font-body:    var(--font-newsreader);
-  --font-label:   var(--font-archivo);
+  /* NOTE: never redefine the next/font variables (--font-fraunces etc.) in
+     terms of themselves — the self-reference is a CSS custom-property cycle
+     that invalidates them document-wide. Alias with fallbacks here instead. */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body:    var(--font-newsreader), Georgia, serif;
+  --font-label:   var(--font-archivo), system-ui, sans-serif;
   --font-mono:    "Spline Sans Mono", ui-monospace, monospace;
 
   /* Document ("paper") palette — used only inside .cs-sheet */
@@ -730,6 +730,51 @@ button:disabled {
 .start-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+/* ── Quickbuilder ── */
+.quickbuilder-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.qb-name-row {
+  margin-top: 1rem;
+}
+
+.qb-name-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #ddceb3;
+}
+
+.qb-name-input {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(221, 206, 179, 0.25);
+  color: #eee6d8;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  max-width: 340px;
+}
+
+.qb-name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(169, 52, 40, 0.2);
+}
+
+.qb-name-input::placeholder {
+  color: rgba(221, 206, 179, 0.35);
+}
+
+.qb-cancel {
+  margin-top: 0.5rem;
+  align-self: flex-start;
 }
 
 .creator-header {
@@ -3056,7 +3101,7 @@ button:disabled {
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 10px 14px;
+  padding: 8px 10px;
   border: 0;
   background: transparent;
   color: var(--parchment);
@@ -3084,7 +3129,7 @@ button:disabled {
 }
 
 .cs-section-body {
-  padding: 0.8em 1em;
+  padding: 0.6em 0.75em;
 }
 
 .cs-section-body.cs-collapsed { display: none; }
@@ -3242,6 +3287,12 @@ button:disabled {
   color: var(--select);
 }
 
+.cs-skin-dropdown-divider {
+  height: 1px;
+  background: var(--rule-soft);
+  margin: 2px 0;
+}
+
 /* ── Appearance Panel ── */
 
 .cs-skin-panel {
@@ -3291,15 +3342,67 @@ button:disabled {
 }
 
 .cs-preset-swatch {
-  padding: 14px;
+  position: relative;
+  padding: 0 12px 12px;
   border: 2px solid transparent;
   border-radius: var(--r-sm);
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   font-size: 0.9em;
   font-weight: 600;
   transition: border-color 120ms;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+
+.cs-preset-accent-bar {
+  display: block;
+  height: 5px;
+  margin: 0 -12px 4px;
+  border-radius: 0;
+}
+
+.cs-preset-name {
+  flex: 1;
+}
+
+.cs-preset-stat {
+  align-self: flex-end;
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 144;
+  font-size: 1.3em;
+}
+
+.cs-preset-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.9em;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.cs-preset-del:hover { background: var(--accent); }
+
+.cs-preset-save-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.cs-preset-save-row .qb-name-input { max-width: 200px; }
 
 .cs-preset-swatch:hover { border-color: var(--select); }
 
@@ -3329,6 +3432,23 @@ button:disabled {
   background: transparent;
   cursor: pointer;
   padding: 2px;
+}
+
+.cs-hex-input {
+  width: 68px;
+  padding: 2px 4px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  background: var(--ground-3);
+  color: var(--parchment);
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  text-align: center;
+}
+
+.cs-hex-input:focus {
+  outline: none;
+  border-color: var(--select);
 }
 
 .cs-skin-warn {
@@ -3668,7 +3788,9 @@ button:disabled {
 
 .cs-glass-btn:hover { border-color: var(--rule); color: var(--parchment); }
 
-.cs-inspire-btn { border-color: var(--accent-deep); color: var(--accent); }
+.cs-inspire-btn { border-color: var(--rule-soft); color: var(--ink-faint); }
+.cs-inspire-btn:hover { border-color: var(--accent-deep); color: var(--accent); }
+.cs-inspire-btn.cs-inspire-on { border-color: var(--accent-deep); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
 .cs-retire-btn {
   display: flex;
@@ -3691,8 +3813,9 @@ button:disabled {
 
 .cs-vital-cell {
   display: grid;
+  grid-template-rows: auto 1fr;
   justify-items: center;
-  align-content: start;
+  align-items: center;
   gap: 3px;
   padding: 8px 6px;
   border-right: 1px solid var(--rule-soft);
@@ -3709,16 +3832,31 @@ button:disabled {
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .cs-vital-label svg { color: var(--accent); }
 
-.cs-vital-cell strong {
+.cs-vital-cell strong,
+.cs-vital-rollable strong {
   font-family: var(--font-display);
   font-variation-settings: "opsz" 144;
   font-size: 1.5em;
   color: var(--parchment);
 }
+
+.cs-vital-rollable {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: inherit;
+  border-style: solid;
+  border-color: inherit;
+  border-width: inherit;
+  border-radius: 0;
+}
+.cs-vital-rollable:hover { background: rgba(0, 0, 0, 0.04); }
 
 .cs-vital-hp { grid-column: span 2; gap: 4px; padding: 8px 12px; }
 
@@ -3742,9 +3880,9 @@ button:disabled {
 
 .cs-vital-death .cs-vital-label { margin-bottom: 2px; }
 
-.cs-vital-death-row { display: flex; align-items: center; gap: 3px; justify-content: center; font-size: 0.55em; color: var(--ink-faint); font-family: var(--font-label); }
+.cs-vital-death-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; justify-content: center; font-size: 0.55em; color: var(--ink-faint); font-family: var(--font-label); }
 
-.cs-death-dot { width: 8px; height: 8px; border: 1px solid var(--rule-soft); border-radius: 50%; background: transparent; cursor: pointer; padding: 0; }
+.cs-death-dot { width: 14px; height: 14px; border: 1.5px solid var(--rule-soft); border-radius: 50%; background: transparent; cursor: pointer; padding: 0; }
 
 .cs-death-dot.dot-success { background: var(--select); border-color: var(--select); }
 
@@ -3790,9 +3928,10 @@ button:disabled {
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--rule-soft);
+  white-space: nowrap;
 }
 
 /* ── Saving Throws ── */
@@ -3801,10 +3940,10 @@ button:disabled {
 
 .cs-save-row {
   display: grid;
-  grid-template-columns: 14px 1fr 38px;
+  grid-template-columns: 14px 1fr 2.4em;
   align-items: center;
   gap: 4px;
-  padding: 4px 6px;
+  padding: 0.25em 0.4em;
   border: 0;
   background: transparent;
   color: inherit;
@@ -3813,9 +3952,11 @@ button:disabled {
   border-radius: var(--r-sm);
 }
 
-.cs-save-row:hover { background: rgba(0, 0, 0, 0.04); }
+.cs-save-row:nth-child(even) { background: rgba(0, 0, 0, 0.025); }
+.cs-save-row:hover { background: rgba(0, 0, 0, 0.06); }
 
 .cs-save-row.cs-prof { background: rgba(201, 162, 90, 0.05); }
+.cs-save-row.cs-prof:nth-child(even) { background: rgba(201, 162, 90, 0.07); }
 
 .cs-prof-marker { font-size: 0.55em; color: var(--ink-faint); display: grid; place-items: center; line-height: 1; }
 
@@ -3831,15 +3972,17 @@ button:disabled {
 
 .cs-sense-list { display: grid; gap: 4px; }
 
-.cs-sense-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-body); font-size: 0.9em; color: var(--parchment-2); }
+.cs-sense-list { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+
+.cs-sense-row { display: flex; align-items: center; gap: 0.3em; font-family: var(--font-body); font-size: 0.9em; color: var(--parchment-2); }
 
 .cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.2em; }
 
 /* ── Proficiencies ── */
 
-.cs-prof-list { display: grid; gap: 8px; }
+.cs-prof-list { display: flex; flex-wrap: wrap; gap: 4px 8px; }
 
-.cs-prof-group { display: grid; gap: 4px; }
+.cs-prof-group { display: flex; flex-wrap: wrap; gap: 4px 8px; }
 
 .cs-prof-cat { font-family: var(--font-label); font-size: 0.65em; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.03em; }
 
@@ -3860,13 +4003,15 @@ button:disabled {
   padding-bottom: 2px;
   border-bottom: 1px solid var(--rule-soft);
   margin-bottom: 1px;
+  white-space: nowrap;
 }
 
 .cs-skill-group { display: grid; gap: 1px; }
 
 .cs-skill-row { display: grid; grid-template-columns: 1.1em 1fr 2.4em; align-items: center; gap: 4px; padding: 0.25em 0.4em; border-radius: var(--r-sm); }
 
-.cs-skill-row:hover { background: rgba(0, 0, 0, 0.03); }
+.cs-skill-row:nth-child(even) { background: rgba(0, 0, 0, 0.025); }
+.cs-skill-row:hover { background: rgba(0, 0, 0, 0.06); }
 
 .cs-prof-click { cursor: pointer; background: transparent; border: 0; padding: 0; font-size: 0.55em; color: var(--ink-faint); display: grid; place-items: center; }
 
@@ -3898,7 +4043,7 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; }
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; white-space: nowrap; }
 
 .cs-feature-group {
   display: grid;
@@ -3914,6 +4059,7 @@ button:disabled {
 }
 
 .cs-spell-card { padding: 8px 10px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-3); display: grid; gap: 3px; }
+.cs-spell-card:nth-child(even) { background: rgba(0, 0, 0, 0.06); }
 
 .cs-spell-card strong { font-size: 1.05em; color: var(--parchment); }
 
@@ -3962,6 +4108,7 @@ button:disabled {
 .cs-reftab-panel {
   overflow: auto;
   display: grid;
+  max-height: 70vh;
 }
 
 .cs-reftab-panel > * {
@@ -3969,8 +4116,7 @@ button:disabled {
 }
 
 .cs-reftab-hidden {
-  visibility: hidden;
-  pointer-events: none;
+  display: none;
 }
 
 /* ── Background / Notes ── */
@@ -3998,6 +4144,11 @@ button:disabled {
 /* ── Misc ── */
 
 .cs-muted { font-family: var(--font-body); font-size: 0.9em; color: var(--ink-faint); font-style: italic; }
+
+/* Auto-compact: section bodies that contain only a placeholder shrink to one row */
+.cs-section-body:has(.cs-muted:only-child) {
+  padding: 0.35em 0.75em;
+}
 
 /* ── Responsive ── */
 
@@ -4451,7 +4602,14 @@ button:disabled {
   .crit-banner::before,
   .crit-text {
     animation: none;
-    opacity: 0;
+  }
+  .flying-die {
+    transform: translate(var(--die-to-x), var(--die-to-y)) rotate(var(--die-spin)) scale(1);
+    opacity: 1;
+  }
+  .die-roll-label,
+  .die-result-num {
+    opacity: 1;
   }
   .cs-section,
   .cs-section-chevron {
@@ -4555,4 +4713,357 @@ button:disabled {
 .cs-cast-row .cs-glass-btn[disabled] {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ── Round 3.5 aesthetic pass (overrides earlier rules by cascade) ── */
+
+/* Section titles were shown twice: the drag-header title AND the block's
+   internal eyebrow. Hide eyebrows inside the draggable columns; pinned
+   sections (console) and overlays keep theirs. */
+.cs-sheet-columns .cs-block > .cs-section-eyebrow { display: none; }
+
+/* Weapon chips are <button>s — kill the UA default grey background and
+   give selected chips an accent tint instead of just an outline. */
+.cs-weapon-chip {
+  opacity: 1;
+  background: transparent;
+  color: var(--parchment-2);
+  cursor: pointer;
+}
+.cs-weapon-chip.cs-weapon-on {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--parchment);
+}
+
+/* Attack table: size columns to content and only break between words.
+   Dice buttons and headers must never wrap internally. */
+.cs-action-table { table-layout: auto; }
+.cs-action-table td, .cs-action-table th { overflow-wrap: break-word; }
+.cs-action-table th { white-space: nowrap; }
+.cs-dmg-roll { white-space: nowrap; }
+.cs-dmg-btns { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
+/* Paint the empty tail below each column paper-colored so short columns
+   end in blank page instead of the rule-line color. */
+.cs-sheet-col:not(:empty)::after {
+  content: "";
+  flex: 1 1 auto;
+  background: var(--ground);
+}
+
+/* Subtle zebra striping so long lists read as rows, not a grey wall. */
+.cs-skill-row:nth-child(even) { background: rgba(0, 0, 0, 0.03); }
+
+/* ── Font-scale consistency ──
+   Section content sits at ~0.85–0.92em (skills 0.92, senses 0.9, save names
+   0.85). The attacks table was 1.08em — visibly larger than everything
+   around it. Numbers keep a slight bump to echo .cs-skill-bonus. */
+.cs-action-table { font-size: 0.92em; }
+.cs-action-table td:nth-child(2) { font-size: 1.1em; }
+
+/* Equipment controls used rem units, which ignore the sheet's em-based
+   scale — restate in em so they track the theme like every other section. */
+.cs-equip-field { font-size: 0.68em; }
+.cs-equip-field select { font-size: 0.9em; }
+.cs-equip-check { font-size: 0.9em; }
+.cs-conc-banner { font-size: 0.88em; }
+
+/* ── Print Stylesheet ── */
+
+@media print {
+  /* Hide app chrome */
+  .builder-topbar,
+  .vault-rail,
+  .cs-sheet-tools,
+  .cs-sheet-bottom,
+  .dice-fly-overlay,
+  .cs-skin-dropdown,
+  .cs-skin-panel,
+  .cs-levelup-overlay,
+  .cs-spell-detail-overlay,
+  button[title="New character"],
+  button[title="Log out"] {
+    display: none !important;
+  }
+
+  /* Clean white page */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .cs-sheet-columns {
+    flex-direction: column;
+    gap: 0;
+    background: none;
+  }
+
+  .cs-sheet-col {
+    flex: 1 !important;
+    max-width: none !important;
+    gap: 0;
+  }
+
+  .cs-section {
+    break-inside: avoid;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+
+  .cs-section-header {
+    background: #fff !important;
+    color: #000 !important;
+    border-bottom-color: #ccc !important;
+  }
+
+  .cs-section-title {
+    color: #000 !important;
+  }
+
+  .cs-vitals,
+  .cs-abilities {
+    border-color: #ccc !important;
+  }
+}
+
+/* ── Sheet text scale (Appearance → Text size) ── */
+.cs-sheet { font-size: calc(1em * var(--sheet-scale, 1)); }
+
+/* ── Custom background image (Appearance → Image URL) ── */
+.cs-sheet[data-bg="custom"] {
+  --skin-bg-pattern: var(--skin-bg-image, none);
+  --skin-bg-size: cover;
+}
+.cs-sheet[data-bg="custom"] .cs-section::before {
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ── Appearance panel: share + background URL rows ── */
+.cs-share-row, .cs-bgurl-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cs-share-row .qb-name-input, .cs-bgurl-row .qb-name-input {
+  flex: 1;
+  min-width: 0;
+}
+.cs-share-status {
+  margin-top: 6px;
+  font-size: 0.72em;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+/* ── Roll drawer (right edge): dice pool + roll history ── */
+.roll-drawer {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+.roll-drawer > * { pointer-events: auto; }
+.roll-drawer-tab {
+  writing-mode: vertical-rl;
+  padding: 14px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: rgba(12, 10, 8, 0.82);
+  color: var(--parchment, #e8dcc2);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.roll-drawer-body {
+  width: 264px;
+  max-height: 76vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  background: rgba(12, 10, 8, 0.92);
+  color: var(--parchment, #e8dcc2);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+.roll-drawer-heading {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent, #c9a25a);
+  margin-bottom: 8px;
+}
+.roll-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.roll-pool-die { position: relative; }
+.roll-pool-add {
+  width: 100%;
+  padding: 8px 2px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.roll-pool-die.has-dice .roll-pool-add {
+  border-color: var(--accent, #c9a25a);
+  background: rgba(201, 162, 90, 0.14);
+}
+.roll-pool-add em {
+  display: block;
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--accent, #c9a25a);
+}
+.roll-pool-minus {
+  position: absolute;
+  top: -6px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(12, 10, 8, 0.95);
+  color: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.roll-pool-mod {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+.roll-pool-mod strong { min-width: 2.6ch; text-align: center; }
+.roll-pool-mod button {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.roll-pool-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.roll-pool-roll {
+  flex: 1;
+  font-size: 0.8rem;
+  padding: 8px 10px;
+}
+.roll-pool-roll[disabled] { opacity: 0.45; cursor: not-allowed; }
+.roll-history {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.roll-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.roll-history-list li {
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.roll-history-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.roll-history-label {
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.roll-history-total {
+  font-size: 1.05rem;
+  color: var(--accent, #c9a25a);
+}
+.roll-history-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.68rem;
+  color: rgba(232, 220, 194, 0.55);
+  overflow-wrap: anywhere;
+}
+.roll-history-empty { font-size: 0.75rem; color: rgba(232, 220, 194, 0.5); }
+
+/* ── Edit mode: hide/show sections + column resize ── */
+.cs-section-hide {
+  align-self: center;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  font-family: var(--font-label);
+  font-size: 0.62em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cs-section-hide:hover { color: var(--accent); border-color: var(--accent); }
+.cs-hidden-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--rule);
+  opacity: 0.65;
+}
+.cs-hidden-ghost .cs-glass-btn { font-size: 0.65em; padding: 2px 8px; }
+.cs-sheet-col { position: relative; }
+.cs-col-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -5px;
+  width: 9px;
+  z-index: 5;
+  cursor: col-resize;
+  background:
+    linear-gradient(var(--rule) 0 0) center / 1px 100% no-repeat;
+  touch-action: none;
+}
+.cs-col-divider:hover {
+  background:
+    linear-gradient(var(--accent) 0 0) center / 3px 100% no-repeat;
 }

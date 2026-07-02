@@ -28,7 +28,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
-  "equipment", "preparedSpells",
+  "equipment", "preparedSpells", "heroicInspiration",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -89,11 +89,25 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         }
         break;
       case "customRules":
-      case "hpRolls":
         if (val !== undefined) assertArray(val, "customRules");
+        break;
+      case "hpRolls":
+        if (val !== undefined) assertArray(val, "hpRolls");
         break;
       case "hitDiceSpent":
         if (val !== undefined) assertInteger(val, "hitDiceSpent", 0, 20);
+        break;
+      case "heroicInspiration":
+        if (val !== undefined && typeof val !== "boolean") throw new Error(`"heroicInspiration" must be a boolean.`);
+        break;
+      case "theme":
+        if (val !== undefined && val !== null) {
+          if (typeof val !== "object" || Array.isArray(val)) throw new Error(`"theme" must be an object.`);
+          const bg = (val as Record<string, unknown>).backgroundImageUrl;
+          if (bg !== undefined && (typeof bg !== "string" || bg.length > 500 || !/^https?:\/\//i.test(bg))) {
+            throw new Error(`"theme.backgroundImageUrl" must be an http(s) URL of at most 500 characters.`);
+          }
+        }
         break;
     }
 
