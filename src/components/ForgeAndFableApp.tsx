@@ -14,7 +14,6 @@ import type {
   AuthMode,
   BuildMode,
   Character,
-  CharacterSettings,
   CustomRule,
   DraftCharacter,
   InventoryItem,
@@ -695,7 +694,7 @@ export default function ForgeAndFableApp() {
   return (
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
-    <RollDrawer history={rollHistory} onRollPool={pushPool} />
+    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} onRollPool={pushPool} />
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
