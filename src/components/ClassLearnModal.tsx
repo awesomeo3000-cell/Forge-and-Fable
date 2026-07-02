@@ -30,7 +30,7 @@ export default memo(function ClassLearnModal(props: {
       <section
         aria-labelledby="class-learn-title"
         aria-modal="true"
-        className="class-modal"
+        className="class-modal paper-surface"
         data-class={props.heroClass.id}
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}

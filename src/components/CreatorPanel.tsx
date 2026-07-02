@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   ChevronRight,
   CircleGauge,
@@ -10,11 +9,10 @@ import {
   Plus,
   Save,
   ScrollText,
-  UserRound,
 } from "lucide-react";
 import { memo, useState } from "react";
 import type { AbilityKey, AbilityScores, BuildMode, CharacterSettings, DraftCharacter, Ruleset, StatMethod } from "@/types/game";
-import { abilityKeys, abilityLabels, abilityNames, classArtById, standardArray, sourceOptions } from "@/lib/utils";
+import { abilityKeys, abilityLabels, abilityNames, standardArray, sourceOptions } from "@/lib/utils";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
@@ -53,7 +51,6 @@ export default memo(function CreatorPanel(props: {
   const inspectedClass = props.ruleset.classes.find((item) => item.id === inspectedClassId) ?? null;
   const inspectedSpecies = props.ruleset.races.find((item) => item.id === inspectedSpeciesId) ?? null;
   const showCharacterPreview = Boolean(props.draft.classId);
-  const heroClassArt = showCharacterPreview ? classArtById[heroClass.id] : undefined;
   const buildModeLabel =
     props.buildMode === "quickbuilder"
       ? "Quickbuilder"
@@ -91,7 +88,7 @@ export default memo(function CreatorPanel(props: {
 
   return (
     <>
-      <div className="creator-panel">
+      <div className="creator-panel paper-surface">
       <div className="creator-header">
         <div className="creator-title">
           <span>{buildModeLabel} Build</span>
@@ -114,29 +111,13 @@ export default memo(function CreatorPanel(props: {
 
       <div className="creator-stage">
         <section className="hero-preview" data-class={showCharacterPreview ? heroClass.id : undefined}>
-          {heroClassArt ? (
-            <div className="class-art-frame" data-class={heroClass.id}>
-              <Image
-                alt={`${heroClass.name} class art`}
-                className="class-art-image"
-                fill
-                priority
-                sizes="(max-width: 900px) 82vw, 36vw"
-                src={heroClassArt}
-              />
-              <span className="class-art-badge" aria-hidden="true">
-                <ClassIconPlaceholder classId={heroClass.id} size={34} strokeWidth={1.6} />
-              </span>
-            </div>
-          ) : (
-            <div className="class-icon-stage" data-class={showCharacterPreview ? heroClass.id : ""}>
-              <ClassIconPlaceholder
-                classId={showCharacterPreview ? heroClass.id : ""}
-                size={92}
-                strokeWidth={1.35}
-              />
-            </div>
-          )}
+          <div className="class-icon-stage" data-class={showCharacterPreview ? heroClass.id : ""}>
+            <ClassIconPlaceholder
+              classId={showCharacterPreview ? heroClass.id : ""}
+              size={92}
+              strokeWidth={1.35}
+            />
+          </div>
           {showCharacterPreview ? (
             <div className="preview-identity-row">
               <div className="species-signal" data-species={race?.id ?? ""}>
@@ -147,10 +128,6 @@ export default memo(function CreatorPanel(props: {
                   <strong>{race?.name ?? "Species"}</strong>
                   <small>{race ? `${race.creatureType} / ${race.size} / ${race.speed}` : "Unchosen"}</small>
                 </div>
-              </div>
-              <div className="portrait-signal">
-                <UserRound size={22} />
-                <span>Custom portrait</span>
               </div>
             </div>
           ) : null}

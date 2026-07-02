@@ -36,7 +36,7 @@ export default memo(function CharacterStartPanel(props: {
   ];
 
   return (
-    <div className="start-panel">
+    <div className="start-panel paper-surface">
       <div className="start-copy">
         <span>Empty Character Vault</span>
         <h2>Create a new character</h2>

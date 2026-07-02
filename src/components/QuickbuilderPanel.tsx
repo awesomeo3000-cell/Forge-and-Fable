@@ -48,7 +48,7 @@ export default memo(function QuickbuilderPanel(props: {
   // Premade: show archetype grid
   if (isPremade) {
     return (
-      <div className="quickbuilder-panel">
+      <div className="quickbuilder-panel paper-surface">
         <div className="start-copy">
           <span><Swords size={18} /> Premade Archetypes</span>
           <h2>Pick a ready-made hero</h2>
@@ -104,7 +104,7 @@ export default memo(function QuickbuilderPanel(props: {
   }
 
   return (
-    <div className="quickbuilder-panel">
+    <div className="quickbuilder-panel paper-surface">
       <div className="start-copy">
         <span><CircleGauge size={18} /> Quickbuilder</span>
         <h2>Forge a hero in three steps</h2>

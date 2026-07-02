@@ -5297,3 +5297,107 @@ button:disabled {
   background:
     linear-gradient(var(--accent) 0 0) center / 3px 100% no-repeat;
 }
+
+/* ── Paper surface: the sheet's document look for the builder panels ──
+   Remaps the dark-chrome tokens to the paper palette exactly like .cs-sheet
+   does, so existing builder styles re-skin without rewrites. Applied to
+   .creator-panel, .start-panel, .quickbuilder-panel. */
+.paper-surface {
+  --ground: var(--paper);
+  --ground-2: var(--paper);
+  --ground-3: var(--paper-raised);
+  --parchment: var(--ink);
+  --parchment-2: var(--ink-2);
+  --ink-faint: var(--ink-3);
+  --rule: var(--doc-rule);
+  --rule-soft: var(--doc-rule-soft);
+  --accent: var(--doc-accent);
+  --accent-deep: var(--doc-accent-deep);
+  --select: var(--doc-select);
+  --gold: var(--doc-accent-deep);
+  --ivory: var(--ink);
+  position: relative;
+  isolation: isolate;
+  margin: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--doc-rule);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sheet-shadow);
+  font-family: var(--font-body);
+}
+.paper-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--grain);
+  background-size: 140px 140px;
+  opacity: 0.08;
+}
+.paper-surface > * { position: relative; z-index: 1; }
+
+/* Fix spots where the dark chrome hardcoded its colors. */
+.paper-surface .creator-header h2,
+.paper-surface h1, .paper-surface h2, .paper-surface h3 {
+  color: var(--ink);
+}
+.paper-surface .creator-header span,
+.paper-surface .start-copy span {
+  color: var(--doc-accent);
+}
+.paper-surface .choice-tile {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+.paper-surface .choice-tile.active {
+  border-color: var(--doc-accent);
+  background: color-mix(in srgb, var(--doc-accent) 8%, var(--paper));
+}
+.paper-surface .choice-tile strong { color: var(--ink); }
+.paper-surface .choice-tile span,
+.paper-surface .choice-tile small,
+.paper-surface .choice-tile em { color: var(--ink-2); }
+.paper-surface .control-field input,
+.paper-surface .control-field textarea,
+.paper-surface .control-field select,
+.paper-surface .attribute-card select,
+.paper-surface .qb-name-input {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+.paper-surface .control-field input::placeholder,
+.paper-surface .qb-name-input::placeholder { color: var(--ink-3); }
+.paper-surface .step-tabs button { color: var(--ink-3); }
+.paper-surface .step-tabs button.active { color: var(--ink); border-bottom-color: var(--doc-accent); }
+.paper-surface .glass-button { color: var(--ink); border-color: var(--doc-rule); }
+.paper-surface .gold-button {
+  background: var(--doc-accent);
+  border-color: var(--doc-accent-deep);
+  color: var(--paper);
+}
+
+/* Paper-surface: icon stages and modal chrome */
+.paper-surface .class-icon-stage,
+.paper-surface .choice-avatar {
+  background: var(--paper-raised);
+  border: 1px solid var(--doc-rule);
+  box-shadow: none;
+}
+.paper-surface.class-modal { margin: 0; }
+.paper-surface .glass-icon {
+  color: var(--ink);
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+}
+.paper-surface .class-detail-card,
+.paper-surface .species-facts {
+  border-color: var(--doc-rule);
+  background: var(--paper-raised);
+  color: var(--ink-2);
+}
+.paper-surface .class-detail-card summary { color: var(--ink); }

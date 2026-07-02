@@ -30,7 +30,7 @@ export default memo(function SpeciesLearnModal(props: {
       <section
         aria-labelledby="species-learn-title"
         aria-modal="true"
-        className="class-modal species-modal"
+        className="class-modal species-modal paper-surface"
         data-species={props.species.id}
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}
