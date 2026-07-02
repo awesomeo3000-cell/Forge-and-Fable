@@ -100,6 +100,12 @@ export type InventoryItem = {
   notes: string;
 };
 
+export type Equipment = {
+  armorId?: string;
+  shield?: boolean;
+  weaponIds?: string[];
+};
+
 export type CustomRule = {
   id: string;
   label: string;
@@ -158,6 +164,7 @@ export type SheetSectionId =
   | "skills"
   | "senses"
   | "profs"
+  | "equipment"
   | "attacks"
   | "features"
   | "notes"
@@ -202,6 +209,9 @@ export type Character = {
   subclassId?: string;
   asiChoices?: ASIChoice[];
   hpRolls?: number[];
+  equipment?: Equipment;
+  preparedSpells?: string[];
+  hitDiceSpent?: number;
   createdAt: string;
 }
 

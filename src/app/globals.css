@@ -4458,3 +4458,101 @@ button:disabled {
     transition: none;
   }
 }
+
+/* ── Equipment section ── */
+.cs-equip-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.cs-equip-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 160px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2, var(--parchment-2));
+}
+.cs-equip-field select {
+  font: inherit;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--doc-rule, var(--rule));
+  background: var(--paper-raised, var(--ground-2));
+  color: var(--ink, var(--parchment));
+}
+.cs-equip-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink, var(--parchment));
+  padding-bottom: 6px;
+  cursor: pointer;
+}
+.cs-weapon-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+.cs-weapon-chip {
+  cursor: pointer;
+  opacity: 0.65;
+}
+.cs-weapon-chip.cs-weapon-on {
+  opacity: 1;
+  outline: 1.5px solid var(--doc-accent, var(--accent));
+  outline-offset: -1px;
+}
+.cs-ac-src {
+  display: block;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Spell prep & casting ── */
+.cs-prep-marker {
+  float: left;
+  margin-right: 6px;
+}
+.cs-prep-filter {
+  margin-left: 8px;
+  font-size: 0.65rem;
+  padding: 2px 8px;
+}
+.cs-conc-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  border: 1px dashed var(--doc-accent, var(--accent));
+  font-size: 0.8rem;
+  color: var(--ink, var(--parchment));
+}
+.cs-cast-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.cs-cast-row .cs-glass-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

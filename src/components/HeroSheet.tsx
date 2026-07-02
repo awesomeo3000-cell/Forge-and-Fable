@@ -25,7 +25,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, Character, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
+import type { AbilityKey, AbilityScores, Character, Equipment, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -37,6 +37,7 @@ import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
+import { ARMORS, WEAPONS, computeArmorClass, getWeapon, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { maxSlots } from "@/lib/spellSlots";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import LevelUpModal from "@/components/LevelUpModal";
@@ -97,7 +98,8 @@ export default memo(function HeroSheet(props: {
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
 
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
-  const armorClass = 10 + dexMod + ruleAc + (props.featAcBonus ?? 0);
+  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, props.character.equipment);
+  const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0);
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0);
   const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0);
@@ -151,6 +153,24 @@ export default memo(function HeroSheet(props: {
     props.onUpdate({ deathSaves: { ...ds, [type]: v } });
   };
   const resetDeathSaves = () => props.onUpdate({ deathSaves: { successes: 0, failures: 0 } });
+
+  const addItem = () => {
+    if (!invName.trim()) return;
+    const item = {
+      id: crypto.randomUUID(),
+      name: invName.trim(),
+      rarity: invRarity,
+      attunement: false,
+      notes: invNotes.trim(),
+    };
+    props.onUpdate({ inventory: [...props.character.inventory, item] });
+    setInvName("");
+    setInvNotes("");
+    setShowInvForm(false);
+  };
+  const removeItem = (id: string) => {
+    props.onUpdate({ inventory: props.character.inventory.filter((item) => item.id !== id) });
+  };
 
   const skillsByAbility = abilityKeys.map((k) => ({ ability: k, skills: SKILLS.filter((s) => s.ability === k) }));
 
@@ -258,28 +278,91 @@ export default memo(function HeroSheet(props: {
 
   /* ── Spell slots & detail ── */
   const [spellDetail, setSpellDetail] = useState<SpellData | null>(null);
+  const [preparedOnly, setPreparedOnly] = useState(false);
+  const [showInvForm, setShowInvForm] = useState(false);
+  const [invName, setInvName] = useState("");
+  const [invRarity, setInvRarity] = useState<"Common" | "Uncommon" | "Rare">("Common");
+  const [invNotes, setInvNotes] = useState("");
   const casterType = heroClass.casterType ?? "none";
+  const isPactCaster = casterType === "pact";
   const spellAbility = heroClass.spellcastingAbility;
   const slotMax = maxSlots(casterType, props.character.level);
+  // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
+  const pactMax = isPactCaster ? (slotMax[0] ?? 0) : 0;
+  const pactUsed = Math.min(props.character.pactSlotsUsed ?? 0, pactMax);
   const slotsUsed = props.character.spellSlotsUsed ?? {};
   const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
   const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
 
   const spendSlot = (lvl: number) => {
-    const next: SpellSlots = { ...slotsUsed };
-    next[lvl] = Math.min((next[lvl] ?? 0) + 1, slotMax[lvl - 1] ?? 0);
-    props.onUpdate({ spellSlotsUsed: next });
+    if (isPactCaster) {
+      props.onUpdate({ pactSlotsUsed: Math.min(pactUsed + 1, pactMax) });
+    } else {
+      const next: SpellSlots = { ...slotsUsed };
+      next[lvl] = Math.min((next[lvl] ?? 0) + 1, slotMax[lvl - 1] ?? 0);
+      props.onUpdate({ spellSlotsUsed: next });
+    }
   };
   const recoverSlot = (lvl: number) => {
-    const next: SpellSlots = { ...slotsUsed };
-    next[lvl] = Math.max((next[lvl] ?? 0) - 1, 0);
-    props.onUpdate({ spellSlotsUsed: next });
+    if (isPactCaster) {
+      props.onUpdate({ pactSlotsUsed: Math.max(pactUsed - 1, 0) });
+    } else {
+      const next: SpellSlots = { ...slotsUsed };
+      next[lvl] = Math.max((next[lvl] ?? 0) - 1, 0);
+      props.onUpdate({ spellSlotsUsed: next });
+    }
   };
   const doShortRest = () => {
-    if (casterType === "pact") props.onUpdate({ pactSlotsUsed: 0 });
+    if (isPactCaster) props.onUpdate({ pactSlotsUsed: 0 });
   };
   const doLongRest = () => {
-    props.onUpdate({ spellSlotsUsed: {}, pactSlotsUsed: 0 });
+    const level = props.character.level;
+    const spent = props.character.hitDiceSpent ?? 0;
+    const recovered = Math.max(1, Math.floor(level / 2));
+    props.onUpdate({
+      spellSlotsUsed: {},
+      pactSlotsUsed: 0,
+      concentratingOn: null,
+      hitDiceSpent: Math.max(0, spent - recovered),
+    });
+  };
+
+  /* ── Equipment ── */
+  const equipment = props.character.equipment ?? {};
+  const updateEquipment = (patch: Partial<Equipment>) =>
+    props.onUpdate({ equipment: { ...equipment, ...patch } });
+  const toggleWeapon = (id: string) => {
+    const cur = equipment.weaponIds ?? [];
+    updateEquipment({ weaponIds: cur.includes(id) ? cur.filter((w) => w !== id) : [...cur, id] });
+  };
+
+  /* ── Spell preparation & casting ── */
+  const preparedIds = props.character.preparedSpells ?? [];
+  const prepLimit = _isPrepared && spellAbility
+    ? preparedSpellLimit(casterType, props.character.level, abilityModifier(props.finalAbilities[spellAbility]))
+    : 0;
+  const togglePrepared = (spellId: string) => {
+    if (preparedIds.includes(spellId)) {
+      props.onUpdate({ preparedSpells: preparedIds.filter((s) => s !== spellId) });
+    } else if (preparedIds.length < prepLimit) {
+      props.onUpdate({ preparedSpells: [...preparedIds, spellId] });
+    }
+  };
+  // One combined patch: slot spend + concentration must not race as two PUTs.
+  const castSpell = (spell: SpellData, atLevel: number) => {
+    const patch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {};
+    if (atLevel > 0) {
+      if (isPactCaster) {
+        patch.pactSlotsUsed = Math.min(pactUsed + 1, pactMax);
+      } else {
+        const next: SpellSlots = { ...slotsUsed };
+        next[atLevel] = Math.min((next[atLevel] ?? 0) + 1, slotMax[atLevel - 1] ?? 0);
+        patch.spellSlotsUsed = next;
+      }
+    }
+    if (spell.concentration) patch.concentratingOn = spell.name;
+    if (Object.keys(patch).length > 0) props.onUpdate(patch);
+    setSpellDetail(null);
   };
 
   const handleLevelDown = () => {
@@ -410,7 +493,7 @@ export default memo(function HeroSheet(props: {
       );
       case "vitals": return (
         <div className="cs-vitals">
-          <div className="cs-vital-cell"><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong></div>
+          <div className="cs-vital-cell" title={acInfo.label}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></div>
           <div className="cs-vital-cell"><span className="cs-vital-label"><Activity size={12} />Initiative</span><strong>{signed(initiative)}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong>{race.speed}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
@@ -424,7 +507,9 @@ export default memo(function HeroSheet(props: {
               <button type="button" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
             </div>
           </div>
-          <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level}d{heroClass.hitDie}</strong></div>
+          <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie}</strong>
+            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} title={`Spend 1 hit die: 1d${heroClass.hitDie}+${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); }); }}>Roll</button>
+          </div>
           <div className="cs-vital-cell cs-vital-death">
             <span className="cs-vital-label"><Skull size={12} />Death Saves</span>
             <div className="cs-vital-death-row">
@@ -463,12 +548,60 @@ export default memo(function HeroSheet(props: {
           <div className="cs-prof-list">{heroClass.proficiencies.length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Armor &amp; Weapons</span><div className="cs-prof-tags">{heroClass.proficiencies.map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}</div>
         </section>
       );
-      case "attacks": return (
-        <section className="cs-block">
-          <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-          {heroClass.actions.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th></tr></thead><tbody>{heroClass.actions.map((action) => { const toHit = abilityModifier(props.finalAbilities[action.ability]) + pb + ruleAttack; const dmgMod = abilityModifier(props.finalAbilities[action.ability]); return (<tr key={action.name} className="cs-action-row-click" onClick={() => props.onRoll(action.name, 20, 1, toHit)} role="button" tabIndex={0} aria-label={`Roll ${action.name}, ${signed(toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(action.name, 20, 1, toHit); } }}><td>{action.name}</td><td>{signed(toHit)}</td><td>{action.formula}{dmgMod !== 0 ? ` ${signed(dmgMod)}` : ""}{action.damageType ? ` ${action.damageType}` : ""}</td></tr>); })}</tbody></table>) : <p className="cs-muted">No actions</p>}
-        </section>
-      );
+      case "equipment": {
+        const armor = equipment.armorId ? ARMORS.find((a) => a.id === equipment.armorId) : undefined;
+        return (
+          <section className="cs-block">
+            <h3 className="cs-section-eyebrow"><Shield size={12} />Equipment</h3>
+            <div className="cs-equip-row">
+              <label className="cs-equip-field">
+                <span>Armor</span>
+                <select value={equipment.armorId ?? ""} onChange={(e) => updateEquipment({ armorId: e.target.value })}>
+                  <option value="">None (unarmored)</option>
+                  {ARMORS.map((a) => (<option key={a.id} value={a.id}>{a.name} — {a.category}</option>))}
+                </select>
+              </label>
+              <label className="cs-equip-check">
+                <input type="checkbox" checked={!!equipment.shield} onChange={(e) => updateEquipment({ shield: e.target.checked })} />
+                Shield (+2)
+              </label>
+            </div>
+            <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
+            {acInfo.stealthDisadvantage ? <p className="cs-rule-note">Disadvantage on Stealth checks</p> : null}
+            {acInfo.strengthWarning && armor ? <p className="cs-rule-note">Needs Str {armor.strengthReq}: speed reduced by 10 ft.</p> : null}
+            <span className="cs-spell-level-head">Weapons</span>
+            <div className="cs-weapon-chips">
+              {WEAPONS.map((w) => { const on = (equipment.weaponIds ?? []).includes(w.id); return (
+                <button key={w.id} type="button" className={`cs-prof-chip cs-weapon-chip${on ? " cs-weapon-on" : ""}`} aria-pressed={on} onClick={() => toggleWeapon(w.id)} title={`${w.damage} ${w.damageType}`}>{w.name}</button>
+              ); })}
+            </div>
+          </section>
+        );
+      }
+      case "attacks": {
+        const weaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
+        const rows = weaponDefs.length > 0
+          ? weaponDefs.map((w) => {
+              const ability = weaponAbility(w, props.finalAbilities);
+              const mod = abilityModifier(props.finalAbilities[ability]);
+              const dice = parseDamageDice(w.damage);
+              const hasDice = dice.length > 0;
+              const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
+              return { name: w.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${mod !== 0 ? ` ${signed(mod)}` : ""} ${w.damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
+            })
+          : heroClass.actions.map((action) => {
+              const mod = abilityModifier(props.finalAbilities[action.ability]);
+              const dice = parseDamageDice(action.formula);
+              const hasDice = dice.length > 0;
+              return { name: action.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${mod !== 0 ? ` ${signed(mod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
+            });
+        return (
+          <section className="cs-block">
+            <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks{weaponDefs.length === 0 && rows.length > 0 ? <span className="cs-muted"> (class defaults — equip weapons to customize)</span> : null}</h3>
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.name} className="cs-action-row-click" onClick={() => props.onRoll(row.name, 20, 1, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(row.name, 20, 1, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+          </section>
+        );
+      }
       case "features": return (
         <section className="cs-reftabs">
           <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}><t.Icon size={13} /> {t.label}</button>))}</div>
@@ -494,21 +627,61 @@ export default memo(function HeroSheet(props: {
             </div>
             <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => { const ci = trait.indexOf(":"); return (<div className="cs-feature-card" key={trait}>{ci > 0 ? <p><strong>{trait.slice(0, ci + 1)}</strong>{trait.slice(ci + 1)}</p> : <p>{trait}</p>}</div>); })}</div>) : null}</div>
             <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}>
-              {casterType !== "none" && spellAbility ? (<div className="cs-spellcast-head">Spell save DC {saveDC} &middot; Spell attack {signed(spellAttack)}</div>) : null}
+              {casterType !== "none" && spellAbility ? (
+                <div className="cs-spellcast-head">
+                  Spell save DC {saveDC} &middot; Spell attack {signed(spellAttack)}
+                  {_isPrepared ? (<> &middot; Prepared {preparedIds.length}/{prepLimit}
+                    <button type="button" className={`cs-glass-btn cs-prep-filter${preparedOnly ? " cs-edit-active" : ""}`} aria-pressed={preparedOnly} onClick={() => setPreparedOnly(!preparedOnly)}>Prepared only</button>
+                  </>) : null}
+                </div>
+              ) : null}
+              {props.character.concentratingOn ? (
+                <div className="cs-conc-banner">Concentrating on <strong>{props.character.concentratingOn}</strong>
+                  <button type="button" className="cs-glass-btn" onClick={() => props.onUpdate({ concentratingOn: null })}>End</button>
+                </div>
+              ) : null}
               <div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
                 const lvlNum = Number(level);
                 const max = slotMax[lvlNum - 1] ?? 0;
-                const used = slotsUsed[lvlNum] ?? 0;
+                const used = isPactCaster ? (max > 0 ? pactUsed : 0) : (slotsUsed[lvlNum] ?? 0);
+                const shown = _isPrepared && preparedOnly && lvlNum > 0 ? spells.filter((s) => preparedIds.includes(s.id)) : spells;
+                if (shown.length === 0 && max === 0) return null;
                 return (<div key={level} className="cs-spell-group">
                   <span className="cs-spell-level-head">
                     {level === "0" ? "Cantrips" : `Level ${level}`}
                     {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
                   </span>
-                  {spells.map((spell) => (<div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}><strong>{spell.name}</strong><span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span><p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p></div>))}
+                  {shown.map((spell) => (<div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>{_isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}<strong>{spell.name}</strong><span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span><p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p></div>))}
                 </div>);
               })}</div>
             </div>
-            <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>{props.character.inventory.length > 0 ? (<div className="cs-inv-list">{props.character.inventory.map((item) => (<div className="cs-inv-row" key={item.id}><div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div><div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}</div></div>))}</div>) : <p className="cs-muted">No equipment</p>}</div>
+            <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
+              {props.character.inventory.length > 0 ? (
+                <div className="cs-inv-list">{props.character.inventory.map((item) => (
+                  <div className="cs-inv-row" key={item.id}>
+                    <div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div>
+                    <div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
+                  </div>
+                ))}</div>
+              ) : <p className="cs-muted">No equipment</p>}
+              {showInvForm ? (
+                <div className="cs-inv-form">
+                  <input type="text" placeholder="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} />
+                  <select value={invRarity} onChange={(e) => setInvRarity(e.target.value as "Common" | "Uncommon" | "Rare")}>
+                    <option value="Common">Common</option>
+                    <option value="Uncommon">Uncommon</option>
+                    <option value="Rare">Rare</option>
+                  </select>
+                  <input type="text" placeholder="Notes (optional)" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
+                  <div className="cs-inv-form-actions">
+                    <button type="button" className="cs-glass-btn" onClick={addItem}>Add</button>
+                    <button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Add item</button>
+              )}
+            </div>
           </div>
         </section>
       );
@@ -639,9 +812,27 @@ export default memo(function HeroSheet(props: {
             {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" onClick={() => props.onRoll(`${spellDetail.name} attack`, 20, 1, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
             <p className="cs-spell-detail-desc">{spellDetail.description}</p>
-            {spellDetail.level > 0 && casterType !== "none" ? (
+            {casterType !== "none" ? (
               <div className="cs-spell-detail-cast">
-                {(() => {
+                <div className="cs-cast-row">
+                  <strong>Cast:</strong>
+                  {spellDetail.level === 0 ? (
+                    <button className="cs-glass-btn" type="button" onClick={() => castSpell(spellDetail, 0)}>Cast cantrip</button>
+                  ) : (
+                    slotMax.map((max, i) => {
+                      const lvl = i + 1;
+                      if (lvl < spellDetail.level || max <= 0) return null;
+                      const remaining = max - (slotsUsed[lvl] ?? 0);
+                      return (
+                        <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0} onClick={() => castSpell(spellDetail, lvl)} title={remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
+                          Lv {lvl} ({remaining})
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                {spellDetail.concentration ? <p className="cs-rule-note">Casting starts concentration{props.character.concentratingOn ? ` (ends ${props.character.concentratingOn})` : ""}</p> : null}
+                {spellDetail.level > 0 ? (() => {
                   const dice = parseDamageDice(spellDetail.description);
                   if (dice.length === 0) return null;
                   return (
@@ -652,7 +843,7 @@ export default memo(function HeroSheet(props: {
                       ))}
                     </div>
                   );
-                })()}
+                })() : null}
               </div>
             ) : null}
           </div>

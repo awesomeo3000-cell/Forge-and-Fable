@@ -41,6 +41,7 @@ import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
+import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import { FONT_STACKS } from "@/lib/skins";
@@ -231,11 +232,23 @@ export default function ForgeAndFableApp() {
     }
 
     setBuildMode(mode);
-    setDraft(createInitialDraft(ruleset) as DraftCharacter);
-    setStatMethod("point-buy");
-    setCreatorStep(0);
-    setCreatorOpen(true);
+    if (mode === "standard") {
+      setDraft(createInitialDraft(ruleset) as DraftCharacter);
+      setStatMethod("point-buy");
+      setCreatorStep(0);
+      setCreatorOpen(true);
+    } else {
+      // Quickbuilder & Premade: start with guided panel, then drop into CreatorPanel at Finalize
+      setCreatorOpen(false);
+    }
     setCreationPromptOpen(false);
+  }
+
+  function handleQuickbuildComplete(draft: DraftCharacter) {
+    setDraft(draft);
+    setCreatorStep(5); // Finalize step
+    setCreatorOpen(true);
+    setBuildMode("standard");
   }
 
   function changeStatMethod(method: StatMethod) {
@@ -682,6 +695,13 @@ export default function ForgeAndFableApp() {
         <section className="studio-surface">
           {showCreationPrompt ? (
             <CharacterStartPanel onSelectBuild={beginBuild} />
+          ) : buildMode !== "standard" && !creatorOpen ? (
+            <QuickbuilderPanel
+              ruleset={ruleset}
+              mode={buildMode}
+              onComplete={handleQuickbuildComplete}
+              onCancel={() => { setCreationPromptOpen(true); setBuildMode("standard"); }}
+            />
           ) : showCreator && draftFinalAbilities ? (
             <CreatorPanel
               draft={draft}

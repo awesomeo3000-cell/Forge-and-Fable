@@ -27,7 +27,8 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "skillProficiencies", "savingThrowProficiencies",
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
-  "subclassId", "asiChoices", "hpRolls",
+  "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
+  "equipment", "preparedSpells",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -79,10 +80,20 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "inventory":
       case "spellsKnown":
       case "skillProficiencies":
+      case "preparedSpells":
         if (val !== undefined) assertArray(val, key);
         break;
+      case "equipment":
+        if (val !== undefined && (typeof val !== "object" || val === null || Array.isArray(val))) {
+          throw new Error(`"equipment" must be an object.`);
+        }
+        break;
       case "customRules":
+      case "hpRolls":
         if (val !== undefined) assertArray(val, "customRules");
+        break;
+      case "hitDiceSpent":
+        if (val !== undefined) assertInteger(val, "hitDiceSpent", 0, 20);
         break;
     }
 
