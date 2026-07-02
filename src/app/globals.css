@@ -5567,3 +5567,19 @@ button:disabled {
   color: color-mix(in srgb, var(--class-a, var(--doc-accent)) 78%, var(--ink));
 }
 .paper-surface .class-choice strong { color: var(--ink); }
+
+/* ── Class-icon palette coloring ──
+   The masked icons paint with currentColor, so color = context. Dark chrome
+   already uses the raw class hue; on paper, mix the hue toward ink so light
+   class colors keep contrast, and drop the glow — paper is flat. */
+.cs-sheet .cs-class-icon[data-class] {
+  color: color-mix(in srgb, var(--class-a, var(--doc-accent)) 75%, var(--ink));
+}
+.paper-surface .class-icon-stage[data-class],
+.paper-surface .species-signal[data-species] > span {
+  color: color-mix(in srgb, var(--class-a, var(--doc-accent)) 75%, var(--ink));
+}
+.paper-surface .class-symbol,
+.cs-sheet .class-symbol {
+  filter: none;
+}
