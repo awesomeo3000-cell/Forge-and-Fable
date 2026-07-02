@@ -110,7 +110,25 @@ export function proficiencyBonus(level: number) {
 }
 
 export function rollDie(sides: number) {
-  return Math.floor(Math.random() * sides) + 1;
+  const wholeSides = Math.floor(sides);
+  if (!Number.isFinite(wholeSides) || wholeSides < 1) return 1;
+
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi?.getRandomValues) {
+    const max = 0xffffffff;
+    const limit = max - (max % wholeSides);
+    const buffer = new Uint32Array(1);
+    let value = 0;
+
+    do {
+      cryptoApi.getRandomValues(buffer);
+      value = buffer[0];
+    } while (value >= limit);
+
+    return (value % wholeSides) + 1;
+  }
+
+  return Math.floor(Math.random() * wholeSides) + 1;
 }
 
 export function scoreFrom4d6() {
