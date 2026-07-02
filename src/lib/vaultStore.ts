@@ -15,7 +15,17 @@ type VaultData = {
 };
 
 const dataDir = path.join(process.cwd(), "data");
-const vaultFile = path.join(dataDir, "forge-vault.json");
+
+function getVaultFile() {
+  const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
+  const dir = configuredDir
+    ? path.isAbsolute(configuredDir)
+      ? configuredDir
+      : path.join(/* turbopackIgnore: true */ process.cwd(), configuredDir)
+    : dataDir;
+
+  return path.join(dir, "forge-vault.json");
+}
 
 function emptyVault(): VaultData {
   return {
@@ -31,6 +41,7 @@ function validateVaultStructure(data: unknown): data is VaultData {
 }
 
 async function readVault(): Promise<VaultData> {
+  const vaultFile = getVaultFile();
   try {
     const raw = await readFile(vaultFile, "utf8");
     const parsed = JSON.parse(raw);
@@ -63,7 +74,8 @@ async function readVault(): Promise<VaultData> {
 }
 
 async function writeVault(data: VaultData) {
-  await mkdir(dataDir, { recursive: true });
+  const vaultFile = getVaultFile();
+  await mkdir(path.dirname(vaultFile), { recursive: true });
   await writeFile(vaultFile, JSON.stringify(data, null, 2), "utf8");
 }
 

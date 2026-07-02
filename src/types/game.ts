@@ -95,15 +95,45 @@ export type SpellSlots = Record<number, number>;
 export type InventoryItem = {
   id: string;
   name: string;
-  rarity: "Common" | "Uncommon" | "Rare";
+  rarity: string;
   attunement: boolean;
   notes: string;
+  sourceItemId?: string;
+  category?: string;
+  classification?: string;
+  description?: string;
+  ac?: string;
+  damage?: string;
+  damageType?: string;
+  properties?: string;
+  cost?: string;
+  image?: string;
+};
+
+export type CatalogItem = {
+  id: string;
+  name: string;
+  image?: string;
+  description: string;
+  category: string;
+  rarity: string;
+  classification?: string;
+  ac?: string;
+  damage?: string;
+  damageType?: string;
+  properties?: string;
+  cost?: string;
+  attunement: boolean;
 };
 
 export type Equipment = {
   armorId?: string;
   shield?: boolean;
   weaponIds?: string[];
+  armorItemId?: string;
+  shieldItemId?: string;
+  weaponItemIds?: string[];
+  bonusItemIds?: string[];
 };
 
 export type CustomRule = {

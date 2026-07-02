@@ -1,4 +1,5 @@
-import type { AbilityKey, AbilityScores, Equipment } from "@/types/game";
+import type { AbilityKey, AbilityScores, Equipment, InventoryItem } from "@/types/game";
+import { getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemArmorAcBonus, itemWeaponBonus } from "@/lib/itemCatalog";
 import { abilityModifier } from "@/lib/utils";
 
 export type ArmorDef = {
@@ -21,6 +22,7 @@ export type WeaponDef = {
   kind: "melee" | "finesse" | "ranged";
   versatile?: string;
   twoHanded?: boolean;
+  bonus?: number;
 };
 
 export const ARMORS: ArmorDef[] = [
@@ -64,6 +66,116 @@ const WEAPONS_BY_ID = new Map(WEAPONS.map((w) => [w.id, w]));
 export const getArmor = (id: string) => ARMORS_BY_ID.get(id);
 export const getWeapon = (id: string) => WEAPONS_BY_ID.get(id);
 
+const ARMOR_NAME_MATCHES = [...ARMORS].sort((a, b) => b.name.length - a.name.length);
+const WEAPON_NAME_MATCHES = [...WEAPONS].sort((a, b) => b.name.length - a.name.length);
+
+function normalizedName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findArmorByItemName(name: string) {
+  const normalized = normalizedName(name);
+  return ARMOR_NAME_MATCHES.find((armor) => normalized.includes(normalizedName(armor.name)));
+}
+
+function findWeaponByItemName(name: string) {
+  const normalized = normalizedName(name);
+  return WEAPON_NAME_MATCHES.find((weapon) => normalized.includes(normalizedName(weapon.name)));
+}
+
+function findWeaponForItem(item: InventoryItem) {
+  const byName = findWeaponByItemName(item.name);
+  if (byName) return byName;
+  const normalized = normalizedName([item.name, item.description, item.properties].filter(Boolean).join(" "));
+  return WEAPON_NAME_MATCHES.find((weapon) => normalized.includes(normalizedName(weapon.name)));
+}
+
+function parseAcString(ac?: string) {
+  const text = (ac ?? "").trim();
+  if (!text) return null;
+  const baseMatch = text.match(/\d+/);
+  if (!baseMatch) return null;
+  const baseAc = Number(baseMatch[0]);
+  if (!Number.isFinite(baseAc)) return null;
+  const acWithoutDex = text.replace(/dex(?:terity)?/gi, "");
+  const inlineBonus = Array.from(acWithoutDex.matchAll(/\+\s*([1-3])\b/g))
+    .reduce((sum, match) => sum + Number(match[1] ?? 0), 0);
+  return {
+    baseAc,
+    hasDex: /dex/i.test(text),
+    inlineBonus,
+  };
+}
+
+function armorCategoryFromItem(item: InventoryItem, fallback?: ArmorDef): ArmorDef["category"] {
+  const classification = (item.classification ?? "").toLowerCase();
+  if (classification.includes("heavy")) return "heavy";
+  if (classification.includes("medium")) return "medium";
+  if (classification.includes("light")) return "light";
+  return fallback?.category ?? "light";
+}
+
+function dexRuleForArmor(category: ArmorDef["category"], parsed: ReturnType<typeof parseAcString> | null, fallback?: ArmorDef) {
+  if (!parsed?.hasDex) return "none" as const;
+  if (fallback?.dexBonus) return fallback.dexBonus;
+  if (category === "medium") return "max2" as const;
+  if (category === "heavy") return "none" as const;
+  return "full" as const;
+}
+
+function inventoryArmorBreakdown(item: InventoryItem) {
+  if (!isArmorItem(item)) return null;
+  const fallback = findArmorByItemName(item.name);
+  const parsed = parseAcString(item.ac);
+  const category = armorCategoryFromItem(item, fallback);
+  const dexBonus = dexRuleForArmor(category, parsed, fallback);
+  const baseAc = parsed?.baseAc ?? fallback?.baseAc;
+  if (!baseAc) return null;
+  const inlineBonus = parsed?.inlineBonus ?? 0;
+  const extraBonus = itemArmorAcBonus(item, inlineBonus > 0);
+  return {
+    name: item.name,
+    category,
+    baseAc,
+    dexBonus,
+    bonus: inlineBonus + extraBonus,
+    stealthDisadvantage: fallback?.stealthDisadvantage ?? false,
+    strengthReq: fallback?.strengthReq ?? 0,
+  };
+}
+
+function shieldBonusFromItem(item: InventoryItem | undefined) {
+  if (!item || !isShieldItem(item)) return 0;
+  const parsed = parseAcString(item.ac);
+  const base = parsed?.baseAc ?? 2;
+  return base + itemArmorAcBonus(item, (parsed?.inlineBonus ?? 0) > 0);
+}
+
+export function inventoryWeaponToDef(item: InventoryItem): WeaponDef | null {
+  if (!isWeaponItem(item)) return null;
+  const fallback = findWeaponForItem(item);
+  const classification = (item.classification ?? "").toLowerCase();
+  const properties = (item.properties ?? "").toLowerCase();
+  const isRanged = classification.includes("ranged") || properties.includes("ammunition");
+  const versatile = item.properties?.match(/versatile\s*\(([^)]+)\)/i)?.[1] ?? fallback?.versatile;
+  const kind: WeaponDef["kind"] = properties.includes("finesse")
+    ? "finesse"
+    : isRanged
+      ? "ranged"
+      : fallback?.kind ?? "melee";
+
+  return {
+    id: `inventory:${item.id}`,
+    name: item.name,
+    damage: item.damage || fallback?.damage || "1d4",
+    damageType: item.damageType || fallback?.damageType || "",
+    kind,
+    versatile,
+    twoHanded: properties.includes("two-handed") || fallback?.twoHanded,
+    bonus: itemWeaponBonus(item),
+  };
+}
+
 export function weaponAbility(weapon: WeaponDef, abilities: AbilityScores): AbilityKey {
   if (weapon.kind === "ranged") return "dexterity";
   if (weapon.kind === "finesse") {
@@ -77,6 +189,7 @@ export type AcBreakdown = {
   label: string;
   stealthDisadvantage: boolean;
   strengthWarning: boolean;
+  strengthRequirement?: number;
 };
 
 /**
@@ -88,42 +201,59 @@ export function computeArmorClass(
   abilities: AbilityScores,
   classId: string,
   equipment: Equipment | undefined,
+  inventory: InventoryItem[] = [],
 ): AcBreakdown {
   const dex = abilityModifier(abilities.dexterity);
-  const shield = equipment?.shield ? 2 : 0;
-  const armor = equipment?.armorId ? getArmor(equipment.armorId) : undefined;
+  const inventoryById = new Map(inventory.map((item) => [item.id, item]));
+  const armorItem = equipment?.armorItemId ? inventoryById.get(equipment.armorItemId) : undefined;
+  const inventoryArmor = armorItem ? inventoryArmorBreakdown(armorItem) : null;
+  const staticArmor = equipment?.armorId ? getArmor(equipment.armorId) : undefined;
+  const armor = inventoryArmor ?? staticArmor;
+  const shieldItem = equipment?.shieldItemId ? inventoryById.get(equipment.shieldItemId) : undefined;
+  const shield = shieldItem ? shieldBonusFromItem(shieldItem) : equipment?.shield ? 2 : 0;
+  const itemAcBonuses = getEquippedItemBonuses(inventory, { bonusItemIds: equipment?.bonusItemIds }, {
+    includeAc: true,
+    hasArmor: !!armor,
+    hasShield: shield > 0,
+  }).ac;
 
   if (armor) {
     const dexPart = armor.dexBonus === "full" ? dex : armor.dexBonus === "max2" ? Math.min(dex, 2) : 0;
+    const armorBonus = "bonus" in armor ? armor.bonus : 0;
+    const itemBonusLabel = itemAcBonuses ? ` + ${itemAcBonuses} item` : "";
     return {
-      total: armor.baseAc + dexPart + shield,
-      label: armor.name + (shield ? " + shield" : ""),
+      total: armor.baseAc + dexPart + armorBonus + shield + itemAcBonuses,
+      label: armor.name + (shield ? " + shield" : "") + itemBonusLabel,
       stealthDisadvantage: armor.stealthDisadvantage,
       strengthWarning: armor.strengthReq > 0 && abilities.strength < armor.strengthReq,
+      strengthRequirement: armor.strengthReq > 0 ? armor.strengthReq : undefined,
     };
   }
 
   if (classId === "barbarian") {
+    const itemBonusLabel = itemAcBonuses ? ` + ${itemAcBonuses} item` : "";
     return {
-      total: 10 + dex + abilityModifier(abilities.constitution) + shield,
-      label: "Unarmored Defense" + (shield ? " + shield" : ""),
+      total: 10 + dex + abilityModifier(abilities.constitution) + shield + itemAcBonuses,
+      label: "Unarmored Defense" + (shield ? " + shield" : "") + itemBonusLabel,
       stealthDisadvantage: false,
       strengthWarning: false,
     };
   }
 
-  if (classId === "monk" && !equipment?.shield) {
+  if (classId === "monk" && shield === 0) {
+    const itemBonusLabel = itemAcBonuses ? ` + ${itemAcBonuses} item` : "";
     return {
-      total: 10 + dex + abilityModifier(abilities.wisdom),
-      label: "Unarmored Defense",
+      total: 10 + dex + abilityModifier(abilities.wisdom) + itemAcBonuses,
+      label: "Unarmored Defense" + itemBonusLabel,
       stealthDisadvantage: false,
       strengthWarning: false,
     };
   }
 
+  const itemBonusLabel = itemAcBonuses ? ` + ${itemAcBonuses} item` : "";
   return {
-    total: 10 + dex + shield,
-    label: shield ? "Unarmored + shield" : "Unarmored",
+    total: 10 + dex + shield + itemAcBonuses,
+    label: (shield ? "Unarmored + shield" : "Unarmored") + itemBonusLabel,
     stealthDisadvantage: false,
     strengthWarning: false,
   };

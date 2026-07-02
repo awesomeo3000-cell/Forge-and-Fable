@@ -9,7 +9,7 @@ This folder is a Git repository for the Forge & Fable web app.
 3. Select this folder:
 
    ```text
-   C:\Users\clare\Documents\Codex\2026-06-24\files-mentioned-by-the-user-final\outputs\forge-and-fable
+   E:\forge-and-fable
    ```
 
 4. In GitHub Desktop, choose `Publish repository`.
@@ -40,3 +40,13 @@ npm run build
 ```
 
 The repo also includes a GitHub Actions workflow that runs lint and build on pushes and pull requests to `main`.
+
+## Deployment
+
+See:
+
+```text
+docs\DEPLOYMENT.md
+```
+
+The repo includes host configuration for Render (`render.yaml`) and Railway (`railway.json`).

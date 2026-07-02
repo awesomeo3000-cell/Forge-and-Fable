@@ -77,6 +77,7 @@ export default function ForgeAndFableApp() {
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
@@ -213,6 +214,7 @@ export default function ForgeAndFableApp() {
         name: authName,
         email: authEmail,
         password: authPassword,
+        inviteCode: authMode === "register" ? authInviteCode : undefined,
       }),
     });
 
@@ -555,7 +557,7 @@ export default function ForgeAndFableApp() {
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
     if (totalCount === 0 || totalCount > 40) return;
 
-    const settled = new Map<number, { sides: number; value: number }>();
+    const rolledDice: { sides: number; value: number }[] = [];
     const newDice: RollingDie[] = [];
     let index = 0;
 
@@ -563,10 +565,12 @@ export default function ForgeAndFableApp() {
       for (let i = 0; i < group.count; i++) {
         const dieIndex = index++;
         const fromLeft = Math.random() > 0.5;
+        const result = rollDie(group.sides);
+        rolledDice[dieIndex] = { sides: group.sides, value: result };
         newDice.push({
           id: `${crypto.randomUUID()}-${dieIndex}`,
           sides: group.sides,
-          result: rollDie(group.sides),
+          result,
           label,
           fromLeft,
           startYPct: 0.15 + Math.random() * 0.35,
@@ -574,23 +578,15 @@ export default function ForgeAndFableApp() {
           landYPct: 0.25 + Math.random() * 0.38,
           rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
           delayMs: dieIndex * 180,
-          onFinish: (settledResult) => {
-            if (settled.has(dieIndex)) return;
-            settled.set(dieIndex, { sides: group.sides, value: settledResult });
-
-            if (settled.size === totalCount) {
-              const values = [...settled.values()];
-              const total = values.reduce((sum, v) => sum + v.value, modifier);
-              const detail = cleaned
-                .map((g) => `${g.count}d${g.sides} [${values.filter((v) => v.sides === g.sides).map((v) => v.value).join(", ")}]`)
-                .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
-              setConsoleLog((prev) => [`${label}  →  ${total}`, ...prev].slice(0, 20));
-              recordHistory(label, detail, total);
-            }
-          },
         });
       }
     }
+    const total = rolledDice.reduce((sum, die) => sum + die.value, modifier);
+    const detail = cleaned
+      .map((g) => `${g.count}d${g.sides} [${rolledDice.filter((die) => die.sides === g.sides).map((die) => die.value).join(", ")}]`)
+      .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
+    setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
+    recordHistory(label, detail, total);
     setFlyingDice((prev) => [...prev, ...newDice]);
   }
 
@@ -681,11 +677,13 @@ export default function ForgeAndFableApp() {
         name={authName}
         email={authEmail}
         password={authPassword}
+        inviteCode={authInviteCode}
         status={status}
         onModeChange={setAuthMode}
         onNameChange={setAuthName}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onInviteCodeChange={setAuthInviteCode}
         onSubmit={authRequest}
       />
     );

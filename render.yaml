@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: forge-and-fable
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start -- -H 0.0.0.0 -p $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REGISTRATION_INVITE_CODE
+        sync: false
+      - key: FORGE_VAULT_DIR
+        value: /var/data
+    disk:
+      name: forge-vault
+      mountPath: /var/data
+      sizeGB: 1

@@ -20,7 +20,7 @@ import {
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, Character, Equipment, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
+import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -32,7 +32,8 @@ import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
-import { ARMORS, WEAPONS, computeArmorClass, getWeapon, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
+import { ARMORS, WEAPONS, computeArmorClass, getWeapon, inventoryWeaponToDef, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
+import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import LevelUpModal from "@/components/LevelUpModal";
@@ -92,14 +93,17 @@ export default memo(function HeroSheet(props: {
 
   const pb = proficiencyBonus(props.character.level);
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
+  const equipment = props.character.equipment ?? {};
+  const equipmentItemBonuses = getEquippedItemBonuses(props.character.inventory, equipment, { includeAc: false });
 
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
-  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, props.character.equipment);
+  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, props.character.inventory);
   const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0);
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0);
   const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0);
   const ruleSaveAll = props.character.customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
+  const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves;
 
   const proficientSaves: AbilityKey[] =
     props.character.savingThrowProficiencies ?? SAVE_PROFICIENCIES[heroClass.id]?.abilities ?? [];
@@ -107,7 +111,7 @@ export default memo(function HeroSheet(props: {
   const isSaveProficient = (key: AbilityKey) => proficientSaves.includes(key);
   const isSkillProficient = (id: string) => (props.character.skillProficiencies ?? []).includes(id);
 
-  const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + ruleSaveAll;
+  const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
   const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0);
 
   const passiveInsight = 10 + skillBonus(SKILLS.find((s) => s.id === "insight")!);
@@ -150,6 +154,41 @@ export default memo(function HeroSheet(props: {
   };
   const resetDeathSaves = () => props.onUpdate({ deathSaves: { successes: 0, failures: 0 } });
 
+  const updateEquipment = (patch: Partial<Equipment>) =>
+    props.onUpdate({ equipment: { ...equipment, ...patch } });
+  const toggleWeapon = (id: string) => {
+    const cur = equipment.weaponIds ?? [];
+    updateEquipment({ weaponIds: cur.includes(id) ? cur.filter((w) => w !== id) : [...cur, id] });
+  };
+  const toggleInventoryWeapon = (id: string) => {
+    const cur = equipment.weaponItemIds ?? [];
+    updateEquipment({ weaponItemIds: cur.includes(id) ? cur.filter((w) => w !== id) : [...cur, id] });
+  };
+  const toggleBonusItem = (id: string) => {
+    const cur = equipment.bonusItemIds ?? [];
+    updateEquipment({ bonusItemIds: cur.includes(id) ? cur.filter((w) => w !== id) : [...cur, id] });
+  };
+  const equipInventoryArmor = (item: InventoryItem) => {
+    updateEquipment({
+      armorItemId: equipment.armorItemId === item.id ? undefined : item.id,
+      armorId: undefined,
+    });
+  };
+  const equipInventoryShield = (item: InventoryItem) => {
+    updateEquipment({
+      shieldItemId: equipment.shieldItemId === item.id ? undefined : item.id,
+      shield: false,
+    });
+  };
+  const cleanEquipmentForRemovedItem = (id: string): Equipment => {
+    const next: Equipment = { ...equipment };
+    if (next.armorItemId === id) next.armorItemId = undefined;
+    if (next.shieldItemId === id) next.shieldItemId = undefined;
+    if (next.weaponItemIds?.includes(id)) next.weaponItemIds = next.weaponItemIds.filter((itemId) => itemId !== id);
+    if (next.bonusItemIds?.includes(id)) next.bonusItemIds = next.bonusItemIds.filter((itemId) => itemId !== id);
+    return next;
+  };
+
   const addItem = () => {
     if (!invName.trim()) return;
     const item = {
@@ -164,8 +203,14 @@ export default memo(function HeroSheet(props: {
     setInvNotes("");
     setShowInvForm(false);
   };
+  const addCatalogItem = (catalogItem: CatalogItem) => {
+    props.onUpdate({ inventory: [...props.character.inventory, catalogItemToInventory(catalogItem)] });
+  };
   const removeItem = (id: string) => {
-    props.onUpdate({ inventory: props.character.inventory.filter((item) => item.id !== id) });
+    props.onUpdate({
+      inventory: props.character.inventory.filter((item) => item.id !== id),
+      equipment: cleanEquipmentForRemovedItem(id),
+    });
   };
 
   const skillsByAbility = abilityKeys.map((k) => ({ ability: k, skills: SKILLS.filter((s) => s.ability === k) }));
@@ -297,8 +342,33 @@ export default memo(function HeroSheet(props: {
   const [preparedOnly, setPreparedOnly] = useState(false);
   const [showInvForm, setShowInvForm] = useState(false);
   const [invName, setInvName] = useState("");
-  const [invRarity, setInvRarity] = useState<"Common" | "Uncommon" | "Rare">("Common");
+  const [invRarity, setInvRarity] = useState("Common");
   const [invNotes, setInvNotes] = useState("");
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemCategory, setItemCategory] = useState("All");
+  const [itemRarity, setItemRarity] = useState("All");
+  const itemMatches = useMemo(() => {
+    const q = itemSearch.trim().toLowerCase();
+    return ITEM_CATALOG.filter((item) => {
+      if (itemCategory !== "All" && item.category !== itemCategory) return false;
+      if (itemRarity !== "All" && item.rarity !== itemRarity) return false;
+      if (!q) return true;
+      return [
+        item.name,
+        item.category,
+        item.rarity,
+        item.classification,
+        item.ac,
+        item.damage,
+        item.damageType,
+        item.properties,
+        item.description,
+      ]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(q));
+    });
+  }, [itemCategory, itemRarity, itemSearch]);
+  const visibleItemMatches = itemMatches.slice(0, 24);
   const hitDiceRolling = useRef(false);
   const casterType = heroClass.casterType ?? "none";
   const isPactCaster = casterType === "pact";
@@ -309,8 +379,8 @@ export default memo(function HeroSheet(props: {
   const pactMax = isPactCaster ? (slotMax.find((c) => c > 0) ?? 0) : 0;
   const pactUsed = Math.min(props.character.pactSlotsUsed ?? 0, pactMax);
   const slotsUsed = props.character.spellSlotsUsed ?? {};
-  const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
-  const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) : 0;
+  const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellSaveDc : 0;
+  const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellAttack : 0;
 
   const spendSlot = (lvl: number) => {
     if (isPactCaster) {
@@ -355,15 +425,6 @@ export default memo(function HeroSheet(props: {
       hitDiceSpent: Math.max(0, spent - recovered),
     });
     props.onNotify?.("Long rest complete — HP and slots restored");
-  };
-
-  /* ── Equipment ── */
-  const equipment = props.character.equipment ?? {};
-  const updateEquipment = (patch: Partial<Equipment>) =>
-    props.onUpdate({ equipment: { ...equipment, ...patch } });
-  const toggleWeapon = (id: string) => {
-    const cur = equipment.weaponIds ?? [];
-    updateEquipment({ weaponIds: cur.includes(id) ? cur.filter((w) => w !== id) : [...cur, id] });
   };
 
   /* ── Spell preparation & casting ── */
@@ -604,7 +665,7 @@ export default memo(function HeroSheet(props: {
         <section className="cs-block">
           <h3 className="cs-section-eyebrow"><Shield size={12} />Saving Throws</h3>
           <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => props.onRoll(`${abilityLabels[key]} save`, 20, 1, bonus)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title="Right-click to toggle proficiency"><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
-          {ruleSaveAll !== 0 ? <p className="cs-rule-note">All saves: {signed(ruleSaveAll)}</p> : null}
+          {saveAllBonus !== 0 ? <p className="cs-rule-note">All saves: {signed(saveAllBonus)}{equipmentItemBonuses.saves !== 0 ? ` (${signed(equipmentItemBonuses.saves)} items)` : ""}</p> : null}
         </section>
       );
       case "skills": return (
@@ -627,25 +688,41 @@ export default memo(function HeroSheet(props: {
       );
       case "equipment": {
         const armor = equipment.armorId ? ARMORS.find((a) => a.id === equipment.armorId) : undefined;
+        const equippedArmor = equipment.armorItemId ? props.character.inventory.find((item) => item.id === equipment.armorItemId) : undefined;
+        const equippedShield = equipment.shieldItemId ? props.character.inventory.find((item) => item.id === equipment.shieldItemId) : undefined;
+        const equippedWeapons = (equipment.weaponItemIds ?? [])
+          .map((id) => props.character.inventory.find((item) => item.id === id))
+          .filter((item): item is InventoryItem => !!item);
+        const equippedBonuses = (equipment.bonusItemIds ?? [])
+          .map((id) => props.character.inventory.find((item) => item.id === id))
+          .filter((item): item is InventoryItem => !!item);
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Shield size={12} />Equipment</h3>
             <div className="cs-equip-row">
               <label className="cs-equip-field">
                 <span>Armor</span>
-                <select value={equipment.armorId ?? ""} onChange={(e) => updateEquipment({ armorId: e.target.value })}>
+                <select value={equipment.armorId ?? ""} onChange={(e) => updateEquipment({ armorId: e.target.value || undefined, armorItemId: undefined })}>
                   <option value="">None (unarmored)</option>
                   {ARMORS.map((a) => (<option key={a.id} value={a.id}>{a.name} — {a.category}</option>))}
                 </select>
               </label>
               <label className="cs-equip-check">
-                <input type="checkbox" checked={!!equipment.shield} onChange={(e) => updateEquipment({ shield: e.target.checked })} />
+                <input type="checkbox" checked={!!equipment.shield && !equipment.shieldItemId} onChange={(e) => updateEquipment({ shield: e.target.checked, shieldItemId: undefined })} />
                 Shield (+2)
               </label>
             </div>
+            {equippedArmor || equippedShield || equippedWeapons.length > 0 || equippedBonuses.length > 0 ? (
+              <div className="cs-equipped-list" aria-label="Equipped inventory items">
+                {equippedArmor ? <span className="cs-equipped-chip"><Shield size={11} />Armor: {equippedArmor.name}<button type="button" onClick={() => updateEquipment({ armorItemId: undefined })}>Unequip</button></span> : null}
+                {equippedShield ? <span className="cs-equipped-chip"><Shield size={11} />Shield: {equippedShield.name}<button type="button" onClick={() => updateEquipment({ shieldItemId: undefined })}>Unequip</button></span> : null}
+                {equippedWeapons.map((item) => <span className="cs-equipped-chip" key={item.id}><Swords size={11} />{item.name}<button type="button" onClick={() => toggleInventoryWeapon(item.id)}>Unequip</button></span>)}
+                {equippedBonuses.map((item) => <span className="cs-equipped-chip" key={item.id}><Zap size={11} />{item.name}<button type="button" onClick={() => toggleBonusItem(item.id)}>Unequip</button></span>)}
+              </div>
+            ) : null}
             <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
             {acInfo.stealthDisadvantage ? <p className="cs-rule-note">Disadvantage on Stealth checks</p> : null}
-            {acInfo.strengthWarning && armor ? <p className="cs-rule-note">Needs Str {armor.strengthReq}: speed reduced by 10 ft.</p> : null}
+            {acInfo.strengthWarning ? <p className="cs-rule-note">Needs Str {acInfo.strengthRequirement ?? armor?.strengthReq}: speed reduced by 10 ft.</p> : null}
             <span className="cs-spell-level-head">Weapons</span>
             <div className="cs-weapon-chips">
               {WEAPONS.map((w) => { const on = (equipment.weaponIds ?? []).includes(w.id); return (
@@ -656,26 +733,35 @@ export default memo(function HeroSheet(props: {
         );
       }
       case "attacks": {
-        const weaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
+        const staticWeaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
+        const inventoryWeaponDefs = (equipment.weaponItemIds ?? [])
+          .map((id) => props.character.inventory.find((item) => item.id === id))
+          .filter((item): item is InventoryItem => !!item)
+          .map((item) => inventoryWeaponToDef(item))
+          .filter((weapon): weapon is WeaponDef => !!weapon);
+        const weaponDefs = [...staticWeaponDefs, ...inventoryWeaponDefs];
         const rows = weaponDefs.length > 0
           ? weaponDefs.map((w) => {
               const ability = weaponAbility(w, props.finalAbilities);
               const mod = abilityModifier(props.finalAbilities[ability]);
+              const itemBonus = w.bonus ?? 0;
+              const damageMod = mod + itemBonus;
               const dice = parseDamageDice(w.damage);
               const hasDice = dice.length > 0;
               const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
-              return { name: w.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${mod !== 0 ? ` ${signed(mod)}` : ""} ${w.damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
+              const damageType = w.damageType ? ` ${w.damageType}` : "";
+              return { id: w.id, name: w.name, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
             })
           : heroClass.actions.map((action) => {
               const mod = abilityModifier(props.finalAbilities[action.ability]);
               const dice = parseDamageDice(action.formula);
               const hasDice = dice.length > 0;
-              return { name: action.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${mod !== 0 ? ` ${signed(mod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
+              return { id: action.name, name: action.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${mod !== 0 ? ` ${signed(mod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.name} className="cs-action-row-click" onClick={() => props.onRoll(row.name, 20, 1, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(row.name, 20, 1, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => props.onRoll(row.name, 20, 1, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(row.name, 20, 1, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
@@ -734,21 +820,90 @@ export default memo(function HeroSheet(props: {
               })}</div>
             </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
+              <div className="cs-item-catalog">
+                <div className="cs-item-catalog-head">
+                  <span>Item catalog</span>
+                  <small>{ITEM_CATALOG.length} items</small>
+                </div>
+                <div className="cs-item-catalog-controls">
+                  <input
+                    type="search"
+                    placeholder="Search items..."
+                    value={itemSearch}
+                    onChange={(e) => setItemSearch(e.target.value)}
+                  />
+                  <select value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}>
+                    <option value="All">All categories</option>
+                    {ITEM_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                  </select>
+                  <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}>
+                    <option value="All">All rarities</option>
+                    {ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
+                  </select>
+                </div>
+                <div className="cs-item-results">
+                  {visibleItemMatches.map((item) => (
+                    <div className="cs-item-result" key={item.id}>
+                      <div>
+                        <strong>{item.name}</strong>
+                        <span>{[item.rarity, ...itemMetaParts(item)].filter(Boolean).join(" | ")}</span>
+                        {item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "..." : ""}</p> : null}
+                      </div>
+                      <button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button>
+                    </div>
+                  ))}
+                  {visibleItemMatches.length === 0 ? <p className="cs-muted">No matching items</p> : null}
+                </div>
+                {itemMatches.length > visibleItemMatches.length ? (
+                  <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p>
+                ) : null}
+              </div>
+
               {props.character.inventory.length > 0 ? (
-                <div className="cs-inv-list">{props.character.inventory.map((item) => (
-                  <div className="cs-inv-row" key={item.id}>
-                    <div><strong>{item.name}</strong>{item.notes ? <span>{item.notes}</span> : null}</div>
-                    <div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
-                  </div>
-                ))}</div>
+                <div className="cs-inv-list">{props.character.inventory.map((item) => {
+                  const canEquipArmor = isArmorItem(item);
+                  const canEquipShield = isShieldItem(item);
+                  const canEquipWeapon = isWeaponItem(item);
+                  const canEquipBonus = itemHasPassiveBonus(item) && !canEquipArmor && !canEquipShield;
+                  const equippedAsArmor = equipment.armorItemId === item.id;
+                  const equippedAsShield = equipment.shieldItemId === item.id;
+                  const equippedAsWeapon = (equipment.weaponItemIds ?? []).includes(item.id);
+                  const equippedAsBonus = (equipment.bonusItemIds ?? []).includes(item.id);
+                  return (
+                    <div className={`cs-inv-row${equippedAsArmor || equippedAsShield || equippedAsWeapon || equippedAsBonus ? " cs-inv-equipped" : ""}`} key={item.id}>
+                      <div>
+                        <strong>{item.name}</strong>
+                        {item.notes ? <span>{item.notes}</span> : null}
+                        {canEquipArmor || canEquipShield || canEquipWeapon || canEquipBonus ? (
+                          <div className="cs-inv-actions">
+                            {canEquipArmor ? <button type="button" className={`cs-glass-btn${equippedAsArmor ? " cs-edit-active" : ""}`} onClick={() => equipInventoryArmor(item)}>{equippedAsArmor ? "Equipped armor" : "Equip armor"}</button> : null}
+                            {canEquipShield ? <button type="button" className={`cs-glass-btn${equippedAsShield ? " cs-edit-active" : ""}`} onClick={() => equipInventoryShield(item)}>{equippedAsShield ? "Equipped shield" : "Equip shield"}</button> : null}
+                            {canEquipWeapon ? <button type="button" className={`cs-glass-btn${equippedAsWeapon ? " cs-edit-active" : ""}`} onClick={() => toggleInventoryWeapon(item.id)}>{equippedAsWeapon ? "Equipped weapon" : "Equip weapon"}</button> : null}
+                            {canEquipBonus ? <button type="button" className={`cs-glass-btn${equippedAsBonus ? " cs-edit-active" : ""}`} onClick={() => toggleBonusItem(item.id)}>{equippedAsBonus ? "Bonus active" : "Equip bonus"}</button> : null}
+                          </div>
+                        ) : null}
+                        {item.description ? (
+                          <details className="cs-inv-details">
+                            <summary>Details</summary>
+                            <p>{item.description}</p>
+                          </details>
+                        ) : null}
+                      </div>
+                      <div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
+                    </div>
+                  );
+                })}</div>
               ) : <p className="cs-muted">No equipment</p>}
               {showInvForm ? (
                 <div className="cs-inv-form">
                   <input type="text" placeholder="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} />
-                  <select value={invRarity} onChange={(e) => setInvRarity(e.target.value as "Common" | "Uncommon" | "Rare")}>
+                  <select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}>
+                    <option value="Mundane">Mundane</option>
                     <option value="Common">Common</option>
                     <option value="Uncommon">Uncommon</option>
                     <option value="Rare">Rare</option>
+                    <option value="Very Rare">Very Rare</option>
+                    <option value="Legendary">Legendary</option>
                   </select>
                   <input type="text" placeholder="Notes (optional)" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
                   <div className="cs-inv-form-actions">

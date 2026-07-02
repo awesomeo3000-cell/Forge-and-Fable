@@ -4069,9 +4069,113 @@ button:disabled {
 
 /* ── Inventory ── */
 
-.cs-inv-list { display: grid; gap: 4px; }
+.cs-item-catalog {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--paper-raised) 74%, transparent);
+}
+
+.cs-item-catalog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-label);
+  color: var(--parchment);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68em;
+}
+
+.cs-item-catalog-head small {
+  color: var(--ink-faint);
+  font-size: 0.9em;
+}
+
+.cs-item-catalog-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.cs-item-catalog-controls input,
+.cs-item-catalog-controls select {
+  min-width: 0;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.78em;
+}
+
+.cs-item-results {
+  display: grid;
+  gap: 6px;
+  max-height: 330px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.cs-item-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  padding: 7px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: var(--ground-3);
+}
+
+.cs-item-result strong {
+  display: block;
+  color: var(--parchment);
+  font-size: 0.98em;
+}
+
+.cs-item-result span,
+.cs-item-more {
+  display: block;
+  color: var(--ink-faint);
+  font-family: var(--font-label);
+  font-size: 0.58em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cs-item-result p {
+  margin-top: 3px;
+  color: var(--parchment-2);
+  font-size: 0.78em;
+  line-height: 1.35;
+}
+
+.cs-item-result .cs-glass-btn {
+  align-self: center;
+  padding: 4px 9px;
+  font-size: 0.62em;
+}
+
+.cs-item-more {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cs-inv-list { display: grid; gap: 4px; margin-bottom: 10px; }
 
 .cs-inv-row { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 10px; padding: 6px 8px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); }
+
+.cs-inv-row.cs-inv-equipped {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--rule-soft));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
 
 .cs-inv-row strong { font-size: 1.05em; color: var(--parchment); display: block; }
 
@@ -4079,7 +4183,49 @@ button:disabled {
 
 .cs-inv-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-label); font-size: 0.6em; color: var(--ink-faint); text-transform: uppercase; }
 
+.cs-inv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.cs-inv-actions .cs-glass-btn {
+  padding: 3px 8px;
+  font-size: 0.62em;
+}
+
 .cs-attune { color: var(--select); }
+
+.cs-inv-details {
+  margin-top: 5px;
+  font-size: 0.82em;
+  color: var(--parchment-2);
+}
+
+.cs-inv-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 0.76em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cs-inv-details p {
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .cs-item-catalog-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-item-result {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ── Features ── */
 
@@ -4654,6 +4800,34 @@ button:disabled {
   font-size: 0.8rem;
   color: var(--ink, var(--parchment));
   padding-bottom: 6px;
+  cursor: pointer;
+}
+.cs-equipped-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.cs-equipped-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--doc-accent, var(--accent)) 44%, var(--doc-rule, var(--rule)));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--doc-accent, var(--accent)) 10%, transparent);
+  color: var(--ink, var(--parchment));
+  font-size: 0.76em;
+}
+.cs-equipped-chip button {
+  border: 0;
+  border-left: 1px solid var(--doc-rule, var(--rule));
+  margin-left: 2px;
+  padding: 0 0 0 5px;
+  background: transparent;
+  color: var(--doc-accent, var(--accent));
+  font: inherit;
   cursor: pointer;
 }
 .cs-weapon-chips {
