@@ -35,6 +35,8 @@ import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/l
 import { ARMORS, WEAPONS, computeArmorClass, getWeapon, inventoryWeaponToDef, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
+import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
+import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import LevelUpModal from "@/components/LevelUpModal";
 import type { SpellData, SpellSlots } from "@/types/game";
@@ -78,6 +80,7 @@ export default memo(function HeroSheet(props: {
   featInitiativeBonus?: number;
   featAcBonus?: number;
   onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
+  onRollPool?: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
   onNotify?: (message: string) => void;
@@ -96,14 +99,32 @@ export default memo(function HeroSheet(props: {
   const equipment = props.character.equipment ?? {};
   const equipmentItemBonuses = getEquippedItemBonuses(props.character.inventory, equipment, { includeAc: false });
 
+  const effectsList = props.character.effects ?? [];
+  const activeEffects = effectsList.filter((e) => e.active);
+  const effAc = effectTotal(effectsList, "ac");
+  const effAttack = effectTotal(effectsList, "attack");
+  const effDamage = effectTotal(effectsList, "damage");
+  const effSaves = effectTotal(effectsList, "saves");
+  const effChecks = effectTotal(effectsList, "checks");
+  const effInit = effectTotal(effectsList, "initiative");
+  const d20Riders = activeD20Riders(effectsList);
+  // Rider dice (e.g. Bless's 1d4) fly with every d20 roll while active.
+  const rollD20 = (label: string, modifier: number) => {
+    if (d20Riders.length > 0 && props.onRollPool) {
+      props.onRollPool([{ sides: 20, count: 1 }, ...d20Riders], modifier, label);
+    } else {
+      props.onRoll(label, 20, 1, modifier);
+    }
+  };
+
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
   const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, props.character.inventory);
-  const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0);
+  const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
-  const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0);
-  const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0);
+  const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
+  const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack;
   const ruleSaveAll = props.character.customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
-  const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves;
+  const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves + effSaves;
 
   const proficientSaves: AbilityKey[] =
     props.character.savingThrowProficiencies ?? SAVE_PROFICIENCIES[heroClass.id]?.abilities ?? [];
@@ -112,7 +133,7 @@ export default memo(function HeroSheet(props: {
   const isSkillProficient = (id: string) => (props.character.skillProficiencies ?? []).includes(id);
 
   const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
-  const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0);
+  const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0) + effChecks;
 
   const passiveInsight = 10 + skillBonus(SKILLS.find((s) => s.id === "insight")!);
   const passiveInvestigation = 10 + skillBonus(SKILLS.find((s) => s.id === "investigation")!);
@@ -153,6 +174,47 @@ export default memo(function HeroSheet(props: {
     props.onUpdate({ deathSaves: { ...ds, [type]: v } });
   };
   const resetDeathSaves = () => props.onUpdate({ deathSaves: { successes: 0, failures: 0 } });
+
+  /* ── Effects & conditions ── */
+  const toggleEffect = (id: string) =>
+    props.onUpdate({ effects: effectsList.map((e) => (e.id === id ? { ...e, active: !e.active } : e)) });
+  const removeEffect = (id: string) =>
+    props.onUpdate({ effects: effectsList.filter((e) => e.id !== id) });
+  const addPresetEffect = (index: number) => {
+    const preset = EFFECT_PRESETS[index];
+    if (!preset) return;
+    props.onUpdate({ effects: [...effectsList, { ...preset, id: crypto.randomUUID(), active: true }] });
+  };
+  const [showEffectForm, setShowEffectForm] = useState(false);
+  const [effForm, setEffForm] = useState<Record<string, string>>({});
+  const [effFormError, setEffFormError] = useState<string | null>(null);
+  const [showAcBreakdown, setShowAcBreakdown] = useState(false);
+  const addCustomEffect = () => {
+    const label = (effForm.label ?? "").trim();
+    if (!label) { setEffFormError("Name the effect."); return; }
+    const dice = (effForm.d20Dice ?? "").trim();
+    if (dice && !D20_DICE_RE.test(dice)) { setEffFormError('Dice must look like "1d4".'); return; }
+    const entry: CharacterEffect = { id: crypto.randomUUID(), label, active: true };
+    for (const field of EFFECT_NUMERIC_FIELDS) {
+      const raw = (effForm[field.key] ?? "").trim();
+      if (raw === "") continue;
+      const n = Math.max(-20, Math.min(20, parseInt(raw, 10)));
+      if (Number.isFinite(n) && n !== 0) entry[field.key] = n;
+    }
+    if (dice) entry.d20Dice = dice;
+    const sense = (effForm.sense ?? "").trim();
+    if (sense) entry.sense = sense.slice(0, 48);
+    props.onUpdate({ effects: [...effectsList, entry] });
+    setEffForm({});
+    setShowEffectForm(false);
+    setEffFormError(null);
+  };
+  const acBreakdown: { label: string; value: number }[] = [
+    { label: acInfo.label, value: acInfo.total },
+    ...props.character.customRules.filter((r) => r.type === "ac").map((r) => ({ label: r.label, value: r.value })),
+    ...((props.featAcBonus ?? 0) !== 0 ? [{ label: "Feats", value: props.featAcBonus ?? 0 }] : []),
+    ...activeEffects.filter((e) => e.ac).map((e) => ({ label: e.label, value: e.ac ?? 0 })),
+  ];
 
   const updateEquipment = (patch: Partial<Equipment>) =>
     props.onUpdate({ equipment: { ...equipment, ...patch } });
@@ -631,8 +693,8 @@ export default memo(function HeroSheet(props: {
       );
       case "vitals": return (
         <div className="cs-vitals">
-          <div className="cs-vital-cell" title={acInfo.label}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></div>
-          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => props.onRoll("Initiative", 20, 1, initiative)} aria-label={`Roll initiative, ${signed(initiative)}`} title="Click to roll initiative"><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
+          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></button>
+          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => rollD20("Initiative", initiative)} aria-label={`Roll initiative, ${signed(initiative)}`} title="Click to roll initiative"><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
           <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong>{race.speed}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
           <div className="cs-vital-cell cs-vital-hp">
@@ -659,25 +721,25 @@ export default memo(function HeroSheet(props: {
         </div>
       );
       case "abilities": return (
-        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); return (<button type="button" className="cs-ability-cell" key={key} onClick={() => props.onRoll(`${abilityLabels[key]} check`, 20, 1, mod)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(mod)}`}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
+        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20(`${abilityLabels[key]} check`, mod + effChecks)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(mod)}`}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
       );
       case "saves": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow"><Shield size={12} />Saving Throws</h3>
-          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => props.onRoll(`${abilityLabels[key]} save`, 20, 1, bonus)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title="Right-click to toggle proficiency"><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
+          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => rollD20(`${abilityLabels[key]} save`, bonus)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title="Right-click to toggle proficiency"><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
           {saveAllBonus !== 0 ? <p className="cs-rule-note">All saves: {signed(saveAllBonus)}{equipmentItemBonuses.saves !== 0 ? ` (${signed(equipmentItemBonuses.saves)} items)` : ""}</p> : null}
         </section>
       );
       case "skills": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Skills</h3>
-          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? " (on)" : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => props.onRoll(skill.name, 20, 1, bonus)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`}>{skill.name}</button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
+          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? " (on)" : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20(skill.name, bonus)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`}>{skill.name}</button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
         </section>
       );
       case "senses": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Senses</h3>
-          <div className="cs-sense-list"><div className="cs-sense-row"><span>Passive Perception</span><strong>{passivePerception}</strong></div><div className="cs-sense-row"><span>Passive Investigation</span><strong>{passiveInvestigation}</strong></div><div className="cs-sense-row"><span>Passive Insight</span><strong>{passiveInsight}</strong></div></div>
+          <div className="cs-sense-list"><div className="cs-sense-row"><span>Passive Perception</span><strong>{passivePerception}</strong></div><div className="cs-sense-row"><span>Passive Investigation</span><strong>{passiveInvestigation}</strong></div><div className="cs-sense-row"><span>Passive Insight</span><strong>{passiveInsight}</strong></div>{activeEffects.filter((e) => e.sense).map((e) => (<div className="cs-sense-row" key={e.id}><span>{e.sense}</span><strong title={e.label}>{"◈"}</strong></div>))}</div>
         </section>
       );
       case "profs": return (
@@ -732,6 +794,50 @@ export default memo(function HeroSheet(props: {
           </section>
         );
       }
+      case "effects": {
+        return (
+          <section className="cs-block">
+            <h3 className="cs-section-eyebrow">Effects &amp; Conditions</h3>
+            {effectsList.length > 0 ? (
+              <div className="cs-effect-list">
+                {effectsList.map((e) => (
+                  <div className={`cs-effect-row${e.active ? " cs-effect-on" : ""}`} key={e.id}>
+                    <button type="button" className={`cs-prof-marker cs-prof-click${e.active ? " cs-prof" : ""}`} onClick={() => toggleEffect(e.id)} aria-pressed={e.active} aria-label={`Toggle ${e.label}`}>{e.active ? "●" : "○"}</button>
+                    <div className="cs-effect-text"><strong>{e.label}</strong><span>{describeEffect(e)}{e.source ? ` — ${e.source}` : ""}</span></div>
+                    <button type="button" className="cs-effect-del" onClick={() => removeEffect(e.id)} aria-label={`Remove ${e.label}`}>×</button>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="cs-muted">No effects yet — add Bless, a +1 weapon, or borrowed darkvision below.</p>}
+            <div className="cs-effect-add">
+              <select value="" onChange={(ev) => { const v = ev.target.value; if (v === "custom") setShowEffectForm(true); else if (v !== "") addPresetEffect(Number(v)); }} aria-label="Add effect">
+                <option value="">Add effect…</option>
+                {EFFECT_PRESETS.map((preset, i) => (<option key={preset.label} value={i}>{preset.label}</option>))}
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            {showEffectForm ? (
+              <div className="cs-effect-form">
+                <input className="qb-name-input" placeholder="Effect name" value={effForm.label ?? ""} onChange={(ev) => setEffForm({ ...effForm, label: ev.target.value })} maxLength={48} />
+                <div className="cs-effect-nums">
+                  {EFFECT_NUMERIC_FIELDS.map((field) => (
+                    <label key={field.key}><span>{field.label}</span><input type="number" min={-20} max={20} value={effForm[field.key] ?? ""} onChange={(ev) => setEffForm({ ...effForm, [field.key]: ev.target.value })} /></label>
+                  ))}
+                </div>
+                <div className="cs-effect-extra">
+                  <label><span>d20 dice</span><input placeholder="1d4" value={effForm.d20Dice ?? ""} onChange={(ev) => setEffForm({ ...effForm, d20Dice: ev.target.value })} maxLength={6} /></label>
+                  <label><span>Sense</span><input placeholder="Darkvision 60 ft." value={effForm.sense ?? ""} onChange={(ev) => setEffForm({ ...effForm, sense: ev.target.value })} maxLength={48} /></label>
+                </div>
+                {effFormError ? <p className="cs-rule-note">{effFormError}</p> : null}
+                <div className="cs-effect-form-actions">
+                  <button type="button" className="cs-glass-btn" onClick={addCustomEffect}>Add effect</button>
+                  <button type="button" className="cs-glass-btn" onClick={() => { setShowEffectForm(false); setEffFormError(null); }}>Cancel</button>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        );
+      }
       case "attacks": {
         const staticWeaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
         const inventoryWeaponDefs = (equipment.weaponItemIds ?? [])
@@ -745,7 +851,7 @@ export default memo(function HeroSheet(props: {
               const ability = weaponAbility(w, props.finalAbilities);
               const mod = abilityModifier(props.finalAbilities[ability]);
               const itemBonus = w.bonus ?? 0;
-              const damageMod = mod + itemBonus;
+              const damageMod = mod + itemBonus + effDamage;
               const dice = parseDamageDice(w.damage);
               const hasDice = dice.length > 0;
               const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
@@ -754,14 +860,15 @@ export default memo(function HeroSheet(props: {
             })
           : heroClass.actions.map((action) => {
               const mod = abilityModifier(props.finalAbilities[action.ability]);
+              const damageMod = mod + effDamage;
               const dice = parseDamageDice(action.formula);
               const hasDice = dice.length > 0;
-              return { id: action.name, name: action.name, toHit: mod + pb + ruleAttack, mod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${mod !== 0 ? ` ${signed(mod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
+              return { id: action.name, name: action.name, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => props.onRoll(row.name, 20, 1, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); props.onRoll(row.name, 20, 1, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20(row.name, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20(row.name, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
@@ -1083,7 +1190,7 @@ export default memo(function HeroSheet(props: {
               <span><strong>Components</strong> {[spellDetail.components.verbal ? "V" : "", spellDetail.components.somatic ? "S" : "", spellDetail.components.material ? `M (${spellDetail.material})` : ""].filter(Boolean).join(", ") || "—"}</span>
               <span><strong>Source</strong> {spellDetail.source}</span>
             </div>
-            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" onClick={() => props.onRoll(`${spellDetail.name} attack`, 20, 1, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
+            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" onClick={() => rollD20(`${spellDetail.name} attack`, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
             <p className="cs-spell-detail-desc">{spellDetail.description}</p>
             {casterType !== "none" ? (
@@ -1124,6 +1231,23 @@ export default memo(function HeroSheet(props: {
         </div>
       ) : null}
 
+      {showAcBreakdown ? (
+        <div className="cs-spell-detail-overlay" onClick={() => setShowAcBreakdown(false)}>
+          <div className="cs-spell-detail cs-ac-breakdown" onClick={(e) => e.stopPropagation()}>
+            <button className="cs-spell-detail-close" type="button" onClick={() => setShowAcBreakdown(false)}>×</button>
+            <h3 className="cs-section-eyebrow">Armor Class {armorClass}</h3>
+            <div className="cs-ac-breakdown-list">
+              {acBreakdown.map((part, i) => (
+                <div className="cs-ac-breakdown-row" key={`${part.label}-${i}`}>
+                  <span>{part.label}</span>
+                  <strong>{i === 0 ? part.value : signed(part.value)}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="cs-rule-note">Toggle contributions in Effects &amp; Conditions or the Equipment section.</p>
+          </div>
+        </div>
+      ) : null}
       {levelUpTarget != null ? (
         <LevelUpModal
           character={props.character}

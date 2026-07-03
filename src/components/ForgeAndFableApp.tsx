@@ -790,6 +790,7 @@ export default function ForgeAndFableApp() {
               featInitiativeBonus={selectedFeatBonuses?.initiativeBonus}
               featAcBonus={selectedFeatBonuses?.acBonus}
               onRoll={pushRoll}
+              onRollPool={pushPool}
               onUpdate={updateSelected}
               onDelete={deleteSelected}
               onNotify={setStatus}

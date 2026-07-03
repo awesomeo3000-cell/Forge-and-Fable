@@ -28,7 +28,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
-  "equipment", "preparedSpells", "heroicInspiration",
+  "equipment", "preparedSpells", "heroicInspiration", "effects",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -99,6 +99,27 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         break;
       case "heroicInspiration":
         if (val !== undefined && typeof val !== "boolean") throw new Error(`"heroicInspiration" must be a boolean.`);
+        break;
+      case "effects":
+        if (val !== undefined) {
+          assertArray(val, "effects");
+          if (val.length > 40) throw new Error(`"effects" must have at most 40 entries.`);
+          for (const entry of val) {
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error(`"effects" entries must be objects.`);
+            const e = entry as Record<string, unknown>;
+            assertString(e.label, "effects[].label", 48);
+            if (!(e.label as string).trim()) throw new Error(`"effects[].label" is required.`);
+            if (typeof e.active !== "boolean") throw new Error(`"effects[].active" must be a boolean.`);
+            for (const k of ["ac", "attack", "damage", "saves", "checks", "initiative"]) {
+              if (e[k] !== undefined) assertInteger(e[k], `effects[].${k}`, -20, 20);
+            }
+            if (e.d20Dice !== undefined && (typeof e.d20Dice !== "string" || !/^[1-9]d(4|6|8|10|12|20|100)$/.test(e.d20Dice))) {
+              throw new Error(`"effects[].d20Dice" must look like "1d4".`);
+            }
+            if (e.sense !== undefined) assertString(e.sense, "effects[].sense", 48);
+            if (e.source !== undefined) assertString(e.source, "effects[].source", 24);
+          }
+        }
         break;
       case "theme":
         if (val !== undefined && val !== null) {

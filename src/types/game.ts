@@ -136,6 +136,27 @@ export type Equipment = {
   bonusItemIds?: string[];
 };
 
+/**
+ * A toggleable effect: an item, spell, feature, or condition the player
+ * switches on/off. Flat bonuses feed derived stats; d20Dice adds rider dice
+ * (e.g. Bless's 1d4) to every d20 roll while active; sense text mirrors into
+ * the Senses section (e.g. darkvision gained from a spell).
+ */
+export type CharacterEffect = {
+  id: string;
+  label: string;
+  active: boolean;
+  source?: string;
+  ac?: number;
+  attack?: number;
+  damage?: number;
+  saves?: number;
+  checks?: number;
+  initiative?: number;
+  d20Dice?: string;
+  sense?: string;
+};
+
 export type CustomRule = {
   id: string;
   label: string;
@@ -199,6 +220,7 @@ export type SheetSectionId =
   | "senses"
   | "profs"
   | "equipment"
+  | "effects"
   | "attacks"
   | "features"
   | "notes"
@@ -252,6 +274,7 @@ export type Character = {
   preparedSpells?: string[];
   hitDiceSpent?: number;
   heroicInspiration?: boolean;
+  effects?: CharacterEffect[];
   createdAt: string;
 }
 
