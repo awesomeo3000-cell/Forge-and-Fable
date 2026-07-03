@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
 import { FONT_STACKS } from "@/lib/skins";
-import type { CharacterTheme } from "@/types/game";
+import type { CharacterTheme, RollMode } from "@/types/game";
 
 export type RollHistoryEntry = {
   id: string;
@@ -13,6 +13,9 @@ export type RollHistoryEntry = {
   detail: string;
   total: number;
   time: string;
+  /** Present when the roll used advantage/disadvantage — the two d20 faces and
+      which one was kept, so history can highlight the winning die. */
+  adv?: { mode: "advantage" | "disadvantage"; dice: number[]; keptIndex: number };
 };
 
 type DrawerLayout = {
@@ -85,9 +88,17 @@ function saveLayout(layout: DrawerLayout) {
  * Right-edge drawer: an ad-hoc dice pool builder on top, a log of every roll
  * made this session (sheet clicks included) underneath.
  */
+const ROLL_MODES: { id: RollMode; label: string; title: string }[] = [
+  { id: "disadvantage", label: "Dis", title: "Disadvantage: next d20 rolls twice, keeps the lower" },
+  { id: "normal", label: "Normal", title: "Normal: next d20 rolls once" },
+  { id: "advantage", label: "Adv", title: "Advantage: next d20 rolls twice, keeps the higher" },
+];
+
 export default memo(function RollDrawer(props: {
   history: RollHistoryEntry[];
   theme?: CharacterTheme | null;
+  rollMode: RollMode;
+  onRollModeChange: (mode: RollMode) => void;
   onRollPool: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -236,8 +247,9 @@ export default memo(function RollDrawer(props: {
 
   return (
     <div className={`roll-drawer${open ? " open" : ""}`} style={rootStyle}>
-      <button type="button" className="roll-drawer-tab" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button type="button" className={`roll-drawer-tab${props.rollMode !== "normal" ? " armed" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
         Dice{props.history.length > 0 ? ` (${props.history.length})` : ""}
+        {props.rollMode !== "normal" ? <span className={`roll-tab-dot ${props.rollMode}`} title={`${props.rollMode} armed`} aria-hidden="true" /> : null}
       </button>
       {open ? (
         <div className="roll-drawer-body" style={bodyStyle}>
@@ -265,6 +277,25 @@ export default memo(function RollDrawer(props: {
                 );
               })}
             </div>
+            <div className="roll-mode" role="group" aria-label="d20 roll mode">
+              {ROLL_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`roll-mode-btn${props.rollMode === m.id ? " active" : ""}${m.id !== "normal" ? ` ${m.id}` : ""}`}
+                  aria-pressed={props.rollMode === m.id}
+                  title={m.title}
+                  onClick={() => props.onRollModeChange(m.id)}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {props.rollMode !== "normal" ? (
+              <p className="roll-mode-hint">
+                Next d20 roll uses <strong>{props.rollMode}</strong>.
+              </p>
+            ) : null}
             <div className="roll-pool-mod">
               <span>Modifier</span>
               <button type="button" onClick={() => setModifier((m) => Math.max(-20, m - 1))}>-</button>
@@ -292,9 +323,19 @@ export default memo(function RollDrawer(props: {
                 {props.history.map((entry) => (
                   <li key={entry.id}>
                     <div className="roll-history-top">
-                      <span className="roll-history-label">{entry.label}</span>
+                      <span className="roll-history-label">
+                        {entry.label}
+                        {entry.adv ? <em className={`roll-history-badge ${entry.adv.mode}`}>{entry.adv.mode === "advantage" ? "ADV" : "DIS"}</em> : null}
+                      </span>
                       <strong className="roll-history-total">{entry.total}</strong>
                     </div>
+                    {entry.adv ? (
+                      <div className="roll-history-dice" aria-label={`d20 rolls ${entry.adv.dice.join(", ")}, kept ${entry.adv.dice[entry.adv.keptIndex]}`}>
+                        {entry.adv.dice.map((d, i) => (
+                          <span key={i} className={`roll-history-die${i === entry.adv!.keptIndex ? " kept" : " dropped"}`}>{d}</span>
+                        ))}
+                      </div>
+                    ) : null}
                     <div className="roll-history-detail">
                       <span>{entry.detail}</span>
                       <time>{entry.time}</time>

@@ -353,3 +353,7 @@ export type RollOutcome = {
   modifier: number;
   total: number;
 };
+
+/** How a d20 check/attack/save is rolled. Advantage/disadvantage roll 2d20
+    and keep the higher/lower die; normal rolls a single d20. */
+export type RollMode = "normal" | "advantage" | "disadvantage";

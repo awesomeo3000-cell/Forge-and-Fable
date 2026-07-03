@@ -14,6 +14,9 @@ export type RollingDie = {
   rotations: number;
   delayMs: number;
   onFinish?: (result: number) => void;
+  /** True for the discarded d20 of an advantage/disadvantage roll — rendered
+      dimmed so the kept die reads as the result. */
+  dropped?: boolean;
 };
 
 /* ── Die shapes ── */
@@ -751,7 +754,7 @@ export default memo(function DiceRollOverlay({
 }) {
   const accent = accentHex ?? "#a23f29";
   const font = fontStack ?? "Georgia, 'Times New Roman', serif";
-  const crits = dice.filter((d) => d.sides === 20 && d.result === 20);
+  const crits = dice.filter((d) => d.sides === 20 && d.result === 20 && !d.dropped);
 
   if (dice.length === 0) return null;
 
@@ -808,7 +811,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
 
   if (!isD20) {
     return (
-      <div className="flying-die" style={style}>
+      <div className={`flying-die${die.dropped ? " dropped" : ""}`} style={style}>
         <PolyhedralDieObject
           sides={die.sides}
           result={die.result}
@@ -826,7 +829,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
   }
 
   return (
-    <div className="flying-die" style={style}>
+    <div className={`flying-die${die.dropped ? " dropped" : ""}`} style={style}>
       {isD20 ? (
         <D20Object
           result={die.result}

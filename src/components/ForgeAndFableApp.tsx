@@ -20,6 +20,7 @@ import type {
   FeedbackEntry,
   InventoryItem,
   PublicUser,
+  RollMode,
   RollOutcome,
   Ruleset,
   StatMethod,
@@ -86,8 +87,14 @@ export default function ForgeAndFableApp() {
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
+  const [rollMode, setRollMode] = useState<RollMode>("normal");
 
-  const recordHistory = (label: string, detail: string, total: number) => {
+  const recordHistory = (
+    label: string,
+    detail: string,
+    total: number,
+    adv?: RollHistoryEntry["adv"],
+  ) => {
     setRollHistory((prev) => [
       {
         id: crypto.randomUUID(),
@@ -95,6 +102,7 @@ export default function ForgeAndFableApp() {
         detail,
         total,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        ...(adv ? { adv } : {}),
       },
       ...prev,
     ].slice(0, 30));
@@ -684,6 +692,75 @@ export default function ForgeAndFableApp() {
     setFlyingDice((prev) => [...prev, ...newDice]);
   }
 
+  /** Roll a single d20 check/attack/save, honoring the armed advantage /
+      disadvantage mode: advantage rolls 2d20 and keeps the higher, disadvantage
+      the lower. Rider dice (e.g. Bless's 1d4) fly and add to the total as usual.
+      The kept d20 alone takes the modifier. The mode is one-shot — it resets to
+      normal after the roll so it can't silently affect the next one. */
+  function pushD20(label: string, modifier = 0, riders: { sides: number; count: number }[] = []) {
+    const mode = rollMode;
+    const d20Count = mode === "normal" ? 1 : 2;
+    const d20s = Array.from({ length: d20Count }, () => rollDie(20));
+    let keptIndex = 0;
+    if (mode === "advantage") keptIndex = d20s[0] >= d20s[1] ? 0 : 1;
+    else if (mode === "disadvantage") keptIndex = d20s[0] <= d20s[1] ? 0 : 1;
+    const keptD20 = d20s[keptIndex];
+
+    const riderGroups = riders.filter((r) => r.count > 0);
+    const riderValues: { sides: number; value: number }[] = [];
+    const newDice: RollingDie[] = [];
+    let index = 0;
+
+    const makeDie = (sides: number, result: number, dropped: boolean) => {
+      const fromLeft = Math.random() > 0.5;
+      newDice.push({
+        id: `${crypto.randomUUID()}-${index}`,
+        sides,
+        result,
+        label,
+        fromLeft,
+        startYPct: 0.15 + Math.random() * 0.35,
+        landXPct: 0.22 + Math.random() * 0.56,
+        landYPct: 0.25 + Math.random() * 0.38,
+        rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
+        delayMs: index * 180,
+        dropped,
+      });
+      index += 1;
+    };
+
+    d20s.forEach((value, i) => makeDie(20, value, mode !== "normal" && i !== keptIndex));
+    for (const group of riderGroups) {
+      for (let i = 0; i < group.count; i++) {
+        const value = rollDie(group.sides);
+        riderValues.push({ sides: group.sides, value });
+        makeDie(group.sides, value, false);
+      }
+    }
+
+    const riderSum = riderValues.reduce((sum, r) => sum + r.value, 0);
+    const total = keptD20 + riderSum + modifier;
+
+    const d20Part =
+      mode === "normal"
+        ? `d20 [${keptD20}]`
+        : `d20 ${mode === "advantage" ? "adv" : "dis"} [${d20s.join(", ")}] keep ${keptD20}`;
+    const riderPart = riderGroups
+      .map((g) => ` + ${g.count}d${g.sides} [${riderValues.filter((r) => r.sides === g.sides).map((r) => r.value).join(", ")}]`)
+      .join("");
+    const detail = `${d20Part}${riderPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
+
+    setConsoleLog((prev) => [`${label}  →  ${detail}`, ...prev].slice(0, 20));
+    recordHistory(
+      label,
+      detail,
+      total,
+      mode !== "normal" ? { mode, dice: d20s, keptIndex } : undefined,
+    );
+    setFlyingDice((prev) => [...prev, ...newDice]);
+    if (mode !== "normal") setRollMode("normal");
+  }
+
   function expireDie(id: string) {
     setFlyingDice((prev) => prev.filter((d) => d.id !== id));
   }
@@ -782,7 +859,7 @@ export default function ForgeAndFableApp() {
   return (
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
-    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} onRollPool={pushPool} />
+    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} rollMode={rollMode} onRollModeChange={setRollMode} onRollPool={pushPool} />
     {feedbackOpen ? (
       <FeedbackModal
         entries={feedbackEntries}
@@ -905,6 +982,7 @@ export default function ForgeAndFableApp() {
               featAcBonus={selectedFeatBonuses?.acBonus}
               onRoll={pushRoll}
               onRollPool={pushPool}
+              onRollD20={pushD20}
               onUpdate={updateSelected}
               onDelete={deleteSelected}
               onNotify={setStatus}

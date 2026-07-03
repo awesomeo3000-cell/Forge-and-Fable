@@ -81,6 +81,7 @@ export default memo(function HeroSheet(props: {
   featAcBonus?: number;
   onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
   onRollPool?: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
+  onRollD20?: (label: string, modifier: number, riders: { sides: number; count: number }[]) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
   onNotify?: (message: string) => void;
@@ -110,7 +111,10 @@ export default memo(function HeroSheet(props: {
   const d20Riders = activeD20Riders(effectsList);
   // Rider dice (e.g. Bless's 1d4) fly with every d20 roll while active.
   const rollD20 = (label: string, modifier: number) => {
-    if (d20Riders.length > 0 && props.onRollPool) {
+    if (props.onRollD20) {
+      // Honors the armed advantage/disadvantage mode; rider dice (Bless, etc.) fly along.
+      props.onRollD20(label, modifier, d20Riders);
+    } else if (d20Riders.length > 0 && props.onRollPool) {
       props.onRollPool([{ sides: 20, count: 1 }, ...d20Riders], modifier, label);
     } else {
       props.onRoll(label, 20, 1, modifier);
