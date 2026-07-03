@@ -94,6 +94,7 @@ export default function ForgeAndFableApp() {
     detail: string,
     total: number,
     adv?: RollHistoryEntry["adv"],
+    nat?: RollHistoryEntry["nat"],
   ) => {
     setRollHistory((prev) => [
       {
@@ -103,6 +104,7 @@ export default function ForgeAndFableApp() {
         total,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         ...(adv ? { adv } : {}),
+        ...(nat ? { nat } : {}),
       },
       ...prev,
     ].slice(0, 30));
@@ -615,7 +617,15 @@ export default function ForgeAndFableApp() {
       const parts = outcome.rolls.join("+");
       const totalStr = modifier !== 0 ? `${parts}${signed(modifier)} = ${outcome.total}` : `${parts} = ${outcome.total}`;
       setConsoleLog((prev) => [`${diceNotation}${modifier !== 0 ? signed(modifier) : ""}  →  ${totalStr}  (${label})`, ...prev].slice(0, 20));
-      recordHistory(label, `${diceNotation}${modifier !== 0 ? signed(modifier) : ""}: ${totalStr}`, outcome.total);
+      const nat: RollHistoryEntry["nat"] =
+        sides === 20 && count === 1
+          ? outcome.rolls[0] === 20
+            ? "crit"
+            : outcome.rolls[0] === 1
+              ? "fumble"
+              : undefined
+          : undefined;
+      recordHistory(label, `${diceNotation}${modifier !== 0 ? signed(modifier) : ""}: ${totalStr}`, outcome.total, undefined, nat);
       onResult?.(outcome);
     };
 
@@ -751,11 +761,14 @@ export default function ForgeAndFableApp() {
     const detail = `${d20Part}${riderPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
 
     setConsoleLog((prev) => [`${label}  →  ${detail}`, ...prev].slice(0, 20));
+    const nat: RollHistoryEntry["nat"] =
+      keptD20 === 20 ? "crit" : keptD20 === 1 ? "fumble" : undefined;
     recordHistory(
       label,
       detail,
       total,
       mode !== "normal" ? { mode, dice: d20s, keptIndex } : undefined,
+      nat,
     );
     setFlyingDice((prev) => [...prev, ...newDice]);
     if (mode !== "normal") setRollMode("normal");

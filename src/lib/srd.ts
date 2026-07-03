@@ -43,6 +43,15 @@ export const SAVE_PROFICIENCIES: Record<string, { label: string; abilities: [Abi
   artificer: { label: "Artificer", abilities: ["constitution", "intelligence"] },
 };
 
+/** Background skill proficiency grants (SRD pairings). */
+export const BACKGROUND_SKILLS: Record<string, string[]> = {
+  Acolyte:  ["insight", "religion"],
+  Criminal: ["deception", "stealth"],
+  Sage:     ["arcana", "history"],
+  Soldier:  ["athletics", "intimidation"],
+  // "Custom Background" grants none.
+};
+
 /** Class skill proficiency choices (PHB): pick `count` from `options`. */
 export const CLASS_SKILL_CHOICES: Record<string, { count: number; options: string[] }> = {
   barbarian: { count: 2, options: ["animal-handling", "athletics", "intimidation", "nature", "perception", "survival"] },

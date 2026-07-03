@@ -16,6 +16,8 @@ export type RollHistoryEntry = {
   /** Present when the roll used advantage/disadvantage — the two d20 faces and
       which one was kept, so history can highlight the winning die. */
   adv?: { mode: "advantage" | "disadvantage"; dice: number[]; keptIndex: number };
+  /** Present when the kept (or only) d20 was a natural 20 or natural 1. */
+  nat?: "crit" | "fumble";
 };
 
 type DrawerLayout = {
@@ -326,6 +328,7 @@ export default memo(function RollDrawer(props: {
                       <span className="roll-history-label">
                         {entry.label}
                         {entry.adv ? <em className={`roll-history-badge ${entry.adv.mode}`}>{entry.adv.mode === "advantage" ? "ADV" : "DIS"}</em> : null}
+                        {entry.nat ? <em className={`roll-history-badge nat ${entry.nat}`}>{entry.nat === "crit" ? "NAT 20" : "NAT 1"}</em> : null}
                       </span>
                       <strong className="roll-history-total">{entry.total}</strong>
                     </div>

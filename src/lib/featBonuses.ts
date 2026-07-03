@@ -66,9 +66,9 @@ export function computeFeatBonuses(asiChoices: ASIChoice[] | undefined): FeatMec
           sources.push(`${feat.name}: +1 ${key.toUpperCase()}`);
         }
       } else if (feat.chooseAbility && feat.abilityBonuses.length > 0) {
-        // Choose-one feat: apply to the FIRST listed ability as default
-        // (the UI would ideally let the player pick; for now default to first)
-        const key = feat.abilityBonuses[0];
+        // Choose-one feat: honor the player's abilityChoice, or default to
+        // the first listed ability for backward compatibility.
+        const key = choice.abilityChoice ?? feat.abilityBonuses[0];
         abilityIncreases[key] = (abilityIncreases[key] ?? 0) + 1;
         sources.push(`${feat.name}: +1 ${key.toUpperCase()}`);
       }

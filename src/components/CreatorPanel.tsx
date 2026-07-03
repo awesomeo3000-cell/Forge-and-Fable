@@ -37,7 +37,7 @@ import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
-import { CLASS_SKILL_CHOICES, SKILLS } from "@/lib/srd";
+import { CLASS_SKILL_CHOICES, SKILLS, BACKGROUND_SKILLS } from "@/lib/srd";
 
 type AssignmentMap = Record<AbilityKey, number>;
 
@@ -489,15 +489,36 @@ export default memo(function CreatorPanel(props: {
             {props.step === 2 ? (
               <div className="dj-option-stack">
                 {props.draft.background ? (
-                  <DossierStamp
-                    type="origin"
-                    label={props.draft.background}
-                    detail={
-                      props.draft.background === "Custom Background"
-                        ? "Personal origin and campaign notes"
-                        : `A ${props.draft.background.toLowerCase()} starting story`
-                    }
-                  />
+                  <>
+                    <DossierStamp
+                      type="origin"
+                      label={props.draft.background}
+                      detail={
+                        props.draft.background === "Custom Background"
+                          ? "Personal origin and campaign notes"
+                          : `A ${props.draft.background.toLowerCase()} starting story`
+                      }
+                    />
+                    {(() => {
+                      const granted = BACKGROUND_SKILLS[props.draft.background];
+                      if (granted && granted.length > 0) {
+                        return (
+                          <div className="dj-background-skills">
+                            <span className="dj-eyebrow">Background skill proficiencies</span>
+                            <div className="dj-skill-chips" style={{ pointerEvents: "none" }}>
+                              {granted.map((skillId) => {
+                                const skill = SKILLS.find((sk) => sk.id === skillId);
+                                return skill ? (
+                                  <span key={skillId} className="dj-skill-chip picked">{skill.name}</span>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
                 ) : null}
                 <div className="dj-card-grid compact">
                   {props.ruleset.backgrounds.map((background) => (

@@ -86,7 +86,7 @@ export type Feat = {
 
 export type ASIChoice =
   | { type: "asi"; level: number; increases: Partial<AbilityScores> }
-  | { type: "feat"; level: number; featId: string };
+  | { type: "feat"; level: number; featId: string; abilityChoice?: AbilityKey };
 
 export type CasterType = "full" | "half" | "third" | "pact" | "none";
 

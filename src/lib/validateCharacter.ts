@@ -121,6 +121,26 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
           }
         }
         break;
+      case "asiChoices":
+        if (val !== undefined) {
+          assertArray(val, "asiChoices");
+          if (val.length > 30) throw new Error(`"asiChoices" must have at most 30 entries.`);
+          for (const entry of val) {
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error(`"asiChoices" entries must be objects.`);
+            const c = entry as Record<string, unknown>;
+            if (c.type !== "asi" && c.type !== "feat") throw new Error(`"asiChoices[].type" must be "asi" or "feat".`);
+            assertInteger(c.level, "asiChoices[].level", 1, 20);
+            if (c.type === "feat") {
+              assertString(c.featId, "asiChoices[].featId", 64);
+              if (c.abilityChoice !== undefined) {
+                if (!ABILITY_KEYS.includes(c.abilityChoice as string)) {
+                  throw new Error(`"asiChoices[].abilityChoice" must be a valid ability key.`);
+                }
+              }
+            }
+          }
+        }
+        break;
       case "theme":
         if (val !== undefined && val !== null) {
           if (typeof val !== "object" || Array.isArray(val)) throw new Error(`"theme" must be an object.`);

@@ -641,11 +641,13 @@ function PolyhedralDieObject({
 function D20Object({
   result,
   isCrit,
+  isFumble,
   delayMs,
   accentHex,
 }: {
   result: number;
   isCrit: boolean;
+  isFumble: boolean;
   delayMs: number;
   accentHex: string;
 }) {
@@ -713,7 +715,7 @@ function D20Object({
           return (
             <div
               key={i}
-              className={`d20-face${isUp ? " is-up" : ""}${isUp && isCrit ? " is-crit" : ""}`}
+              className={`d20-face${isUp ? " is-up" : ""}${isUp && isCrit ? " is-crit" : ""}${isUp && isFumble ? " is-fumble" : ""}`}
               style={{
                 transform: `matrix3d(${face.matrix.join(",")})`,
                 ...(isUp ? null : { background: dieFaceColor(face.brightness, baseRgb) }),
@@ -728,13 +730,22 @@ function D20Object({
   );
 }
 
-/* ── Crit banner ── */
+/* ── Crit / Fumble banners ── */
 
 function ClarebearCrit({ delayMs }: { delayMs: number }) {
   const style = { "--crit-delay": `${delayMs}ms` } as React.CSSProperties;
   return (
     <div className="crit-banner" style={style} aria-live="assertive">
       <span className="crit-text">HOLY SHIT</span>
+    </div>
+  );
+}
+
+function FumbleBanner({ delayMs }: { delayMs: number }) {
+  const style = { "--crit-delay": `${delayMs}ms` } as React.CSSProperties;
+  return (
+    <div className="fumble-banner" style={style} aria-live="assertive">
+      <span className="fumble-text">FUMBLE</span>
     </div>
   );
 }
@@ -755,6 +766,7 @@ export default memo(function DiceRollOverlay({
   const accent = accentHex ?? "#a23f29";
   const font = fontStack ?? "Georgia, 'Times New Roman', serif";
   const crits = dice.filter((d) => d.sides === 20 && d.result === 20 && !d.dropped);
+  const fumbles = dice.filter((d) => d.sides === 20 && d.result === 1 && !d.dropped);
 
   if (dice.length === 0) return null;
 
@@ -765,6 +777,9 @@ export default memo(function DiceRollOverlay({
       ))}
       {crits.map((die) => (
         <ClarebearCrit key={`crit-${die.id}`} delayMs={die.delayMs + 1680} />
+      ))}
+      {fumbles.map((die) => (
+        <FumbleBanner key={`fumble-${die.id}`} delayMs={die.delayMs + 1680} />
       ))}
     </div>
   );
@@ -834,6 +849,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
         <D20Object
           result={die.result}
           isCrit={die.result === 20}
+          isFumble={die.result === 1}
           delayMs={die.delayMs}
           accentHex={accentHex}
         />

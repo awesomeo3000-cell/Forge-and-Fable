@@ -6888,3 +6888,125 @@ button.dj-card {
 
 /* Discarded flying d20 (adv/dis) reads as secondary */
 .flying-die.dropped { opacity: 0.42; filter: saturate(0.6); }
+
+/* ── Feature 1: Background skill grants ── */
+
+/* BG chip on sheet skills */
+.cs-skill-bg-chip {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+/* Background skill readout in CreatorPanel Origin step */
+.dj-background-skills {
+  margin: 8px 0 4px;
+}
+.dj-background-skills .dj-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ── Feature 2: Crit / fumble flair ── */
+
+/* Fumble d20 face — desaturated, cracked-look overlay */
+.d20-face.is-fumble {
+  filter: saturate(0.3) brightness(0.7);
+}
+
+/* Fumble banner — restrained mirror of crit banner */
+.fumble-banner {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.fumble-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(80, 60, 50, 0.28) 0%, transparent 70%);
+  animation: crit-bg-pulse 2.6s ease forwards;
+  animation-delay: var(--crit-delay, 0ms);
+  opacity: 0;
+}
+
+.fumble-text {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--ink-faint);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: crit-flash 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--crit-delay, 0ms);
+  opacity: 0;
+  -webkit-text-stroke: 3px var(--ground-3);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.45), 0 3px 10px rgba(0, 0, 0, 0.45);
+  paint-order: stroke fill;
+}
+
+/* Nat 20 / Nat 1 history chips */
+.roll-history-badge.nat {
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  vertical-align: middle;
+  color: #fff;
+}
+.roll-history-badge.nat.crit {
+  background: color-mix(in srgb, #c9a25a 82%, #000);
+}
+.roll-history-badge.nat.fumble {
+  background: color-mix(in srgb, #9b6b5e 82%, #000);
+}
+
+/* ── Feature 3: Half-feat ability choice ── */
+
+.cs-feat-ability-choice {
+  margin-top: 14px;
+}
+.cs-feat-ability-choice .cs-section-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cs-feat-ability-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cs-feat-ability-options .cs-lvl-subcard.compact {
+  flex: 1 1 auto;
+  min-width: 60px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fumble-banner::before,
+  .fumble-text {
+    animation: none;
+  }
+}

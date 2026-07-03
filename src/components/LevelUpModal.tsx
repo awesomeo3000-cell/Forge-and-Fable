@@ -6,7 +6,7 @@ import type { AbilityKey, AbilityScores, ASIChoice } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
 import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
-import { availableFeats } from "@/lib/feats";
+import { availableFeats, getFeat } from "@/lib/feats";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
 type HpRollRequest = {
@@ -68,6 +68,7 @@ export default memo(function LevelUpModal({
   const [hpGained, setHpGained] = useState(0);
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
+  const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const mounted = useRef(true);
@@ -87,7 +88,13 @@ export default memo(function LevelUpModal({
     switch (s) {
       case "hp": return hpRolled;
       case "subclass": return pickedSubclass !== "";
-      case "asi": return pickedFeat !== "" && (pickedFeat !== "asi" || Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2);
+      case "asi": {
+        if (pickedFeat === "") return false;
+        if (pickedFeat === "asi") return Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2;
+        const feat = getFeat(pickedFeat);
+        if (feat?.chooseAbility && feat.abilityBonuses.length > 1) return featAbilityChoice !== null;
+        return true;
+      }
       case "spells": return pickedSpells.length > 0;
       case "summary": return true;
     }
@@ -166,7 +173,9 @@ export default memo(function LevelUpModal({
           choices.push({ type: "asi" as const, level: newLevel, increases: asiIncreases });
         }
       } else if (pickedFeat) {
-        choices.push({ type: "feat" as const, level: newLevel, featId: pickedFeat });
+        const featChoice: ASIChoice = { type: "feat", level: newLevel, featId: pickedFeat };
+        if (featAbilityChoice) featChoice.abilityChoice = featAbilityChoice;
+        choices.push(featChoice);
       }
       if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
     }
@@ -233,7 +242,7 @@ export default memo(function LevelUpModal({
                 <p>Increase one ability score by 2, or two ability scores by 1 (max 20).</p>
               </button>
               {feats.map((f) => (
-                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => setPickedFeat(f.id)}>
+                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); }}>
                   <strong>{f.name}</strong>
                   <p>{f.description.slice(0, 150)}</p>
                 </button>
@@ -250,6 +259,27 @@ export default memo(function LevelUpModal({
                 ))}
               </div>
             ) : null}
+            {pickedFeat && pickedFeat !== "asi" && (() => {
+              const chosenFeat = getFeat(pickedFeat);
+              if (!chosenFeat?.chooseAbility || chosenFeat.abilityBonuses.length <= 1) return null;
+              return (
+                <div className="cs-feat-ability-choice">
+                  <span className="cs-section-eyebrow">+1 to…</span>
+                  <div className="cs-feat-ability-options">
+                    {chosenFeat.abilityBonuses.map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        className={`cs-lvl-subcard compact${featAbilityChoice === a ? " active" : ""}`}
+                        onClick={() => setFeatAbilityChoice(a)}
+                      >
+                        {abilityLabels[a]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -274,7 +304,11 @@ export default memo(function LevelUpModal({
             {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : hasHp ? <p style={{ color: "var(--accent)" }}>HP: not rolled</p> : null}
             {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : hasSubclass ? <p style={{ color: "var(--accent)" }}>Subclass: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length > 0 ? <p>Ability Score Improvement: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
-            {hasAsi && pickedFeat && pickedFeat !== "asi" ? <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}</p> : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
+            {hasAsi && pickedFeat && pickedFeat !== "asi" ? (
+              <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}
+                {featAbilityChoice ? ` (+1 ${abilityLabels[featAbilityChoice]})` : ""}
+              </p>
+            ) : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
             {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: none chosen</p> : null}
             <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
