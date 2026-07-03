@@ -103,6 +103,7 @@ export function buildQuickDraft(ruleset: Ruleset, classId: string, raceId: strin
     skillProficiencies: CLASS_SKILL_CHOICES[classId]
       ? CLASS_SKILL_CHOICES[classId].options.slice(0, CLASS_SKILL_CHOICES[classId].count)
       : [],
+    startingHpRolls: [],
     deathSaves: { successes: 0, failures: 0 },
   };
 

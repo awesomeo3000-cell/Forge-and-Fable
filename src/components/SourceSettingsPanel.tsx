@@ -109,8 +109,7 @@ export default memo(function SourceSettingsPanel(props: {
           <label className="control-field">
             <span>Hit Point Type</span>
             <small>
-              When leveling up, increase hit points by the fixed value for your chosen class or
-              manually enter a rolled value
+              Increase hit points by the fixed value or roll hit dice for higher starting levels.
             </small>
             <select
               value={props.settings.hitPointType}
@@ -121,6 +120,7 @@ export default memo(function SourceSettingsPanel(props: {
               }
             >
               <option value="fixed">Fixed</option>
+              <option value="rolled">Rolled</option>
               <option value="manual">Manual</option>
             </select>
           </label>

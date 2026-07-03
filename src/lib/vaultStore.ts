@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
-import type { Character, PublicUser } from "@/types/game";
+import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 
 type StoredUser = PublicUser & {
@@ -12,6 +12,7 @@ type StoredUser = PublicUser & {
 type VaultData = {
   users: StoredUser[];
   characters: Character[];
+  feedback: FeedbackEntry[];
 };
 
 const dataDir = path.join(process.cwd(), "data");
@@ -31,13 +32,20 @@ function emptyVault(): VaultData {
   return {
     users: [],
     characters: [],
+    feedback: [],
   };
 }
 
-function validateVaultStructure(data: unknown): data is VaultData {
+function validateVaultStructure(data: unknown): data is Omit<VaultData, "feedback"> & {
+  feedback?: FeedbackEntry[];
+} {
   if (!data || typeof data !== "object") return false;
   const candidate = data as Record<string, unknown>;
-  return Array.isArray(candidate.users) && Array.isArray(candidate.characters);
+  return (
+    Array.isArray(candidate.users) &&
+    Array.isArray(candidate.characters) &&
+    (candidate.feedback === undefined || Array.isArray(candidate.feedback))
+  );
 }
 
 async function readVault(): Promise<VaultData> {
@@ -50,7 +58,10 @@ async function readVault(): Promise<VaultData> {
       throw new Error("Vault data has an unexpected structure.");
     }
 
-    return parsed;
+    return {
+      ...parsed,
+      feedback: parsed.feedback ?? [],
+    };
   } catch (error) {
     // File not found is expected on first run — return a fresh vault.
     if (error instanceof Error && "code" in error && (error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -229,4 +240,36 @@ export async function deleteCharacter(userId: string, id: string): Promise<void>
 
   vault.characters = nextCharacters;
   await writeVault(vault);
+}
+
+export async function listFeedback(): Promise<FeedbackEntry[]> {
+  const vault = await readVault();
+  return vault.feedback.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function createFeedback(
+  userId: string,
+  input: Omit<FeedbackEntry, "id" | "userId" | "userName" | "userEmail" | "status" | "createdAt">,
+): Promise<FeedbackEntry> {
+  const vault = await readVault();
+  const user = vault.users.find((candidate) => candidate.id === userId);
+
+  if (!user) {
+    throw new Error("Vault session not found.");
+  }
+
+  const feedback: FeedbackEntry = {
+    ...input,
+    id: crypto.randomUUID(),
+    userId,
+    userName: user.name,
+    userEmail: user.email,
+    status: "new",
+    createdAt: new Date().toISOString(),
+  };
+
+  vault.feedback.push(feedback);
+  await writeVault(vault);
+
+  return feedback;
 }

@@ -92,6 +92,25 @@ export type CasterType = "full" | "half" | "third" | "pact" | "none";
 
 export type SpellSlots = Record<number, number>;
 
+export type FeedbackCategory = "bug" | "idea" | "balance" | "content" | "ui" | "other";
+export type FeedbackPriority = "low" | "medium" | "high" | "blocking";
+
+export type FeedbackEntry = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  category: FeedbackCategory;
+  priority: FeedbackPriority;
+  area: string;
+  title: string;
+  details: string;
+  page: string;
+  characterName?: string;
+  status: "new" | "reviewed" | "planned" | "done";
+  createdAt: string;
+};
+
 export type InventoryItem = {
   id: string;
   name: string;
@@ -170,7 +189,7 @@ export type CharacterSettings = {
   optionalClassFeatures: boolean;
   customizeOrigin: boolean;
   advancementType: "milestone" | "xp";
-  hitPointType: "fixed" | "manual";
+  hitPointType: "fixed" | "rolled" | "manual";
   usePrerequisites: boolean;
   useFeatPrerequisites: boolean;
   useMulticlassPrerequisites: boolean;
@@ -321,6 +340,7 @@ export type DraftCharacter = {
   spellsKnown: string[];
   customRules: CustomRule[];
   skillProficiencies: string[];
+  startingHpRolls: number[];
   deathSaves: DeathSaves;
 };
 

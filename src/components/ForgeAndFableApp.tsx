@@ -2,6 +2,7 @@
 
 import {
   LogOut,
+  MessageSquare,
   Plus,
   Sparkles,
   UserRound,
@@ -16,6 +17,7 @@ import type {
   Character,
   CustomRule,
   DraftCharacter,
+  FeedbackEntry,
   InventoryItem,
   PublicUser,
   RollOutcome,
@@ -40,6 +42,7 @@ import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
+import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
@@ -77,6 +80,10 @@ export default function ForgeAndFableApp() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [status, setStatus] = useState("");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
 
@@ -376,6 +383,26 @@ export default function ForgeAndFableApp() {
     );
   }
 
+  function rollStartingHp(request: {
+    className: string;
+    hitDie: number;
+    count: number;
+    constitutionModifier: number;
+    onResult: (rolls: number[]) => void;
+  }) {
+    if (request.count <= 0) {
+      return;
+    }
+
+    pushRoll(
+      `${request.className} starting HP`,
+      request.hitDie,
+      request.count,
+      request.constitutionModifier * request.count,
+      (outcome) => request.onResult(outcome.rolls),
+    );
+  }
+
   async function createHero() {
     if (!user || !ruleset || !draft) {
       return;
@@ -489,6 +516,77 @@ export default function ForgeAndFableApp() {
     setCharacters((current) => current.filter((character) => character.id !== selected.id));
     setSelectedId("");
     setStatus(`${selected.name} retired`);
+  }
+
+  async function loadFeedback() {
+    if (!user) {
+      return;
+    }
+
+    const response = await fetch("/api/feedback", {
+      headers: authHeaders(),
+    });
+
+    const data = (await response.json()) as { feedback?: FeedbackEntry[]; error?: string };
+
+    if (response.status === 401) {
+      logOut();
+      setStatus("Session expired â€” please log in again.");
+      return;
+    }
+
+    if (!response.ok || !data.feedback) {
+      setFeedbackStatus(data.error ?? "Feedback could not be loaded.");
+      return;
+    }
+
+    setFeedbackEntries(data.feedback);
+  }
+
+  async function submitFeedback(input: FeedbackInput) {
+    if (!user) {
+      return false;
+    }
+
+    setFeedbackBusy(true);
+    setFeedbackStatus("Sending feedback...");
+
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(input),
+      });
+
+      const data = (await response.json()) as { feedback?: FeedbackEntry; error?: string };
+
+      if (response.status === 401) {
+        logOut();
+        setStatus("Session expired â€” please log in again.");
+        return false;
+      }
+
+      if (!response.ok || !data.feedback) {
+        setFeedbackStatus(data.error ?? "Feedback could not be submitted.");
+        return false;
+      }
+
+      setFeedbackEntries((current) => [data.feedback!, ...current]);
+      setFeedbackStatus("Feedback saved. Thank you.");
+      setStatus("Feedback saved");
+      return true;
+    } catch {
+      setFeedbackStatus("Feedback could not be submitted.");
+      return false;
+    } finally {
+      setFeedbackBusy(false);
+    }
+  }
+
+  function openFeedback() {
+    setFeedbackOpen(true);
+    setFeedbackStatus("");
+    void loadFeedback();
   }
 
   function pushRoll(
@@ -685,6 +783,17 @@ export default function ForgeAndFableApp() {
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
     <RollDrawer history={rollHistory} theme={selected?.theme ?? null} onRollPool={pushPool} />
+    {feedbackOpen ? (
+      <FeedbackModal
+        entries={feedbackEntries}
+        currentPage={typeof window !== "undefined" ? window.location.pathname : "/"}
+        characterName={selected?.name}
+        status={feedbackStatus}
+        busy={feedbackBusy}
+        onClose={() => setFeedbackOpen(false)}
+        onSubmit={submitFeedback}
+      />
+    ) : null}
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
@@ -702,6 +811,9 @@ export default function ForgeAndFableApp() {
             <UserRound size={16} />
             {user.name}
           </span>
+          <button className="glass-icon" type="button" onClick={openFeedback} title="Submit feedback">
+            <MessageSquare size={18} />
+          </button>
           <button className="glass-icon" type="button" onClick={logOut} title="Log out">
             <LogOut size={18} />
           </button>
@@ -780,6 +892,7 @@ export default function ForgeAndFableApp() {
               onPointBuyChange={changePointBuy}
               onAssignmentChange={setAssignment}
               onRollStats={rollStatBlock}
+              onRollStartingHp={rollStartingHp}
               onCreate={createHero}
             />
           ) : selected && selectedFinalAbilities ? (

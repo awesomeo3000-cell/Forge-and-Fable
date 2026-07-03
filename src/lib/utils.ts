@@ -167,6 +167,7 @@ export function createInitialDraft(ruleset: Ruleset) {
     spellsKnown: [] as string[],
     customRules: [] as CustomRule[],
     skillProficiencies: [] as string[],
+    startingHpRolls: [] as number[],
     deathSaves: { successes: 0, failures: 0 },
   };
 }
@@ -199,12 +200,33 @@ export function defaultAssignments(): Record<AbilityKey, number> {
   };
 }
 
-function startingMaxHp(level: number, hitDie: number, constitutionModifier: number) {
+function startingHp(
+  level: number,
+  hitDie: number,
+  constitutionModifier: number,
+  hitPointType: CharacterSettings["hitPointType"],
+  startingHpRolls: number[],
+) {
   const safeLevel = Math.max(1, Math.min(20, Math.trunc(level)));
   const firstLevelHp = Math.max(1, hitDie + constitutionModifier);
   const fixedLevelHp = Math.max(1, Math.floor(hitDie / 2) + 1 + constitutionModifier);
+  const extraLevels = safeLevel - 1;
 
-  return firstLevelHp + (safeLevel - 1) * fixedLevelHp;
+  if (hitPointType === "rolled" && startingHpRolls.length >= extraLevels) {
+    const hpRolls = startingHpRolls
+      .slice(0, extraLevels)
+      .map((roll) => Math.max(1, Math.trunc(roll) + constitutionModifier));
+
+    return {
+      maxHp: firstLevelHp + hpRolls.reduce((sum, gain) => sum + gain, 0),
+      hpRolls,
+    };
+  }
+
+  return {
+    maxHp: firstLevelHp + extraLevels * fixedLevelHp,
+    hpRolls: [] as number[],
+  };
 }
 
 export function characterPayload(
@@ -228,6 +250,7 @@ export function characterPayload(
     spellsKnown: string[];
     customRules: CustomRule[];
     skillProficiencies: string[];
+    startingHpRolls?: number[];
     deathSaves: { successes: number; failures: number };
   },
   ruleset: Ruleset,
@@ -235,17 +258,26 @@ export function characterPayload(
   const heroClass = ruleset.classes.find((item) => item.id === draft.classId) ?? ruleset.classes[0];
   const race = ruleset.races.find((item) => item.id === draft.raceId) ?? ruleset.races[0];
   const conScore = draft.abilities.constitution + (race.bonuses.constitution ?? 0);
-  const maxHp = startingMaxHp(draft.level, heroClass.hitDie, abilityModifier(conScore));
+  const { maxHp, hpRolls } = startingHp(
+    draft.level,
+    heroClass.hitDie,
+    abilityModifier(conScore),
+    draft.settings.hitPointType,
+    draft.startingHpRolls ?? [],
+  );
   const classGear = heroClass.startingGear.map((name, index) => inventoryEntry(name, index));
+  const characterDraft = { ...draft };
+  delete characterDraft.startingHpRolls;
 
   return {
-    ...draft,
+    ...characterDraft,
     currentHp: maxHp,
     maxHp,
     tempHp: 0,
     inventory: classGear,
     spellsKnown: heroClass.spellSuggestions.slice(0, 3),
     customRules: [],
+    hpRolls: hpRolls.length > 0 ? hpRolls : undefined,
   };
 }
 

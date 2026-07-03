@@ -22,13 +22,21 @@ import type {
   Ruleset,
   StatMethod,
 } from "@/types/game";
-import { abilityKeys, abilityLabels, abilityNames, proficiencyBonus, sourceOptions, standardArray } from "@/lib/utils";
+import {
+  abilityKeys,
+  abilityLabels,
+  abilityModifier,
+  abilityNames,
+  proficiencyBonus,
+  signed,
+  sourceOptions,
+  standardArray,
+} from "@/lib/utils";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
-import { signed } from "@/lib/utils";
 import { CLASS_SKILL_CHOICES, SKILLS } from "@/lib/srd";
 
 type AssignmentMap = Record<AbilityKey, number>;
@@ -111,6 +119,13 @@ export default memo(function CreatorPanel(props: {
   onPointBuyChange: (ability: AbilityKey, delta: number) => void;
   onAssignmentChange: (type: "standard" | "rolled", ability: AbilityKey, nextIndex: number) => void;
   onRollStats: () => void;
+  onRollStartingHp: (request: {
+    className: string;
+    hitDie: number;
+    count: number;
+    constitutionModifier: number;
+    onResult: (rolls: number[]) => void;
+  }) => void;
   onCreate: () => void;
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
@@ -134,7 +149,69 @@ export default memo(function CreatorPanel(props: {
   const skillChoice = props.draft.classId ? CLASS_SKILL_CHOICES[props.draft.classId] : undefined;
   const chosenSkillCount = props.draft.skillProficiencies.length;
   const skillsComplete = !skillChoice || chosenSkillCount >= skillChoice.count;
-  const classStepComplete = Boolean(props.draft.classId) && skillsComplete;
+  const extraHpLevels = Math.max(0, props.draft.level - 1);
+  const startingHpRolls = props.draft.startingHpRolls.slice(0, extraHpLevels);
+  const constitutionModifier = abilityModifier(props.finalAbilities.constitution);
+  const firstLevelHp = selectedClass ? Math.max(1, selectedClass.hitDie + constitutionModifier) : 1;
+  const fixedLevelHp = selectedClass ? Math.max(1, Math.floor(selectedClass.hitDie / 2) + 1 + constitutionModifier) : 1;
+  const rolledHpGains = startingHpRolls.map((roll) => Math.max(1, Math.trunc(roll) + constitutionModifier));
+  const usesRolledStartingHp =
+    props.draft.settings.hitPointType === "rolled" && Boolean(selectedClass) && extraHpLevels > 0;
+  const startingHpComplete = !usesRolledStartingHp || startingHpRolls.length === extraHpLevels;
+  const startingHpPreview =
+    firstLevelHp +
+    (usesRolledStartingHp
+      ? rolledHpGains.reduce((sum, gain) => sum + gain, 0)
+      : extraHpLevels * fixedLevelHp);
+  const startingHpDisplay =
+    usesRolledStartingHp && !startingHpComplete ? `${firstLevelHp} + pending rolls` : `${startingHpPreview}`;
+  const hpMethodLabel = props.draft.settings.hitPointType === "rolled" ? "rolled" : "fixed";
+  const classStepComplete = Boolean(props.draft.classId) && skillsComplete && startingHpComplete;
+
+  const changeStartingLevel = (level: number) => {
+    const nextLevel = Math.max(1, Math.min(20, Math.trunc(level)));
+    const nextExtraLevels = Math.max(0, nextLevel - 1);
+    props.onDraftChange({
+      ...props.draft,
+      level: nextLevel,
+      startingHpRolls: props.draft.startingHpRolls.slice(0, nextExtraLevels),
+    });
+  };
+
+  const changeHitPointType = (hitPointType: CharacterSettings["hitPointType"]) => {
+    props.onDraftChange({
+      ...props.draft,
+      settings: {
+        ...props.draft.settings,
+        hitPointType,
+      },
+      startingHpRolls:
+        hitPointType === "rolled" ? props.draft.startingHpRolls.slice(0, extraHpLevels) : [],
+    });
+  };
+
+  const rollStartingHp = () => {
+    if (!selectedClass || extraHpLevels <= 0) {
+      return;
+    }
+
+    props.onRollStartingHp({
+      className: selectedClass.name,
+      hitDie: selectedClass.hitDie,
+      count: extraHpLevels,
+      constitutionModifier,
+      onResult: (rolls) => {
+        props.onDraftChange({
+          ...props.draft,
+          settings: {
+            ...props.draft.settings,
+            hitPointType: "rolled",
+          },
+          startingHpRolls: rolls.slice(0, extraHpLevels),
+        });
+      },
+    });
+  };
 
   const toggleSkillChoice = (skillId: string) => {
     const current = props.draft.skillProficiencies;
@@ -267,22 +344,54 @@ export default memo(function CreatorPanel(props: {
                 ) : null}
                 {selectedClass && skillChoice ? (
                   <div className="dj-class-training" data-class={selectedClass.id}>
-                    <label className="dj-level-pick">
+                    <div className="dj-level-pick">
                       <span className="dj-eyebrow">Starting level</span>
-                      <select
-                        value={props.draft.level}
-                        onChange={(event) =>
-                          props.onDraftChange({ ...props.draft, level: Number(event.target.value) })
-                        }
-                      >
-                        {levelOptions.map((level) => (
-                          <option value={level} key={level}>
-                            Level {level}
-                          </option>
-                        ))}
-                      </select>
-                      <small>Proficiency bonus {signed(proficiencyBonus(props.draft.level))}</small>
-                    </label>
+                      <label>
+                        <span>Level</span>
+                        <select
+                          value={props.draft.level}
+                          onChange={(event) => changeStartingLevel(Number(event.target.value))}
+                        >
+                          {levelOptions.map((level) => (
+                            <option value={level} key={level}>
+                              Level {level}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>HP method</span>
+                        <select
+                          value={props.draft.settings.hitPointType}
+                          onChange={(event) => changeHitPointType(event.target.value as CharacterSettings["hitPointType"])}
+                        >
+                          <option value="fixed">Fixed</option>
+                          <option value="rolled">Rolled</option>
+                          <option value="manual">Manual</option>
+                        </select>
+                      </label>
+                      <small>
+                        Proficiency bonus {signed(proficiencyBonus(props.draft.level))} / starting HP{" "}
+                        {startingHpDisplay}
+                      </small>
+                      <small>
+                        Level 1: {firstLevelHp} HP. Later levels use {hpMethodLabel} d{selectedClass.hitDie}
+                        {constitutionModifier !== 0 ? ` ${signed(constitutionModifier)}` : ""}.
+                      </small>
+                      {usesRolledStartingHp ? (
+                        <div className="dj-hp-roll-panel">
+                          <button type="button" className="glass-button small" onClick={rollStartingHp}>
+                            <Dices size={16} />
+                            Roll {extraHpLevels}d{selectedClass.hitDie} HP
+                          </button>
+                          <span className={`dj-hp-roll-status${startingHpComplete ? " done" : ""}`}>
+                            {startingHpComplete
+                              ? `${startingHpRolls.join(", ")} -> +${rolledHpGains.reduce((sum, gain) => sum + gain, 0)} HP`
+                              : `${startingHpRolls.length}/${extraHpLevels} rolled`}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                     <div className="dj-skill-pick">
                       <div className="dj-skill-pick-head">
                         <span className="dj-eyebrow">Skill proficiencies</span>
@@ -334,7 +443,16 @@ export default memo(function CreatorPanel(props: {
                           type="button"
                           aria-label={`Select ${candidate.name}`}
                           aria-pressed={selected}
-                          onClick={() => { if (candidate.id !== props.draft.classId) props.onDraftChange({ ...props.draft, classId: candidate.id, skillProficiencies: [] }); }}
+                          onClick={() => {
+                            if (candidate.id !== props.draft.classId) {
+                              props.onDraftChange({
+                                ...props.draft,
+                                classId: candidate.id,
+                                skillProficiencies: [],
+                                startingHpRolls: [],
+                              });
+                            }
+                          }}
                         />
                         <div className="dj-card-main">
                           <span className="dj-card-icon" data-class={candidate.id}>
@@ -650,7 +768,12 @@ export default memo(function CreatorPanel(props: {
           selected={inspectedClass.id === props.draft.classId}
           onClose={() => setInspectedClassId(null)}
           onSelect={() => {
-            props.onDraftChange({ ...props.draft, classId: inspectedClass.id });
+            props.onDraftChange({
+              ...props.draft,
+              classId: inspectedClass.id,
+              skillProficiencies: inspectedClass.id === props.draft.classId ? props.draft.skillProficiencies : [],
+              startingHpRolls: inspectedClass.id === props.draft.classId ? props.draft.startingHpRolls : [],
+            });
             setInspectedClassId(null);
           }}
         />
