@@ -36,30 +36,34 @@ export default memo(function CharacterStartPanel(props: {
   ];
 
   return (
-    <div className="start-panel paper-surface">
-      <div className="start-copy">
-        <span>Empty Character Vault</span>
+    <div className="start-panel paper-surface dj-start">
+      <div className="dj-document-header">
+        <span className="dj-eyebrow">Empty character vault</span>
         <h2>Create a new character</h2>
-        <p>Choose how you want to begin. You can name the character and pick rule sources on the next screen.</p>
+        <p>Choose a record style. Name and sources come next.</p>
       </div>
-      <div className="build-mode-grid">
+      <div className="dj-card-grid dj-mode-grid">
         {buildModes.map((item) => (
           <button
             type="button"
-            className={`build-mode-card ${selectedMode === item.mode ? "active" : ""}`}
+            className={`dj-card dj-mode-card ${selectedMode === item.mode ? "active" : ""}`}
             aria-pressed={selectedMode === item.mode}
             key={item.mode}
             onClick={() => setSelectedMode(item.mode)}
           >
-            {item.icon === "standard" ? <ShieldCheck size={28} /> : null}
-            {item.icon === "quickbuilder" ? <CircleGauge size={28} /> : null}
-            {item.icon === "premade" ? <Swords size={28} /> : null}
+            <div className="dj-card-tab" />
+            <span className="dj-mode-icon">
+              {item.icon === "standard" ? <ShieldCheck size={22} /> : null}
+              {item.icon === "quickbuilder" ? <CircleGauge size={22} /> : null}
+              {item.icon === "premade" ? <Swords size={22} /> : null}
+            </span>
             <strong>{item.label}</strong>
-            <span>{item.summary}</span>
+            <small>{item.summary}</small>
+            {selectedMode === item.mode ? <em>chosen</em> : null}
           </button>
         ))}
       </div>
-      <div className="start-actions">
+      <div className="start-actions dj-footer">
         <button
           type="button"
           className="gold-button"

@@ -1,9 +1,11 @@
 "use client";
 
-import { ChevronRight, CircleGauge, Swords, Wand2, Eye, Heart } from "lucide-react";
+import { ChevronRight, Swords, Wand2, Eye, Heart } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import type { Ruleset, DraftCharacter, BuildMode } from "@/types/game";
 import { FIGHT_STYLES, STYLE_TO_CLASSES, buildQuickDraft, PREMADE_ARCHETYPES, type FightStyle } from "@/lib/quickbuild";
+import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 
 const STYLE_ICONS: Record<FightStyle, typeof Swords> = {
   weapons: Swords,
@@ -48,13 +50,13 @@ export default memo(function QuickbuilderPanel(props: {
   // Premade: show archetype grid
   if (isPremade) {
     return (
-      <div className="quickbuilder-panel paper-surface">
-        <div className="start-copy">
-          <span><Swords size={18} /> Premade Archetypes</span>
+      <div className="quickbuilder-panel paper-surface dj-start dj-quickbuilder">
+        <div className="dj-document-header">
+          <span className="dj-eyebrow">Premade archetypes</span>
           <h2>Pick a ready-made hero</h2>
-          <p>Choose an archetype and jump straight to final review.</p>
+          <p>Choose an archetype, write a name, and jump straight to final review.</p>
         </div>
-        <div className="choice-grid">
+        <div className="dj-card-grid">
           {PREMADE_ARCHETYPES.map((a) => {
             const cls = ruleset.classes.find((c) => c.id === a.classId);
             const race = ruleset.races.find((r) => r.id === a.raceId);
@@ -62,17 +64,28 @@ export default memo(function QuickbuilderPanel(props: {
               <button
                 key={a.id}
                 type="button"
-                className={`choice-tile ${classId === a.classId && raceId === a.raceId ? "active" : ""}`}
+                className={`dj-card dj-option-card ${classId === a.classId && raceId === a.raceId ? "active" : ""}`}
+                data-class={a.classId}
                 onClick={() => { setClassId(a.classId); setRaceId(a.raceId); }}
+                aria-pressed={classId === a.classId && raceId === a.raceId}
               >
-                <strong>{a.label}</strong>
+                <div className="dj-card-tab" />
+                <div className="dj-card-main">
+                  {cls ? (
+                    <span className="dj-card-icon" data-class={cls.id}>
+                      <ClassIconPlaceholder classId={cls.id} size={18} strokeWidth={1.5} />
+                    </span>
+                  ) : null}
+                  <strong>{a.label}</strong>
+                </div>
+                <small>{cls?.name} / {race?.name}</small>
                 <span>{a.summary}</span>
-                <small>{cls?.name} &middot; {race?.name}</small>
+                {classId === a.classId && raceId === a.raceId ? <em>chosen</em> : null}
               </button>
             );
           })}
         </div>
-        <div className="qb-name-row">
+        <div className="qb-name-row dj-qb-name">
           <label>
             <span>Character name</span>
             <input
@@ -85,7 +98,7 @@ export default memo(function QuickbuilderPanel(props: {
             />
           </label>
         </div>
-        <div className="creator-footer">
+        <div className="creator-footer dj-footer">
           <button
             className="gold-button"
             type="button"
@@ -104,28 +117,35 @@ export default memo(function QuickbuilderPanel(props: {
   }
 
   return (
-    <div className="quickbuilder-panel paper-surface">
-      <div className="start-copy">
-        <span><CircleGauge size={18} /> Quickbuilder</span>
+    <div className="quickbuilder-panel paper-surface dj-start dj-quickbuilder">
+      <div className="dj-document-header">
+        <span className="dj-eyebrow">Quickbuilder</span>
         <h2>Forge a hero in three steps</h2>
-        <p>Answer a few questions and we&apos;ll fill in the rest.</p>
+        <p>Answer a few questions and the draft record fills itself in.</p>
       </div>
 
       {/* Step 0: Fight style */}
       {step === 0 ? (
-        <div className="choice-grid">
+        <div className="dj-card-grid">
           {FIGHT_STYLES.map((style) => {
             const Icon = STYLE_ICONS[style.id];
             return (
               <button
                 key={style.id}
                 type="button"
-                className={`choice-tile ${fightStyle === style.id ? "active" : ""}`}
+                className={`dj-card dj-option-card ${fightStyle === style.id ? "active" : ""}`}
                 onClick={() => setFightStyle(style.id)}
+                aria-pressed={fightStyle === style.id}
               >
-                <Icon size={28} />
-                <strong>{style.label}</strong>
-                <span>{style.summary}</span>
+                <div className="dj-card-tab" />
+                <div className="dj-card-main">
+                  <span className="dj-card-icon">
+                    <Icon size={18} />
+                  </span>
+                  <strong>{style.label}</strong>
+                  {fightStyle === style.id ? <em>chosen</em> : null}
+                </div>
+                <small>{style.summary}</small>
               </button>
             );
           })}
@@ -134,16 +154,25 @@ export default memo(function QuickbuilderPanel(props: {
 
       {/* Step 1: Class (vibe) */}
       {step === 1 ? (
-        <div className="choice-grid">
+        <div className="dj-card-grid">
           {classOptions.map((c) => (
             <button
               key={c.id}
               type="button"
-              className={`choice-tile ${classId === c.id ? "active" : ""}`}
+              className={`dj-card dj-option-card ${classId === c.id ? "active" : ""}`}
+              data-class={c.id}
               onClick={() => setClassId(c.id)}
+              aria-pressed={classId === c.id}
             >
-              <strong>{c.name}</strong>
-              <span>{c.summary}</span>
+              <div className="dj-card-tab" />
+              <div className="dj-card-main">
+                <span className="dj-card-icon" data-class={c.id}>
+                  <ClassIconPlaceholder classId={c.id} size={18} strokeWidth={1.5} />
+                </span>
+                <strong>{c.name}</strong>
+                {classId === c.id ? <em>chosen</em> : null}
+              </div>
+              <small>{c.summary}</small>
             </button>
           ))}
         </div>
@@ -152,20 +181,29 @@ export default memo(function QuickbuilderPanel(props: {
       {/* Step 2: Species + name */}
       {step === 2 ? (
         <div>
-          <div className="choice-grid">
+          <div className="dj-card-grid species-grid">
             {ruleset.races.map((r) => (
               <button
                 key={r.id}
                 type="button"
-                className={`choice-tile ${raceId === r.id ? "active" : ""}`}
+                className={`dj-card dj-option-card ${raceId === r.id ? "active" : ""}`}
+                data-species={r.id}
                 onClick={() => setRaceId(r.id)}
+                aria-pressed={raceId === r.id}
               >
-                <strong>{r.name}</strong>
-                <span>{r.summary.slice(0, 80)}</span>
+                <div className="dj-card-tab" />
+                <div className="dj-card-main">
+                  <span className="dj-card-icon" data-species={r.id}>
+                    <SpeciesIconPlaceholder speciesId={r.id} size={18} strokeWidth={1.5} />
+                  </span>
+                  <strong>{r.name}</strong>
+                  {raceId === r.id ? <em>chosen</em> : null}
+                </div>
+                <small>{r.summary.slice(0, 90)}</small>
               </button>
             ))}
           </div>
-          <div className="qb-name-row">
+          <div className="qb-name-row dj-qb-name">
             <label>
               <span>Character name</span>
               <input
@@ -181,7 +219,7 @@ export default memo(function QuickbuilderPanel(props: {
         </div>
       ) : null}
 
-      <div className="creator-footer">
+      <div className="creator-footer dj-footer">
         <button
           className="glass-button"
           type="button"
