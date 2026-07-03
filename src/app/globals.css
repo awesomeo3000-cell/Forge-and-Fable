@@ -69,6 +69,14 @@
   /* Desk + the one earned shadow */
   --desk:         #1a140d;
   --sheet-shadow: 0 26px 55px rgba(0,0,0,0.50), 0 4px 14px rgba(0,0,0,0.40);
+
+  /* Shared world backdrop for splash, auth, and the app shell. */
+  --world-backdrop: url("/heroes-backdrop.jpg");
+  --world-backdrop-position: 48% center;
+  --world-backdrop-wash:
+    radial-gradient(circle at 50% 45%, rgba(30, 22, 13, 0.42) 0%, rgba(30, 22, 13, 0.16) 34%, rgba(239, 226, 194, 0.05) 68%),
+    linear-gradient(180deg, rgba(24, 18, 10, 0.34) 0%, rgba(24, 18, 10, 0.08) 38%, rgba(24, 18, 10, 0.38) 100%),
+    linear-gradient(90deg, rgba(24, 18, 10, 0.40) 0%, rgba(24, 18, 10, 0.08) 52%, rgba(24, 18, 10, 0.24) 100%);
 }
 
 * {
@@ -130,9 +138,16 @@ button:disabled {
   inset: 0;
   z-index: -3;
   content: "";
-  background-image: url("/forge-backdrop.png");
-  background-size: cover;
-  background-position: center;
+  background-image:
+    var(--world-backdrop-wash),
+    var(--world-backdrop);
+  background-size: cover, cover, cover, cover;
+  background-position:
+    var(--world-backdrop-position),
+    var(--world-backdrop-position),
+    var(--world-backdrop-position),
+    var(--world-backdrop-position);
+  background-repeat: no-repeat;
 }
 
 .splash-screen::after,
@@ -198,6 +213,7 @@ button:disabled {
   color: #fff4da;
   font-size: clamp(2rem, 5vw, 4.4rem);
   line-height: 0.96;
+  text-shadow: 0 3px 22px rgba(24, 18, 10, 0.62);
 }
 
 .splash-progress {
@@ -307,6 +323,7 @@ button:disabled {
   font-size: clamp(3.4rem, 8vw, 8.8rem);
   font-weight: 820;
   line-height: 0.9;
+  text-shadow: 0 4px 28px rgba(24, 18, 10, 0.58);
 }
 
 .entry-copy p {
@@ -314,6 +331,7 @@ button:disabled {
   color: #dfd0b7;
   font-size: clamp(1rem, 1.6vw, 1.22rem);
   line-height: 1.7;
+  text-shadow: 0 2px 16px rgba(24, 18, 10, 0.56);
 }
 
 .entry-metrics {
@@ -2714,6 +2732,10 @@ button:disabled {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --world-backdrop-position: 42% center;
+  }
+
   .entry-screen {
     grid-template-columns: 1fr;
     align-content: start;
