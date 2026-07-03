@@ -3,36 +3,48 @@
 import type { CSSProperties } from "react";
 
 const RACE_ICON_PATHS: Record<string, string> = {
+  "aarakocra": "/race-icons/aarakocra.svg",
+  "aarakocra-legacy": "/race-icons/aarakocra.svg",
+  "aasimar": "/race-icons/aasimar.svg",
   "air-genasi": "/race-icons/air-genasi.svg",
+  "dragonborn": "/race-icons/dragonborn.svg",
+  "dragonborn-legacy": "/race-icons/dragonborn.svg",
   "drow": "/race-icons/drow.svg",
   "dark-elf": "/race-icons/drow.svg",
+  "deep-gnome": "/race-icons/deep-gnome.svg",
+  "deep-gnome-legacy": "/race-icons/deep-gnome.svg",
+  "dwarf": "/race-icons/dwarf.svg",
+  "dwarf-legacy": "/race-icons/dwarf.svg",
   "earth-genasi": "/race-icons/earth-genasi.svg",
+  "elf": "/race-icons/elf.svg",
+  "elf-legacy": "/race-icons/elf.svg",
   "firbolg": "/race-icons/firbolg.svg",
   "fire-genasi": "/race-icons/fire-genasi.svg",
   "forest-gnome": "/race-icons/forest-gnome.svg",
-  "gnome": "/race-icons/forest-gnome.svg",
+  "genasi": "/race-icons/genasi.svg",
+  "genasi-legacy": "/race-icons/genasi.svg",
+  "gnome": "/race-icons/gnome.svg",
+  "goliath": "/race-icons/goliath.svg",
+  "goliath-legacy": "/race-icons/goliath.svg",
+  "half-elf": "/race-icons/half-elf.svg",
+  "half-elf-legacy": "/race-icons/half-elf.svg",
+  "half-orc": "/race-icons/half-orc.svg",
+  "half-orc-legacy": "/race-icons/half-orc.svg",
+  "halfling": "/race-icons/halfling.svg",
+  "halfling-legacy": "/race-icons/halfling.svg",
   "high-elf": "/race-icons/high-elf.svg",
-  "elf": "/race-icons/high-elf.svg",
-  "elf-legacy": "/race-icons/high-elf.svg",
-  "half-elf-legacy": "/race-icons/high-elf.svg",
+  "human": "/race-icons/human.svg",
+  "human-legacy": "/race-icons/human.svg",
+  "orc": "/race-icons/orc.svg",
+  "rock-gnome": "/race-icons/rock-gnome.svg",
+  "rock-gnome-legacy": "/race-icons/rock-gnome.svg",
   "tiefling": "/race-icons/tiefling.svg",
   "tiefling-legacy": "/race-icons/tiefling.svg",
   "triton": "/race-icons/triton.svg",
+  "variant-aasimar": "/race-icons/aasimar.svg",
   "water-genasi": "/race-icons/water-genasi.svg",
   "yuan-ti": "/race-icons/yuan-ti.svg",
   "yuan-ti-pureblood": "/race-icons/yuan-ti.svg",
-};
-
-const GENASI_ICON_PATHS = [
-  "/race-icons/air-genasi.svg",
-  "/race-icons/earth-genasi.svg",
-  "/race-icons/fire-genasi.svg",
-  "/race-icons/water-genasi.svg",
-];
-
-const RACE_ICON_GROUPS: Record<string, string[]> = {
-  genasi: GENASI_ICON_PATHS,
-  "genasi-legacy": GENASI_ICON_PATHS,
 };
 
 type IconMaskStyle = CSSProperties & {
@@ -46,25 +58,6 @@ function SpeciesIconPlaceholder(props: {
 }) {
   const id = props.speciesId.toLowerCase();
   const iconPath = RACE_ICON_PATHS[id];
-  const iconGroup = RACE_ICON_GROUPS[id];
-
-  if (iconGroup) {
-    return (
-      <span
-        aria-hidden="true"
-        className="species-symbol species-symbol-grid"
-        style={{ height: props.size, width: props.size }}
-      >
-        {iconGroup.map((path) => (
-          <span
-            key={path}
-            className="species-symbol-mask"
-            style={{ "--species-icon-url": `url("${path}")` } as IconMaskStyle}
-          />
-        ))}
-      </span>
-    );
-  }
 
   if (iconPath) {
     const style: IconMaskStyle = {
