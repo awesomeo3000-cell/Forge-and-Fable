@@ -6265,11 +6265,36 @@ button.dj-card {
 .cs-ac-breakdown-row strong { color: var(--parchment); font-variant-numeric: tabular-nums; }
 
 /* ── Dossier: class skill proficiency picker ── */
+.dj-class-training {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr);
+  gap: 10px;
+  border-left: 4px solid color-mix(in srgb, var(--class-a, var(--doc-accent)) 60%, var(--paper));
+}
+.dj-level-pick,
 .dj-skill-pick {
   border: 1px solid var(--doc-rule);
-  border-left: 4px solid color-mix(in srgb, var(--class-a, var(--doc-accent)) 60%, var(--paper));
   background: var(--paper-raised);
   padding: 10px 12px;
+}
+.dj-level-pick {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+.dj-level-pick select {
+  width: 100%;
+  border: 1px solid var(--doc-rule);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 7px 9px;
+  font-family: var(--font-label);
+  font-size: 13px;
+}
+.dj-level-pick small {
+  color: var(--ink-2);
+  font-size: 12px;
 }
 .dj-skill-pick-head {
   display: flex;
@@ -6312,4 +6337,10 @@ button.dj-card {
 .dj-skill-chip[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .dj-class-training {
+    grid-template-columns: 1fr;
+  }
 }

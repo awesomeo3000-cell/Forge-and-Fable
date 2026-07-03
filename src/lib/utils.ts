@@ -199,6 +199,14 @@ export function defaultAssignments(): Record<AbilityKey, number> {
   };
 }
 
+function startingMaxHp(level: number, hitDie: number, constitutionModifier: number) {
+  const safeLevel = Math.max(1, Math.min(20, Math.trunc(level)));
+  const firstLevelHp = Math.max(1, hitDie + constitutionModifier);
+  const fixedLevelHp = Math.max(1, Math.floor(hitDie / 2) + 1 + constitutionModifier);
+
+  return firstLevelHp + (safeLevel - 1) * fixedLevelHp;
+}
+
 export function characterPayload(
   draft: {
     name: string;
@@ -227,7 +235,7 @@ export function characterPayload(
   const heroClass = ruleset.classes.find((item) => item.id === draft.classId) ?? ruleset.classes[0];
   const race = ruleset.races.find((item) => item.id === draft.raceId) ?? ruleset.races[0];
   const conScore = draft.abilities.constitution + (race.bonuses.constitution ?? 0);
-  const maxHp = Math.max(1, heroClass.hitDie + abilityModifier(conScore));
+  const maxHp = startingMaxHp(draft.level, heroClass.hitDie, abilityModifier(conScore));
   const classGear = heroClass.startingGear.map((name, index) => inventoryEntry(name, index));
 
   return {

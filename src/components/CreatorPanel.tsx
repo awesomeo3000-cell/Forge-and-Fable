@@ -22,7 +22,7 @@ import type {
   Ruleset,
   StatMethod,
 } from "@/types/game";
-import { abilityKeys, abilityLabels, abilityNames, sourceOptions, standardArray } from "@/lib/utils";
+import { abilityKeys, abilityLabels, abilityNames, proficiencyBonus, sourceOptions, standardArray } from "@/lib/utils";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
@@ -34,6 +34,7 @@ import { CLASS_SKILL_CHOICES, SKILLS } from "@/lib/srd";
 type AssignmentMap = Record<AbilityKey, number>;
 
 const steps = ["Setup", "Class", "Origin", "Species", "Attributes", "Finalize"];
+const levelOptions = Array.from({ length: 20 }, (_, index) => index + 1);
 
 function casterLabel(heroClass: HeroClass) {
   if (!heroClass.casterType || heroClass.casterType === "none") return "martial";
@@ -265,37 +266,55 @@ export default memo(function CreatorPanel(props: {
                   />
                 ) : null}
                 {selectedClass && skillChoice ? (
-                  <div className="dj-skill-pick" data-class={selectedClass.id}>
-                    <div className="dj-skill-pick-head">
-                      <span className="dj-eyebrow">Skill proficiencies</span>
-                      <span className={`dj-skill-count${skillsComplete ? " done" : ""}`}>
-                        {chosenSkillCount}/{skillChoice.count} chosen
-                      </span>
-                    </div>
-                    <p className="dj-skill-hint">
-                      {skillsComplete
-                        ? `Trained in ${props.draft.skillProficiencies.map((id) => SKILLS.find((sk) => sk.id === id)?.name ?? id).join(", ")}.`
-                        : `Choose ${skillChoice.count} skills the ${selectedClass.name.toLowerCase()} is trained in.`}
-                    </p>
-                    <div className="dj-skill-chips">
-                      {skillChoice.options.map((skillId) => {
-                        const skill = SKILLS.find((sk) => sk.id === skillId);
-                        if (!skill) return null;
-                        const picked = props.draft.skillProficiencies.includes(skillId);
-                        const full = !picked && skillsComplete;
-                        return (
-                          <button
-                            key={skillId}
-                            type="button"
-                            className={`dj-skill-chip${picked ? " picked" : ""}`}
-                            aria-pressed={picked}
-                            disabled={full}
-                            onClick={() => toggleSkillChoice(skillId)}
-                          >
-                            {skill.name}
-                          </button>
-                        );
-                      })}
+                  <div className="dj-class-training" data-class={selectedClass.id}>
+                    <label className="dj-level-pick">
+                      <span className="dj-eyebrow">Starting level</span>
+                      <select
+                        value={props.draft.level}
+                        onChange={(event) =>
+                          props.onDraftChange({ ...props.draft, level: Number(event.target.value) })
+                        }
+                      >
+                        {levelOptions.map((level) => (
+                          <option value={level} key={level}>
+                            Level {level}
+                          </option>
+                        ))}
+                      </select>
+                      <small>Proficiency bonus {signed(proficiencyBonus(props.draft.level))}</small>
+                    </label>
+                    <div className="dj-skill-pick">
+                      <div className="dj-skill-pick-head">
+                        <span className="dj-eyebrow">Skill proficiencies</span>
+                        <span className={`dj-skill-count${skillsComplete ? " done" : ""}`}>
+                          {chosenSkillCount}/{skillChoice.count} chosen
+                        </span>
+                      </div>
+                      <p className="dj-skill-hint">
+                        {skillsComplete
+                          ? `Trained in ${props.draft.skillProficiencies.map((id) => SKILLS.find((sk) => sk.id === id)?.name ?? id).join(", ")}.`
+                          : `Choose ${skillChoice.count} skills the ${selectedClass.name.toLowerCase()} is trained in.`}
+                      </p>
+                      <div className="dj-skill-chips">
+                        {skillChoice.options.map((skillId) => {
+                          const skill = SKILLS.find((sk) => sk.id === skillId);
+                          if (!skill) return null;
+                          const picked = props.draft.skillProficiencies.includes(skillId);
+                          const full = !picked && skillsComplete;
+                          return (
+                            <button
+                              key={skillId}
+                              type="button"
+                              className={`dj-skill-chip${picked ? " picked" : ""}`}
+                              aria-pressed={picked}
+                              disabled={full}
+                              onClick={() => toggleSkillChoice(skillId)}
+                            >
+                              {skill.name}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -557,7 +576,7 @@ export default memo(function CreatorPanel(props: {
                 <span className="dj-eyebrow">Seal the record</span>
                 <h3>{props.draft.name || "Unwritten hero"}</h3>
                 <p>
-                  Level 1 {race?.name ?? "Unchosen species"} {heroClass.name}
+                  Level {props.draft.level} {race?.name ?? "Unchosen species"} {heroClass.name}
                 </p>
                 <div className="final-loadout">
                   <span>{props.draft.background}</span>
