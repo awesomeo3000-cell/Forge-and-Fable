@@ -4758,31 +4758,31 @@ button:disabled {
 @keyframes die-fly {
   0% {
     transform: translate(var(--die-from-x), var(--die-from-y)) rotate(0deg) scale(0.6);
-    opacity: 0.85;
+    opacity: var(--die-start-opacity, 0.85);
   }
   50% {
     transform: translate(var(--die-to-x), var(--die-to-y)) rotate(calc(var(--die-spin) * 0.85)) scale(1.08);
-    opacity: 1;
+    opacity: var(--die-visible-opacity, 1);
   }
   57% {
     transform: translate(var(--die-to-x), calc(var(--die-to-y) + 10px)) rotate(var(--die-spin)) scale(1.1, 0.88);
-    opacity: 1;
+    opacity: var(--die-visible-opacity, 1);
   }
   63% {
     transform: translate(var(--die-to-x), var(--die-to-y)) rotate(var(--die-spin)) scale(0.96, 1.04);
-    opacity: 1;
+    opacity: var(--die-visible-opacity, 1);
   }
   68% {
     transform: translate(var(--die-to-x), var(--die-to-y)) rotate(var(--die-spin)) scale(1);
-    opacity: 1;
+    opacity: var(--die-visible-opacity, 1);
   }
   84% {
     transform: translate(var(--die-to-x), var(--die-to-y)) rotate(var(--die-spin)) scale(1);
-    opacity: 1;
+    opacity: var(--die-visible-opacity, 1);
   }
   100% {
-    transform: translate(var(--die-to-x), calc(var(--die-to-y) - 28px)) rotate(var(--die-spin)) scale(0.78);
-    opacity: 0;
+    transform: translate(var(--die-to-x), var(--die-to-y)) rotate(var(--die-spin)) scale(1);
+    opacity: var(--die-visible-opacity, 1);
   }
 }
 
@@ -4790,7 +4790,7 @@ button:disabled {
   0%, 61% { opacity: 0; }
   70%     { opacity: 1; }
   84%     { opacity: 1; }
-  100%    { opacity: 0; }
+  100%    { opacity: 1; }
 }
 
 .flying-die {
@@ -4812,15 +4812,26 @@ button:disabled {
   top: calc(100% + 4px);
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  padding: 3px 9px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 132px;
+  max-width: min(260px, 80vw);
+  white-space: normal;
+  text-align: center;
+  padding: 5px 10px 6px;
   border: 1px solid rgba(255, 244, 218, 0.22);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(10, 8, 4, 0.72);
   animation: die-text-in 2.8s linear forwards;
+}
+
+.die-roll-label-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
 }
 
 .die-roll-label-name {
@@ -4837,6 +4848,24 @@ button:disabled {
   font-size: 0.65rem;
   color: var(--gold, #c9a25a);
   font-weight: 700;
+}
+
+.die-roll-label-total {
+  font-family: var(--font-label, system-ui, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--gold, #c9a25a);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.die-roll-label-detail {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.66rem;
+  line-height: 1.25;
+  color: rgba(255, 244, 218, 0.78);
 }
 
 .d20-stage {
@@ -6887,7 +6916,14 @@ button.dj-card {
 }
 
 /* Discarded flying d20 (adv/dis) reads as secondary */
-.flying-die.dropped { opacity: 0.42; filter: saturate(0.6); }
+.flying-die.dropped .die-roll-label-total {
+  color: rgba(255, 244, 218, 0.62);
+}
+
+.flying-die.dropped .die-roll-label-detail {
+  color: rgba(255, 244, 218, 0.5);
+  text-decoration: line-through;
+}
 
 /* ── Feature 1: Background skill grants ── */
 

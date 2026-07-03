@@ -60,6 +60,18 @@ function authHeaders(): Record<string, string> {
   };
 }
 
+const NORMAL_ROLL_LINGER_MS = 1800;
+const KEPT_D20_LINGER_MS = 4200;
+const DROPPED_D20_LINGER_MS = 850;
+
+function rollResultSummary(total: number) {
+  return `${total} total`;
+}
+
+function rollDetailWithTotal(detail: string, total: number) {
+  return detail.includes("=") ? detail : `${detail} = ${total}`;
+}
+
 export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
   const [ruleset, setRuleset] = useState<Ruleset | null>(null);
@@ -606,12 +618,17 @@ export default function ForgeAndFableApp() {
     modifier = 0,
     onResult?: (outcome: RollOutcome) => void,
   ) {
+    const generatedRolls = Array.from({ length: count }, () => rollDie(sides));
     const rolls = Array<number>(count).fill(0);
     const finishedIndices = new Set<number>();
     let finished = 0;
     // Include modifier in the label so users see the full roll info (e.g. "1d20+5")
     const fullLabel = `${label}${modifier !== 0 ? ` ${signed(modifier)}` : ""}`;
     const diceNotation = count > 1 ? `${count}d${sides}` : `d${sides}`;
+    const total = generatedRolls.reduce((sum, value) => sum + value, modifier);
+    const detailRolls = count > 1 ? `[${generatedRolls.join(", ")}]` : `[${generatedRolls[0]}]`;
+    const resultDetail = `${diceNotation} ${detailRolls}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
+    const resultSummary = rollResultSummary(total);
 
     const recordResult = (outcome: RollOutcome) => {
       const parts = outcome.rolls.join("+");
@@ -631,12 +648,15 @@ export default function ForgeAndFableApp() {
 
     const newDice: RollingDie[] = Array.from({ length: count }, (_, i) => {
       const fromLeft = Math.random() > 0.5;
-      const result = rollDie(sides);
+      const result = generatedRolls[i];
       return {
         id: `${crypto.randomUUID()}-${i}`,
         sides,
         result,
         label: fullLabel,
+        resultSummary,
+        resultDetail,
+        lingerMs: NORMAL_ROLL_LINGER_MS,
         fromLeft,
         startYPct: 0.15 + Math.random() * 0.35,
         landXPct: 0.22 + Math.random() * 0.56,
@@ -667,7 +687,84 @@ export default function ForgeAndFableApp() {
   function pushPool(groups: { sides: number; count: number }[], modifier: number, label: string) {
     const cleaned = groups.filter((g) => g.count > 0);
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
-    if (totalCount === 0 || totalCount > 40) return;
+    const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20);
+    if (totalCount === 0 || totalCount + (useD20Mode ? 1 : 0) > 40) return;
+
+    if (useD20Mode) {
+      const mode = rollMode === "advantage" ? "advantage" : "disadvantage";
+      const d20s = [rollDie(20), rollDie(20)];
+      const keptIndex =
+        mode === "advantage"
+          ? d20s[0] >= d20s[1] ? 0 : 1
+          : d20s[0] <= d20s[1] ? 0 : 1;
+      const keptD20 = d20s[keptIndex];
+      const rolledDice: { sides: number; value: number }[] = [];
+      const newDice: RollingDie[] = [];
+      let index = 0;
+
+      const makeDie = (sides: number, result: number, dropped = false) => {
+        const dieIndex = index++;
+        const fromLeft = Math.random() > 0.5;
+        newDice.push({
+          id: `${crypto.randomUUID()}-${dieIndex}`,
+          sides,
+          result,
+          label,
+          fromLeft,
+          startYPct: 0.15 + Math.random() * 0.35,
+          landXPct: 0.22 + Math.random() * 0.56,
+          landYPct: 0.25 + Math.random() * 0.38,
+          rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
+          delayMs: dieIndex * 180,
+          dropped,
+        });
+      };
+
+      d20s.forEach((value, i) => makeDie(20, value, i !== keptIndex));
+
+      for (const group of cleaned) {
+        const count = group.sides === 20 ? group.count - 1 : group.count;
+        for (let i = 0; i < count; i++) {
+          const value = rollDie(group.sides);
+          rolledDice.push({ sides: group.sides, value });
+          makeDie(group.sides, value);
+        }
+      }
+
+      const extraSum = rolledDice.reduce((sum, die) => sum + die.value, 0);
+      const total = keptD20 + extraSum + modifier;
+      const d20Part = `d20 ${mode === "advantage" ? "adv" : "dis"} [${d20s.join(", ")}] keep ${keptD20}`;
+      const extraPart = cleaned
+        .map((group) => {
+          const count = group.sides === 20 ? group.count - 1 : group.count;
+          if (count <= 0) return "";
+          const values = rolledDice.filter((die) => die.sides === group.sides).map((die) => die.value);
+          return ` + ${count}d${group.sides} [${values.join(", ")}]`;
+        })
+        .join("");
+      const detail = `${d20Part}${extraPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
+      const nat: RollHistoryEntry["nat"] =
+        keptD20 === 20 ? "crit" : keptD20 === 1 ? "fumble" : undefined;
+      const resultSummary = rollResultSummary(total);
+      newDice.forEach((die, dieIndex) => {
+        const isAdvantagePairDie = dieIndex < d20s.length && die.sides === 20;
+        const isKeptAdvantageDie = isAdvantagePairDie && dieIndex === keptIndex;
+
+        die.resultSummary = isAdvantagePairDie && die.dropped ? "Dropped" : resultSummary;
+        die.resultDetail = isAdvantagePairDie && die.dropped ? `${die.result}` : detail;
+        die.lingerMs = isKeptAdvantageDie
+          ? KEPT_D20_LINGER_MS
+          : die.dropped
+            ? DROPPED_D20_LINGER_MS
+            : NORMAL_ROLL_LINGER_MS;
+      });
+
+      setConsoleLog((prev) => [`${label} -> ${detail}`, ...prev].slice(0, 20));
+      recordHistory(label, detail, total, { mode, dice: d20s, keptIndex }, nat);
+      setFlyingDice((prev) => [...prev, ...newDice]);
+      setRollMode("normal");
+      return;
+    }
 
     const rolledDice: { sides: number; value: number }[] = [];
     const newDice: RollingDie[] = [];
@@ -697,6 +794,12 @@ export default function ForgeAndFableApp() {
     const detail = cleaned
       .map((g) => `${g.count}d${g.sides} [${rolledDice.filter((die) => die.sides === g.sides).map((die) => die.value).join(", ")}]`)
       .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
+    const detailWithTotal = rollDetailWithTotal(detail, total);
+    newDice.forEach((die) => {
+      die.resultSummary = rollResultSummary(total);
+      die.resultDetail = detailWithTotal;
+      die.lingerMs = NORMAL_ROLL_LINGER_MS;
+    });
     setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
     recordHistory(label, detail, total);
     setFlyingDice((prev) => [...prev, ...newDice]);
@@ -759,6 +862,19 @@ export default function ForgeAndFableApp() {
       .map((g) => ` + ${g.count}d${g.sides} [${riderValues.filter((r) => r.sides === g.sides).map((r) => r.value).join(", ")}]`)
       .join("");
     const detail = `${d20Part}${riderPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
+    const resultSummary = rollResultSummary(total);
+    newDice.forEach((die, dieIndex) => {
+      const isD20ChoiceDie = dieIndex < d20s.length && die.sides === 20;
+      const isKeptD20 = isD20ChoiceDie && dieIndex === keptIndex;
+
+      die.resultSummary = isD20ChoiceDie && die.dropped ? "Dropped" : resultSummary;
+      die.resultDetail = isD20ChoiceDie && die.dropped ? `${die.result}` : detail;
+      die.lingerMs = isKeptD20 && mode !== "normal"
+        ? KEPT_D20_LINGER_MS
+        : die.dropped
+          ? DROPPED_D20_LINGER_MS
+          : NORMAL_ROLL_LINGER_MS;
+    });
 
     setConsoleLog((prev) => [`${label}  →  ${detail}`, ...prev].slice(0, 20));
     const nat: RollHistoryEntry["nat"] =

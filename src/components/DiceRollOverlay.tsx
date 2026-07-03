@@ -7,6 +7,9 @@ export type RollingDie = {
   sides: number;
   result: number;
   label: string;
+  resultSummary?: string;
+  resultDetail?: string;
+  lingerMs?: number;
   fromLeft: boolean;
   startYPct: number;
   landXPct: number;
@@ -18,6 +21,9 @@ export type RollingDie = {
       dimmed so the kept die reads as the result. */
   dropped?: boolean;
 };
+
+const ROLL_ANIMATION_MS = 2800;
+const DEFAULT_RESULT_LINGER_MS = 1800;
 
 /* ── Die shapes ── */
 
@@ -789,16 +795,22 @@ export default memo(function DiceRollOverlay({
 
 function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; onExpire: (id: string) => void; accentHex: string; fontStack: string }) {
   const [visible, setVisible] = useState(true);
-  const totalMs = 2800 + die.delayMs;
+  const finishMs = ROLL_ANIMATION_MS + die.delayMs + 100;
+  const expireMs = finishMs + (die.lingerMs ?? DEFAULT_RESULT_LINGER_MS);
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    const finishTimer = setTimeout(() => {
       die.onFinish?.(die.result);
+    }, finishMs);
+    const expireTimer = setTimeout(() => {
       setVisible(false);
       onExpire(die.id);
-    }, totalMs + 100);
-    return () => clearTimeout(t);
-  }, [die, onExpire, totalMs]);
+    }, expireMs);
+    return () => {
+      clearTimeout(finishTimer);
+      clearTimeout(expireTimer);
+    };
+  }, [die, expireMs, finishMs, onExpire]);
 
   if (!visible) return null;
 
@@ -815,13 +827,15 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
     "--die-to-y":   `calc(${die.landYPct * 100}vh - 48px)`,
     "--die-spin":   `${die.rotations}deg`,
     "--die-glow":   colors.glow,
+    "--die-start-opacity": die.dropped ? "0.34" : "0.85",
+    "--die-visible-opacity": die.dropped ? "0.42" : "1",
     animationDelay:    `${die.delayMs}ms`,
-    animationDuration: "2.8s",
+    animationDuration: `${ROLL_ANIMATION_MS}ms`,
   } as React.CSSProperties;
 
   const textStyle = {
     animationDelay: `${die.delayMs}ms`,
-    animationDuration: "2.8s",
+    animationDuration: `${ROLL_ANIMATION_MS}ms`,
   } as React.CSSProperties;
 
   if (!isD20) {
@@ -835,10 +849,7 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
           fontStack={fontStack}
         />
 
-        <div className="die-roll-label" style={textStyle}>
-          <span className="die-roll-label-name">{die.label}</span>
-          <span className="die-roll-label-die">d{die.sides}</span>
-        </div>
+        <RollResultLabel die={die} textStyle={textStyle} />
       </div>
     );
   }
@@ -916,10 +927,20 @@ function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; o
         </svg>
       )}
 
-      <div className="die-roll-label" style={textStyle}>
+      <RollResultLabel die={die} textStyle={textStyle} />
+    </div>
+  );
+}
+
+function RollResultLabel({ die, textStyle }: { die: RollingDie; textStyle: React.CSSProperties }) {
+  return (
+    <div className="die-roll-label" style={textStyle}>
+      <span className="die-roll-label-main">
         <span className="die-roll-label-name">{die.label}</span>
         <span className="die-roll-label-die">d{die.sides}</span>
-      </div>
+      </span>
+      {die.resultSummary ? <span className="die-roll-label-total">{die.resultSummary}</span> : null}
+      {die.resultDetail ? <span className="die-roll-label-detail">{die.resultDetail}</span> : null}
     </div>
   );
 }
