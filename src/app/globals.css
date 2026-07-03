@@ -984,6 +984,35 @@ button:disabled {
   -webkit-mask: var(--class-icon-url) center / contain no-repeat;
 }
 
+.species-symbol {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 18%, transparent));
+}
+
+.species-symbol-mask {
+  flex: 0 0 auto;
+  background: currentColor;
+  mask: var(--species-icon-url) center / contain no-repeat;
+  -webkit-mask: var(--species-icon-url) center / contain no-repeat;
+}
+
+.species-symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  padding: 2px;
+}
+
+.species-symbol-grid .species-symbol-mask {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .preview-identity-row {
   position: relative;
   z-index: 2;
@@ -1081,7 +1110,7 @@ button:disabled {
 .class-art-frame,
 .hero-preview,
 .choice-avatar,
-.vault-avatar span {
+:where(.vault-avatar span) {
   --class-a: var(--gold);
   --class-b: var(--teal);
   --preview-title: #fff7e3;
@@ -5580,6 +5609,13 @@ button:disabled {
   color: color-mix(in srgb, var(--class-a, var(--doc-accent)) 75%, var(--ink));
 }
 .paper-surface .class-symbol,
-.cs-sheet .class-symbol {
+.cs-sheet .class-symbol,
+.paper-surface .species-symbol,
+.cs-sheet .species-symbol {
   filter: none;
+}
+
+/* Vault rail: per-class hue, lightened for the dark chips. */
+.vault-avatar span[data-class]:not([data-class=""]) {
+  color: color-mix(in srgb, var(--class-a) 72%, var(--parchment));
 }

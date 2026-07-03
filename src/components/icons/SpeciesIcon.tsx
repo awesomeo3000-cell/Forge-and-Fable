@@ -1,10 +1,87 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
+const RACE_ICON_PATHS: Record<string, string> = {
+  "air-genasi": "/race-icons/air-genasi.svg",
+  "drow": "/race-icons/drow.svg",
+  "dark-elf": "/race-icons/drow.svg",
+  "earth-genasi": "/race-icons/earth-genasi.svg",
+  "firbolg": "/race-icons/firbolg.svg",
+  "fire-genasi": "/race-icons/fire-genasi.svg",
+  "forest-gnome": "/race-icons/forest-gnome.svg",
+  "gnome": "/race-icons/forest-gnome.svg",
+  "high-elf": "/race-icons/high-elf.svg",
+  "elf": "/race-icons/high-elf.svg",
+  "elf-legacy": "/race-icons/high-elf.svg",
+  "half-elf-legacy": "/race-icons/high-elf.svg",
+  "tiefling": "/race-icons/tiefling.svg",
+  "tiefling-legacy": "/race-icons/tiefling.svg",
+  "triton": "/race-icons/triton.svg",
+  "water-genasi": "/race-icons/water-genasi.svg",
+  "yuan-ti": "/race-icons/yuan-ti.svg",
+  "yuan-ti-pureblood": "/race-icons/yuan-ti.svg",
+};
+
+const GENASI_ICON_PATHS = [
+  "/race-icons/air-genasi.svg",
+  "/race-icons/earth-genasi.svg",
+  "/race-icons/fire-genasi.svg",
+  "/race-icons/water-genasi.svg",
+];
+
+const RACE_ICON_GROUPS: Record<string, string[]> = {
+  genasi: GENASI_ICON_PATHS,
+  "genasi-legacy": GENASI_ICON_PATHS,
+};
+
+type IconMaskStyle = CSSProperties & {
+  "--species-icon-url": string;
+};
+
 function SpeciesIconPlaceholder(props: {
   speciesId: string;
   size: number;
   strokeWidth?: number;
 }) {
+  const id = props.speciesId.toLowerCase();
+  const iconPath = RACE_ICON_PATHS[id];
+  const iconGroup = RACE_ICON_GROUPS[id];
+
+  if (iconGroup) {
+    return (
+      <span
+        aria-hidden="true"
+        className="species-symbol species-symbol-grid"
+        style={{ height: props.size, width: props.size }}
+      >
+        {iconGroup.map((path) => (
+          <span
+            key={path}
+            className="species-symbol-mask"
+            style={{ "--species-icon-url": `url("${path}")` } as IconMaskStyle}
+          />
+        ))}
+      </span>
+    );
+  }
+
+  if (iconPath) {
+    const style: IconMaskStyle = {
+      "--species-icon-url": `url("${iconPath}")`,
+      height: props.size,
+      width: props.size,
+    };
+
+    return (
+      <span
+        aria-hidden="true"
+        className="species-symbol species-symbol-mask"
+        style={style}
+      />
+    );
+  }
+
   const strokeWidth = props.strokeWidth ?? 2;
   const common = {
     fill: "none",
@@ -13,12 +90,11 @@ function SpeciesIconPlaceholder(props: {
     strokeLinejoin: "round" as const,
     strokeWidth,
   };
-  const id = props.speciesId;
 
   return (
     <svg
       aria-hidden="true"
-      className="class-svg"
+      className="species-symbol"
       focusable="false"
       height={props.size}
       viewBox="0 0 64 64"
