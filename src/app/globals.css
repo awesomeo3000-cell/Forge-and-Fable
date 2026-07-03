@@ -6263,3 +6263,53 @@ button.dj-card {
   color: var(--parchment-2);
 }
 .cs-ac-breakdown-row strong { color: var(--parchment); font-variant-numeric: tabular-nums; }
+
+/* ── Dossier: class skill proficiency picker ── */
+.dj-skill-pick {
+  border: 1px solid var(--doc-rule);
+  border-left: 4px solid color-mix(in srgb, var(--class-a, var(--doc-accent)) 60%, var(--paper));
+  background: var(--paper-raised);
+  padding: 10px 12px;
+}
+.dj-skill-pick-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.dj-skill-count {
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--doc-accent);
+}
+.dj-skill-count.done { color: color-mix(in srgb, #4f7d33 75%, var(--ink)); }
+.dj-skill-hint {
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.dj-skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dj-skill-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--doc-rule);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.dj-skill-chip.picked {
+  border-color: var(--doc-accent);
+  background: color-mix(in srgb, var(--doc-accent) 10%, var(--paper));
+  color: var(--ink);
+}
+.dj-skill-chip[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

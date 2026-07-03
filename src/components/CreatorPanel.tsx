@@ -29,6 +29,7 @@ import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import { signed } from "@/lib/utils";
+import { CLASS_SKILL_CHOICES, SKILLS } from "@/lib/srd";
 
 type AssignmentMap = Record<AbilityKey, number>;
 
@@ -129,15 +130,29 @@ export default memo(function CreatorPanel(props: {
         ? "Premade"
         : "Standard";
 
+  const skillChoice = props.draft.classId ? CLASS_SKILL_CHOICES[props.draft.classId] : undefined;
+  const chosenSkillCount = props.draft.skillProficiencies.length;
+  const skillsComplete = !skillChoice || chosenSkillCount >= skillChoice.count;
+  const classStepComplete = Boolean(props.draft.classId) && skillsComplete;
+
+  const toggleSkillChoice = (skillId: string) => {
+    const current = props.draft.skillProficiencies;
+    if (current.includes(skillId)) {
+      props.onDraftChange({ ...props.draft, skillProficiencies: current.filter((id) => id !== skillId) });
+    } else if (!skillChoice || current.length < skillChoice.count) {
+      props.onDraftChange({ ...props.draft, skillProficiencies: [...current, skillId] });
+    }
+  };
+
   const stepComplete = [
     Boolean(props.draft.name.trim()) && props.draft.sourceIds.length > 0,
-    Boolean(props.draft.classId),
+    classStepComplete,
     Boolean(props.draft.background),
     Boolean(props.draft.raceId),
     Boolean(props.statMethod),
     Boolean(props.draft.name.trim()) &&
       props.draft.sourceIds.length > 0 &&
-      Boolean(props.draft.classId) &&
+      classStepComplete &&
       Boolean(props.draft.background) &&
       Boolean(props.draft.raceId),
   ];
@@ -249,6 +264,41 @@ export default memo(function CreatorPanel(props: {
                     detail={classDetailLine(selectedClass)}
                   />
                 ) : null}
+                {selectedClass && skillChoice ? (
+                  <div className="dj-skill-pick" data-class={selectedClass.id}>
+                    <div className="dj-skill-pick-head">
+                      <span className="dj-eyebrow">Skill proficiencies</span>
+                      <span className={`dj-skill-count${skillsComplete ? " done" : ""}`}>
+                        {chosenSkillCount}/{skillChoice.count} chosen
+                      </span>
+                    </div>
+                    <p className="dj-skill-hint">
+                      {skillsComplete
+                        ? `Trained in ${props.draft.skillProficiencies.map((id) => SKILLS.find((sk) => sk.id === id)?.name ?? id).join(", ")}.`
+                        : `Choose ${skillChoice.count} skills the ${selectedClass.name.toLowerCase()} is trained in.`}
+                    </p>
+                    <div className="dj-skill-chips">
+                      {skillChoice.options.map((skillId) => {
+                        const skill = SKILLS.find((sk) => sk.id === skillId);
+                        if (!skill) return null;
+                        const picked = props.draft.skillProficiencies.includes(skillId);
+                        const full = !picked && skillsComplete;
+                        return (
+                          <button
+                            key={skillId}
+                            type="button"
+                            className={`dj-skill-chip${picked ? " picked" : ""}`}
+                            aria-pressed={picked}
+                            disabled={full}
+                            onClick={() => toggleSkillChoice(skillId)}
+                          >
+                            {skill.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
                 <div className="dj-card-grid">
                   {props.ruleset.classes.map((candidate) => {
                     const selected = candidate.id === props.draft.classId;
@@ -265,7 +315,7 @@ export default memo(function CreatorPanel(props: {
                           type="button"
                           aria-label={`Select ${candidate.name}`}
                           aria-pressed={selected}
-                          onClick={() => props.onDraftChange({ ...props.draft, classId: candidate.id })}
+                          onClick={() => { if (candidate.id !== props.draft.classId) props.onDraftChange({ ...props.draft, classId: candidate.id, skillProficiencies: [] }); }}
                         />
                         <div className="dj-card-main">
                           <span className="dj-card-icon" data-class={candidate.id}>

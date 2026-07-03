@@ -1,5 +1,6 @@
 import type { AbilityKey, AbilityScores, DraftCharacter, Ruleset } from "@/types/game";
 import { abilityKeys, defaultCharacterSettings, emptyAbilities } from "@/lib/utils";
+import { CLASS_SKILL_CHOICES } from "@/lib/srd";
 
 // ──── Quickbuilder question flow ────
 
@@ -98,7 +99,10 @@ export function buildQuickDraft(ruleset: Ruleset, classId: string, raceId: strin
     inventory: [],
     spellsKnown: heroClass.spellSuggestions.slice(0, 3),
     customRules: [],
-    skillProficiencies: [],
+    // Quick builds skip the picker: take the first N class skills.
+    skillProficiencies: CLASS_SKILL_CHOICES[classId]
+      ? CLASS_SKILL_CHOICES[classId].options.slice(0, CLASS_SKILL_CHOICES[classId].count)
+      : [],
     deathSaves: { successes: 0, failures: 0 },
   };
 
