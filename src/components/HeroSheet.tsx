@@ -136,9 +136,18 @@ export default memo(function HeroSheet(props: {
   const isSaveProficient = (key: AbilityKey) => proficientSaves.includes(key);
 
   const backgroundSkillIds: string[] = BACKGROUND_SKILLS[props.character.background] ?? [];
+  const characterSkillIds = props.character.skillProficiencies ?? [];
   const isBackgroundSkill = (id: string) => backgroundSkillIds.includes(id);
+  const isCharacterSkill = (id: string) => characterSkillIds.includes(id);
   const isSkillProficient = (id: string) =>
-    (props.character.skillProficiencies ?? []).includes(id) || isBackgroundSkill(id);
+    characterSkillIds.includes(id) || isBackgroundSkill(id);
+
+  const skillProficiencySources = (id: string) => {
+    const sources: string[] = [];
+    if (isBackgroundSkill(id)) sources.push("BG");
+    if (isCharacterSkill(id)) sources.push("PROF");
+    return sources;
+  };
 
   const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
   const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0) + effChecks;
@@ -763,7 +772,7 @@ export default memo(function HeroSheet(props: {
       case "skills": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Skills</h3>
-          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? " (on)" : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20(skill.name, bonus)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`}>{skill.name}{isBackgroundSkill(skill.id) ? <span className="cs-skill-bg-chip" title="Granted by background">BG</span> : null}</button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
+          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20(skill.name, bonus)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
         </section>
       );
       case "senses": return (

@@ -6930,19 +6930,34 @@ button.dj-card {
 
 /* ── Feature 1: Background skill grants ── */
 
-/* BG chip on sheet skills */
-.cs-skill-bg-chip {
-  display: inline-block;
-  margin-left: 5px;
+/* Source chips on sheet skills — shows BG (background) and/or PROF (chosen) */
+.cs-skill-source-chips {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.cs-skill-source-chip {
+  display: inline-flex;
+  align-items: center;
   padding: 0 4px;
   font-size: 0.58rem;
   font-weight: 700;
   line-height: 1.4;
+  border-radius: 3px;
+}
+
+.cs-skill-source-chip.background {
   color: var(--gold);
   background: color-mix(in srgb, var(--gold) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
-  border-radius: 3px;
-  vertical-align: middle;
+}
+
+.cs-skill-source-chip.trained {
+  color: var(--accent, var(--gold));
+  background: color-mix(in srgb, var(--accent, var(--gold)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--gold)) 26%, transparent);
 }
 
 /* Background skill readout in CreatorPanel Origin step */
