@@ -21,6 +21,7 @@ const RACE_ICON_PATHS: Record<string, string> = {
   "firbolg": "/race-icons/firbolg.svg",
   "fire-genasi": "/race-icons/fire-genasi.svg",
   "forest-gnome": "/race-icons/forest-gnome.svg",
+  "forest-gnome-legacy": "/race-icons/forest-gnome.svg",
   "genasi": "/race-icons/genasi.svg",
   "genasi-legacy": "/race-icons/genasi.svg",
   "gnome": "/race-icons/gnome.svg",

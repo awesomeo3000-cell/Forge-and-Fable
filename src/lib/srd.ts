@@ -40,6 +40,7 @@ export const SAVE_PROFICIENCIES: Record<string, { label: string; abilities: [Abi
   sorcerer: { label: "Sorcerer", abilities: ["constitution", "charisma"] },
   warlock: { label: "Warlock", abilities: ["wisdom", "charisma"] },
   wizard: { label: "Wizard", abilities: ["intelligence", "wisdom"] },
+  artificer: { label: "Artificer", abilities: ["constitution", "intelligence"] },
 };
 
 /** Class skill proficiency choices (PHB): pick `count` from `options`. */
@@ -56,4 +57,5 @@ export const CLASS_SKILL_CHOICES: Record<string, { count: number; options: strin
   sorcerer: { count: 2, options: ["arcana", "deception", "insight", "intimidation", "persuasion", "religion"] },
   warlock: { count: 2, options: ["arcana", "deception", "history", "intimidation", "investigation", "nature", "religion"] },
   wizard: { count: 2, options: ["arcana", "history", "insight", "investigation", "medicine", "religion"] },
+  artificer: { count: 2, options: ["arcana", "history", "investigation", "medicine", "nature", "perception", "sleight-of-hand"] },
 };

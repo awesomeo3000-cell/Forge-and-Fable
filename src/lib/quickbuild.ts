@@ -15,7 +15,7 @@ export const FIGHT_STYLES: { id: FightStyle; label: string; summary: string }[] 
 
 export const STYLE_TO_CLASSES: Record<FightStyle, string[]> = {
   weapons: ["barbarian", "fighter", "monk", "paladin"],
-  magic: ["sorcerer", "warlock", "wizard"],
+  magic: ["sorcerer", "warlock", "wizard", "artificer"],
   sneaky: ["bard", "ranger", "rogue"],
   faith: ["cleric", "druid"],
 };

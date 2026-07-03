@@ -1220,6 +1220,13 @@ button:disabled {
   --preview-copy: var(--parchment-2);
 }
 
+[data-class="artificer"] {
+  --class-a: #7a6e4e;
+  --class-b: var(--class-a);
+  --preview-title: var(--parchment);
+  --preview-copy: var(--parchment-2);
+}
+
 [data-species="dragonborn"],
 [data-species="dragonborn-legacy"] {
   --class-a: #8a5a3a;
@@ -1241,7 +1248,8 @@ button:disabled {
 
 [data-species="gnome"],
 [data-species="rock-gnome-legacy"],
-[data-species="deep-gnome-legacy"] {
+[data-species="deep-gnome-legacy"],
+[data-species="forest-gnome-legacy"] {
   --class-a: #7a5a4a;
   --class-b: var(--class-a);
 }
@@ -5242,6 +5250,81 @@ button:disabled {
 }
 
 /* ── Spell prep & casting ── */
+.cs-spellbook-manager {
+  display: grid;
+  gap: 8px;
+  padding: 9px 10px;
+  margin-bottom: 12px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--ground-3) 86%, var(--accent) 14%);
+}
+.cs-spellbook-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cs-spellbook-head .cs-spell-level-head {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cs-spellbook-head small {
+  color: var(--ink-faint);
+  font-family: var(--font-label);
+  font-size: 0.68em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cs-spellbook-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.cs-spellbook-add select {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: var(--ground-2);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 0.86em;
+}
+.cs-spellbook-known {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cs-known-spell-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--parchment-2);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.78em;
+}
+.cs-known-spell-chip span {
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 0.72em;
+  text-transform: uppercase;
+}
+.cs-known-spell-chip:hover {
+  border-color: var(--accent);
+  color: var(--parchment);
+}
+.cs-spellbook-add .cs-glass-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .cs-prep-marker {
   float: left;
   margin-right: 6px;

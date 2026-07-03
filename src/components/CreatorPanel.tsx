@@ -65,6 +65,15 @@ function speciesDetailLine(race: Race) {
   return `${race.creatureType} / ${race.size} / ${race.speed}`;
 }
 
+function parseSpeciesName(name: string): { displayName: string; subspeciesLabel: string | null } {
+  const match = name.match(/^(.+)\s+\((\d+)\)$/);
+  if (match) {
+    const count = parseInt(match[2], 10);
+    return { displayName: match[1], subspeciesLabel: `${count} subspecies` };
+  }
+  return { displayName: name, subspeciesLabel: null };
+}
+
 function StepSlot(props: { value?: string | null; label: string }) {
   return props.value ? (
     <span className="dj-header-value">{props.value}</span>
@@ -561,12 +570,14 @@ export default memo(function CreatorPanel(props: {
                   <DossierStamp
                     type="species"
                     speciesId={race.id}
-                    label={race.name}
+                    label={parseSpeciesName(race.name).displayName}
                     detail={speciesDetailLine(race)}
                   />
                 ) : null}
                 <div className="dj-card-grid species-grid">
-                  {props.ruleset.races.map((candidate) => (
+                  {props.ruleset.races.map((candidate) => {
+                    const parsed = parseSpeciesName(candidate.name);
+                    return (
                     <button
                       type="button"
                       key={candidate.id}
@@ -583,12 +594,14 @@ export default memo(function CreatorPanel(props: {
                         <span className="dj-card-icon" data-species={candidate.id}>
                           <SpeciesIconPlaceholder speciesId={candidate.id} size={18} strokeWidth={1.5} />
                         </span>
-                        <strong>{candidate.name}</strong>
+                        <strong>{parsed.displayName}</strong>
                         {candidate.id === props.draft.raceId ? <em>chosen</em> : null}
                       </div>
+                      {parsed.subspeciesLabel ? <small>{parsed.subspeciesLabel}</small> : null}
                       <small>{speciesDetailLine(candidate)}</small>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : null}

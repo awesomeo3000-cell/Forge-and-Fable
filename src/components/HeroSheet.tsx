@@ -31,7 +31,7 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
-import { getSpell, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
+import { getSpell, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
 import { ARMORS, WEAPONS, computeArmorClass, getWeapon, inventoryWeaponToDef, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
@@ -140,18 +140,27 @@ export default memo(function HeroSheet(props: {
   const passivePerception = 10 + skillBonus(SKILLS.find((s) => s.id === "perception")!);
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
+  const casterType = heroClass.casterType ?? "none";
+  const spellAbility = heroClass.spellcastingAbility;
+  const classSpellList = spellsForClass(heroClass.name);
+  const canManageSpellbook = learnsIndividualSpells(heroClass.id, casterType) && classSpellList.length > 0;
   // Prepared casters (cleric/druid/paladin/artificer) have their WHOLE class
   // list available up to their accessible spell level — not a learned subset.
   // Everyone else shows the spells they actually know. (Cantrips stay chosen.)
-  const _ct = heroClass.casterType ?? "none";
-  const _isPrepared = PREPARED_CASTERS.has(heroClass.id) && _ct !== "none";
-  const _maxSpellLvl = maxSlots(_ct, props.character.level).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
+  const _isPrepared = PREPARED_CASTERS.has(heroClass.id) && casterType !== "none";
+  const _maxSpellLvl = maxSlots(casterType, props.character.level).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
   const knownSpells: SpellData[] = _isPrepared
     ? [
         ...(props.character.spellsKnown.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
-        ...spellsForClass(heroClass.name).filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
+        ...classSpellList.filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
       ]
     : (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[]);
+  const spellbookChoices = canManageSpellbook
+    ? classSpellList
+        .filter((spell) => spell.level === 0 || spell.level <= _maxSpellLvl)
+        .filter((spell) => !props.character.spellsKnown.includes(spell.id))
+        .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
+    : [];
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
   const subclassFeatures = props.character.subclassId
@@ -280,7 +289,8 @@ export default memo(function HeroSheet(props: {
   const subtitleParts = [race.name, heroClass.name, props.character.level > 0 ? `Level ${props.character.level}` : null, props.character.background, props.character.alignment].filter(Boolean);
 
   /* ── Reference tabs ── */
-  const visibleTabs = REF_TABS.filter((t) => t.id !== "spells" || knownSpells.length > 0);
+  const hasSpellTab = casterType !== "none" && Boolean(spellAbility) && (knownSpells.length > 0 || spellbookChoices.length > 0);
+  const visibleTabs = REF_TABS.filter((t) => t.id !== "spells" || hasSpellTab);
   const [refTab, setRefTab] = useState<RefTab>(visibleTabs[0]?.id ?? "features");
   const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     let nxt = i;
@@ -402,6 +412,7 @@ export default memo(function HeroSheet(props: {
   /* ── Spell slots & detail ── */
   const [spellDetail, setSpellDetail] = useState<SpellData | null>(null);
   const [preparedOnly, setPreparedOnly] = useState(false);
+  const [spellToLearn, setSpellToLearn] = useState("");
   const [showInvForm, setShowInvForm] = useState(false);
   const [invName, setInvName] = useState("");
   const [invRarity, setInvRarity] = useState("Common");
@@ -432,9 +443,7 @@ export default memo(function HeroSheet(props: {
   }, [itemCategory, itemRarity, itemSearch]);
   const visibleItemMatches = itemMatches.slice(0, 24);
   const hitDiceRolling = useRef(false);
-  const casterType = heroClass.casterType ?? "none";
   const isPactCaster = casterType === "pact";
-  const spellAbility = heroClass.spellcastingAbility;
   const slotMax = maxSlots(casterType, props.character.level);
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
   // Pact slots live at the first non-zero entry of slotMax (index = slotLevel - 1), not always [0].
@@ -500,6 +509,18 @@ export default memo(function HeroSheet(props: {
     } else if (preparedIds.length < prepLimit) {
       props.onUpdate({ preparedSpells: [...preparedIds, spellId] });
     }
+  };
+  const learnSpell = (spellId: string) => {
+    if (!spellId || props.character.spellsKnown.includes(spellId)) return;
+    if (!spellbookChoices.some((spell) => spell.id === spellId)) return;
+    props.onUpdate({ spellsKnown: [...props.character.spellsKnown, spellId] });
+    setSpellToLearn("");
+  };
+  const forgetSpell = (spellId: string) => {
+    props.onUpdate({
+      spellsKnown: props.character.spellsKnown.filter((id) => id !== spellId),
+      preparedSpells: preparedIds.filter((id) => id !== spellId),
+    });
   };
   // One combined patch: slot spend + concentration must not race as two PUTs.
   const castSpell = (spell: SpellData, atLevel: number) => {
@@ -909,6 +930,47 @@ export default memo(function HeroSheet(props: {
               {props.character.concentratingOn ? (
                 <div className="cs-conc-banner">Concentrating on <strong>{props.character.concentratingOn}</strong>
                   <button type="button" className="cs-glass-btn" onClick={() => props.onUpdate({ concentratingOn: null })}>End</button>
+                </div>
+              ) : null}
+              {canManageSpellbook ? (
+                <div className="cs-spellbook-manager">
+                  <div className="cs-spellbook-head">
+                    <span className="cs-spell-level-head">{heroClass.id === "wizard" ? "Spellbook" : "Spells Known"}</span>
+                    <small>
+                      {props.character.spellsKnown.length} learned
+                      {_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}
+                    </small>
+                  </div>
+                  <div className="cs-spellbook-add">
+                    <select
+                      value={spellToLearn}
+                      onChange={(event) => setSpellToLearn(event.target.value)}
+                      aria-label="Choose a spell to learn"
+                    >
+                      <option value="">Choose a spell</option>
+                      {spellbookChoices.map((spell) => (
+                        <option key={spell.id} value={spell.id}>
+                          {spell.level === 0 ? "Cantrip" : `Level ${spell.level}`} - {spell.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="cs-glass-btn" type="button" disabled={!spellToLearn} onClick={() => learnSpell(spellToLearn)}>
+                      Learn
+                    </button>
+                  </div>
+                  {knownSpells.length > 0 ? (
+                    <div className="cs-spellbook-known">
+                      {knownSpells.map((spell) => (
+                        <button key={spell.id} type="button" className="cs-known-spell-chip" onClick={() => forgetSpell(spell.id)}>
+                          {spell.name}
+                          <span>Forget</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {spellbookChoices.length === 0 ? (
+                    <p className="cs-muted">No additional spells available at this level.</p>
+                  ) : null}
                 </div>
               ) : null}
               <div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
