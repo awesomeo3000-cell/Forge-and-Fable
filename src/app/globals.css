@@ -1947,7 +1947,11 @@ button:disabled {
 }
 
 .feedback-modal {
+  --skin-bg-pattern: var(--grain);
+  --skin-bg-size: 140px 140px;
+  --skin-bg-opacity: 0.08;
   position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(1040px, 100%);
@@ -1955,13 +1959,94 @@ button:disabled {
   overflow: hidden;
   gap: 18px;
   padding: 22px;
-  border: 1px solid color-mix(in srgb, var(--gold) 34%, rgba(255, 255, 255, 0.14));
+  border: 1px solid color-mix(in srgb, var(--doc-accent) 38%, var(--doc-rule));
   border-radius: 24px;
   background:
-    radial-gradient(circle at 18% 0%, rgba(205, 164, 92, 0.18), transparent 40%),
-    radial-gradient(circle at 86% 18%, rgba(88, 146, 150, 0.16), transparent 36%),
-    rgba(8, 9, 11, 0.96);
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--doc-accent) 16%, transparent), transparent 40%),
+    radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--ink) 8%, transparent), transparent 36%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
   box-shadow: 0 24px 76px rgba(0, 0, 0, 0.58);
+}
+
+.feedback-modal::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  background-image: var(--skin-bg-pattern);
+  background-size: var(--skin-bg-size);
+  opacity: var(--skin-bg-opacity);
+}
+
+.feedback-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+.feedback-modal[data-bg="parchment"] {
+  --skin-bg-pattern: var(--grain);
+  --skin-bg-size: 140px 140px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.18);
+}
+
+.feedback-modal[data-bg="plain"] {
+  --skin-bg-pattern: none;
+  --skin-bg-opacity: 0;
+}
+
+.feedback-modal[data-bg="linen"] {
+  --skin-bg-pattern:
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1px);
+  --skin-bg-size: 9px 9px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.65);
+}
+
+.feedback-modal[data-bg="stars"] {
+  --skin-bg-pattern:
+    radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--doc-accent) 62%, transparent) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 35% 44%, color-mix(in srgb, var(--ink) 34%, transparent) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 24%, color-mix(in srgb, var(--doc-accent) 54%, transparent) 0 1.25px, transparent 2.25px),
+    radial-gradient(circle at 84% 68%, color-mix(in srgb, var(--ink) 30%, transparent) 0 1px, transparent 2px);
+  --skin-bg-size: 112px 88px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.9);
+}
+
+.feedback-modal[data-bg="sparkle"] {
+  --skin-bg-pattern:
+    radial-gradient(circle at 22% 30%, color-mix(in srgb, var(--doc-accent) 68%, transparent) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--doc-accent) 30%, transparent) 0 1px, transparent 7px),
+    radial-gradient(circle at 48% 76%, color-mix(in srgb, var(--ink) 18%, transparent) 0 1px, transparent 8px),
+    linear-gradient(135deg, transparent 0 46%, color-mix(in srgb, var(--doc-accent) 22%, transparent) 47% 49%, transparent 50% 100%);
+  --skin-bg-size: 86px 86px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.95);
+}
+
+.feedback-modal[data-bg="forest"] {
+  --skin-bg-pattern:
+    radial-gradient(ellipse at 32% 28%, color-mix(in srgb, var(--doc-accent) 32%, transparent) 0 7px, transparent 8px),
+    radial-gradient(ellipse at 70% 74%, color-mix(in srgb, var(--ink) 20%, transparent) 0 9px, transparent 10px),
+    repeating-linear-gradient(112deg, transparent 0 13px, color-mix(in srgb, var(--doc-accent) 18%, transparent) 14px 16px, transparent 17px 34px);
+  --skin-bg-size: 96px 112px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.8);
+}
+
+.feedback-modal[data-bg="dungeon"] {
+  --skin-bg-pattern:
+    linear-gradient(color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 0 47%, color-mix(in srgb, var(--ink) 12%, transparent) 48% 50%, transparent 51% 100%);
+  --skin-bg-size: 34px 26px, 34px 26px, 68px 52px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.85);
+}
+
+.feedback-modal[data-bg="custom"] {
+  --skin-bg-pattern: var(--skin-bg-image, none);
+  --skin-bg-size: cover;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.35);
 }
 
 .feedback-modal-hero {
@@ -1977,14 +2062,14 @@ button:disabled {
   place-items: center;
   width: 56px;
   height: 56px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid color-mix(in srgb, var(--doc-accent) 46%, var(--doc-rule));
   border-radius: 16px;
-  color: #171007;
-  background: linear-gradient(145deg, var(--select), var(--accent-deep));
+  color: var(--paper);
+  background: linear-gradient(145deg, var(--doc-accent), var(--doc-accent-deep));
 }
 
 .feedback-eyebrow {
-  color: var(--gold);
+  color: var(--doc-accent-deep);
   font-size: 0.72rem;
   font-weight: 760;
   letter-spacing: 0.14em;
@@ -1993,7 +2078,7 @@ button:disabled {
 
 .feedback-modal-hero h2 {
   margin-top: 4px;
-  color: #fff4da;
+  color: var(--ink);
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 0.98;
 }
@@ -2001,7 +2086,7 @@ button:disabled {
 .feedback-modal-hero p {
   max-width: 720px;
   margin-top: 8px;
-  color: var(--soft);
+  color: var(--ink-2);
   line-height: 1.55;
 }
 
@@ -2015,9 +2100,9 @@ button:disabled {
 .feedback-form,
 .feedback-inbox {
   min-height: 0;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid var(--doc-rule);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.055);
+  background: color-mix(in srgb, var(--paper-raised) 92%, var(--paper));
 }
 
 .feedback-form {
@@ -2038,6 +2123,42 @@ button:disabled {
   resize: vertical;
 }
 
+.feedback-modal .control-field span {
+  color: var(--ink-2);
+}
+
+.feedback-modal .control-field input,
+.feedback-modal .control-field textarea,
+.feedback-modal .control-field select {
+  border-color: var(--doc-rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.feedback-modal .control-field input::placeholder,
+.feedback-modal .control-field textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.feedback-modal .glass-icon {
+  border-color: var(--doc-rule);
+  background: color-mix(in srgb, var(--paper-raised) 82%, var(--paper));
+  color: var(--ink);
+}
+
+.feedback-modal .glass-button {
+  border-color: var(--doc-rule);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
+}
+
+.feedback-modal .gold-button {
+  border-color: var(--doc-accent-deep);
+  background: var(--doc-accent);
+  color: var(--paper);
+}
+
 .feedback-context {
   display: flex;
   flex-wrap: wrap;
@@ -2045,17 +2166,17 @@ button:disabled {
 }
 
 .feedback-context span {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--doc-rule-soft);
   border-radius: 999px;
   padding: 5px 9px;
-  color: var(--soft);
-  background: rgba(0, 0, 0, 0.16);
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--doc-accent) 7%, var(--paper));
   font-size: 0.78rem;
 }
 
 .feedback-status {
   min-height: 20px;
-  color: var(--teal);
+  color: var(--doc-accent-deep);
   font-size: 0.9rem;
 }
 
@@ -2075,7 +2196,7 @@ button:disabled {
 }
 
 .feedback-empty {
-  color: var(--soft);
+  color: var(--ink-2);
   line-height: 1.5;
 }
 
@@ -2087,10 +2208,10 @@ button:disabled {
 .feedback-item {
   display: grid;
   gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--doc-rule-soft);
   border-radius: 12px;
   padding: 11px;
-  background: rgba(0, 0, 0, 0.16);
+  background: color-mix(in srgb, var(--paper) 88%, var(--doc-accent) 12%);
 }
 
 .feedback-item-head {
@@ -2101,15 +2222,15 @@ button:disabled {
 }
 
 .feedback-item strong {
-  color: #fff4da;
+  color: var(--ink);
   line-height: 1.25;
 }
 
 .feedback-item-head span {
-  border: 1px solid rgba(205, 164, 92, 0.35);
+  border: 1px solid color-mix(in srgb, var(--doc-accent) 52%, var(--doc-rule));
   border-radius: 999px;
   padding: 3px 7px;
-  color: var(--gold);
+  color: var(--doc-accent-deep);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -2119,7 +2240,7 @@ button:disabled {
 .feedback-item p {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--soft);
+  color: var(--ink-2);
   font-size: 0.9rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -2127,7 +2248,7 @@ button:disabled {
 }
 
 .feedback-item small {
-  color: color-mix(in srgb, var(--soft) 72%, transparent);
+  color: var(--ink-3);
   font-size: 0.76rem;
 }
 

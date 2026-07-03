@@ -1,9 +1,10 @@
 "use client";
 
 import { memo, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
-import type { FeedbackCategory, FeedbackEntry, FeedbackPriority } from "@/types/game";
+import type { CharacterTheme, FeedbackCategory, FeedbackEntry, FeedbackPriority } from "@/types/game";
+import { FONT_STACKS } from "@/lib/skins";
 
 export type FeedbackInput = {
   category: FeedbackCategory;
@@ -47,6 +48,7 @@ function formatFeedbackTime(value: string) {
 
 export default memo(function FeedbackModal(props: {
   entries: FeedbackEntry[];
+  theme?: CharacterTheme | null;
   currentPage: string;
   characterName?: string;
   status: string;
@@ -59,6 +61,27 @@ export default memo(function FeedbackModal(props: {
   const [area, setArea] = useState("Character sheet");
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+  const themeVars = props.theme
+    ? ({
+        "--paper": props.theme.paper,
+        "--paper-raised": `color-mix(in srgb, ${props.theme.paper} 94%, #000)`,
+        "--ink": props.theme.ink,
+        "--ink-2": `color-mix(in srgb, ${props.theme.ink} 65%, ${props.theme.paper})`,
+        "--ink-3": `color-mix(in srgb, ${props.theme.ink} 45%, ${props.theme.paper})`,
+        "--doc-accent": props.theme.accent,
+        "--doc-accent-deep": `color-mix(in srgb, ${props.theme.accent} 82%, #000)`,
+        "--doc-select": props.theme.accent,
+        "--doc-rule": `color-mix(in srgb, ${props.theme.ink} 40%, ${props.theme.paper})`,
+        "--doc-rule-soft": `color-mix(in srgb, ${props.theme.ink} 20%, ${props.theme.paper})`,
+        "--font-body": FONT_STACKS[props.theme.fontKey],
+        "--font-display": FONT_STACKS[props.theme.fontKey],
+        "--bg-opacity": `${props.theme.backgroundOpacity ?? 0.5}`,
+        ...(props.theme.backgroundImageUrl
+          ? { "--skin-bg-image": `url("${props.theme.backgroundImageUrl.replace(/["\\)]/g, "")}")` }
+          : {}),
+      } as CSSProperties)
+    : undefined;
+  const backgroundKey = props.theme?.backgroundImageUrl ? "custom" : props.theme?.backgroundKey ?? "parchment";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -84,6 +107,8 @@ export default memo(function FeedbackModal(props: {
     <div className="modal-scrim feedback-scrim" onClick={props.onClose}>
       <section
         className="feedback-modal"
+        data-bg={backgroundKey}
+        style={themeVars}
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-title"

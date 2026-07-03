@@ -786,6 +786,7 @@ export default function ForgeAndFableApp() {
     {feedbackOpen ? (
       <FeedbackModal
         entries={feedbackEntries}
+        theme={selected?.theme ?? null}
         currentPage={typeof window !== "undefined" ? window.location.pathname : "/"}
         characterName={selected?.name}
         status={feedbackStatus}
