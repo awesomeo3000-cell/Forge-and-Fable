@@ -6,20 +6,19 @@ Do not deploy this to GitHub Pages or a static-only host.
 
 ## Privacy Model
 
-Use all three layers:
+Use these layers:
 
 1. Keep the GitHub repository private.
-2. Set `REGISTRATION_INVITE_CODE` on the host and only share it with friends.
+2. Share the hosted URL only with the people you want using the app.
 3. Keep normal app login enabled.
 
-Existing users do not need the invite code to log in. The code is only checked when creating a new account.
+Registration only asks for email and password. Anyone with the live URL can create an account unless the host adds an outer access-control layer.
 
 ## Required Environment Variables
 
 | Name | Purpose |
 | --- | --- |
 | `JWT_SECRET` | Required in production. Use a long random value. |
-| `REGISTRATION_INVITE_CODE` | Optional locally, recommended online. Requires new users to enter this code when registering. |
 | `FORGE_VAULT_DIR` | Optional. Directory that stores `forge-vault.json`. Use a persistent disk path online. |
 
 Generate a strong `JWT_SECRET`:
@@ -38,8 +37,7 @@ This repo includes `render.yaml`.
 2. In Render, choose **New** -> **Blueprint**.
 3. Connect the GitHub repository.
 4. Render will read `render.yaml`.
-5. When prompted, enter `REGISTRATION_INVITE_CODE`.
-6. Deploy the blueprint.
+5. Deploy the blueprint.
 
 The blueprint creates:
 
@@ -71,7 +69,6 @@ This repo includes `railway.json`.
 
 ```text
 JWT_SECRET=<long random secret>
-REGISTRATION_INVITE_CODE=<private code for your friends>
 ```
 
 Railway automatically exposes the volume path as `RAILWAY_VOLUME_MOUNT_PATH`, and Forge & Fable will use it for the vault. You can also explicitly set:
@@ -92,8 +89,5 @@ npm run build
 After deployment:
 
 1. Open the hosted URL.
-2. Create your own account with the invite code.
-3. Share the URL and invite code privately with friends.
-4. Rotate `REGISTRATION_INVITE_CODE` later if it leaks.
-
-Changing the invite code does not affect existing accounts.
+2. Create your own account with an email and password.
+3. Share the URL privately with friends.

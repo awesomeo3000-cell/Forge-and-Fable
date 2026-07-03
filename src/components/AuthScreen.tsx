@@ -7,16 +7,12 @@ import type { AuthMode } from "@/types/game";
 
 export default memo(function AuthScreen(props: {
   mode: AuthMode;
-  name: string;
   email: string;
   password: string;
-  inviteCode: string;
   status: string;
   onModeChange: (mode: AuthMode) => void;
-  onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
-  onInviteCodeChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) {
   return (
@@ -56,10 +52,6 @@ export default memo(function AuthScreen(props: {
           </button>
         </div>
         <label className="control-field">
-          <span>Name</span>
-          <input value={props.name} onChange={(event) => props.onNameChange(event.target.value)} />
-        </label>
-        <label className="control-field">
           <span>Email</span>
           <input
             type="email"
@@ -75,16 +67,6 @@ export default memo(function AuthScreen(props: {
             onChange={(event) => props.onPasswordChange(event.target.value)}
           />
         </label>
-        {props.mode === "register" ? (
-          <label className="control-field">
-            <span>Invite code</span>
-            <input
-              value={props.inviteCode}
-              onChange={(event) => props.onInviteCodeChange(event.target.value)}
-              autoComplete="one-time-code"
-            />
-          </label>
-        ) : null}
         {props.status ? <span className="auth-status">{props.status}</span> : null}
         <button className="gold-button" type="submit">
           <Vault size={18} />

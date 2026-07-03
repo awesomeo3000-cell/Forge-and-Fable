@@ -13,7 +13,7 @@ $env:JWT_SECRET="your-secret-here"
 set JWT_SECRET=your-secret-here
 ```
 
-For a hosted friends-only deployment, set `REGISTRATION_INVITE_CODE` so new accounts require the shared private code. You can also set `FORGE_VAULT_DIR` to a persistent disk path so users and characters survive deploys and restarts.
+For a hosted friends-only deployment, set `FORGE_VAULT_DIR` to a persistent disk path so users and characters survive deploys and restarts. Registration is intentionally simple: email and password only.
 
 ## Run
 

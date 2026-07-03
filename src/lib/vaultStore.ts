@@ -91,13 +91,26 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function displayNameFromEmail(email: string) {
+  const localPart = email.split("@")[0] ?? "";
+  const readableName = localPart.replace(/[._-]+/g, " ").trim();
+
+  if (!readableName) {
+    return "Adventurer";
+  }
+
+  return readableName
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .slice(0, 80);
+}
+
 export async function registerUser(input: {
-  name: string;
+  name?: string;
   email: string;
   password: string;
 }): Promise<PublicUser> {
-  const name = input.name.trim() || "Adventurer";
   const email = normalizeEmail(input.email);
+  const name = input.name?.trim() || displayNameFromEmail(email);
 
   if (!email.includes("@") || input.password.length < MIN_PASSWORD_LENGTH) {
     throw new Error(`Use an email address and a password with at least ${MIN_PASSWORD_LENGTH} characters.`);

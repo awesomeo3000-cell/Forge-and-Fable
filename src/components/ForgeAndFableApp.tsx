@@ -74,10 +74,8 @@ export default function ForgeAndFableApp() {
   const [consoleInput, setConsoleInput] = useState("");
   const [consoleLog, setConsoleLog] = useState<string[]>(["Console online"]);
   const [authMode, setAuthMode] = useState<AuthMode>("register");
-  const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
@@ -211,10 +209,8 @@ export default function ForgeAndFableApp() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: authName,
         email: authEmail,
         password: authPassword,
-        inviteCode: authMode === "register" ? authInviteCode : undefined,
       }),
     });
 
@@ -674,16 +670,12 @@ export default function ForgeAndFableApp() {
     return (
       <AuthScreen
         mode={authMode}
-        name={authName}
         email={authEmail}
         password={authPassword}
-        inviteCode={authInviteCode}
         status={status}
         onModeChange={setAuthMode}
-        onNameChange={setAuthName}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
-        onInviteCodeChange={setAuthInviteCode}
         onSubmit={authRequest}
       />
     );
