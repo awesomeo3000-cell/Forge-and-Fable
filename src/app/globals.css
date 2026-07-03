@@ -4797,10 +4797,13 @@ button:disabled {
   position: fixed;
   top: 0;
   left: 0;
+  width: 100px;
+  height: 100px;
+  overflow: visible;
   pointer-events: none;
   animation: die-fly 2.8s cubic-bezier(0.18, 0.82, 0.28, 1) forwards;
   will-change: transform;
-  contain: layout style paint;
+  contain: layout style;
 }
 
 .die-result-num {
@@ -4809,8 +4812,8 @@ button:disabled {
 
 .die-roll-label {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
+  top: 104px;
+  left: 50px;
   transform: translateX(-50%);
   display: grid;
   justify-items: center;
