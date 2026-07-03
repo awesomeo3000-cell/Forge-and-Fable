@@ -5299,6 +5299,13 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: -1px;
+}
+
+/* AC cell has an extra source row — keep the number vertically aligned
+   with the other vital numbers that sit alone in their second grid row. */
+.cs-vital-cell:has(.cs-ac-src) strong {
+  align-self: end;
 }
 
 /* ── Spell prep & casting ── */
