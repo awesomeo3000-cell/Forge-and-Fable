@@ -134,9 +134,10 @@ button:disabled {
 .splash-screen::before,
 .entry-screen::before,
 .builder-shell::before {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -3;
+  pointer-events: none;
   content: "";
   background-image:
     var(--world-backdrop-wash),
@@ -153,7 +154,7 @@ button:disabled {
 .splash-screen::after,
 .entry-screen::after,
 .builder-shell::after {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
