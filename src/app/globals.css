@@ -661,6 +661,13 @@ button:disabled {
   padding-bottom: 40px;
 }
 
+.studio-surface:has(.dj-dossier),
+.studio-surface:has(.dj-start) {
+  border-color: transparent;
+  background: transparent;
+  padding-bottom: 0;
+}
+
 .creator-panel,
 .sheet-panel {
   display: grid;
@@ -6055,7 +6062,8 @@ button:disabled {
 /* Dossier builder overhaul */
 .paper-surface.dj-dossier,
 .paper-surface.dj-start {
-  width: min(1180px, calc(100% - 28px));
+  margin: 0;
+  width: 100%;
   border-radius: 6px;
 }
 
