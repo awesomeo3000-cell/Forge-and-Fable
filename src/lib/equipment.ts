@@ -144,6 +144,83 @@ function inventoryArmorBreakdown(item: InventoryItem) {
   };
 }
 
+export function inventoryArmorProficiencyInfo(item: InventoryItem) {
+  if (!isArmorItem(item)) return null;
+  const fallback = findArmorByItemName(item.name);
+  return {
+    name: item.name,
+    category: armorCategoryFromItem(item, fallback),
+  };
+}
+
+function normalizedProficiency(value: string) {
+  return normalizedName(value);
+}
+
+export function isArmorCategoryProficient(
+  proficiencies: string[],
+  category: ArmorDef["category"],
+) {
+  const needed = `${category} armor`;
+  return proficiencies.some((proficiency) => {
+    const normalized = normalizedProficiency(proficiency);
+    return normalized === "all armor" || normalized === needed;
+  });
+}
+
+export function isShieldProficient(proficiencies: string[]) {
+  return proficiencies.some((proficiency) => {
+    const normalized = normalizedProficiency(proficiency);
+    return normalized === "shields" || normalized === "shield";
+  });
+}
+
+export type ArmorProficiencyIssue = {
+  hasIssue: boolean;
+  lacksArmor: boolean;
+  lacksShield: boolean;
+  armorName?: string;
+  armorCategory?: ArmorDef["category"];
+  shieldName?: string;
+  labels: string[];
+  spellcastingBlocked: boolean;
+  strengthDexterityDisadvantage: boolean;
+};
+
+export function getArmorProficiencyIssue(
+  proficiencies: string[],
+  equipment: Equipment | undefined,
+  inventory: InventoryItem[] = [],
+): ArmorProficiencyIssue {
+  const inventoryById = new Map(inventory.map((item) => [item.id, item]));
+  const armorItem = equipment?.armorItemId ? inventoryById.get(equipment.armorItemId) : undefined;
+  const inventoryArmor = armorItem ? inventoryArmorProficiencyInfo(armorItem) : null;
+  const staticArmor = equipment?.armorId ? getArmor(equipment.armorId) : undefined;
+  const armor = inventoryArmor ?? staticArmor;
+  const shieldItem = equipment?.shieldItemId ? inventoryById.get(equipment.shieldItemId) : undefined;
+  const shieldName = shieldItem && isShieldItem(shieldItem) ? shieldItem.name : equipment?.shield ? "Shield" : undefined;
+
+  const lacksArmor = !!armor && !isArmorCategoryProficient(proficiencies, armor.category);
+  const lacksShield = !!shieldName && !isShieldProficient(proficiencies);
+  const labels = [
+    lacksArmor && armor ? `${armor.name} (${armor.category} armor)` : "",
+    lacksShield && shieldName ? shieldName : "",
+  ].filter(Boolean);
+  const hasIssue = labels.length > 0;
+
+  return {
+    hasIssue,
+    lacksArmor,
+    lacksShield,
+    armorName: armor?.name,
+    armorCategory: armor?.category,
+    shieldName,
+    labels,
+    spellcastingBlocked: hasIssue,
+    strengthDexterityDisadvantage: hasIssue,
+  };
+}
+
 function shieldBonusFromItem(item: InventoryItem | undefined) {
   if (!item || !isShieldItem(item)) return 0;
   const parsed = parseAcString(item.ac);

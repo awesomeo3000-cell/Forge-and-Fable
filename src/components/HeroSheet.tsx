@@ -20,7 +20,7 @@ import {
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
+import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, RollMode, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -32,7 +32,7 @@ import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
-import { ARMORS, WEAPONS, computeArmorClass, getWeapon, inventoryWeaponToDef, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
+import { ARMORS, WEAPONS, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
@@ -65,6 +65,7 @@ import {
 type RefTab = "features" | "traits" | "spells" | "inventory";
 type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
 type RollOutcome = { rolls: number[]; modifier: number; total: number };
+type RollD20Options = { forcedMode?: RollMode };
 
 const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "features", label: "Features" },
@@ -72,6 +73,20 @@ const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "spells", label: "Spells" },
   { id: "inventory", label: "Inventory" },
 ];
+
+function armorProficienciesFromFeatures(features: { name: string; description: string }[]) {
+  const proficiencies = new Set<string>();
+  for (const feature of features) {
+    const text = `${feature.name} ${feature.description}`.toLowerCase();
+    if (!text.includes("proficien")) continue;
+    if (/\ball armor\b/.test(text)) proficiencies.add("All armor");
+    if (/\blight armor\b/.test(text)) proficiencies.add("Light armor");
+    if (/\bmedium armor\b/.test(text)) proficiencies.add("Medium armor");
+    if (/\bheavy armor\b/.test(text)) proficiencies.add("Heavy armor");
+    if (/\bshields?\b/.test(text)) proficiencies.add("Shields");
+  }
+  return [...proficiencies];
+}
 
 export default memo(function HeroSheet(props: {
   character: Character;
@@ -81,7 +96,7 @@ export default memo(function HeroSheet(props: {
   featAcBonus?: number;
   onRoll: (label: string, sides: number, count?: number, modifier?: number, onResult?: (outcome: RollOutcome) => void) => void;
   onRollPool?: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
-  onRollD20?: (label: string, modifier: number, riders: { sides: number; count: number }[]) => void;
+  onRollD20?: (label: string, modifier: number, riders: { sides: number; count: number }[], options?: RollD20Options) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
   onNotify?: (message: string) => void;
@@ -94,6 +109,10 @@ export default memo(function HeroSheet(props: {
     props.ruleset.races.find((r) => r.id === props.character.raceId) ?? props.ruleset.races[0];
   const heroClass =
     props.ruleset.classes.find((c) => c.id === props.character.classId) ?? props.ruleset.classes[0];
+  const subclassFeatures = props.character.subclassId
+    ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
+    : [];
+  const effectiveProficiencies = Array.from(new Set([...heroClass.proficiencies, ...armorProficienciesFromFeatures(subclassFeatures)]));
 
   const pb = proficiencyBonus(props.character.level);
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
@@ -110,10 +129,10 @@ export default memo(function HeroSheet(props: {
   const effInit = effectTotal(effectsList, "initiative");
   const d20Riders = activeD20Riders(effectsList);
   // Rider dice (e.g. Bless's 1d4) fly with every d20 roll while active.
-  const rollD20 = (label: string, modifier: number) => {
+  const rollD20 = (label: string, modifier: number, options?: RollD20Options) => {
     if (props.onRollD20) {
       // Honors the armed advantage/disadvantage mode; rider dice (Bless, etc.) fly along.
-      props.onRollD20(label, modifier, d20Riders);
+      props.onRollD20(label, modifier, d20Riders, options);
     } else if (d20Riders.length > 0 && props.onRollPool) {
       props.onRollPool([{ sides: 20, count: 1 }, ...d20Riders], modifier, label);
     } else {
@@ -123,6 +142,13 @@ export default memo(function HeroSheet(props: {
 
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
   const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, props.character.inventory);
+  const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, props.character.inventory);
+  const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" and ")}` : "";
+  const d20OptionsForAbility = (ability?: AbilityKey): RollD20Options | undefined =>
+    armorProficiencyIssue.strengthDexterityDisadvantage && (ability === "strength" || ability === "dexterity")
+      ? { forcedMode: "disadvantage" }
+      : undefined;
+  const rollD20ForAbility = (label: string, modifier: number, ability?: AbilityKey) => rollD20(label, modifier, d20OptionsForAbility(ability));
   const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
@@ -158,6 +184,8 @@ export default memo(function HeroSheet(props: {
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
   const casterType = heroClass.casterType ?? "none";
+  const spellcastingBlockedByArmor = casterType !== "none" && armorProficiencyIssue.spellcastingBlocked;
+  const spellBlockTitle = spellcastingBlockedByArmor ? `${armorPenaltyReason}: cannot cast spells.` : undefined;
   const spellAbility = heroClass.spellcastingAbility;
   const classSpellList = spellsForClass(heroClass.name);
   const canManageSpellbook = learnsIndividualSpells(heroClass.id, casterType) && classSpellList.length > 0;
@@ -180,9 +208,6 @@ export default memo(function HeroSheet(props: {
     : [];
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
-  const subclassFeatures = props.character.subclassId
-    ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
-    : [];
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
 
@@ -542,6 +567,10 @@ export default memo(function HeroSheet(props: {
   };
   // One combined patch: slot spend + concentration must not race as two PUTs.
   const castSpell = (spell: SpellData, atLevel: number) => {
+    if (spellcastingBlockedByArmor) {
+      props.onNotify?.(`${armorPenaltyReason}: spellcasting is blocked.`);
+      return;
+    }
     const patch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {};
     if (atLevel > 0) {
       if (isPactCaster) {
@@ -733,7 +762,7 @@ export default memo(function HeroSheet(props: {
       case "vitals": return (
         <div className="cs-vitals">
           <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></button>
-          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => rollD20("Initiative", initiative)} aria-label={`Roll initiative, ${signed(initiative)}`} title="Click to roll initiative"><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
+          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
           <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong>{race.speed}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
           <div className="cs-vital-cell cs-vital-hp">
@@ -760,19 +789,19 @@ export default memo(function HeroSheet(props: {
         </div>
       );
       case "abilities": return (
-        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20(`${abilityLabels[key]} check`, mod + effChecks)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(mod)}`}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
+        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, mod + effChecks, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(mod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
       );
       case "saves": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow"><Shield size={12} />Saving Throws</h3>
-          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => rollD20(`${abilityLabels[key]} save`, bonus)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title="Right-click to toggle proficiency"><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
+          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} save`, bonus, key)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title={d20OptionsForAbility(key) ? "Right-click to toggle proficiency. Armor penalty: rolls with disadvantage." : "Right-click to toggle proficiency"}><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
           {saveAllBonus !== 0 ? <p className="cs-rule-note">All saves: {signed(saveAllBonus)}{equipmentItemBonuses.saves !== 0 ? ` (${signed(equipmentItemBonuses.saves)} items)` : ""}</p> : null}
         </section>
       );
       case "skills": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Skills</h3>
-          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20(skill.name, bonus)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
+          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20ForAbility(skill.name, bonus, skill.ability)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`} title={d20OptionsForAbility(skill.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
         </section>
       );
       case "senses": return (
@@ -784,7 +813,7 @@ export default memo(function HeroSheet(props: {
       case "profs": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Proficiencies &amp; Training</h3>
-          <div className="cs-prof-list">{heroClass.proficiencies.length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Armor &amp; Weapons</span><div className="cs-prof-tags">{heroClass.proficiencies.map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}</div>
+          <div className="cs-prof-list">{effectiveProficiencies.length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Armor &amp; Weapons</span><div className="cs-prof-tags">{effectiveProficiencies.map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}</div>
         </section>
       );
       case "equipment": {
@@ -797,6 +826,8 @@ export default memo(function HeroSheet(props: {
         const equippedBonuses = (equipment.bonusItemIds ?? [])
           .map((id) => props.character.inventory.find((item) => item.id === id))
           .filter((item): item is InventoryItem => !!item);
+        const equippedArmorWarning = armorProficiencyIssue.lacksArmor && equippedArmor?.name === armorProficiencyIssue.armorName;
+        const equippedShieldWarning = armorProficiencyIssue.lacksShield && equippedShield?.name === armorProficiencyIssue.shieldName;
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Shield size={12} />Equipment</h3>
@@ -805,23 +836,24 @@ export default memo(function HeroSheet(props: {
                 <span>Armor</span>
                 <select value={equipment.armorId ?? ""} onChange={(e) => updateEquipment({ armorId: e.target.value || undefined, armorItemId: undefined })}>
                   <option value="">None (unarmored)</option>
-                  {ARMORS.map((a) => (<option key={a.id} value={a.id}>{a.name} — {a.category}</option>))}
+                  {ARMORS.map((a) => (<option key={a.id} value={a.id}>{a.name} - {a.category}{isArmorCategoryProficient(effectiveProficiencies, a.category) ? "" : " (not proficient)"}</option>))}
                 </select>
               </label>
               <label className="cs-equip-check">
                 <input type="checkbox" checked={!!equipment.shield && !equipment.shieldItemId} onChange={(e) => updateEquipment({ shield: e.target.checked, shieldItemId: undefined })} />
-                Shield (+2)
+                Shield (+2){isShieldProficient(effectiveProficiencies) ? "" : " - not proficient"}
               </label>
             </div>
             {equippedArmor || equippedShield || equippedWeapons.length > 0 || equippedBonuses.length > 0 ? (
               <div className="cs-equipped-list" aria-label="Equipped inventory items">
-                {equippedArmor ? <span className="cs-equipped-chip"><Shield size={11} />Armor: {equippedArmor.name}<button type="button" onClick={() => updateEquipment({ armorItemId: undefined })}>Unequip</button></span> : null}
-                {equippedShield ? <span className="cs-equipped-chip"><Shield size={11} />Shield: {equippedShield.name}<button type="button" onClick={() => updateEquipment({ shieldItemId: undefined })}>Unequip</button></span> : null}
+                {equippedArmor ? <span className={`cs-equipped-chip${equippedArmorWarning ? " cs-equipped-warning" : ""}`} title={equippedArmorWarning ? "Not proficient with this armor" : undefined}><Shield size={11} />Armor: {equippedArmor.name}<button type="button" onClick={() => updateEquipment({ armorItemId: undefined })}>Unequip</button></span> : null}
+                {equippedShield ? <span className={`cs-equipped-chip${equippedShieldWarning ? " cs-equipped-warning" : ""}`} title={equippedShieldWarning ? "Not proficient with this shield" : undefined}><Shield size={11} />Shield: {equippedShield.name}<button type="button" onClick={() => updateEquipment({ shieldItemId: undefined })}>Unequip</button></span> : null}
                 {equippedWeapons.map((item) => <span className="cs-equipped-chip" key={item.id}><Swords size={11} />{item.name}<button type="button" onClick={() => toggleInventoryWeapon(item.id)}>Unequip</button></span>)}
                 {equippedBonuses.map((item) => <span className="cs-equipped-chip" key={item.id}><Zap size={11} />{item.name}<button type="button" onClick={() => toggleBonusItem(item.id)}>Unequip</button></span>)}
               </div>
             ) : null}
             <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
+            {armorProficiencyIssue.hasIssue ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: STR/DEX checks, saves, and attacks roll with disadvantage; spellcasting is blocked.</p> : null}
             {acInfo.stealthDisadvantage ? <p className="cs-rule-note">Disadvantage on Stealth checks</p> : null}
             {acInfo.strengthWarning ? <p className="cs-rule-note">Needs Str {acInfo.strengthRequirement ?? armor?.strengthReq}: speed reduced by 10 ft.</p> : null}
             <span className="cs-spell-level-head">Weapons</span>
@@ -895,19 +927,19 @@ export default memo(function HeroSheet(props: {
               const hasDice = dice.length > 0;
               const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
               const damageType = w.damageType ? ` ${w.damageType}` : "";
-              return { id: w.id, name: w.name, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
+              return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
             })
           : heroClass.actions.map((action) => {
               const mod = abilityModifier(props.finalAbilities[action.ability]);
               const damageMod = mod + effDamage;
               const dice = parseDamageDice(action.formula);
               const hasDice = dice.length > 0;
-              return { id: action.name, name: action.name, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
+              return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20(row.name, row.toHit)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20(row.name, row.toHit); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20ForAbility(row.name, row.toHit, row.ability)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20ForAbility(row.name, row.toHit, row.ability); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
@@ -945,6 +977,7 @@ export default memo(function HeroSheet(props: {
                   </>) : null}
                 </div>
               ) : null}
+              {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
               {props.character.concentratingOn ? (
                 <div className="cs-conc-banner">Concentrating on <strong>{props.character.concentratingOn}</strong>
                   <button type="button" className="cs-glass-btn" onClick={() => props.onUpdate({ concentratingOn: null })}>End</button>
@@ -1052,6 +1085,9 @@ export default memo(function HeroSheet(props: {
                   const canEquipShield = isShieldItem(item);
                   const canEquipWeapon = isWeaponItem(item);
                   const canEquipBonus = itemHasPassiveBonus(item) && !canEquipArmor && !canEquipShield;
+                  const armorProfInfo = canEquipArmor ? inventoryArmorProficiencyInfo(item) : null;
+                  const armorIsProficient = !armorProfInfo || isArmorCategoryProficient(effectiveProficiencies, armorProfInfo.category);
+                  const shieldIsProficient = !canEquipShield || isShieldProficient(effectiveProficiencies);
                   const equippedAsArmor = equipment.armorItemId === item.id;
                   const equippedAsShield = equipment.shieldItemId === item.id;
                   const equippedAsWeapon = (equipment.weaponItemIds ?? []).includes(item.id);
@@ -1063,8 +1099,8 @@ export default memo(function HeroSheet(props: {
                         {item.notes ? <span>{item.notes}</span> : null}
                         {canEquipArmor || canEquipShield || canEquipWeapon || canEquipBonus ? (
                           <div className="cs-inv-actions">
-                            {canEquipArmor ? <button type="button" className={`cs-glass-btn${equippedAsArmor ? " cs-edit-active" : ""}`} onClick={() => equipInventoryArmor(item)}>{equippedAsArmor ? "Equipped armor" : "Equip armor"}</button> : null}
-                            {canEquipShield ? <button type="button" className={`cs-glass-btn${equippedAsShield ? " cs-edit-active" : ""}`} onClick={() => equipInventoryShield(item)}>{equippedAsShield ? "Equipped shield" : "Equip shield"}</button> : null}
+                            {canEquipArmor ? <button type="button" className={`cs-glass-btn${equippedAsArmor ? " cs-edit-active" : ""}${armorIsProficient ? "" : " cs-equip-warning"}`} onClick={() => equipInventoryArmor(item)} title={armorIsProficient ? undefined : "Not proficient with this armor"}>{equippedAsArmor ? "Equipped armor" : "Equip armor"}{armorIsProficient ? "" : " (not proficient)"}</button> : null}
+                            {canEquipShield ? <button type="button" className={`cs-glass-btn${equippedAsShield ? " cs-edit-active" : ""}${shieldIsProficient ? "" : " cs-equip-warning"}`} onClick={() => equipInventoryShield(item)} title={shieldIsProficient ? undefined : "Not proficient with shields"}>{equippedAsShield ? "Equipped shield" : "Equip shield"}{shieldIsProficient ? "" : " (not proficient)"}</button> : null}
                             {canEquipWeapon ? <button type="button" className={`cs-glass-btn${equippedAsWeapon ? " cs-edit-active" : ""}`} onClick={() => toggleInventoryWeapon(item.id)}>{equippedAsWeapon ? "Equipped weapon" : "Equip weapon"}</button> : null}
                             {canEquipBonus ? <button type="button" className={`cs-glass-btn${equippedAsBonus ? " cs-edit-active" : ""}`} onClick={() => toggleBonusItem(item.id)}>{equippedAsBonus ? "Bonus active" : "Equip bonus"}</button> : null}
                           </div>
@@ -1270,7 +1306,8 @@ export default memo(function HeroSheet(props: {
               <span><strong>Components</strong> {[spellDetail.components.verbal ? "V" : "", spellDetail.components.somatic ? "S" : "", spellDetail.components.material ? `M (${spellDetail.material})` : ""].filter(Boolean).join(", ") || "—"}</span>
               <span><strong>Source</strong> {spellDetail.source}</span>
             </div>
-            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" onClick={() => rollD20(`${spellDetail.name} attack`, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
+            {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
+            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => rollD20(`${spellDetail.name} attack`, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
             <p className="cs-spell-detail-desc">{spellDetail.description}</p>
             {casterType !== "none" ? (
@@ -1278,14 +1315,14 @@ export default memo(function HeroSheet(props: {
                 <div className="cs-cast-row">
                   <strong>Cast:</strong>
                   {spellDetail.level === 0 ? (
-                    <button className="cs-glass-btn" type="button" onClick={() => castSpell(spellDetail, 0)}>Cast cantrip</button>
+                    <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => castSpell(spellDetail, 0)}>Cast cantrip</button>
                   ) : (
                     slotMax.map((max, i) => {
                       const lvl = i + 1;
                       if (lvl < spellDetail.level || max <= 0) return null;
                       const remaining = max - (slotsUsed[lvl] ?? 0);
                       return (
-                        <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0} onClick={() => castSpell(spellDetail, lvl)} title={remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
+                        <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0 || spellcastingBlockedByArmor} onClick={() => castSpell(spellDetail, lvl)} title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
                           Lv {lvl} ({remaining})
                         </button>
                       );
@@ -1300,7 +1337,7 @@ export default memo(function HeroSheet(props: {
                     <div className="cs-spell-damage-dice">
                       <strong>Damage:</strong> {spellDetail.damageEffect ? `${spellDetail.damageEffect} — ` : ""}
                       {dice.map((d, i) => (
-                        <button key={i} className="cs-glass-btn" type="button" onClick={() => props.onRoll(`${spellDetail.name} damage`, d.sides, d.count, 0)}>{d.count}d{d.sides}</button>
+                        <button key={i} className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => props.onRoll(`${spellDetail.name} damage`, d.sides, d.count, 0)}>{d.count}d{d.sides}</button>
                       ))}
                     </div>
                   );

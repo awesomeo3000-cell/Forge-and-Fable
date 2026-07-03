@@ -4367,6 +4367,11 @@ button:disabled {
 .cs-save-bonus { font-family: var(--font-body); font-size: 1.15em; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
 .cs-rule-note { font-family: var(--font-body); font-size: 0.68em; color: var(--select); margin-top: 6px; text-align: center; font-style: italic; }
+.cs-rule-note.cs-rule-warning {
+  color: color-mix(in srgb, var(--accent, #a23f29) 78%, #ffffff);
+  font-style: normal;
+  font-weight: 700;
+}
 
 /* ── Senses ── */
 
@@ -5252,6 +5257,10 @@ button:disabled {
   color: var(--ink, var(--parchment));
   font-size: 0.76em;
 }
+.cs-equipped-chip.cs-equipped-warning {
+  border-color: color-mix(in srgb, var(--accent, #a23f29) 72%, #ffffff);
+  background: color-mix(in srgb, var(--accent, #a23f29) 18%, transparent);
+}
 .cs-equipped-chip button {
   border: 0;
   border-left: 1px solid var(--doc-rule, var(--rule));
@@ -5267,6 +5276,10 @@ button:disabled {
   flex-wrap: wrap;
   gap: 5px;
   margin-top: 6px;
+}
+.cs-glass-btn.cs-equip-warning {
+  border-color: color-mix(in srgb, var(--accent, #a23f29) 70%, #ffffff);
+  color: color-mix(in srgb, var(--accent, #a23f29) 76%, #ffffff);
 }
 .cs-weapon-chip {
   cursor: pointer;

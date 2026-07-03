@@ -72,6 +72,8 @@ function rollDetailWithTotal(detail: string, total: number) {
   return detail.includes("=") ? detail : `${detail} = ${total}`;
 }
 
+type D20RollOptions = { forcedMode?: RollMode };
+
 export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
   const [ruleset, setRuleset] = useState<Ruleset | null>(null);
@@ -810,8 +812,10 @@ export default function ForgeAndFableApp() {
       the lower. Rider dice (e.g. Bless's 1d4) fly and add to the total as usual.
       The kept d20 alone takes the modifier. The mode is one-shot — it resets to
       normal after the roll so it can't silently affect the next one. */
-  function pushD20(label: string, modifier = 0, riders: { sides: number; count: number }[] = []) {
-    const mode = rollMode;
+  function pushD20(label: string, modifier = 0, riders: { sides: number; count: number }[] = [], options?: D20RollOptions) {
+    const armedMode = rollMode;
+    const forcedMode = options?.forcedMode;
+    const mode = forcedMode && armedMode !== "normal" && armedMode !== forcedMode ? "normal" : forcedMode ?? armedMode;
     const d20Count = mode === "normal" ? 1 : 2;
     const d20s = Array.from({ length: d20Count }, () => rollDie(20));
     let keptIndex = 0;
@@ -887,7 +891,7 @@ export default function ForgeAndFableApp() {
       nat,
     );
     setFlyingDice((prev) => [...prev, ...newDice]);
-    if (mode !== "normal") setRollMode("normal");
+    if (armedMode !== "normal") setRollMode("normal");
   }
 
   function expireDie(id: string) {
