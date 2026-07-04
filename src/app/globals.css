@@ -4102,6 +4102,46 @@ button:disabled {
   margin-right: 4px;
 }
 
+.cs-spell-status-panel {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--ground-3) 82%, var(--accent) 18%);
+}
+
+.cs-spell-status-panel label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.78em;
+  color: var(--parchment-2);
+}
+
+.cs-spell-status-panel label > span {
+  font-family: var(--font-label);
+  font-size: 0.78em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.cs-spell-status-panel input[type="text"] {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: var(--ground-2);
+  color: var(--parchment);
+  font: inherit;
+}
+
+.cs-spell-status-panel .cs-spell-status-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .cs-spell-detail-roll {
   font-size: 0.88em;
   margin-bottom: 8px;
@@ -4469,6 +4509,33 @@ button:disabled {
 .cs-spell-card strong { font-size: 1.05em; color: var(--parchment); }
 
 .cs-spell-card span { font-size: 0.88em; color: var(--ink-faint); }
+
+.cs-spell-status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cs-spell-status-badges span {
+  width: fit-content;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  color: var(--parchment-2);
+  font-family: var(--font-label);
+  font-size: 0.68em;
+  text-transform: uppercase;
+}
+
+.cs-spell-status-badges span.ready {
+  border-color: color-mix(in srgb, var(--select) 58%, transparent);
+  color: var(--select);
+}
+
+.cs-spell-status-badges span.used {
+  opacity: 0.72;
+}
 
 .cs-spell-card p { font-size: 0.92em; color: var(--parchment-2); margin-top: 4px; font-style: italic; line-height: 1.5; }
 

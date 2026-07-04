@@ -28,7 +28,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
-  "equipment", "preparedSpells", "heroicInspiration", "effects",
+  "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -86,6 +86,29 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "equipment":
         if (val !== undefined && (typeof val !== "object" || val === null || Array.isArray(val))) {
           throw new Error(`"equipment" must be an object.`);
+        }
+        break;
+      case "spellStatuses":
+        if (val !== undefined) {
+          if (typeof val !== "object" || val === null || Array.isArray(val)) {
+            throw new Error(`"spellStatuses" must be an object.`);
+          }
+          const entries = Object.entries(val as Record<string, unknown>);
+          if (entries.length > 200) throw new Error(`"spellStatuses" must have at most 200 entries.`);
+          for (const [spellId, entry] of entries) {
+            assertString(spellId, "spellStatuses key", 128);
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+              throw new Error(`"spellStatuses" entries must be objects.`);
+            }
+            const status = entry as Record<string, unknown>;
+            if (status.source !== undefined) assertString(status.source, "spellStatuses[].source", 80);
+            if (status.freeUse !== undefined && typeof status.freeUse !== "boolean") {
+              throw new Error(`"spellStatuses[].freeUse" must be a boolean.`);
+            }
+            if (status.freeUsed !== undefined && typeof status.freeUsed !== "boolean") {
+              throw new Error(`"spellStatuses[].freeUsed" must be a boolean.`);
+            }
+          }
         }
         break;
       case "customRules":

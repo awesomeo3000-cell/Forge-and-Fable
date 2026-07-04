@@ -26,6 +26,7 @@ export default memo(function LevelUpModal({
   asiLevels,
   subclassLevel,
   casterType,
+  skipHp = false,
   onHpRoll,
   onConfirm,
   onCancel,
@@ -39,13 +40,16 @@ export default memo(function LevelUpModal({
   asiLevels: number[];
   subclassLevel?: number;
   casterType?: string;
+  /** When true, omit the HP step — used at character creation, where the
+      creator already computes starting HP for the chosen level. */
+  skipHp?: boolean;
   onHpRoll?: (request: HpRollRequest) => void;
   onConfirm: (data: Record<string, unknown>) => void;
   onCancel: () => void;
 }) {
   const conMod = abilityModifier(finalAbilities.constitution);
 
-  const hasHp = newLevel > 1;
+  const hasHp = newLevel > 1 && !skipHp;
   const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
   const hasAsi = asiLevels.includes(newLevel);
   // Only KNOWN casters (bard/ranger/sorcerer/warlock) and the wizard's

@@ -12,12 +12,14 @@ import type { FormEvent } from "react";
 import type {
   AbilityKey,
   AbilityScores,
+  ASIChoice,
   AuthMode,
   BuildMode,
   Character,
   CustomRule,
   DraftCharacter,
   FeedbackEntry,
+  HeroClass,
   InventoryItem,
   PublicUser,
   RollMode,
@@ -46,6 +48,9 @@ import CreatorPanel from "@/components/CreatorPanel";
 import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
+import LevelUpModal from "@/components/LevelUpModal";
+import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
+import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
@@ -58,6 +63,42 @@ function authHeaders(): Record<string, string> {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token ?? ""}`,
   };
+}
+
+/** The choices a character forged above level 1 accumulates through the
+    creation level-up sequence, applied on top of the level-1 payload. */
+type CreationChoices = {
+  level: number;
+  maxHp: number;
+  currentHp: number;
+  subclassId?: string;
+  spellsKnown: string[];
+  asiChoices: ASIChoice[];
+  hpRolls?: number[];
+};
+
+type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
+
+/** Levels 1..target that require a player choice when starting above level 1:
+    subclass, ASI/feat, or a spell pick for known casters. Level 1 is included
+    only for level-1-subclass classes (sorcerer/warlock/cleric) so a high-level
+    start still picks its origin. HP-only levels are skipped — the creator
+    already computes starting HP for the chosen level. */
+function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number[] {
+  const asiLevels = heroClass.asiLevels ?? [4, 8, 12, 16, 19];
+  const subclassLevel = getClassData(heroClass.id)?.subclassLevel;
+  const knownCaster =
+    learnsIndividualSpells(heroClass.id, heroClass.casterType) && spellsForClass(heroClass.name).length > 0;
+  const out: number[] = [];
+  for (let level = 1; level <= targetLevel; level++) {
+    const isSubclass = subclassLevel != null && level === subclassLevel;
+    if (level === 1) {
+      if (isSubclass) out.push(1);
+      continue;
+    }
+    if (isSubclass || asiLevels.includes(level) || knownCaster) out.push(level);
+  }
+  return out;
 }
 
 const NORMAL_ROLL_LINGER_MS = 1800;
@@ -102,6 +143,7 @@ export default function ForgeAndFableApp() {
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
   const [rollMode, setRollMode] = useState<RollMode>("normal");
+  const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
 
   const recordHistory = (
     label: string,
@@ -225,6 +267,20 @@ export default function ForgeAndFableApp() {
     }
     return applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
   }, [draft, ruleset]);
+
+  // Abilities for the in-progress creation level-up (race bonuses + the ASIs
+  // chosen so far), so each step's ASI cap and HP modifier stay accurate.
+  const creationSeqFinalAbilities = useMemo(() => {
+    if (!creationSeq || !draft || !ruleset) {
+      return null;
+    }
+    const raced = applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
+    const featInfo = computeFeatBonuses(creationSeq.soFar.asiChoices);
+    for (const key of abilityKeys) {
+      raced[key] += featInfo.abilityIncreases[key] ?? 0;
+    }
+    return raced;
+  }, [creationSeq, draft, ruleset]);
   const pointSpent = draft
     ? abilityKeys.reduce((sum, key) => sum + (pointCosts[draft.abilities[key]] ?? 99), 0)
     : 0;
@@ -457,10 +513,55 @@ export default function ForgeAndFableApp() {
       return;
     }
 
+    // Starting above level 1: collect the feat/ASI/subclass/spell choices for the
+    // levels gained, then forge with them. Level-1 starts forge immediately.
+    const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
+    if (heroClass && draft.level > 1) {
+      const levels = creationChoiceLevels(heroClass, draft.level);
+      if (levels.length > 0) {
+        const base = characterPayload(draft, ruleset);
+        setCreationSeq({
+          levels,
+          index: 0,
+          soFar: {
+            level: 1,
+            maxHp: base.maxHp,
+            currentHp: base.currentHp,
+            subclassId: undefined,
+            spellsKnown: [...base.spellsKnown],
+            asiChoices: [],
+            hpRolls: base.hpRolls,
+          },
+        });
+        return;
+      }
+    }
+
+    await forgeCharacter(null);
+  }
+
+  /** POST the drafted character, applying any level-up choices collected during
+      the creation sequence. */
+  async function forgeCharacter(choices: CreationChoices | null) {
+    if (!user || !ruleset || !draft) {
+      return;
+    }
+
+    const payload = {
+      ...characterPayload(draft, ruleset),
+      ...(choices
+        ? {
+            asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
+            subclassId: choices.subclassId,
+            spellsKnown: choices.spellsKnown,
+          }
+        : {}),
+    };
+
     const response = await fetch("/api/characters", {
       method: "POST",
       headers: authHeaders(),
-      body: JSON.stringify(characterPayload(draft, ruleset)),
+      body: JSON.stringify(payload),
     });
 
     const data = (await response.json()) as { character?: Character; error?: string };
@@ -483,7 +584,28 @@ export default function ForgeAndFableApp() {
     setCreatorStep(0);
     setDraft(createInitialDraft(ruleset) as DraftCharacter);
     setStatMethod("point-buy");
+    setCreationSeq(null);
     setStatus(`${data.character.name} forged`);
+  }
+
+  /** Apply one level's level-up choices during creation, then advance to the
+      next choice-level or forge once every level has been chosen. */
+  function advanceCreationSeq(patch: Record<string, unknown>) {
+    if (!creationSeq) {
+      return;
+    }
+    const soFar: CreationChoices = {
+      ...creationSeq.soFar,
+      level: creationSeq.levels[creationSeq.index],
+      asiChoices: (patch.asiChoices as ASIChoice[] | undefined) ?? creationSeq.soFar.asiChoices,
+      subclassId: (patch.subclassId as string | undefined) ?? creationSeq.soFar.subclassId,
+      spellsKnown: (patch.spellsKnown as string[] | undefined) ?? creationSeq.soFar.spellsKnown,
+    };
+    if (creationSeq.index + 1 < creationSeq.levels.length) {
+      setCreationSeq({ ...creationSeq, index: creationSeq.index + 1, soFar });
+    } else {
+      void forgeCharacter(soFar);
+    }
   }
 
   async function updateSelected(patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
@@ -993,6 +1115,28 @@ export default function ForgeAndFableApp() {
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
     <RollDrawer history={rollHistory} theme={selected?.theme ?? null} rollMode={rollMode} onRollModeChange={setRollMode} onRollPool={pushPool} />
+    {creationSeq && draft && creationSeqFinalAbilities ? (() => {
+      const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
+      if (!heroClass) return null;
+      const targetLevel = creationSeq.levels[creationSeq.index];
+      return (
+        <LevelUpModal
+          key={`create-${creationSeq.index}`}
+          character={creationSeq.soFar}
+          newLevel={targetLevel}
+          finalAbilities={creationSeqFinalAbilities}
+          classId={heroClass.id}
+          className={heroClass.name}
+          hitDie={heroClass.hitDie}
+          asiLevels={heroClass.asiLevels ?? [4, 8, 12, 16, 19]}
+          subclassLevel={getClassData(heroClass.id)?.subclassLevel}
+          casterType={heroClass.casterType}
+          skipHp
+          onConfirm={advanceCreationSeq}
+          onCancel={() => setCreationSeq(null)}
+        />
+      );
+    })() : null}
     {feedbackOpen ? (
       <FeedbackModal
         entries={feedbackEntries}

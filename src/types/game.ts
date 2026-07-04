@@ -92,6 +92,12 @@ export type CasterType = "full" | "half" | "third" | "pact" | "none";
 
 export type SpellSlots = Record<number, number>;
 
+export type SpellStatus = {
+  source?: string;
+  freeUse?: boolean;
+  freeUsed?: boolean;
+};
+
 export type FeedbackCategory = "bug" | "idea" | "balance" | "content" | "ui" | "other";
 export type FeedbackPriority = "low" | "medium" | "high" | "blocking";
 
@@ -291,6 +297,7 @@ export type Character = {
   hpRolls?: number[];
   equipment?: Equipment;
   preparedSpells?: string[];
+  spellStatuses?: Record<string, SpellStatus>;
   hitDiceSpent?: number;
   heroicInspiration?: boolean;
   effects?: CharacterEffect[];

@@ -343,7 +343,7 @@ function facePlane(vertices: Vec3[], indices: number[]): { normal: Vec3; distanc
   return distance < 0 ? { normal: negate3(normal), distance: -distance } : { normal, distance };
 }
 
-function faceFromIndices(vertices: Vec3[], indices: number[], label: string): MeshFace {
+function faceFromIndices(vertices: Vec3[], indices: number[], label: string, upHint?: Vec3): MeshFace {
   let points = indices.map((index) => vertices[index]);
   let normal = normalize3(cross3(sub3(points[1], points[0]), sub3(points[2], points[0])));
   const center = average3(points);
@@ -353,8 +353,19 @@ function faceFromIndices(vertices: Vec3[], indices: number[], label: string): Me
     normal = negate3(normal);
   }
 
-  const xAxis = normalize3(sub3(points[1], points[0]));
-  const yAxis = normalize3(cross3(normal, xAxis));
+  // Text frame. By default the baseline follows an edge (fine for regular faces).
+  // For kite faces (d10/d100) an edge is skew to the kite's axis, so the number
+  // renders crooked — pass upHint (toward the kite's apex) to stand it upright.
+  let xAxis: Vec3;
+  let yAxis: Vec3;
+  const projectedUp = upHint ? sub3(upHint, scale3(normal, dot3(upHint, normal))) : null;
+  if (projectedUp && Math.hypot(projectedUp[0], projectedUp[1], projectedUp[2]) > 1e-6) {
+    yAxis = normalize3(projectedUp);
+    xAxis = normalize3(cross3(yAxis, normal)); // right-handed: xAxis × yAxis = normal
+  } else {
+    xAxis = normalize3(sub3(points[1], points[0]));
+    yAxis = normalize3(cross3(normal, xAxis));
+  }
   const projections = points.map((point) => [dot3(point, xAxis), dot3(point, yAxis)] as [number, number]);
   const minX = Math.min(...projections.map(([x]) => x));
   const maxX = Math.max(...projections.map(([x]) => x));
@@ -391,7 +402,11 @@ function faceFromIndices(vertices: Vec3[], indices: number[], label: string): Me
 
 function pentagonalTrapezohedron(radius: number): MeshInput {
   const count = 5;
-  const height = 0.46;
+  // Antiprism cap height. The die is the polar dual of this antiprism; taller
+  // caps here push the dual's equator outward, giving the squat proportions of
+  // a real d10 (height ≈ 1.1× width). At 0.46 the dual apexes shot out on Z and
+  // the die rendered as a tall spike (height ≈ 2× width).
+  const height = 0.8;
   const vertices: Vec3[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -510,13 +525,21 @@ function meshInputForDie(sides: number): MeshInput {
 function meshForDie(sides: number, result: number): { faces: MeshFace[]; upIndex: number; className: string } {
   const input = meshInputForDie(sides);
   const upIndex = dieFaceIndex(sides, result, input.faces.length);
+  // d10/d100 kites: stand the number upright by pointing its top at the kite's
+  // apex — the face vertex nearest a pole (max |z|).
+  const kite = sides === 10 || sides === 100;
 
   return {
     className: input.className,
     upIndex,
-    faces: input.faces.map((face, i) =>
-      faceFromIndices(input.vertices, face, i === upIndex ? displayValue(sides, result) : inactiveFaceLabel(sides, i)),
-    ),
+    faces: input.faces.map((face, i) => {
+      const label = i === upIndex ? displayValue(sides, result) : inactiveFaceLabel(sides, i);
+      if (!kite) return faceFromIndices(input.vertices, face, label);
+      const verts = face.map((idx) => input.vertices[idx]);
+      const apex = verts.reduce((a, b) => (Math.abs(b[2]) > Math.abs(a[2]) ? b : a));
+      const centroid = average3(verts);
+      return faceFromIndices(input.vertices, face, label, sub3(apex, centroid));
+    }),
   };
 }
 

@@ -20,7 +20,7 @@ import {
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, RollMode, Ruleset, SheetLayout, SheetSectionId } from "@/types/game";
+import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, RollMode, Ruleset, SheetLayout, SheetSectionId, SpellStatus } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -495,6 +495,30 @@ export default memo(function HeroSheet(props: {
   const slotsUsed = props.character.spellSlotsUsed ?? {};
   const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellSaveDc : 0;
   const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellAttack : 0;
+  const spellStatuses = useMemo(() => props.character.spellStatuses ?? {}, [props.character.spellStatuses]);
+  const spellStatusesRef = useRef(spellStatuses);
+  useEffect(() => {
+    spellStatusesRef.current = spellStatuses;
+  }, [spellStatuses]);
+
+  const updateSpellStatus = (spellId: string, patch: SpellStatus) => {
+    const allStatuses = spellStatusesRef.current;
+    const current = allStatuses[spellId] ?? {};
+    const merged: SpellStatus = { ...current, ...patch };
+    const source = merged.source?.trim() ?? "";
+    const cleaned: SpellStatus = {};
+    if (source) cleaned.source = source;
+    if (merged.freeUse) {
+      cleaned.freeUse = true;
+      if (merged.freeUsed) cleaned.freeUsed = true;
+    }
+
+    const next = { ...allStatuses };
+    if (Object.keys(cleaned).length > 0) next[spellId] = cleaned;
+    else delete next[spellId];
+    spellStatusesRef.current = next;
+    props.onUpdate({ spellStatuses: next });
+  };
 
   const spendSlot = (lvl: number) => {
     if (isPactCaster) {
@@ -530,6 +554,14 @@ export default memo(function HeroSheet(props: {
     const level = props.character.level;
     const spent = props.character.hitDiceSpent ?? 0;
     const recovered = Math.max(1, Math.floor(level / 2));
+    const allStatuses = spellStatusesRef.current;
+    const restedSpellStatuses = Object.fromEntries(
+      Object.entries(allStatuses).map(([spellId, status]) => [
+        spellId,
+        status.freeUse ? { ...status, freeUsed: false } : status,
+      ]),
+    );
+    spellStatusesRef.current = restedSpellStatuses;
     props.onUpdate({
       currentHp: props.character.maxHp,
       tempHp: 0,
@@ -537,6 +569,7 @@ export default memo(function HeroSheet(props: {
       pactSlotsUsed: 0,
       concentratingOn: null,
       hitDiceSpent: Math.max(0, spent - recovered),
+      spellStatuses: restedSpellStatuses,
     });
     props.onNotify?.("Long rest complete — HP and slots restored");
   };
@@ -560,9 +593,13 @@ export default memo(function HeroSheet(props: {
     setSpellToLearn("");
   };
   const forgetSpell = (spellId: string) => {
+    const nextStatuses = { ...spellStatusesRef.current };
+    delete nextStatuses[spellId];
+    spellStatusesRef.current = nextStatuses;
     props.onUpdate({
       spellsKnown: props.character.spellsKnown.filter((id) => id !== spellId),
       preparedSpells: preparedIds.filter((id) => id !== spellId),
+      spellStatuses: nextStatuses,
     });
   };
   // One combined patch: slot spend + concentration must not race as two PUTs.
@@ -583,6 +620,24 @@ export default memo(function HeroSheet(props: {
     }
     if (spell.concentration) patch.concentratingOn = spell.name;
     if (Object.keys(patch).length > 0) props.onUpdate(patch);
+    setSpellDetail(null);
+  };
+  const castFreeSpell = (spell: SpellData) => {
+    if (spellcastingBlockedByArmor) {
+      props.onNotify?.(`${armorPenaltyReason}: spellcasting is blocked.`);
+      return;
+    }
+    const allStatuses = spellStatusesRef.current;
+    const current = allStatuses[spell.id];
+    if (!current?.freeUse || current.freeUsed) return;
+    const nextStatuses = {
+      ...allStatuses,
+      [spell.id]: { ...current, freeUse: true, freeUsed: true },
+    };
+    spellStatusesRef.current = nextStatuses;
+    const patch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = { spellStatuses: nextStatuses };
+    if (spell.concentration) patch.concentratingOn = spell.name;
+    props.onUpdate(patch);
     setSpellDetail(null);
   };
 
@@ -1035,7 +1090,24 @@ export default memo(function HeroSheet(props: {
                     {level === "0" ? "Cantrips" : `Level ${level}`}
                     {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
                   </span>
-                  {shown.map((spell) => (<div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>{_isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}<strong>{spell.name}</strong><span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span><p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p></div>))}
+                  {shown.map((spell) => {
+                    const status = spellStatuses[spell.id];
+                    const source = status?.source?.trim();
+                    return (
+                      <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
+                        {_isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}
+                        <strong>{spell.name}</strong>
+                        <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
+                        {source || status?.freeUse ? (
+                          <div className="cs-spell-status-badges">
+                            {source ? <span>{source}</span> : null}
+                            {status?.freeUse ? <span className={status.freeUsed ? "used" : "ready"}>{status.freeUsed ? "Free use spent" : "Free use ready"}</span> : null}
+                          </div>
+                        ) : null}
+                        <p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p>
+                      </div>
+                    );
+                  })}
                 </div>);
               })}</div>
             </div>
@@ -1217,6 +1289,8 @@ export default memo(function HeroSheet(props: {
     </div>,
     document.body,
   ) : null;
+  const spellDetailStatus = spellDetail ? spellStatuses[spellDetail.id] ?? {} : {};
+  const spellDetailSource = spellDetailStatus.source?.trim() ?? "";
 
   return (
     <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment"}>
@@ -1306,6 +1380,37 @@ export default memo(function HeroSheet(props: {
               <span><strong>Components</strong> {[spellDetail.components.verbal ? "V" : "", spellDetail.components.somatic ? "S" : "", spellDetail.components.material ? `M (${spellDetail.material})` : ""].filter(Boolean).join(", ") || "—"}</span>
               <span><strong>Source</strong> {spellDetail.source}</span>
             </div>
+            <div className="cs-spell-status-panel">
+              <label>
+                <span>Granted from</span>
+                <input
+                  type="text"
+                  defaultValue={spellDetailSource}
+                  placeholder="Fey Touched feat"
+                  maxLength={80}
+                  onBlur={(event) => updateSpellStatus(spellDetail.id, { source: event.currentTarget.value })}
+                  onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
+                />
+              </label>
+              <label className="cs-spell-status-check">
+                <input
+                  type="checkbox"
+                  checked={!!spellDetailStatus.freeUse}
+                  onChange={(event) => updateSpellStatus(spellDetail.id, { freeUse: event.currentTarget.checked, freeUsed: false })}
+                />
+                Track one free use per long rest
+              </label>
+              {spellDetailStatus.freeUse ? (
+                <label className="cs-spell-status-check">
+                  <input
+                    type="checkbox"
+                    checked={!!spellDetailStatus.freeUsed}
+                    onChange={(event) => updateSpellStatus(spellDetail.id, { freeUse: true, freeUsed: event.currentTarget.checked })}
+                  />
+                  Free use spent since last long rest
+                </label>
+              ) : null}
+            </div>
             {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
             {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => rollD20(`${spellDetail.name} attack`, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
@@ -1317,16 +1422,23 @@ export default memo(function HeroSheet(props: {
                   {spellDetail.level === 0 ? (
                     <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => castSpell(spellDetail, 0)}>Cast cantrip</button>
                   ) : (
-                    slotMax.map((max, i) => {
-                      const lvl = i + 1;
-                      if (lvl < spellDetail.level || max <= 0) return null;
-                      const remaining = max - (slotsUsed[lvl] ?? 0);
-                      return (
-                        <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0 || spellcastingBlockedByArmor} onClick={() => castSpell(spellDetail, lvl)} title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
-                          Lv {lvl} ({remaining})
+                    <>
+                      {spellDetailStatus.freeUse ? (
+                        <button className="cs-glass-btn" type="button" disabled={!!spellDetailStatus.freeUsed || spellcastingBlockedByArmor} onClick={() => castFreeSpell(spellDetail)} title={spellcastingBlockedByArmor ? spellBlockTitle : spellDetailStatus.freeUsed ? "Free use already spent" : "Cast without spending a spell slot"}>
+                          {spellDetailStatus.freeUsed ? "Free use spent" : "Cast free"}
                         </button>
-                      );
-                    })
+                      ) : null}
+                      {slotMax.map((max, i) => {
+                        const lvl = i + 1;
+                        if (lvl < spellDetail.level || max <= 0) return null;
+                        const remaining = max - (slotsUsed[lvl] ?? 0);
+                        return (
+                          <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0 || spellcastingBlockedByArmor} onClick={() => castSpell(spellDetail, lvl)} title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
+                            Lv {lvl} ({remaining})
+                          </button>
+                        );
+                      })}
+                    </>
                   )}
                 </div>
                 {spellDetail.concentration ? <p className="cs-rule-note">Casting starts concentration{props.character.concentratingOn ? ` (ends ${props.character.concentratingOn})` : ""}</p> : null}
