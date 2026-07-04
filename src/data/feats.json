@@ -303,7 +303,8 @@
 "chooseAbility": true,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"grantsSpells": { "fixed": ["misty-step"], "choose": { "count": 1, "level": 1, "schools": ["divination", "enchantment"] } }
 },
 {
 "id": "fighting-initiate",
@@ -815,7 +816,8 @@
 "chooseAbility": true,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"grantsSpells": { "fixed": ["invisibility"], "choose": { "count": 1, "level": 1, "schools": ["illusion", "necromancy"] } }
 },
 {
 "id": "sharpshooter",

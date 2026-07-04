@@ -78,10 +78,24 @@ export type SpellData = {
   classes: string[];
 };
 
+export type FeatGrantSpells = {
+  /** Spells always granted (e.g. Misty Step from Fey Touched). */
+  fixed?: string[];
+  /** Spells the player chooses from. */
+  choose?: {
+    count: number;
+    level: number;
+    /** Optional school filter (e.g. "divination", "enchantment"). */
+    schools?: string[];
+  };
+};
+
 export type Feat = {
   id: string; name: string; description: string;
   abilityBonuses: AbilityKey[]; fixedAbility: boolean; chooseAbility: boolean;
   racialPrereq: string; otherPrereq: string; source: string;
+  /** If present, the feat grants spells — the UI must prompt for choices. */
+  grantsSpells?: FeatGrantSpells;
 };
 
 export type ASIChoice =

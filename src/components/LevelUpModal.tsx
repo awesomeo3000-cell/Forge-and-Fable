@@ -30,8 +30,9 @@ export default memo(function LevelUpModal({
   onHpRoll,
   onConfirm,
   onCancel,
+  raceName,
 }: {
-  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[] };
+  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -40,6 +41,7 @@ export default memo(function LevelUpModal({
   asiLevels: number[];
   subclassLevel?: number;
   casterType?: string;
+  raceName?: string;
   /** When true, omit the HP step — used at character creation, where the
       creator already computes starting HP for the chosen level. */
   skipHp?: boolean;
@@ -73,6 +75,7 @@ export default memo(function LevelUpModal({
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
   const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
+  const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const mounted = useRef(true);
@@ -96,7 +99,13 @@ export default memo(function LevelUpModal({
         if (pickedFeat === "") return false;
         if (pickedFeat === "asi") return Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2;
         const feat = getFeat(pickedFeat);
-        if (feat?.chooseAbility && feat.abilityBonuses.length > 1) return featAbilityChoice !== null;
+        if (feat?.chooseAbility && feat.abilityBonuses.length > 1) {
+          if (featAbilityChoice === null) return false;
+        }
+        // Feat grants spells — must have chosen the required count
+        if (feat?.grantsSpells?.choose) {
+          if (featSpellChoices.length < feat.grantsSpells.choose.count) return false;
+        }
         return true;
       }
       case "spells": return pickedSpells.length > 0;
@@ -112,7 +121,29 @@ export default memo(function LevelUpModal({
     .filter((s) => !character.spellsKnown.includes(s.id))
     .slice(0, 50);
 
-  const feats = availableFeats();
+  const feats = availableFeats({
+    raceName,
+    casterType,
+    existingFeatIds: (character.asiChoices ?? [])
+      .filter((c) => c.type === "feat")
+      .map((c) => (c as { featId: string }).featId),
+    level: newLevel,
+  });
+
+  // Compute available spells for the chosen feat's grantsSpells.choose
+  const featSpellOptions = (() => {
+    if (!pickedFeat || pickedFeat === "asi") return [];
+    const feat = getFeat(pickedFeat);
+    if (!feat?.grantsSpells?.choose) return [];
+    const { schools, level: spellLevel } = feat.grantsSpells.choose;
+    // Use the full class spell list as a reasonable superset for feat spells
+    const classList = spellsForClass(className);
+    let candidates = classList.filter((s) => s.level === spellLevel && !character.spellsKnown.includes(s.id));
+    if (schools && schools.length > 0) {
+      candidates = candidates.filter((s) => schools.includes(s.school.toLowerCase()));
+    }
+    return candidates.slice(0, 30);
+  })();
 
   const rollHp = () => {
     if (hpRolling || hpRolled) return;
@@ -186,6 +217,19 @@ export default memo(function LevelUpModal({
     if (hasSpells && pickedSpells.length > 0) {
       data.spellsKnown = [...character.spellsKnown, ...pickedSpells];
     }
+    // Feat-granted spells: add both fixed and chosen spells
+    if (pickedFeat && pickedFeat !== "asi") {
+      const feat = getFeat(pickedFeat);
+      if (feat?.grantsSpells) {
+        const grantSpells: string[] = [
+          ...(feat.grantsSpells.fixed ?? []),
+          ...featSpellChoices,
+        ];
+        if (grantSpells.length > 0) {
+          data.spellsKnown = [...(data.spellsKnown as string[] ?? character.spellsKnown), ...grantSpells];
+        }
+      }
+    }
     onConfirm(data);
   };
 
@@ -246,7 +290,7 @@ export default memo(function LevelUpModal({
                 <p>Increase one ability score by 2, or two ability scores by 1 (max 20).</p>
               </button>
               {feats.map((f) => (
-                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); }}>
+                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); setFeatSpellChoices([]); }}>
                   <strong>{f.name}</strong>
                   <p>{f.description.slice(0, 150)}</p>
                 </button>
@@ -284,6 +328,28 @@ export default memo(function LevelUpModal({
                 </div>
               );
             })()}
+            {featSpellOptions.length > 0 ? (
+              <div className="cs-feat-ability-choice">
+                <span className="cs-section-eyebrow">
+                  Choose {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.count ?? 0; })()} spell{(() => { const f = getFeat(pickedFeat); return (f?.grantsSpells?.choose?.count ?? 0) > 1 ? "s" : ""; })()} (Level {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.level ?? 1; })()})
+                </span>
+                <div className="cs-lvl-spell-grid">
+                  {featSpellOptions.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`cs-lvl-spell-row${featSpellChoices.includes(s.id) ? " active" : ""}`}
+                      onClick={() => setFeatSpellChoices((prev) =>
+                        prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id],
+                      )}
+                    >
+                      <span>{s.name}</span>
+                      <small>Lv {s.level} {s.school}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 

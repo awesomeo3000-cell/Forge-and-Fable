@@ -1488,6 +1488,7 @@ export default memo(function HeroSheet(props: {
           asiLevels={heroClass.asiLevels ?? [4, 8, 12, 16, 19]}
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
+          raceName={race.name}
           onHpRoll={({ label, sides, modifier, onResult }) => {
             props.onRoll(label, sides, 1, modifier, ({ rolls, total }) => {
               onResult({ roll: rolls[0] ?? 1, total });
