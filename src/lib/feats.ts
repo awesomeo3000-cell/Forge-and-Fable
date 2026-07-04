@@ -1,5 +1,5 @@
 import raw from "@/data/feats.json";
-import type { Feat } from "@/types/game";
+import type { AbilityKey, AbilityScores, Feat } from "@/types/game";
 
 export const ALL_FEATS: Feat[] = raw as Feat[];
 
@@ -18,32 +18,68 @@ export interface FeatFilterContext {
   existingFeatIds?: string[];
   /** The character's current level (for level-gated feats). */
   level?: number;
+  /** The character's final ability scores, for ability-score prerequisites. */
+  abilities?: AbilityScores;
 }
 
 const SPELLCASTER_PREREQ = /spellcasting|pact magic|the ability to cast/i;
 
-/** Return feats the character is eligible for, filtered by prerequisites. */
+const ABILITY_WORDS: Record<string, AbilityKey> = {
+  strength: "strength",
+  dexterity: "dexterity",
+  constitution: "constitution",
+  intelligence: "intelligence",
+  wisdom: "wisdom",
+  charisma: "charisma",
+};
+
+/** Whether the character's race satisfies a feat's racial prerequisite.
+    Token-based so "Elf" matches "Elf (drow)" and "Elf or half-elf", but a pure
+    "Elf" does NOT match "Half-elf, half-orc, or human" (those stay one token). */
+function raceMatchesPrereq(raceName: string, prereq: string): boolean {
+  const target = raceName.trim().toLowerCase();
+  const first = target.split(/[\s-]/)[0];
+  const tokens = prereq.toLowerCase().split(/[\s,()]+/).filter(Boolean);
+  return tokens.some((t) => t === target || t === first);
+}
+
+/** Ability-score prerequisites like "Dexterity 13 or higher" or "Intelligence
+    or Wisdom 13 or higher". Prereqs without an ability threshold pass through;
+    if scores are unknown we don't block. */
+function meetsAbilityPrereq(prereq: string, abilities?: AbilityScores): boolean {
+  const threshold = prereq.match(/(\d+)\s*or higher/i);
+  if (!threshold) return true;
+  const min = parseInt(threshold[1], 10);
+  const needed = Object.keys(ABILITY_WORDS).filter((w) => new RegExp(`\\b${w}\\b`, "i").test(prereq));
+  if (needed.length === 0 || !abilities) return true;
+  // "X or Y 13+" — meeting the threshold in any listed ability qualifies.
+  return needed.some((w) => (abilities[ABILITY_WORDS[w]] ?? 0) >= min);
+}
+
+/** Return feats the character is eligible for, filtered by prerequisites.
+    A prereq is only enforced when the relevant context is known — so the
+    builder still shows everything before a race/abilities are chosen. */
 export function availableFeats(ctx?: FeatFilterContext): Feat[] {
   return ALL_FEATS.filter((f) => {
-    // Racial prerequisite: must match the character's race name
+    // Racial prerequisite
     if (f.racialPrereq && ctx?.raceName) {
-      if (f.racialPrereq.toLowerCase() !== ctx.raceName.toLowerCase()) return false;
-    }
-    // If the feat has a racial prereq but we don't know the race, still show it
-    // (the UI in the builder may not have race context yet).
-
-    // otherPrereq: spellcasting requirement
-    if (f.otherPrereq && SPELLCASTER_PREREQ.test(f.otherPrereq)) {
-      if (!ctx?.casterType || ctx.casterType === "none") return false;
+      if (!raceMatchesPrereq(ctx.raceName, f.racialPrereq)) return false;
     }
 
-    // otherPrereq: chain feat (e.g. "Strike of the Giants")
-    if (f.otherPrereq && ctx?.existingFeatIds) {
-      const prereqFeatId = f.otherPrereq.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-      if (!ctx.existingFeatIds.some((id) => id.toLowerCase() === prereqFeatId)) {
-        // Only enforce if it looks like a feat-chain prerequisite (contains a feat name)
+    if (f.otherPrereq) {
+      // Spellcasting requirement
+      if (SPELLCASTER_PREREQ.test(f.otherPrereq) && (!ctx?.casterType || ctx.casterType === "none")) {
+        return false;
+      }
+      // Ability-score requirement (DEX 13+, STR 13+, INT/WIS 13+, …)
+      if (!meetsAbilityPrereq(f.otherPrereq, ctx?.abilities)) return false;
+      // Chain feat (e.g. "Strike of the Giants")
+      if (ctx?.existingFeatIds) {
         const looksLikeFeatChain = /strike|giant|adept/i.test(f.otherPrereq);
-        if (looksLikeFeatChain) return false;
+        const prereqFeatId = f.otherPrereq.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        if (looksLikeFeatChain && !ctx.existingFeatIds.some((id) => id.toLowerCase() === prereqFeatId)) {
+          return false;
+        }
       }
     }
 

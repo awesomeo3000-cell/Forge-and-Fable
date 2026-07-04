@@ -2,10 +2,10 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import type { AbilityKey, AbilityScores, ASIChoice } from "@/types/game";
+import type { AbilityKey, AbilityScores, ASIChoice, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
-import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
+import { ALL_SPELLS, learnsIndividualSpells, spellsForClass } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
@@ -32,7 +32,7 @@ export default memo(function LevelUpModal({
   onCancel,
   raceName,
 }: {
-  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string };
+  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus> };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -91,6 +91,14 @@ export default memo(function LevelUpModal({
     };
   }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
   const stepComplete = (s: LevelUpStep): boolean => {
     switch (s) {
       case "hp": return hpRolled;
@@ -128,6 +136,7 @@ export default memo(function LevelUpModal({
       .filter((c) => c.type === "feat")
       .map((c) => (c as { featId: string }).featId),
     level: newLevel,
+    abilities: finalAbilities,
   });
 
   // Compute available spells for the chosen feat's grantsSpells.choose
@@ -136,13 +145,14 @@ export default memo(function LevelUpModal({
     const feat = getFeat(pickedFeat);
     if (!feat?.grantsSpells?.choose) return [];
     const { schools, level: spellLevel } = feat.grantsSpells.choose;
-    // Use the full class spell list as a reasonable superset for feat spells
-    const classList = spellsForClass(className);
-    let candidates = classList.filter((s) => s.level === spellLevel && !character.spellsKnown.includes(s.id));
+    // Feat spells are drawn from ALL spells of the given level and school — a
+    // feat's spell grant is independent of the class list, so this works for
+    // non-casters (Fighter/Rogue/etc.) too, not just spellcasters.
+    let candidates = ALL_SPELLS.filter((s) => s.level === spellLevel && !character.spellsKnown.includes(s.id));
     if (schools && schools.length > 0) {
       candidates = candidates.filter((s) => schools.includes(s.school.toLowerCase()));
     }
-    return candidates.slice(0, 30);
+    return candidates.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 40);
   })();
 
   const rollHp = () => {
@@ -217,7 +227,8 @@ export default memo(function LevelUpModal({
     if (hasSpells && pickedSpells.length > 0) {
       data.spellsKnown = [...character.spellsKnown, ...pickedSpells];
     }
-    // Feat-granted spells: add both fixed and chosen spells
+    // Feat-granted spells: add both fixed and chosen spells, and register them
+    // as free-use (once per long rest, no slot) with the feat as their source.
     if (pickedFeat && pickedFeat !== "asi") {
       const feat = getFeat(pickedFeat);
       if (feat?.grantsSpells) {
@@ -227,6 +238,11 @@ export default memo(function LevelUpModal({
         ];
         if (grantSpells.length > 0) {
           data.spellsKnown = [...(data.spellsKnown as string[] ?? character.spellsKnown), ...grantSpells];
+          const statuses: Record<string, SpellStatus> = { ...(character.spellStatuses ?? {}) };
+          for (const id of grantSpells) {
+            statuses[id] = { source: `${feat.name} feat`, freeUse: true, freeUsed: false };
+          }
+          data.spellStatuses = statuses;
         }
       }
     }
@@ -235,10 +251,16 @@ export default memo(function LevelUpModal({
 
   return (
     <div className="cs-levelup-overlay" onClick={onCancel}>
-      <div className="cs-levelup" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="cs-levelup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cs-levelup-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="cs-levelup-head">
-          <h2>Level {newLevel}</h2>
-          <button type="button" className="cs-glass-btn" onClick={onCancel}><X size={14} /></button>
+          <h2 id="cs-levelup-title">Level {newLevel}</h2>
+          <button type="button" className="cs-glass-btn" onClick={onCancel} aria-label="Close level up" title="Close"><X size={14} /></button>
         </div>
 
         <div className="cs-levelup-steps">

@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-07-04T16:51:39.944Z",
+  "summary": {
+    "passed": 4,
+    "failed": 3,
+    "partial": 0,
+    "skipped": 1,
+    "total": 8
+  },
+  "results": [
+    {
+      "test": "App loads and shows auth screen",
+      "status": "pass",
+      "detail": "",
+      "time": "2026-07-04T16:51:29.340Z"
+    },
+    {
+      "test": "User login",
+      "status": "pass",
+      "detail": "",
+      "time": "2026-07-04T16:51:32.461Z"
+    },
+    {
+      "test": "Character creation entry",
+      "status": "fail",
+      "detail": "Create heading not found. Found 4 buttons on page",
+      "time": "2026-07-04T16:51:32.466Z"
+    },
+    {
+      "test": "Character sheet sections",
+      "status": "skip",
+      "detail": "No character created",
+      "time": "2026-07-04T16:51:33.209Z"
+    },
+    {
+      "test": "Dice rolling triggered",
+      "status": "pass",
+      "detail": "Dice overlay may appear or roll may be silent",
+      "time": "2026-07-04T16:51:33.212Z"
+    },
+    {
+      "test": "Theme panel access",
+      "status": "fail",
+      "detail": "No Skin/Appearance button found",
+      "time": "2026-07-04T16:51:33.583Z"
+    },
+    {
+      "test": "Persistence after refresh",
+      "status": "fail",
+      "detail": "",
+      "time": "2026-07-04T16:51:36.593Z"
+    },
+    {
+      "test": "Console errors during navigation",
+      "status": "pass",
+      "detail": "",
+      "time": "2026-07-04T16:51:39.944Z"
+    }
+  ]
+}

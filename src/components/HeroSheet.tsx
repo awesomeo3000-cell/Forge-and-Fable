@@ -802,7 +802,7 @@ export default memo(function HeroSheet(props: {
           <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
           <div><h1 className="cs-char-name">{props.character.name}</h1><p className="cs-char-subtitle">{subtitleParts.join(" / ")}</p></div>
           <span className="cs-level-badge">
-            <button className="cs-lvl-stepper" type="button" onClick={handleLevelDown}><Minus size={10} /></button>
+            <button className="cs-lvl-stepper" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={10} /></button>
             Lv {props.character.level}
             <button className="cs-lvl-stepper" type="button" title="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
           </span>
@@ -811,7 +811,7 @@ export default memo(function HeroSheet(props: {
             <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest">Long Rest</button>
           </div>
           <button className={`cs-glass-btn cs-inspire-btn${props.character.heroicInspiration ? " cs-inspire-on" : ""}`} type="button" aria-pressed={!!props.character.heroicInspiration} title="Heroic Inspiration" onClick={() => props.onUpdate({ heroicInspiration: !props.character.heroicInspiration })}>{props.character.heroicInspiration ? "✦ " : ""}Inspiration</button>
-          <button className="cs-retire-btn" type="button" onClick={props.onDelete}><Trash2 size={12} /></button>
+          <button className="cs-retire-btn" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={12} /></button>
         </div>
       );
       case "vitals": return (

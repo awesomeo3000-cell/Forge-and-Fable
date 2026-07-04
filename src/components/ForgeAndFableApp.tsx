@@ -25,6 +25,7 @@ import type {
   RollMode,
   RollOutcome,
   Ruleset,
+  SpellStatus,
   StatMethod,
 } from "@/types/game";
 import {
@@ -75,6 +76,7 @@ type CreationChoices = {
   spellsKnown: string[];
   asiChoices: ASIChoice[];
   hpRolls?: number[];
+  spellStatuses?: Record<string, SpellStatus>;
 };
 
 type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
@@ -554,6 +556,7 @@ export default function ForgeAndFableApp() {
             asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
             subclassId: choices.subclassId,
             spellsKnown: choices.spellsKnown,
+            spellStatuses: choices.spellStatuses,
           }
         : {}),
     };
@@ -600,6 +603,7 @@ export default function ForgeAndFableApp() {
       asiChoices: (patch.asiChoices as ASIChoice[] | undefined) ?? creationSeq.soFar.asiChoices,
       subclassId: (patch.subclassId as string | undefined) ?? creationSeq.soFar.subclassId,
       spellsKnown: (patch.spellsKnown as string[] | undefined) ?? creationSeq.soFar.spellsKnown,
+      spellStatuses: (patch.spellStatuses as Record<string, SpellStatus> | undefined) ?? creationSeq.soFar.spellStatuses,
     };
     if (creationSeq.index + 1 < creationSeq.levels.length) {
       setCreationSeq({ ...creationSeq, index: creationSeq.index + 1, soFar });
@@ -1119,6 +1123,7 @@ export default function ForgeAndFableApp() {
       const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
       if (!heroClass) return null;
       const targetLevel = creationSeq.levels[creationSeq.index];
+      const raceName = ruleset.races.find((item) => item.id === draft.raceId)?.name;
       return (
         <LevelUpModal
           key={`create-${creationSeq.index}`}
@@ -1131,6 +1136,7 @@ export default function ForgeAndFableApp() {
           asiLevels={heroClass.asiLevels ?? [4, 8, 12, 16, 19]}
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
+          raceName={raceName}
           skipHp
           onConfirm={advanceCreationSeq}
           onCancel={() => setCreationSeq(null)}

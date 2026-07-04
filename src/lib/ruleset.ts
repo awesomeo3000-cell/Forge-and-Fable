@@ -654,7 +654,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, charisma: 1 },
       traits: [
         speciesTrait("Draconic Ancestry", "Choose a dragon lineage that shapes your breath energy and resistance."),
         speciesTrait("Breath Weapon", "Exhale elemental force in a short burst for area damage."),
@@ -669,7 +669,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { constitution: 2 },
       traits: [
         speciesTrait("Darkvision", "See in dim light and darkness better than most surface folk."),
         speciesTrait("Dwarven Resilience", "Resist poison and recover from toxic threats more reliably."),
@@ -684,7 +684,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { dexterity: 2 },
       traits: [
         speciesTrait("Darkvision", "See through darkness with a hint of old fey perception."),
         speciesTrait("Fey Ancestry", "Resist charm effects and magical sleep more easily."),
@@ -699,7 +699,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { intelligence: 2 },
       traits: [
         speciesTrait("Darkvision", "See in dim light and darkness while exploring hidden places."),
         speciesTrait("Gnomish Cunning", "Resist many magical assaults against your mind."),
@@ -714,7 +714,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "35 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, constitution: 1 },
       traits: [
         speciesTrait("Giant Ancestry", "Choose a giant lineage that grants a defining physical gift."),
         speciesTrait("Powerful Build", "Carry, push, drag, and lift as though you were larger."),
@@ -729,7 +729,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { dexterity: 2 },
       traits: [
         speciesTrait("Lucky", "Turn an unlucky moment into another chance when fortune matters."),
         speciesTrait("Brave", "Resist fear with surprising steadiness."),
@@ -744,7 +744,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium or Small",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 },
       traits: [
         speciesTrait("Resourceful", "Bring extra flexibility to skills, tools, or feats."),
         speciesTrait("Skillful", "Pick up useful training that reflects your upbringing."),
@@ -759,7 +759,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, constitution: 1 },
       traits: [
         speciesTrait("Adrenaline Rush", "Surge forward with temporary durability when the fight begins."),
         speciesTrait("Powerful Build", "Handle heavy loads and physical obstacles with ease."),
@@ -774,7 +774,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium or Small",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { charisma: 2, intelligence: 1 },
       traits: [
         speciesTrait("Darkvision", "See in gloom with supernatural clarity."),
         speciesTrait("Fiendish Legacy", "Gain innate magic shaped by an infernal, abyssal, or chthonic legacy."),
@@ -790,7 +790,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, charisma: 1 },
       traits: [
         speciesTrait("Draconic Ancestry", "Choose a dragon type that determines breath damage and resistance."),
         speciesTrait("Breath Weapon", "Release a line or cone of elemental energy."),
@@ -806,7 +806,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "25 ft.",
-      bonuses: {},
+      bonuses: { constitution: 2 },
       traits: [
         speciesTrait("Darkvision", "See underground and in darkness more easily."),
         speciesTrait("Dwarven Resilience", "Resist poison and recover from it more reliably."),
@@ -822,7 +822,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { dexterity: 2 },
       traits: [
         speciesTrait("Darkvision", "See in dim light and darkness with elven senses."),
         speciesTrait("Fey Ancestry", "Resist charm effects and magical sleep."),
@@ -838,7 +838,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { charisma: 2, dexterity: 1, constitution: 1 },
       traits: [
         speciesTrait("Darkvision", "See in dim light and darkness with elven influence."),
         speciesTrait("Fey Ancestry", "Resist charm effects and magical sleep."),
@@ -854,7 +854,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, constitution: 1 },
       traits: [
         speciesTrait("Darkvision", "See in darkness with orcish senses."),
         speciesTrait("Relentless Endurance", "Avoid falling when a hit would drop you to zero."),
@@ -870,7 +870,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "25 ft.",
-      bonuses: {},
+      bonuses: { dexterity: 2 },
       traits: [
         speciesTrait("Lucky", "Reroll a bad d20 moment and try for better fortune."),
         speciesTrait("Brave", "Stand firm against frightening effects."),
@@ -886,7 +886,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 1, dexterity: 1, constitution: 1, intelligence: 1, wisdom: 1, charisma: 1 },
       traits: [
         speciesTrait("Adaptable", "Spread improvements broadly or focus into a feat-based variant."),
         speciesTrait("Extra Training", "Variant builds begin with additional skill and feat flexibility."),
@@ -902,7 +902,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "25 ft.",
-      bonuses: {},
+      bonuses: { intelligence: 2, constitution: 1 },
       traits: [
         speciesTrait("Darkvision", "See in the dark with gnomish eyes."),
         speciesTrait("Gnome Cunning", "Resist many magic effects that target your mind."),
@@ -918,7 +918,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { charisma: 2, intelligence: 1 },
       traits: [
         speciesTrait("Darkvision", "See through dim light and darkness."),
         speciesTrait("Hellish Resistance", "Resist fire damage."),
@@ -934,7 +934,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { charisma: 2 },
       traits: [
         speciesTrait("Celestial Resistance", "Resist radiant and necrotic forces."),
         speciesTrait("Healing Hands", "Restore a small amount of health with a celestial touch."),
@@ -950,7 +950,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "25 ft., fly 50 ft.",
-      bonuses: {},
+      bonuses: { dexterity: 2, wisdom: 1 },
       traits: [
         speciesTrait("Flight", "Fly when not restricted by armor or circumstances that prevent it."),
         speciesTrait("Talons", "Use natural talons as a close-range weapon."),
@@ -966,7 +966,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "25 ft.",
-      bonuses: {},
+      bonuses: { intelligence: 2, dexterity: 1 },
       traits: [
         speciesTrait("Superior Darkvision", "See much farther in darkness than most creatures."),
         speciesTrait("Gnome Cunning", "Resist magic that attacks your mind."),
@@ -982,7 +982,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Small",
       speed: "25 ft.",
-      bonuses: {},
+      bonuses: { intelligence: 2, dexterity: 1 },
       traits: [
         speciesTrait("Darkvision", "See in the dark with gnomish eyes."),
         speciesTrait("Gnome Cunning", "Resist many magic effects that target your mind."),
@@ -998,7 +998,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { constitution: 2 },
       traits: [
         speciesTrait("Elemental Lineage", "Choose air, earth, fire, or water to shape your traits."),
         speciesTrait("Elemental Resistance", "Gain protection or utility tied to your elemental heritage."),
@@ -1014,7 +1014,7 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: {},
+      bonuses: { strength: 2, constitution: 1 },
       traits: [
         speciesTrait("Natural Athlete", "Excel at climbing, leaping, and feats of raw physical effort."),
         speciesTrait("Stone's Endurance", "Reduce incoming damage with stubborn toughness."),
