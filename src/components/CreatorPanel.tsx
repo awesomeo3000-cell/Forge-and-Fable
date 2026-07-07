@@ -37,6 +37,7 @@ import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
+import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
 import { CLASS_SKILL_CHOICES, SKILLS, BACKGROUND_SKILLS } from "@/lib/srd";
 
 type AssignmentMap = Record<AbilityKey, number>;
@@ -59,6 +60,40 @@ function classDetailLine(heroClass: HeroClass) {
   const parts = [`d${heroClass.hitDie} hit die`, casterLabel(heroClass)];
   if (heroClass.subclassLevel) parts.push(`subclass at level ${heroClass.subclassLevel}`);
   return parts.join(" / ");
+}
+
+const FAMILY_LABELS: Record<string, { name: string; summary: string }> = {
+  "dwarf-legacy": { name: "Dwarf (Legacy)", summary: "Hill or Mountain dwarf traditions." },
+  "elf-legacy": { name: "Elf (Legacy)", summary: "High, Wood, or Drow elf traditions." },
+  "halfling-legacy": { name: "Halfling (Legacy)", summary: "Lightfoot or Stout halfling families." },
+  "gnome-legacy": { name: "Gnome (Legacy)", summary: "Rock, Deep, or Forest gnome traditions." },
+  "genasi-legacy": { name: "Genasi (Legacy)", summary: "Air, Earth, Fire, or Water elemental heritage." },
+};
+
+/** Groups races sharing a familyId into one family entry (first-seen order);
+    races without a familyId pass through as their own single-race entry. */
+function groupSpeciesByFamily(
+  races: Race[],
+): ({ kind: "single"; race: Race } | { kind: "family"; familyId: string; members: Race[] })[] {
+  const items: ({ kind: "single"; race: Race } | { kind: "family"; familyId: string; members: Race[] })[] = [];
+  const familyIndex = new Map<string, number>();
+
+  for (const race of races) {
+    if (!race.familyId) {
+      items.push({ kind: "single", race });
+      continue;
+    }
+    const existingIndex = familyIndex.get(race.familyId);
+    if (existingIndex !== undefined) {
+      const entry = items[existingIndex];
+      if (entry.kind === "family") entry.members.push(race);
+      continue;
+    }
+    familyIndex.set(race.familyId, items.length);
+    items.push({ kind: "family", familyId: race.familyId, members: [race] });
+  }
+
+  return items;
 }
 
 function speciesDetailLine(race: Race) {
@@ -146,6 +181,11 @@ export default memo(function CreatorPanel(props: {
     : null;
   const heroClass = selectedClass ?? props.ruleset.classes[0];
   const race = props.ruleset.races.find((item) => item.id === props.draft.raceId) ?? null;
+  const [familyPickerId, setFamilyPickerId] = useState<string | null>(null);
+  const speciesGroups = groupSpeciesByFamily(props.ruleset.races);
+  const pickedFamily = familyPickerId
+    ? speciesGroups.find((item) => item.kind === "family" && item.familyId === familyPickerId)
+    : null;
   const inspectedClass = props.ruleset.classes.find((item) => item.id === inspectedClassId) ?? null;
   const inspectedSpecies = props.ruleset.races.find((item) => item.id === inspectedSpeciesId) ?? null;
   const buildModeLabel =
@@ -611,31 +651,61 @@ export default memo(function CreatorPanel(props: {
                   />
                 ) : null}
                 <div className="dj-card-grid species-grid">
-                  {props.ruleset.races.map((candidate) => {
-                    const parsed = parseSpeciesName(candidate.name);
+                  {speciesGroups.map((item) => {
+                    if (item.kind === "single") {
+                      const candidate = item.race;
+                      return (
+                        <button
+                          type="button"
+                          key={candidate.id}
+                          className={`dj-card dj-option-card dj-species-card ${
+                            candidate.id === props.draft.raceId ? "active" : ""
+                          }`}
+                          data-species={candidate.id}
+                          aria-haspopup="dialog"
+                          aria-pressed={candidate.id === props.draft.raceId}
+                          onClick={() => setInspectedSpeciesId(candidate.id)}
+                        >
+                          <div className="dj-card-tab" />
+                          <div className="dj-card-main">
+                            <span className="dj-card-icon" data-species={candidate.id}>
+                              <SpeciesIconPlaceholder speciesId={candidate.id} size={18} strokeWidth={1.5} />
+                            </span>
+                            <strong>{candidate.name}</strong>
+                            {candidate.id === props.draft.raceId ? <em>chosen</em> : null}
+                          </div>
+                          <small>{speciesDetailLine(candidate)}</small>
+                        </button>
+                      );
+                    }
+
+                    const family = FAMILY_LABELS[item.familyId] ?? { name: item.familyId, summary: "" };
+                    const iconMember = item.members[0];
+                    const familyHasSelection = item.members.some((m) => m.id === props.draft.raceId);
+
                     return (
-                    <button
-                      type="button"
-                      key={candidate.id}
-                      className={`dj-card dj-option-card dj-species-card ${
-                        candidate.id === props.draft.raceId ? "active" : ""
-                      }`}
-                      data-species={candidate.id}
-                      aria-haspopup="dialog"
-                      aria-pressed={candidate.id === props.draft.raceId}
-                      onClick={() => setInspectedSpeciesId(candidate.id)}
-                    >
-                      <div className="dj-card-tab" />
-                      <div className="dj-card-main">
-                        <span className="dj-card-icon" data-species={candidate.id}>
-                          <SpeciesIconPlaceholder speciesId={candidate.id} size={18} strokeWidth={1.5} />
-                        </span>
-                        <strong>{parsed.displayName}</strong>
-                        {candidate.id === props.draft.raceId ? <em>chosen</em> : null}
-                      </div>
-                      {parsed.subspeciesLabel ? <small>{parsed.subspeciesLabel}</small> : null}
-                      <small>{speciesDetailLine(candidate)}</small>
-                    </button>
+                      <button
+                        type="button"
+                        key={item.familyId}
+                        className={`dj-card dj-option-card dj-species-card dj-species-family ${
+                          familyHasSelection ? "active" : ""
+                        }`}
+                        data-species={iconMember.id}
+                        aria-haspopup="dialog"
+                        onClick={() => setFamilyPickerId(item.familyId)}
+                      >
+                        <div className="dj-card-tab" />
+                        <ChevronRight size={14} className="dj-family-chevron" />
+                        <div className="dj-card-main">
+                          <span className="dj-card-icon" data-species={iconMember.id}>
+                            <SpeciesIconPlaceholder speciesId={iconMember.id} size={18} strokeWidth={1.5} />
+                          </span>
+                          <strong>{family.name}</strong>
+                          {familyHasSelection ? <em>chosen</em> : null}
+                        </div>
+                        <small>{`${item.members.length} subspecies`}</small>
+                        <small>{family.summary}</small>
+                      </button>
                     );
                   })}
                 </div>
@@ -835,6 +905,19 @@ export default memo(function CreatorPanel(props: {
           onSelect={() => {
             props.onDraftChange({ ...props.draft, raceId: inspectedSpecies.id });
             setInspectedSpeciesId(null);
+          }}
+        />
+      ) : null}
+      {pickedFamily && pickedFamily.kind === "family" ? (
+        <SpeciesFamilyModal
+          familyName={FAMILY_LABELS[pickedFamily.familyId]?.name ?? pickedFamily.familyId}
+          familySummary={FAMILY_LABELS[pickedFamily.familyId]?.summary ?? ""}
+          members={pickedFamily.members}
+          selectedId={props.draft.raceId}
+          onClose={() => setFamilyPickerId(null)}
+          onPick={(raceId) => {
+            setFamilyPickerId(null);
+            setInspectedSpeciesId(raceId);
           }}
         />
       ) : null}

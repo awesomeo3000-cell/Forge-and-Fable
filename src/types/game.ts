@@ -19,6 +19,9 @@ export type Race = {
   speed: string;
   bonuses: Partial<AbilityScores>;
   traits: FeatureUnlock[];
+  /** Groups subspecies variants (e.g. Hill/Mountain Dwarf) under one family
+      card in the builder. Races without a familyId render as their own card. */
+  familyId?: string;
 };
 
 export type HeroClass = {

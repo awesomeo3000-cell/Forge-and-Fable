@@ -1160,13 +1160,16 @@ button:disabled {
 }
 
 [data-species="dwarf"],
-[data-species="dwarf-legacy"] {
+[data-species="hill-dwarf-legacy"],
+[data-species="mountain-dwarf-legacy"] {
   --class-a: #7a6a4a;
   --class-b: var(--class-a);
 }
 
 [data-species="elf"],
-[data-species="elf-legacy"],
+[data-species="high-elf-legacy"],
+[data-species="wood-elf-legacy"],
+[data-species="drow-legacy"],
 [data-species="half-elf-legacy"] {
   --class-a: #5f7a5a;
   --class-b: var(--class-a);
@@ -1187,7 +1190,8 @@ button:disabled {
 }
 
 [data-species="halfling"],
-[data-species="halfling-legacy"] {
+[data-species="lightfoot-halfling-legacy"],
+[data-species="stout-halfling-legacy"] {
   --class-a: #6f7a4a;
   --class-b: var(--class-a);
 }
@@ -7098,4 +7102,83 @@ button.dj-card {
 .cs-inv-row strong[data-rarity="Legendary"],
 .cs-inv-meta span[data-rarity="Legendary"] {
   color: #ff7a1a;
+}
+
+/* Species family grouping: one card per subspecies family in the grid;
+   clicking it opens SpeciesFamilyModal, a popup with an accordion list of
+   the family's actual subspecies (see .species-family-* below). */
+.dj-family-chevron {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--ink-3);
+}
+
+/* SpeciesFamilyModal: popup listing a family's subspecies as an accordion
+   (each <details> row expands to show traits + a pick button), mirroring
+   the existing "Unique Features & Traits" accordion in SpeciesLearnModal. */
+.species-family-modal .species-family-list {
+  display: grid;
+  gap: 8px;
+}
+
+.species-family-row summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.species-family-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.species-family-row-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.species-family-row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.species-family-row-name em {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--doc-accent);
+  color: var(--paper);
+  font-size: 0.6rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.species-family-row summary small {
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.species-family-row summary svg {
+  flex-shrink: 0;
+  color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+
+.species-family-row[open] summary svg {
+  transform: rotate(90deg);
+}
+
+.species-family-pick {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
 }
