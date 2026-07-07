@@ -25,6 +25,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "abilities", "currentHp", "maxHp", "tempHp",
   "inventory", "spellsKnown", "customRules",
   "skillProficiencies", "savingThrowProficiencies",
+  "toolProficiencies", "languages", "currency",
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
@@ -82,6 +83,25 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "skillProficiencies":
       case "preparedSpells":
         if (val !== undefined) assertArray(val, key);
+        break;
+      case "toolProficiencies":
+      case "languages":
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 40) throw new Error(`"${key}" must have at most 40 entries.`);
+          for (const entry of val) assertString(entry, `${key}[]`, 64);
+        }
+        break;
+      case "currency":
+        if (val !== undefined) {
+          if (typeof val !== "object" || val === null || Array.isArray(val)) {
+            throw new Error(`"currency" must be an object.`);
+          }
+          const currency = val as Record<string, unknown>;
+          for (const denomination of ["cp", "sp", "ep", "gp", "pp"]) {
+            if (denomination in currency) assertInteger(currency[denomination], `currency.${denomination}`, 0, 999999);
+          }
+        }
         break;
       case "equipment":
         if (val !== undefined && (typeof val !== "object" || val === null || Array.isArray(val))) {

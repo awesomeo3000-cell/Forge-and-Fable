@@ -1,5 +1,6 @@
-import type { AbilityKey, AbilityScores, Character, CharacterSettings, CustomRule, InventoryItem, Ruleset } from "@/types/game";
+import type { AbilityKey, AbilityScores, Character, CharacterSettings, Currency, CustomRule, InventoryItem, Ruleset } from "@/types/game";
 import { DEFAULT_STARTING_HP } from "@/lib/constants";
+import { BACKGROUND_TOOL_GRANTS, CLASS_TOOL_GRANTS } from "@/lib/srd";
 
 export const abilityKeys: AbilityKey[] = [
   "strength",
@@ -167,6 +168,9 @@ export function createInitialDraft(ruleset: Ruleset) {
     spellsKnown: [] as string[],
     customRules: [] as CustomRule[],
     skillProficiencies: [] as string[],
+    toolProficiencies: [] as string[],
+    languages: [] as string[],
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
     startingHpRolls: [] as number[],
     deathSaves: { successes: 0, failures: 0 },
   };
@@ -250,6 +254,9 @@ export function characterPayload(
     spellsKnown: string[];
     customRules: CustomRule[];
     skillProficiencies: string[];
+    toolProficiencies?: string[];
+    languages?: string[];
+    currency?: Currency;
     startingHpRolls?: number[];
     deathSaves: { successes: number; failures: number };
   },
@@ -257,6 +264,11 @@ export function characterPayload(
 ): Omit<Character, "id" | "userId" | "createdAt"> {
   const heroClass = ruleset.classes.find((item) => item.id === draft.classId) ?? ruleset.classes[0];
   const race = ruleset.races.find((item) => item.id === draft.raceId) ?? ruleset.races[0];
+  const grantedTools = new Set([
+    ...(CLASS_TOOL_GRANTS[draft.classId] ?? []),
+    ...(BACKGROUND_TOOL_GRANTS[draft.background] ?? []),
+    ...(draft.toolProficiencies ?? []),
+  ]);
   const conScore = draft.abilities.constitution + (race.bonuses.constitution ?? 0);
   const { maxHp, hpRolls } = startingHp(
     draft.level,
@@ -277,6 +289,9 @@ export function characterPayload(
     inventory: classGear,
     spellsKnown: heroClass.spellSuggestions.slice(0, 3),
     customRules: [],
+    toolProficiencies: [...grantedTools],
+    languages: draft.languages ?? [],
+    currency: draft.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
     hpRolls: hpRolls.length > 0 ? hpRolls : undefined,
   };
 }

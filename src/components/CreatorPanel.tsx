@@ -38,7 +38,20 @@ import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
-import { CLASS_SKILL_CHOICES, SKILLS, BACKGROUND_SKILLS } from "@/lib/srd";
+import {
+  CLASS_SKILL_CHOICES,
+  SKILLS,
+  BACKGROUND_SKILLS,
+  CLASS_TOOL_GRANTS,
+  CLASS_TOOL_CHOICES,
+  BACKGROUND_TOOL_GRANTS,
+  BACKGROUND_TOOL_CHOICES,
+  BACKGROUND_LANGUAGE_CHOICES,
+  LANGUAGES,
+} from "@/lib/srd";
+
+const ALL_CLASS_TOOL_OPTIONS = new Set(Object.values(CLASS_TOOL_CHOICES).flatMap((c) => c.options));
+const ALL_BACKGROUND_TOOL_OPTIONS = new Set(Object.values(BACKGROUND_TOOL_CHOICES).flatMap((c) => c.options));
 
 type AssignmentMap = Record<AbilityKey, number>;
 
@@ -198,6 +211,12 @@ export default memo(function CreatorPanel(props: {
   const skillChoice = props.draft.classId ? CLASS_SKILL_CHOICES[props.draft.classId] : undefined;
   const chosenSkillCount = props.draft.skillProficiencies.length;
   const skillsComplete = !skillChoice || chosenSkillCount >= skillChoice.count;
+
+  const classToolGrants = props.draft.classId ? CLASS_TOOL_GRANTS[props.draft.classId] ?? [] : [];
+  const classToolChoice = props.draft.classId ? CLASS_TOOL_CHOICES[props.draft.classId] : undefined;
+  const backgroundToolGrants = BACKGROUND_TOOL_GRANTS[props.draft.background] ?? [];
+  const backgroundToolChoice = BACKGROUND_TOOL_CHOICES[props.draft.background];
+  const backgroundLanguageCount = BACKGROUND_LANGUAGE_CHOICES[props.draft.background] ?? 0;
   const extraHpLevels = Math.max(0, props.draft.level - 1);
   const startingHpRolls = props.draft.startingHpRolls.slice(0, extraHpLevels);
   const constitutionModifier = abilityModifier(props.finalAbilities.constitution);
@@ -268,6 +287,31 @@ export default memo(function CreatorPanel(props: {
       props.onDraftChange({ ...props.draft, skillProficiencies: current.filter((id) => id !== skillId) });
     } else if (!skillChoice || current.length < skillChoice.count) {
       props.onDraftChange({ ...props.draft, skillProficiencies: [...current, skillId] });
+    }
+  };
+
+  /** Tool choices from class and background share one flat array; count each
+      pick against only its own choice's option pool so two independent
+      choices (e.g. a class instrument pick + a background gaming-set pick)
+      don't compete for the same slot count. */
+  const toggleToolChoice = (tool: string, options: string[], count: number) => {
+    const current = props.draft.toolProficiencies;
+    if (current.includes(tool)) {
+      props.onDraftChange({ ...props.draft, toolProficiencies: current.filter((t) => t !== tool) });
+      return;
+    }
+    const chosenInPool = current.filter((t) => options.includes(t)).length;
+    if (chosenInPool < count) {
+      props.onDraftChange({ ...props.draft, toolProficiencies: [...current, tool] });
+    }
+  };
+
+  const toggleLanguageChoice = (language: string) => {
+    const current = props.draft.languages;
+    if (current.includes(language)) {
+      props.onDraftChange({ ...props.draft, languages: current.filter((l) => l !== language) });
+    } else if (current.length < backgroundLanguageCount) {
+      props.onDraftChange({ ...props.draft, languages: [...current, language] });
     }
   };
 
@@ -474,6 +518,45 @@ export default memo(function CreatorPanel(props: {
                         })}
                       </div>
                     </div>
+                    {classToolGrants.length > 0 || classToolChoice ? (
+                      <div className="dj-skill-pick">
+                        <div className="dj-skill-pick-head">
+                          <span className="dj-eyebrow">Tool proficiencies</span>
+                        </div>
+                        {classToolGrants.length > 0 ? (
+                          <p className="dj-skill-hint">Automatically trained in {classToolGrants.join(", ")}.</p>
+                        ) : null}
+                        {classToolChoice ? (
+                          <>
+                            <p className="dj-skill-hint">
+                              Choose {classToolChoice.count} tool{classToolChoice.count > 1 ? "s" : ""} the{" "}
+                              {selectedClass.name.toLowerCase()} is trained in.
+                            </p>
+                            <div className="dj-skill-chips">
+                              {classToolChoice.options.map((tool) => {
+                                const picked = props.draft.toolProficiencies.includes(tool);
+                                const chosenInPool = props.draft.toolProficiencies.filter((t) =>
+                                  classToolChoice.options.includes(t),
+                                ).length;
+                                const full = !picked && chosenInPool >= classToolChoice.count;
+                                return (
+                                  <button
+                                    key={tool}
+                                    type="button"
+                                    className={`dj-skill-chip${picked ? " picked" : ""}`}
+                                    aria-pressed={picked}
+                                    disabled={full}
+                                    onClick={() => toggleToolChoice(tool, classToolChoice.options, classToolChoice.count)}
+                                  >
+                                    {tool}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="dj-card-grid">
@@ -498,6 +581,9 @@ export default memo(function CreatorPanel(props: {
                                 ...props.draft,
                                 classId: candidate.id,
                                 skillProficiencies: [],
+                                toolProficiencies: props.draft.toolProficiencies.filter(
+                                  (t) => !ALL_CLASS_TOOL_OPTIONS.has(t),
+                                ),
                                 startingHpRolls: [],
                               });
                             }
@@ -558,6 +644,72 @@ export default memo(function CreatorPanel(props: {
                       }
                       return null;
                     })()}
+                    {backgroundToolGrants.length > 0 ? (
+                      <div className="dj-background-skills">
+                        <span className="dj-eyebrow">Background tool proficiencies</span>
+                        <div className="dj-skill-chips" style={{ pointerEvents: "none" }}>
+                          {backgroundToolGrants.map((tool) => (
+                            <span key={tool} className="dj-skill-chip picked">{tool}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {backgroundToolChoice ? (
+                      <div className="dj-skill-pick">
+                        <div className="dj-skill-pick-head">
+                          <span className="dj-eyebrow">Choose a tool</span>
+                        </div>
+                        <div className="dj-skill-chips">
+                          {backgroundToolChoice.options.map((tool) => {
+                            const picked = props.draft.toolProficiencies.includes(tool);
+                            const chosenInPool = props.draft.toolProficiencies.filter((t) =>
+                              backgroundToolChoice.options.includes(t),
+                            ).length;
+                            const full = !picked && chosenInPool >= backgroundToolChoice.count;
+                            return (
+                              <button
+                                key={tool}
+                                type="button"
+                                className={`dj-skill-chip${picked ? " picked" : ""}`}
+                                aria-pressed={picked}
+                                disabled={full}
+                                onClick={() => toggleToolChoice(tool, backgroundToolChoice.options, backgroundToolChoice.count)}
+                              >
+                                {tool}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {backgroundLanguageCount > 0 ? (
+                      <div className="dj-skill-pick">
+                        <div className="dj-skill-pick-head">
+                          <span className="dj-eyebrow">Languages</span>
+                          <span className={`dj-skill-count${props.draft.languages.length >= backgroundLanguageCount ? " done" : ""}`}>
+                            {props.draft.languages.length}/{backgroundLanguageCount} chosen
+                          </span>
+                        </div>
+                        <div className="dj-skill-chips">
+                          {LANGUAGES.map((language) => {
+                            const picked = props.draft.languages.includes(language);
+                            const full = !picked && props.draft.languages.length >= backgroundLanguageCount;
+                            return (
+                              <button
+                                key={language}
+                                type="button"
+                                className={`dj-skill-chip${picked ? " picked" : ""}`}
+                                aria-pressed={picked}
+                                disabled={full}
+                                onClick={() => toggleLanguageChoice(language)}
+                              >
+                                {language}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                   </>
                 ) : null}
                 <div className="dj-card-grid compact">
@@ -568,7 +720,16 @@ export default memo(function CreatorPanel(props: {
                       className={`dj-card dj-option-card dj-background-card ${
                         background === props.draft.background ? "active" : ""
                       }`}
-                      onClick={() => props.onDraftChange({ ...props.draft, background })}
+                      onClick={() =>
+                        props.onDraftChange({
+                          ...props.draft,
+                          background,
+                          toolProficiencies: props.draft.toolProficiencies.filter(
+                            (t) => !ALL_BACKGROUND_TOOL_OPTIONS.has(t),
+                          ),
+                          languages: [],
+                        })
+                      }
                       aria-pressed={background === props.draft.background}
                     >
                       <div className="dj-card-tab" />

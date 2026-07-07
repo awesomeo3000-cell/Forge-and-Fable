@@ -68,3 +68,61 @@ export const CLASS_SKILL_CHOICES: Record<string, { count: number; options: strin
   wizard: { count: 2, options: ["arcana", "history", "insight", "investigation", "medicine", "religion"] },
   artificer: { count: 2, options: ["arcana", "history", "investigation", "medicine", "nature", "perception", "sleight-of-hand"] },
 };
+
+/** Standard 5e languages (Common is assumed known by every character and not tracked as a choice). */
+export const LANGUAGES: string[] = [
+  "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orc",
+  "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal", "Primordial", "Sylvan", "Undercommon",
+];
+
+const ARTISAN_TOOLS = [
+  "Alchemist's supplies", "Brewer's supplies", "Calligrapher's supplies", "Carpenter's tools",
+  "Cartographer's tools", "Cobbler's tools", "Cook's utensils", "Glassblower's tools",
+  "Jeweler's tools", "Leatherworker's tools", "Mason's tools", "Painter's supplies",
+  "Potter's tools", "Smith's tools", "Tinker's tools", "Weaver's tools", "Woodcarver's tools",
+];
+
+const MUSICAL_INSTRUMENTS = [
+  "Bagpipes", "Drum", "Dulcimer", "Flute", "Lute", "Lyre", "Horn", "Pan flute", "Shawm", "Viol",
+];
+
+const GAMING_SETS = ["Dice set", "Playing card set"];
+
+export const TOOLS: string[] = [
+  ...ARTISAN_TOOLS, ...MUSICAL_INSTRUMENTS, ...GAMING_SETS,
+  "Thieves' tools", "Herbalism kit", "Disguise kit", "Forgery kit", "Navigator's tools", "Poisoner's kit", "Land vehicles", "Water vehicles",
+];
+
+/** Fixed (no-choice) tool proficiencies a class grants, per PHB. */
+export const CLASS_TOOL_GRANTS: Record<string, string[]> = {
+  druid: ["Herbalism kit"],
+  rogue: ["Thieves' tools"],
+  artificer: ["Thieves' tools", "Tinker's tools"],
+};
+
+/** Class tool proficiency choices (PHB): pick `count` from `options`. */
+export const CLASS_TOOL_CHOICES: Record<string, { count: number; options: string[] }> = {
+  bard: { count: 3, options: MUSICAL_INSTRUMENTS },
+  monk: { count: 1, options: [...ARTISAN_TOOLS, ...MUSICAL_INSTRUMENTS] },
+  artificer: { count: 1, options: ARTISAN_TOOLS },
+};
+
+/** Fixed (no-choice) tool proficiencies a background grants, per PHB. */
+export const BACKGROUND_TOOL_GRANTS: Record<string, string[]> = {
+  Criminal: ["Thieves' tools"],
+  Soldier: ["Land vehicles"],
+  // Acolyte, Sage, "Custom Background" grant no tools.
+};
+
+/** Background tool proficiency choices (PHB): pick `count` from `options`. */
+export const BACKGROUND_TOOL_CHOICES: Record<string, { count: number; options: string[] }> = {
+  Criminal: { count: 1, options: GAMING_SETS },
+  Soldier: { count: 1, options: GAMING_SETS },
+};
+
+/** How many languages of the player's choice a background grants. */
+export const BACKGROUND_LANGUAGE_CHOICES: Record<string, number> = {
+  Acolyte: 2,
+  Sage: 2,
+  // Criminal, Soldier, "Custom Background" grant no extra languages.
+};

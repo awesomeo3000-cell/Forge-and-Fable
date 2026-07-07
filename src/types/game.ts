@@ -150,6 +150,17 @@ export type InventoryItem = {
   properties?: string;
   cost?: string;
   image?: string;
+  /** Weight in pounds, for carrying-capacity math. Only populated for
+      manually-added items and the static armor/weapon catalog for now. */
+  weight?: number;
+};
+
+export type Currency = {
+  cp: number;
+  sp: number;
+  ep: number;
+  gp: number;
+  pp: number;
 };
 
 export type CatalogItem = {
@@ -302,6 +313,9 @@ export type Character = {
   customRules: CustomRule[];
   skillProficiencies?: string[];
   savingThrowProficiencies?: AbilityKey[];
+  toolProficiencies?: string[];
+  languages?: string[];
+  currency?: Currency;
   deathSaves: DeathSaves;
   /** null = explicitly cleared (JSON drops undefined, so reset PUTs null). */
   theme?: CharacterTheme | null;
@@ -364,6 +378,9 @@ export type DraftCharacter = {
   spellsKnown: string[];
   customRules: CustomRule[];
   skillProficiencies: string[];
+  toolProficiencies: string[];
+  languages: string[];
+  currency: Currency;
   startingHpRolls: number[];
   deathSaves: DeathSaves;
 };

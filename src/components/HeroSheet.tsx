@@ -32,7 +32,7 @@ import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
-import { ARMORS, WEAPONS, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, weaponAbility, type WeaponDef } from "@/lib/equipment";
+import { ARMORS, WEAPONS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
@@ -150,6 +150,9 @@ export default memo(function HeroSheet(props: {
       : undefined;
   const rollD20ForAbility = (label: string, modifier: number, ability?: AbilityKey) => rollD20(label, modifier, d20OptionsForAbility(ability));
   const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
+  const currency = props.character.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+  const carriedWeight = totalCarriedWeight(props.character.inventory, equipment, currency, props.character.settings.ignoreCoinWeight);
+  const capacity = carryCapacity(props.finalAbilities.strength, props.character.settings.encumbranceType);
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
   const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack;
@@ -305,16 +308,19 @@ export default memo(function HeroSheet(props: {
 
   const addItem = () => {
     if (!invName.trim()) return;
+    const parsedWeight = Number(invWeight);
     const item = {
       id: crypto.randomUUID(),
       name: invName.trim(),
       rarity: invRarity,
       attunement: false,
       notes: invNotes.trim(),
+      weight: invWeight && Number.isFinite(parsedWeight) && parsedWeight >= 0 ? parsedWeight : undefined,
     };
     props.onUpdate({ inventory: [...props.character.inventory, item] });
     setInvName("");
     setInvNotes("");
+    setInvWeight("");
     setShowInvForm(false);
   };
   const addCatalogItem = (catalogItem: CatalogItem) => {
@@ -460,6 +466,7 @@ export default memo(function HeroSheet(props: {
   const [invName, setInvName] = useState("");
   const [invRarity, setInvRarity] = useState("Common");
   const [invNotes, setInvNotes] = useState("");
+  const [invWeight, setInvWeight] = useState("");
   const [itemSearch, setItemSearch] = useState("");
   const [itemCategory, setItemCategory] = useState("All");
   const [itemRarity, setItemRarity] = useState("All");
@@ -868,7 +875,12 @@ export default memo(function HeroSheet(props: {
       case "profs": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Proficiencies &amp; Training</h3>
-          <div className="cs-prof-list">{effectiveProficiencies.length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Armor &amp; Weapons</span><div className="cs-prof-tags">{effectiveProficiencies.map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}</div>
+          <div className="cs-prof-list">
+            {effectiveProficiencies.length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Armor &amp; Weapons</span><div className="cs-prof-tags">{effectiveProficiencies.map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}
+            {(props.character.toolProficiencies ?? []).length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Tools</span><div className="cs-prof-tags">{(props.character.toolProficiencies ?? []).map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}
+            {(props.character.languages ?? []).length > 0 ? (<div className="cs-prof-group"><span className="cs-prof-cat">Languages</span><div className="cs-prof-tags">{(props.character.languages ?? []).map((p) => (<span className="cs-prof-chip" key={p}>{p}</span>))}</div></div>) : null}
+            {effectiveProficiencies.length === 0 && (props.character.toolProficiencies ?? []).length === 0 && (props.character.languages ?? []).length === 0 ? <p className="cs-muted">No proficiencies recorded</p> : null}
+          </div>
         </section>
       );
       case "equipment": {
@@ -1112,6 +1124,37 @@ export default memo(function HeroSheet(props: {
               })}</div>
             </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
+              <div className="cs-currency-panel">
+                <div className="cs-currency-row">
+                  {(["cp", "sp", "ep", "gp", "pp"] as const).map((denomination) => (
+                    <label className="cs-currency-field" key={denomination}>
+                      <span>{denomination.toUpperCase()}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={currency[denomination]}
+                        onChange={(e) =>
+                          props.onUpdate({
+                            currency: { ...currency, [denomination]: Math.max(0, Number(e.target.value) || 0) },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+                {capacity ? (
+                  <p className={`cs-rule-note${carriedWeight > capacity.max ? " cs-rule-warning" : ""}`}>
+                    Carrying {carriedWeight.toFixed(1)} / {capacity.max} lb
+                    {capacity.encumberedAt !== undefined && carriedWeight >= capacity.heavilyEncumberedAt!
+                      ? " — heavily encumbered (speed −20 ft., disadvantage on attacks/STR/DEX saves)"
+                      : capacity.encumberedAt !== undefined && carriedWeight >= capacity.encumberedAt
+                        ? " — encumbered (speed −10 ft.)"
+                        : carriedWeight > capacity.max
+                          ? " — over capacity (speed 0)"
+                          : ""}
+                  </p>
+                ) : null}
+              </div>
               <div className="cs-item-catalog">
                 <div className="cs-item-catalog-head">
                   <span>Item catalog</span>
@@ -1201,6 +1244,7 @@ export default memo(function HeroSheet(props: {
                     <option value="Legendary">Legendary</option>
                   </select>
                   <input type="text" placeholder="Notes (optional)" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
+                  <input type="number" placeholder="Weight (lb, optional)" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} />
                   <div className="cs-inv-form-actions">
                     <button type="button" className="cs-glass-btn" onClick={addItem}>Add</button>
                     <button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button>

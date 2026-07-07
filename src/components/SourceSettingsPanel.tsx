@@ -135,6 +135,43 @@ export default memo(function SourceSettingsPanel(props: {
           </label>
         </div>
       </section>
+
+      <section className="settings-section">
+        <div className="select-grid">
+          <label className="control-field">
+            <span>Encumbrance Type</span>
+            <small>
+              Use the standard encumbrance rules / Disable the encumbrance display / Use the more
+              detailed rules for encumbrance
+            </small>
+            <select
+              value={props.settings.encumbranceType}
+              onChange={(event) =>
+                props.onSettingsChange({
+                  encumbranceType: event.target.value as CharacterSettings["encumbranceType"],
+                })
+              }
+            >
+              <option value="standard">Use Encumbrance</option>
+              <option value="none">Disable Encumbrance</option>
+              <option value="variant">Variant Encumbrance</option>
+            </select>
+          </label>
+        </div>
+        <div className="settings-list compact">
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={props.settings.ignoreCoinWeight}
+              onChange={(event) => props.onSettingsChange({ ignoreCoinWeight: event.target.checked })}
+            />
+            <span>
+              <strong>Ignore Coin Weight</strong>
+              <small>Coins do not count against your total weight carried (50 coins weigh 1 lb.)</small>
+            </span>
+          </label>
+        </div>
+      </section>
     </div>
   );
 })

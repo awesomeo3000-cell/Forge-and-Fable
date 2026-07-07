@@ -1,4 +1,4 @@
-import type { AbilityKey, AbilityScores, Equipment, InventoryItem } from "@/types/game";
+import type { AbilityKey, AbilityScores, CharacterSettings, Currency, Equipment, InventoryItem } from "@/types/game";
 import { getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemArmorAcBonus, itemWeaponBonus } from "@/lib/itemCatalog";
 import { abilityModifier } from "@/lib/utils";
 
@@ -11,6 +11,8 @@ export type ArmorDef = {
   dexBonus: "full" | "max2" | "none";
   stealthDisadvantage: boolean;
   strengthReq: number;
+  /** Weight in pounds (PHB equipment table). */
+  weight: number;
 };
 
 export type WeaponDef = {
@@ -23,41 +25,46 @@ export type WeaponDef = {
   versatile?: string;
   twoHanded?: boolean;
   bonus?: number;
+  /** Weight in pounds (PHB equipment table). */
+  weight: number;
 };
 
+/** Weight in pounds of a carried shield (PHB equipment table). */
+export const SHIELD_WEIGHT = 6;
+
 export const ARMORS: ArmorDef[] = [
-  { id: "padded", name: "Padded", category: "light", baseAc: 11, dexBonus: "full", stealthDisadvantage: true, strengthReq: 0 },
-  { id: "leather", name: "Leather", category: "light", baseAc: 11, dexBonus: "full", stealthDisadvantage: false, strengthReq: 0 },
-  { id: "studded-leather", name: "Studded leather", category: "light", baseAc: 12, dexBonus: "full", stealthDisadvantage: false, strengthReq: 0 },
-  { id: "hide", name: "Hide", category: "medium", baseAc: 12, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0 },
-  { id: "chain-shirt", name: "Chain shirt", category: "medium", baseAc: 13, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0 },
-  { id: "scale-mail", name: "Scale mail", category: "medium", baseAc: 14, dexBonus: "max2", stealthDisadvantage: true, strengthReq: 0 },
-  { id: "breastplate", name: "Breastplate", category: "medium", baseAc: 14, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0 },
-  { id: "half-plate", name: "Half plate", category: "medium", baseAc: 15, dexBonus: "max2", stealthDisadvantage: true, strengthReq: 0 },
-  { id: "ring-mail", name: "Ring mail", category: "heavy", baseAc: 14, dexBonus: "none", stealthDisadvantage: true, strengthReq: 0 },
-  { id: "chain-mail", name: "Chain mail", category: "heavy", baseAc: 16, dexBonus: "none", stealthDisadvantage: true, strengthReq: 13 },
-  { id: "splint", name: "Splint", category: "heavy", baseAc: 17, dexBonus: "none", stealthDisadvantage: true, strengthReq: 15 },
-  { id: "plate", name: "Plate", category: "heavy", baseAc: 18, dexBonus: "none", stealthDisadvantage: true, strengthReq: 15 },
+  { id: "padded", name: "Padded", category: "light", baseAc: 11, dexBonus: "full", stealthDisadvantage: true, strengthReq: 0, weight: 8 },
+  { id: "leather", name: "Leather", category: "light", baseAc: 11, dexBonus: "full", stealthDisadvantage: false, strengthReq: 0, weight: 10 },
+  { id: "studded-leather", name: "Studded leather", category: "light", baseAc: 12, dexBonus: "full", stealthDisadvantage: false, strengthReq: 0, weight: 13 },
+  { id: "hide", name: "Hide", category: "medium", baseAc: 12, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0, weight: 12 },
+  { id: "chain-shirt", name: "Chain shirt", category: "medium", baseAc: 13, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0, weight: 20 },
+  { id: "scale-mail", name: "Scale mail", category: "medium", baseAc: 14, dexBonus: "max2", stealthDisadvantage: true, strengthReq: 0, weight: 45 },
+  { id: "breastplate", name: "Breastplate", category: "medium", baseAc: 14, dexBonus: "max2", stealthDisadvantage: false, strengthReq: 0, weight: 20 },
+  { id: "half-plate", name: "Half plate", category: "medium", baseAc: 15, dexBonus: "max2", stealthDisadvantage: true, strengthReq: 0, weight: 40 },
+  { id: "ring-mail", name: "Ring mail", category: "heavy", baseAc: 14, dexBonus: "none", stealthDisadvantage: true, strengthReq: 0, weight: 40 },
+  { id: "chain-mail", name: "Chain mail", category: "heavy", baseAc: 16, dexBonus: "none", stealthDisadvantage: true, strengthReq: 13, weight: 55 },
+  { id: "splint", name: "Splint", category: "heavy", baseAc: 17, dexBonus: "none", stealthDisadvantage: true, strengthReq: 15, weight: 60 },
+  { id: "plate", name: "Plate", category: "heavy", baseAc: 18, dexBonus: "none", stealthDisadvantage: true, strengthReq: 15, weight: 65 },
 ];
 
 export const WEAPONS: WeaponDef[] = [
-  { id: "unarmed", name: "Unarmed strike", damage: "1", damageType: "bludgeoning", kind: "melee" },
-  { id: "dagger", name: "Dagger", damage: "1d4", damageType: "piercing", kind: "finesse" },
-  { id: "mace", name: "Mace", damage: "1d6", damageType: "bludgeoning", kind: "melee" },
-  { id: "quarterstaff", name: "Quarterstaff", damage: "1d6", damageType: "bludgeoning", kind: "melee", versatile: "1d8" },
-  { id: "spear", name: "Spear", damage: "1d6", damageType: "piercing", kind: "melee", versatile: "1d8" },
-  { id: "handaxe", name: "Handaxe", damage: "1d6", damageType: "slashing", kind: "melee" },
-  { id: "scimitar", name: "Scimitar", damage: "1d6", damageType: "slashing", kind: "finesse" },
-  { id: "shortsword", name: "Shortsword", damage: "1d6", damageType: "piercing", kind: "finesse" },
-  { id: "rapier", name: "Rapier", damage: "1d8", damageType: "piercing", kind: "finesse" },
-  { id: "longsword", name: "Longsword", damage: "1d8", damageType: "slashing", kind: "melee", versatile: "1d10" },
-  { id: "warhammer", name: "Warhammer", damage: "1d8", damageType: "bludgeoning", kind: "melee", versatile: "1d10" },
-  { id: "battleaxe", name: "Battleaxe", damage: "1d8", damageType: "slashing", kind: "melee", versatile: "1d10" },
-  { id: "greataxe", name: "Greataxe", damage: "1d12", damageType: "slashing", kind: "melee", twoHanded: true },
-  { id: "greatsword", name: "Greatsword", damage: "2d6", damageType: "slashing", kind: "melee", twoHanded: true },
-  { id: "shortbow", name: "Shortbow", damage: "1d6", damageType: "piercing", kind: "ranged", twoHanded: true },
-  { id: "longbow", name: "Longbow", damage: "1d8", damageType: "piercing", kind: "ranged", twoHanded: true },
-  { id: "light-crossbow", name: "Light crossbow", damage: "1d8", damageType: "piercing", kind: "ranged", twoHanded: true },
+  { id: "unarmed", name: "Unarmed strike", damage: "1", damageType: "bludgeoning", kind: "melee", weight: 0 },
+  { id: "dagger", name: "Dagger", damage: "1d4", damageType: "piercing", kind: "finesse", weight: 1 },
+  { id: "mace", name: "Mace", damage: "1d6", damageType: "bludgeoning", kind: "melee", weight: 4 },
+  { id: "quarterstaff", name: "Quarterstaff", damage: "1d6", damageType: "bludgeoning", kind: "melee", versatile: "1d8", weight: 4 },
+  { id: "spear", name: "Spear", damage: "1d6", damageType: "piercing", kind: "melee", versatile: "1d8", weight: 3 },
+  { id: "handaxe", name: "Handaxe", damage: "1d6", damageType: "slashing", kind: "melee", weight: 2 },
+  { id: "scimitar", name: "Scimitar", damage: "1d6", damageType: "slashing", kind: "finesse", weight: 3 },
+  { id: "shortsword", name: "Shortsword", damage: "1d6", damageType: "piercing", kind: "finesse", weight: 2 },
+  { id: "rapier", name: "Rapier", damage: "1d8", damageType: "piercing", kind: "finesse", weight: 2 },
+  { id: "longsword", name: "Longsword", damage: "1d8", damageType: "slashing", kind: "melee", versatile: "1d10", weight: 3 },
+  { id: "warhammer", name: "Warhammer", damage: "1d8", damageType: "bludgeoning", kind: "melee", versatile: "1d10", weight: 2 },
+  { id: "battleaxe", name: "Battleaxe", damage: "1d8", damageType: "slashing", kind: "melee", versatile: "1d10", weight: 4 },
+  { id: "greataxe", name: "Greataxe", damage: "1d12", damageType: "slashing", kind: "melee", twoHanded: true, weight: 7 },
+  { id: "greatsword", name: "Greatsword", damage: "2d6", damageType: "slashing", kind: "melee", twoHanded: true, weight: 6 },
+  { id: "shortbow", name: "Shortbow", damage: "1d6", damageType: "piercing", kind: "ranged", twoHanded: true, weight: 2 },
+  { id: "longbow", name: "Longbow", damage: "1d8", damageType: "piercing", kind: "ranged", twoHanded: true, weight: 2 },
+  { id: "light-crossbow", name: "Light crossbow", damage: "1d8", damageType: "piercing", kind: "ranged", twoHanded: true, weight: 5 },
 ];
 
 const ARMORS_BY_ID = new Map(ARMORS.map((a) => [a.id, a]));
@@ -250,6 +257,7 @@ export function inventoryWeaponToDef(item: InventoryItem): WeaponDef | null {
     versatile,
     twoHanded: properties.includes("two-handed") || fallback?.twoHanded,
     bonus: itemWeaponBonus(item),
+    weight: item.weight ?? fallback?.weight ?? 0,
   };
 }
 
@@ -348,4 +356,47 @@ export function preparedSpellLimit(
 ): number {
   const casterLevel = casterType === "half" ? Math.floor(level / 2) : level;
   return Math.max(1, casterLevel + abilityMod);
+}
+
+/**
+ * Total weight (lb) of everything a character is carrying: every inventory
+ * item (equipped or not) plus any statically-selected armor/weapons/shield
+ * (which aren't inventory rows), plus coin weight (50 coins/lb) unless
+ * ignored. Items without weight data (most of the 541-item catalog, for now)
+ * simply contribute 0 — see roadmap §3.11 for scope notes.
+ */
+export function totalCarriedWeight(
+  inventory: InventoryItem[],
+  equipment: Equipment | undefined,
+  currency: Currency | undefined,
+  ignoreCoinWeight: boolean,
+): number {
+  const inventoryWeight = inventory.reduce((sum, item) => sum + (item.weight ?? 0), 0);
+  const staticArmorWeight = equipment?.armorId ? getArmor(equipment.armorId)?.weight ?? 0 : 0;
+  const staticWeaponWeight = (equipment?.weaponIds ?? []).reduce((sum, id) => sum + (getWeapon(id)?.weight ?? 0), 0);
+  const staticShieldWeight = equipment?.shield ? SHIELD_WEIGHT : 0;
+  const totalCoins = currency ? currency.cp + currency.sp + currency.ep + currency.gp + currency.pp : 0;
+  const coinWeight = ignoreCoinWeight ? 0 : totalCoins / 50;
+
+  return inventoryWeight + staticArmorWeight + staticWeaponWeight + staticShieldWeight + coinWeight;
+}
+
+export type CarryCapacity = {
+  max: number;
+  /** Only set when using variant encumbrance rules. */
+  encumberedAt?: number;
+  heavilyEncumberedAt?: number;
+};
+
+/** Carrying capacity from STR score, per the chosen encumbrance ruleset. Null means the display is disabled. */
+export function carryCapacity(
+  strength: number,
+  encumbranceType: CharacterSettings["encumbranceType"],
+): CarryCapacity | null {
+  if (encumbranceType === "none") return null;
+  const max = strength * 15;
+  if (encumbranceType === "variant") {
+    return { max, encumberedAt: strength * 5, heavilyEncumberedAt: strength * 10 };
+  }
+  return { max };
 }
