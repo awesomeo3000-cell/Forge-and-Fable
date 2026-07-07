@@ -576,8 +576,7 @@ button:disabled {
 }
 
 .vault-rail,
-.studio-surface,
-.dice-panel {
+.studio-surface {
   border: 1px solid var(--rule);
   border-radius: var(--r-lg);
   background: var(--ground-2);
@@ -585,8 +584,7 @@ button:disabled {
   backdrop-filter: none;
 }
 
-.vault-rail,
-.dice-panel {
+.vault-rail {
   position: sticky;
   top: 18px;
   padding: 14px;
@@ -2919,10 +2917,6 @@ button:disabled {
   font-size: 0.76rem;
 }
 
-.dice-panel {
-  display: grid;
-  gap: 12px;
-}
 
 .dice-buttons {
   display: grid;
@@ -4173,6 +4167,7 @@ button:disabled {
 /* ── Vitals ── */
 
 .cs-vital-cell {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
   justify-items: center;
@@ -5278,22 +5273,22 @@ button:disabled {
   outline: 1.5px solid var(--doc-accent, var(--accent));
   outline-offset: -1px;
 }
+/* Positioned as an absolute overlay (not a grid row) so it doesn't compete
+   with the AC number for space — keeps the number centered at the same
+   height as the other vital numbers, which have no third row. */
 .cs-ac-src {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
   display: block;
   font-size: 0.58rem;
   letter-spacing: 0.04em;
   opacity: 0.75;
-  max-width: 90px;
+  max-width: 90%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: -1px;
-}
-
-/* AC cell has an extra source row — keep the number vertically aligned
-   with the other vital numbers that sit alone in their second grid row. */
-.cs-vital-cell:has(.cs-ac-src) strong {
-  align-self: end;
 }
 
 /* ── Spell prep & casting ── */
@@ -7071,4 +7066,33 @@ button.dj-card {
   .fumble-text {
     animation: none;
   }
+}
+
+/* Item rarity color-coding: catalog search + rarity filter options + equipped inventory list. */
+.cs-item-result strong[data-rarity="Uncommon"],
+.cs-item-catalog-controls option[data-rarity="Uncommon"],
+.cs-inv-row strong[data-rarity="Uncommon"],
+.cs-inv-meta span[data-rarity="Uncommon"] {
+  color: #2e9e5b;
+}
+
+.cs-item-result strong[data-rarity="Rare"],
+.cs-item-catalog-controls option[data-rarity="Rare"],
+.cs-inv-row strong[data-rarity="Rare"],
+.cs-inv-meta span[data-rarity="Rare"] {
+  color: #3b82f6;
+}
+
+.cs-item-result strong[data-rarity="Very Rare"],
+.cs-item-catalog-controls option[data-rarity="Very Rare"],
+.cs-inv-row strong[data-rarity="Very Rare"],
+.cs-inv-meta span[data-rarity="Very Rare"] {
+  color: #a855f7;
+}
+
+.cs-item-result strong[data-rarity="Legendary"],
+.cs-item-catalog-controls option[data-rarity="Legendary"],
+.cs-inv-row strong[data-rarity="Legendary"],
+.cs-inv-meta span[data-rarity="Legendary"] {
+  color: #ff7a1a;
 }

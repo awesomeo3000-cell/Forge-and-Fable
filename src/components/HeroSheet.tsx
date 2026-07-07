@@ -1130,14 +1130,14 @@ export default memo(function HeroSheet(props: {
                   </select>
                   <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}>
                     <option value="All">All rarities</option>
-                    {ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}
+                    {ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity} data-rarity={rarity}>{rarity}</option>)}
                   </select>
                 </div>
                 <div className="cs-item-results">
                   {visibleItemMatches.map((item) => (
                     <div className="cs-item-result" key={item.id}>
                       <div>
-                        <strong>{item.name}</strong>
+                        <strong data-rarity={item.rarity}>{item.name}</strong>
                         <span>{[item.rarity, ...itemMetaParts(item)].filter(Boolean).join(" | ")}</span>
                         {item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "..." : ""}</p> : null}
                       </div>
@@ -1167,7 +1167,7 @@ export default memo(function HeroSheet(props: {
                   return (
                     <div className={`cs-inv-row${equippedAsArmor || equippedAsShield || equippedAsWeapon || equippedAsBonus ? " cs-inv-equipped" : ""}`} key={item.id}>
                       <div>
-                        <strong>{item.name}</strong>
+                        <strong data-rarity={item.rarity}>{item.name}</strong>
                         {item.notes ? <span>{item.notes}</span> : null}
                         {canEquipArmor || canEquipShield || canEquipWeapon || canEquipBonus ? (
                           <div className="cs-inv-actions">
@@ -1184,7 +1184,7 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                       </div>
-                      <div className="cs-inv-meta"><span>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
+                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
                     </div>
                   );
                 })}</div>
