@@ -1220,7 +1220,10 @@ button:disabled {
   --class-b: var(--class-a);
 }
 
-[data-species="genasi-legacy"] {
+[data-species="air-genasi-legacy"],
+[data-species="earth-genasi-legacy"],
+[data-species="fire-genasi-legacy"],
+[data-species="water-genasi-legacy"] {
   --class-a: #5a7a7a;
   --class-b: var(--class-a);
 }
@@ -3322,7 +3325,7 @@ button:disabled {
   flex-shrink: 0;
 }
 
-.cs-sheet-col:nth-child(1) { flex: 0 0 8.5em; }
+.cs-sheet-col:nth-child(1) { flex: 0 0 12em; }
 .cs-sheet-col:nth-child(2) { flex: 1 1 0; min-width: 10.5em; max-width: 24em; }
 .cs-sheet-col:nth-child(3) { flex: 2 1 0; min-width: 0; }
 
@@ -4337,7 +4340,7 @@ button:disabled {
 
 .cs-sense-row { display: flex; align-items: center; gap: 0.3em; font-family: var(--font-body); font-size: 0.9em; color: var(--parchment-2); }
 
-.cs-sense-row strong { font-family: var(--font-display); font-variation-settings: "opsz" 144; color: var(--parchment); font-size: 1.2em; }
+.cs-sense-row strong { font-family: var(--font-body); font-weight: 700; color: var(--parchment); font-size: 1.05em; line-height: 1; }
 
 /* ── Proficiencies ── */
 
@@ -4687,7 +4690,7 @@ button:disabled {
 /* ── Responsive ── */
 
 @media (max-width: 1100px) {
-  .cs-sheet-col:nth-child(1) { flex: 0 0 8.5em; }
+  .cs-sheet-col:nth-child(1) { flex: 0 0 12em; }
   .cs-sheet-col:nth-child(2) { flex: 0.8; }
   .cs-sheet-col:nth-child(3) { flex: 1.2; }
 }
