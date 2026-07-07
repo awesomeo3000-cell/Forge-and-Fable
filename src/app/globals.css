@@ -7224,3 +7224,148 @@ button.dj-card {
   font-family: var(--font-body);
   font-size: 0.8em;
 }
+
+/* Custom character pages: journal/backstory/map content the player adds. */
+.cs-page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: 10px;
+}
+
+.cs-page-tab {
+  font-family: var(--font-label);
+  font-size: 0.8em;
+  padding: 6px 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-page-tab:hover {
+  color: var(--parchment);
+}
+
+.cs-page-tab.is-active {
+  color: var(--parchment);
+  border-bottom-color: var(--select);
+}
+
+.cs-page-tab.cs-page-add {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cs-page-body {
+  display: grid;
+  gap: 10px;
+}
+
+.cs-page-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-page-title-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--parchment);
+  font-family: var(--font-display);
+  font-size: 1.1em;
+  padding: 2px 0;
+}
+
+.cs-page-title-input:focus {
+  outline: none;
+  border-bottom-color: var(--rule-soft);
+}
+
+.cs-page-blocks {
+  display: grid;
+  gap: 10px;
+}
+
+.cs-page-block {
+  position: relative;
+  padding: 8px 28px 8px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: var(--ground-3);
+}
+
+.cs-page-text-block {
+  width: 100%;
+  min-height: 90px;
+  border: 0;
+  background: transparent;
+  color: var(--parchment-2);
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.cs-page-text-block:focus {
+  outline: none;
+}
+
+.cs-page-image-block {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-page-image-block img {
+  max-width: 100%;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+}
+
+.cs-page-caption {
+  color: var(--ink-3);
+  font-size: 0.72em;
+}
+
+.cs-page-image-block input {
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  padding: 5px 7px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.78em;
+}
+
+.cs-page-block-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 1em;
+  line-height: 1;
+}
+
+.cs-page-block-del:hover {
+  color: var(--parchment);
+}
+
+.cs-page-add-controls {
+  display: flex;
+  gap: 8px;
+}

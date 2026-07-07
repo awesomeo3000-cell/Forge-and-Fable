@@ -29,7 +29,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
-  "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects",
+  "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects", "pages",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -161,6 +161,37 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
             }
             if (e.sense !== undefined) assertString(e.sense, "effects[].sense", 48);
             if (e.source !== undefined) assertString(e.source, "effects[].source", 24);
+          }
+        }
+        break;
+      case "pages":
+        if (val !== undefined) {
+          assertArray(val, "pages");
+          if (val.length > 10) throw new Error(`"pages" must have at most 10 entries.`);
+          for (const page of val) {
+            if (!page || typeof page !== "object" || Array.isArray(page)) throw new Error(`"pages" entries must be objects.`);
+            const p = page as Record<string, unknown>;
+            assertString(p.id, "pages[].id", 64);
+            assertString(p.title, "pages[].title", 60);
+            if (!(p.title as string).trim()) throw new Error(`"pages[].title" is required.`);
+            assertArray(p.blocks, "pages[].blocks");
+            if ((p.blocks as unknown[]).length > 20) throw new Error(`"pages[].blocks" must have at most 20 entries.`);
+            for (const block of p.blocks as unknown[]) {
+              if (!block || typeof block !== "object" || Array.isArray(block)) throw new Error(`"pages[].blocks" entries must be objects.`);
+              const b = block as Record<string, unknown>;
+              assertString(b.id, "pages[].blocks[].id", 64);
+              if (b.type === "text") {
+                assertString(b.content, "pages[].blocks[].content", 5000);
+              } else if (b.type === "image") {
+                assertString(b.url, "pages[].blocks[].url", 500);
+                if (!/^https?:\/\//i.test(b.url as string)) {
+                  throw new Error(`"pages[].blocks[].url" must be an http(s) URL.`);
+                }
+                if (b.caption !== undefined) assertString(b.caption, "pages[].blocks[].caption", 120);
+              } else {
+                throw new Error(`"pages[].blocks[].type" must be "text" or "image".`);
+              }
+            }
           }
         }
         break;

@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  BookOpen,
   ChevronDown,
   GripHorizontal,
   Minus,
@@ -20,7 +21,7 @@ import {
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, CatalogItem, Character, Equipment, InventoryItem, RollMode, Ruleset, SheetLayout, SheetSectionId, SpellStatus } from "@/types/game";
+import type { AbilityKey, AbilityScores, CatalogItem, Character, CharacterPage, Equipment, InventoryItem, PageBlock, RollMode, Ruleset, SheetLayout, SheetSectionId, SpellStatus } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -695,6 +696,61 @@ export default memo(function HeroSheet(props: {
     [props],
   );
 
+  const [pages, setPages] = useState<CharacterPage[]>(props.character.pages ?? []);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [brokenPageImages, setBrokenPageImages] = useState<Set<string>>(new Set());
+  const pagesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const savePages = useCallback(
+    (next: CharacterPage[]) => {
+      setPages(next);
+      if (pagesTimer.current) clearTimeout(pagesTimer.current);
+      pagesTimer.current = setTimeout(() => props.onUpdate({ pages: next }), 300);
+    },
+    [props],
+  );
+
+  const addPage = () => {
+    const next = [...pages, { id: crypto.randomUUID(), title: "New page", blocks: [] as PageBlock[] }];
+    savePages(next);
+    setActivePageIndex(next.length - 1);
+  };
+
+  const deletePage = (pageId: string) => {
+    if (!window.confirm("Delete this page?")) return;
+    const next = pages.filter((p) => p.id !== pageId);
+    savePages(next);
+    setActivePageIndex((i) => Math.max(0, Math.min(i, next.length - 1)));
+  };
+
+  const updatePageTitle = (pageId: string, title: string) => {
+    savePages(pages.map((p) => (p.id === pageId ? { ...p, title: title.trim() || "Untitled" } : p)));
+  };
+
+  const addPageBlock = (pageId: string, type: "text" | "image") => {
+    const block: PageBlock =
+      type === "text"
+        ? { id: crypto.randomUUID(), type: "text", content: "" }
+        : { id: crypto.randomUUID(), type: "image", url: "" };
+    savePages(pages.map((p) => (p.id === pageId ? { ...p, blocks: [...p.blocks, block] } : p)));
+  };
+
+  const updatePageBlock = (pageId: string, blockId: string, patch: Partial<PageBlock>) => {
+    savePages(
+      pages.map((p) =>
+        p.id === pageId
+          ? { ...p, blocks: p.blocks.map((b) => (b.id === blockId ? ({ ...b, ...patch } as PageBlock) : b)) }
+          : p,
+      ),
+    );
+  };
+
+  const removePageBlock = (pageId: string, block: PageBlock) => {
+    const hasContent = block.type === "text" ? block.content.trim().length > 0 : block.url.trim().length > 0;
+    if (hasContent && !window.confirm("Remove this block?")) return;
+    savePages(pages.map((p) => (p.id === pageId ? { ...p, blocks: p.blocks.filter((b) => b.id !== block.id) } : p)));
+  };
+
   const toggleCollapse = (id: SheetSectionId) => {
     const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
     saveLayout({ ...layout, collapsed: next });
@@ -1263,6 +1319,123 @@ export default memo(function HeroSheet(props: {
       case "background": return (
         <section className="cs-block"><h3 className="cs-section-eyebrow"><UserRound size={12} />Background</h3><div className="cs-bg-block">{props.character.background ? (<div className="cs-bg-field"><span className="cs-bg-label">Background</span><p>{props.character.background}</p></div>) : null}{props.character.alignment ? (<div className="cs-bg-field"><span className="cs-bg-label">Alignment</span><p>{props.character.alignment}</p></div>) : null}</div></section>
       );
+      case "pages": {
+        const activePage = pages[activePageIndex] ?? null;
+        return (
+          <section className="cs-block">
+            <h3 className="cs-section-eyebrow"><BookOpen size={12} />Pages</h3>
+            {pages.length > 0 ? (
+              <>
+                <div className="cs-page-tabs" role="tablist" aria-label="Character pages">
+                  {pages.map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === activePageIndex}
+                      className={`cs-page-tab${i === activePageIndex ? " is-active" : ""}`}
+                      onClick={() => setActivePageIndex(i)}
+                    >
+                      {p.title || "Untitled"}
+                    </button>
+                  ))}
+                  <button type="button" className="cs-page-tab cs-page-add" onClick={addPage}>+ Page</button>
+                </div>
+                {activePage ? (
+                  <div className="cs-page-body">
+                    <div className="cs-page-header">
+                      <input
+                        key={activePage.id}
+                        className="cs-page-title-input"
+                        type="text"
+                        defaultValue={activePage.title}
+                        maxLength={60}
+                        aria-label="Page title"
+                        onBlur={(e) => updatePageTitle(activePage.id, e.target.value)}
+                      />
+                      <button type="button" className="cs-glass-btn cs-page-delete" onClick={() => deletePage(activePage.id)}>
+                        Delete page
+                      </button>
+                    </div>
+                    {activePage.blocks.length > 0 ? (
+                      <div className="cs-page-blocks">
+                        {activePage.blocks.map((block) => (
+                          <div className="cs-page-block" key={block.id}>
+                            {block.type === "text" ? (
+                              <textarea
+                                key={block.id}
+                                className="cs-page-text-block"
+                                defaultValue={block.content}
+                                maxLength={5000}
+                                placeholder="Write..."
+                                onBlur={(e) => updatePageBlock(activePage.id, block.id, { content: e.target.value })}
+                              />
+                            ) : (
+                              <div className="cs-page-image-block">
+                                {block.url && !brokenPageImages.has(block.id) ? (
+                                  <img
+                                    src={block.url}
+                                    alt={block.caption || "Character page image"}
+                                    onError={() => setBrokenPageImages((prev) => new Set(prev).add(block.id))}
+                                    onLoad={() =>
+                                      setBrokenPageImages((prev) => {
+                                        if (!prev.has(block.id)) return prev;
+                                        const next = new Set(prev);
+                                        next.delete(block.id);
+                                        return next;
+                                      })
+                                    }
+                                  />
+                                ) : block.url ? (
+                                  <p className="cs-muted">Image unavailable</p>
+                                ) : null}
+                                {block.caption ? <small className="cs-page-caption">{block.caption}</small> : null}
+                                <input
+                                  key={`${block.id}-url`}
+                                  type="text"
+                                  placeholder="https://..."
+                                  defaultValue={block.url}
+                                  maxLength={500}
+                                  onBlur={(e) => updatePageBlock(activePage.id, block.id, { url: e.target.value.trim() })}
+                                />
+                                <input
+                                  key={`${block.id}-caption`}
+                                  type="text"
+                                  placeholder="Caption (optional)"
+                                  defaultValue={block.caption ?? ""}
+                                  maxLength={120}
+                                  onBlur={(e) => updatePageBlock(activePage.id, block.id, { caption: e.target.value.trim() || undefined })}
+                                />
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              className="cs-page-block-del"
+                              aria-label="Remove block"
+                              onClick={() => removePageBlock(activePage.id, block)}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="cs-muted">No blocks yet</p>}
+                    <div className="cs-page-add-controls">
+                      <button type="button" className="cs-glass-btn" onClick={() => addPageBlock(activePage.id, "text")}>+ Text</button>
+                      <button type="button" className="cs-glass-btn" onClick={() => addPageBlock(activePage.id, "image")}>+ Image</button>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <p className="cs-muted">No pages yet — add a journal, backstory, or map.</p>
+                <button type="button" className="cs-glass-btn" onClick={addPage}>+ Page</button>
+              </>
+            )}
+          </section>
+        );
+      }
       case "console": return (
         <section className="cs-block"><h3 className="cs-section-eyebrow"><Terminal size={12} />Console</h3><form className="cs-console-form" onSubmit={props.onConsoleSubmit}><label className="cs-console-label"><Terminal size={14} />Command<input value={props.consoleInput} onChange={(e) => props.onConsoleInput(e.target.value)} className="cs-console-input" /></label><button className="cs-glass-btn" type="submit">Execute</button><div className="cs-console-log">{props.consoleLog.map((entry, i) => (<span key={`${entry}-${i}`}>{entry}</span>))}</div></form></section>
       );

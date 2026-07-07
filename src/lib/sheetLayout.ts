@@ -14,6 +14,7 @@ export const SECTION_TITLES: Record<SheetSectionId, string> = {
   features: "Features & Traits",
   notes: "Notes",
   background: "Background",
+  pages: "Pages",
   console: "Console",
 };
 
@@ -28,7 +29,7 @@ export const DEFAULT_LAYOUT: SheetLayout = {
   columns: [
     ["abilities", "saves", "senses"],
     ["skills", "background", "notes"],
-    ["equipment", "effects", "attacks", "features", "profs"],
+    ["equipment", "effects", "attacks", "features", "profs", "pages"],
   ],
   collapsed: [],
   version: 1,
@@ -48,6 +49,7 @@ export const MOBILE_ORDER: SheetSectionId[] = [
   "features",
   "notes",
   "background",
+  "pages",
   "console",
 ];
 

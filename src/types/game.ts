@@ -189,6 +189,17 @@ export type Equipment = {
   bonusItemIds?: string[];
 };
 
+/** A custom sheet page: freeform journal/backstory/map content the player adds. */
+export type PageBlock =
+  | { id: string; type: "text"; content: string }
+  | { id: string; type: "image"; url: string; caption?: string };
+
+export type CharacterPage = {
+  id: string;
+  title: string;
+  blocks: PageBlock[];
+};
+
 /**
  * A toggleable effect: an item, spell, feature, or condition the player
  * switches on/off. Flat bonuses feed derived stats; d20Dice adds rider dice
@@ -278,6 +289,7 @@ export type SheetSectionId =
   | "features"
   | "notes"
   | "background"
+  | "pages"
   | "console";
 
 export type SheetLayout = {
@@ -332,6 +344,7 @@ export type Character = {
   hitDiceSpent?: number;
   heroicInspiration?: boolean;
   effects?: CharacterEffect[];
+  pages?: CharacterPage[];
   createdAt: string;
 }
 
