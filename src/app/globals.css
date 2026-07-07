@@ -892,18 +892,6 @@ button:disabled {
   mask-image: radial-gradient(circle, black 62%, transparent 65%);
 }
 
-.hero-preview:has(.class-art-frame)::before {
-  inset: 0;
-  z-index: 1;
-  border: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at 50% 22%, transparent 20%, rgba(5, 6, 7, 0.2) 58%, rgba(5, 6, 7, 0.74) 100%),
-    linear-gradient(180deg, rgba(5, 6, 7, 0.08), rgba(5, 6, 7, 0.22) 42%, rgba(5, 6, 7, 0.9)),
-    linear-gradient(90deg, rgba(5, 6, 7, 0.28), transparent 28%, transparent 72%, rgba(5, 6, 7, 0.32));
-  mask-image: none;
-}
-
 .class-icon-stage {
   --class-a: var(--gold);
   --class-b: var(--teal);
@@ -927,72 +915,6 @@ button:disabled {
     ),
     rgba(0, 0, 0, 0.22);
   box-shadow: none;
-}
-
-.class-art-frame {
-  --class-a: var(--gold);
-  --class-b: var(--teal);
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  aspect-ratio: auto;
-  overflow: hidden;
-  border: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--class-a) 22%, transparent), transparent 48%),
-    rgba(0, 0, 0, 0.3);
-  box-shadow: none;
-}
-
-.class-art-frame::before,
-.class-art-frame::after {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  content: "";
-}
-
-.class-art-frame::before {
-  background:
-    radial-gradient(circle at 50% 22%, color-mix(in srgb, var(--class-a) 16%, transparent), transparent 38%),
-    linear-gradient(180deg, rgba(255, 244, 218, 0.08), transparent 24%),
-    linear-gradient(0deg, rgba(5, 6, 7, 0.72), transparent 42%);
-}
-
-.class-art-frame::after {
-  inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: inherit;
-}
-
-.class-art-image {
-  object-fit: cover;
-  object-position: center top;
-  filter: saturate(1.08) contrast(1.04) brightness(0.92);
-}
-
-.class-art-badge {
-  position: absolute;
-  right: 16px;
-  top: 16px;
-  bottom: auto;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  width: 66px;
-  height: 66px;
-  border: 0;
-  border-radius: 0;
-  color: var(--class-a);
-  background: transparent;
-  filter:
-    drop-shadow(0 4px 2px rgba(0, 0, 0, 0.72))
-    drop-shadow(0 0 14px rgba(0, 0, 0, 0.72));
 }
 
 .class-symbol {
@@ -1133,7 +1055,6 @@ button:disabled {
 }
 
 .class-icon-stage,
-.class-art-frame,
 .hero-preview,
 .choice-avatar,
 :where(.vault-avatar span) {
@@ -1959,7 +1880,7 @@ button:disabled {
 }
 
 .feedback-scrim {
-  z-index: 72;
+  z-index: 210;
 }
 
 .feedback-modal {

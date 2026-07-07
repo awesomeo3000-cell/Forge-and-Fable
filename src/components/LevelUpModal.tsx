@@ -2,11 +2,12 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import type { AbilityKey, AbilityScores, ASIChoice, SpellStatus } from "@/types/game";
+import type { AbilityKey, AbilityScores, ASIChoice, CasterType, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
 import { ALL_SPELLS, learnsIndividualSpells, spellsForClass } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
+import { maxSlots } from "@/lib/spellSlots";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
 type HpRollRequest = {
@@ -31,6 +32,7 @@ export default memo(function LevelUpModal({
   onConfirm,
   onCancel,
   raceName,
+  useFeatPrerequisites = true,
 }: {
   character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus> };
   newLevel: number;
@@ -42,6 +44,8 @@ export default memo(function LevelUpModal({
   subclassLevel?: number;
   casterType?: string;
   raceName?: string;
+  /** From CharacterSettings.useFeatPrerequisites — when false, every feat is offered regardless of prereqs. */
+  useFeatPrerequisites?: boolean;
   /** When true, omit the HP step — used at character creation, where the
       creator already computes starting HP for the chosen level. */
   skipHp?: boolean;
@@ -124,8 +128,14 @@ export default memo(function LevelUpModal({
   const canContinue = stepComplete(current);
   const allDone = steps.slice(0, -1).every(stepComplete);
 
+  // Highest spell level this caster can actually cast at newLevel, from the
+  // real slot progression (not a naive ceil(level/2) approximation — half
+  // casters and pact magic don't scale that way).
+  const slots = maxSlots((casterType ?? "none") as CasterType, newLevel);
+  const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
+
   const availableSpells = spellsForClass(className)
-    .filter((s) => s.level <= Math.ceil(newLevel / 2) && s.level > 0)
+    .filter((s) => s.level <= maxCastableLevel && s.level > 0)
     .filter((s) => !character.spellsKnown.includes(s.id))
     .slice(0, 50);
 
@@ -137,6 +147,7 @@ export default memo(function LevelUpModal({
       .map((c) => (c as { featId: string }).featId),
     level: newLevel,
     abilities: finalAbilities,
+    enforcePrereqs: useFeatPrerequisites,
   });
 
   // Compute available spells for the chosen feat's grantsSpells.choose

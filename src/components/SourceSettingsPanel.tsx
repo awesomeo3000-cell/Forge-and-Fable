@@ -92,21 +92,6 @@ export default memo(function SourceSettingsPanel(props: {
       <section className="settings-section">
         <div className="select-grid">
           <label className="control-field">
-            <span>Advancement Type</span>
-            <small>Story-based character progression / XP-based character progression</small>
-            <select
-              value={props.settings.advancementType}
-              onChange={(event) =>
-                props.onSettingsChange({
-                  advancementType: event.target.value as CharacterSettings["advancementType"],
-                })
-              }
-            >
-              <option value="milestone">Milestone</option>
-              <option value="xp">XP-based</option>
-            </select>
-          </label>
-          <label className="control-field">
             <span>Hit Point Type</span>
             <small>
               Increase hit points by the fixed value or roll hit dice for higher starting levels.
@@ -139,18 +124,6 @@ export default memo(function SourceSettingsPanel(props: {
           <label className="checkbox-row">
             <input
               type="checkbox"
-              checked={props.settings.usePrerequisites}
-              onChange={(event) =>
-                props.onSettingsChange({ usePrerequisites: event.target.checked })
-              }
-            />
-            <span>
-              <strong>Use Prerequisites</strong>
-            </span>
-          </label>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
               checked={props.settings.useFeatPrerequisites}
               onChange={(event) =>
                 props.onSettingsChange({ useFeatPrerequisites: event.target.checked })
@@ -158,84 +131,6 @@ export default memo(function SourceSettingsPanel(props: {
             />
             <span>
               <strong>Feats</strong>
-            </span>
-          </label>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={props.settings.useMulticlassPrerequisites}
-              onChange={(event) =>
-                props.onSettingsChange({ useMulticlassPrerequisites: event.target.checked })
-              }
-            />
-            <span>
-              <strong>Multiclass Requirements</strong>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <section className="settings-section">
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={props.settings.showLevelScaledSpells}
-            onChange={(event) =>
-              props.onSettingsChange({ showLevelScaledSpells: event.target.checked })
-            }
-          />
-          <span>
-            <strong>Show Level-Scaled Spells</strong>
-            <small>
-              Display and highlight available spells to cast with higher level spell slots
-            </small>
-          </span>
-        </label>
-      </section>
-
-      <section className="settings-section">
-        <div className="select-grid">
-          <label className="control-field">
-            <span>Encumbrance Type</span>
-            <small>
-              Use the standard encumbrance rules / Disable the encumbrance display / Use the more
-              detailed rules for encumbrance
-            </small>
-            <select
-              value={props.settings.encumbranceType}
-              onChange={(event) =>
-                props.onSettingsChange({
-                  encumbranceType: event.target.value as CharacterSettings["encumbranceType"],
-                })
-              }
-            >
-              <option value="standard">Use Encumbrance</option>
-              <option value="none">Disable Encumbrance</option>
-              <option value="variant">Variant Encumbrance</option>
-            </select>
-          </label>
-        </div>
-        <div className="settings-list compact">
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={props.settings.ignoreCoinWeight}
-              onChange={(event) => props.onSettingsChange({ ignoreCoinWeight: event.target.checked })}
-            />
-            <span>
-              <strong>Ignore Coin Weight</strong>
-              <small>Coins do not count against your total weight carried (50 coins weigh 1 lb.)</small>
-            </span>
-          </label>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={props.settings.modifiersTop}
-              onChange={(event) => props.onSettingsChange({ modifiersTop: event.target.checked })}
-            />
-            <span>
-              <strong>Modifiers Top</strong>
-              <small>Reverse the arrangement of ability modifiers and scores</small>
             </span>
           </label>
         </div>

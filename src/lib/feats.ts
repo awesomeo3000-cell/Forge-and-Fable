@@ -20,6 +20,9 @@ export interface FeatFilterContext {
   level?: number;
   /** The character's final ability scores, for ability-score prerequisites. */
   abilities?: AbilityScores;
+  /** When false (from CharacterSettings.useFeatPrerequisites), skip all
+      prerequisite filtering and return every feat. Defaults to true. */
+  enforcePrereqs?: boolean;
 }
 
 const SPELLCASTER_PREREQ = /spellcasting|pact magic|the ability to cast/i;
@@ -60,6 +63,8 @@ function meetsAbilityPrereq(prereq: string, abilities?: AbilityScores): boolean 
     A prereq is only enforced when the relevant context is known — so the
     builder still shows everything before a race/abilities are chosen. */
 export function availableFeats(ctx?: FeatFilterContext): Feat[] {
+  if (ctx?.enforcePrereqs === false) return ALL_FEATS;
+
   return ALL_FEATS.filter((f) => {
     // Racial prerequisite
     if (f.racialPrereq && ctx?.raceName) {

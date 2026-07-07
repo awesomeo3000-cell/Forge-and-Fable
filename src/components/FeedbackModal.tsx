@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
 import type { CharacterTheme, FeedbackCategory, FeedbackEntry, FeedbackPriority } from "@/types/game";
@@ -61,6 +61,16 @@ export default memo(function FeedbackModal(props: {
   const [area, setArea] = useState("Character sheet");
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") props.onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [props]);
   const themeVars = props.theme
     ? ({
         "--paper": props.theme.paper,
@@ -114,7 +124,13 @@ export default memo(function FeedbackModal(props: {
         aria-labelledby="feedback-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="glass-icon modal-close" type="button" onClick={props.onClose} title="Close feedback">
+        <button
+          ref={closeButtonRef}
+          className="glass-icon modal-close"
+          type="button"
+          onClick={props.onClose}
+          title="Close feedback"
+        >
           <X size={18} />
         </button>
 

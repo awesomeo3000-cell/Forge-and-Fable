@@ -541,6 +541,21 @@ export default memo(function CreatorPanel(props: {
                     </button>
                   ))}
                 </div>
+                <label className="control-field">
+                  <span>Alignment</span>
+                  <select
+                    value={props.draft.alignment}
+                    onChange={(event) =>
+                      props.onDraftChange({ ...props.draft, alignment: event.target.value })
+                    }
+                  >
+                    {props.ruleset.alignments.map((alignment) => (
+                      <option key={alignment} value={alignment}>
+                        {alignment}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <div className="dj-notes-grid">
                   <label className="control-field narrative-field">
                     <span>Physical characteristics</span>

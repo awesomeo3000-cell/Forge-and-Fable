@@ -1137,6 +1137,7 @@ export default function ForgeAndFableApp() {
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
           raceName={raceName}
+          useFeatPrerequisites={draft.settings.useFeatPrerequisites}
           skipHp
           onConfirm={advanceCreationSeq}
           onCancel={() => setCreationSeq(null)}

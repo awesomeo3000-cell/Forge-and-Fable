@@ -73,7 +73,7 @@ async function readVault(): Promise<VaultData> {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const backupFile = vaultFile.replace(".json", `-backup-${timestamp}.json`);
       await copyFile(vaultFile, backupFile);
-      console.error(`⚠️ Corrupted vault backed up to ${backupFile}`);
+      console.error(`⚠️ Corrupted vault backed up to ${path.basename(backupFile)}`);
     } catch {
       // If backup itself fails (e.g. file truly gone), at least don't destroy data.
     }
@@ -146,6 +146,13 @@ export async function registerUser(input: {
   await writeVault(vault);
 
   return publicUser(user);
+}
+
+/** Best-effort rollback for a registration whose post-write step (token signing) failed. */
+export async function deleteUserById(userId: string): Promise<void> {
+  const vault = await readVault();
+  vault.users = vault.users.filter((user) => user.id !== userId);
+  await writeVault(vault);
 }
 
 export async function loginUser(input: {
