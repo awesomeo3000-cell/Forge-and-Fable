@@ -5,6 +5,7 @@ import type { CSSProperties, FormEvent } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
 import type { CharacterTheme, FeedbackCategory, FeedbackEntry, FeedbackPriority } from "@/types/game";
 import { FONT_STACKS } from "@/lib/skins";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export type FeedbackInput = {
   category: FeedbackCategory;
@@ -62,14 +63,23 @@ export default memo(function FeedbackModal(props: {
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useFocusTrap(true);
 
   useEffect(() => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
     closeButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") props.onClose();
+      if (event.key === "Escape") {
+        props.onClose();
+        queueMicrotask(() => triggerRef.current?.focus());
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      queueMicrotask(() => triggerRef.current?.focus());
+    };
   }, [props]);
   const themeVars = props.theme
     ? ({
@@ -116,6 +126,7 @@ export default memo(function FeedbackModal(props: {
   return (
     <div className="modal-scrim feedback-scrim" onClick={props.onClose}>
       <section
+        ref={dialogRef}
         className="feedback-modal"
         data-bg={backgroundKey}
         style={themeVars}

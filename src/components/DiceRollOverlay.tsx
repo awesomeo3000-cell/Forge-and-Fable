@@ -255,13 +255,13 @@ function brightnessForNormal(normal: Vec3): number {
 
 function dieFaceIndex(sides: number, result: number, faceCount: number): number {
   if (sides === 100) {
-    return Math.floor((result % 100) / 10);
+    return Math.min(9, Math.floor((result - 1) / 10));
   }
   return (((result - 1) % faceCount) + faceCount) % faceCount;
 }
 
 function inactiveFaceLabel(sides: number, index: number): string {
-  if (sides === 100) return index === 0 ? "00" : String(index * 10).padStart(2, "0");
+  if (sides === 100) return index === 0 ? "1" : String(index * 10 + 1);
   return String(index + 1);
 }
 

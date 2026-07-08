@@ -1,5 +1,8 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
+  "env": {
+    "FORGE_VAULT_DIR": "data"
+  },
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "npm ci && npm run build"

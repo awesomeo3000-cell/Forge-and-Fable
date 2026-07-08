@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, X } from "lucide-react";
 import type { CharacterTheme, ThemeBackgroundKey, ThemeFontKey } from "@/types/game";
 import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS, loadUserPresets, saveUserPreset, deleteUserPreset, encodeSkinCode, decodeSkinCode, isValidBackgroundImageUrl } from "@/lib/skins";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 function contrastRatio(hex1: string, hex2: string) {
   const lum = (h: string) => {
@@ -191,7 +192,6 @@ export default memo(function AppearancePanel(props: {
   const inkWarn = inkPaperRatio < 4.5;
   const accentWarn = accentPaperRatio < 3.0;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   // Sync hex fields when color pickers change externally
@@ -201,8 +201,26 @@ export default memo(function AppearancePanel(props: {
 
   const allPresets = [...SKIN_PRESETS, ...userPresets];
 
+  const panelRef = useFocusTrap(true);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        props.onClose();
+        queueMicrotask(() => triggerRef.current?.focus());
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => {
+      window.removeEventListener("keydown", onEscape);
+      queueMicrotask(() => triggerRef.current?.focus());
+    };
+  }, [props]);
+
   return (
-    <div className="cs-skin-panel">
+    <div className="cs-skin-panel" ref={panelRef} role="dialog" aria-modal="true" aria-label="Appearance settings">
       <div className="cs-skin-head">
         <h3>Appearance</h3>
         <div style={{ display: "flex", gap: 6 }}>
@@ -221,7 +239,7 @@ export default memo(function AppearancePanel(props: {
               <span className="cs-preset-name">{p.name}</span>
               <span className="cs-preset-stat" style={{ color: p.theme.accent }}>+3</span>
               {userPresets.some((u) => u.id === p.id) ? (
-                <button type="button" className="cs-preset-del" title="Delete preset" onClick={(e) => { e.stopPropagation(); handleDeletePreset(p.id); }}>×</button>
+                <button type="button" className="cs-preset-del" title="Delete preset" aria-label={`Delete preset ${p.name}`} onClick={(e) => { e.stopPropagation(); handleDeletePreset(p.id); }}>×</button>
               ) : null}
             </button>
           ))}
@@ -233,6 +251,7 @@ export default memo(function AppearancePanel(props: {
             Save as preset
           </button>
         </div>
+        {userPresets.length === 0 ? <p className="cs-muted" style={{ marginTop: 4, fontSize: "0.78rem" }}>No saved themes yet</p> : null}
       </div>
 
       <div className="cs-skin-section">

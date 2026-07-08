@@ -144,7 +144,7 @@ export default memo(function HeroSheet(props: {
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
   const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, props.character.inventory);
   const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, props.character.inventory);
-  const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" and ")}` : "";
+  const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" or ")}` : "";
   const d20OptionsForAbility = (ability?: AbilityKey): RollD20Options | undefined =>
     armorProficiencyIssue.strengthDexterityDisadvantage && (ability === "strength" || ability === "dexterity")
       ? { forcedMode: "disadvantage" }
@@ -616,6 +616,9 @@ export default memo(function HeroSheet(props: {
       props.onNotify?.(`${armorPenaltyReason}: spellcasting is blocked.`);
       return;
     }
+    if (props.character.concentratingOn && spell.concentration) {
+      if (!window.confirm(`You are already concentrating on ${props.character.concentratingOn}. Cast ${spell.name} instead?`)) return;
+    }
     const patch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {};
     if (atLevel > 0) {
       if (isPactCaster) {
@@ -634,6 +637,9 @@ export default memo(function HeroSheet(props: {
     if (spellcastingBlockedByArmor) {
       props.onNotify?.(`${armorPenaltyReason}: spellcasting is blocked.`);
       return;
+    }
+    if (props.character.concentratingOn && spell.concentration) {
+      if (!window.confirm(`You are already concentrating on ${props.character.concentratingOn}. Cast ${spell.name} instead?`)) return;
     }
     const allStatuses = spellStatusesRef.current;
     const current = allStatuses[spell.id];
@@ -867,7 +873,7 @@ export default memo(function HeroSheet(props: {
           <span className="cs-level-badge">
             <button className="cs-lvl-stepper" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={10} /></button>
             Lv {props.character.level}
-            <button className="cs-lvl-stepper" type="button" title="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
+            <button className="cs-lvl-stepper" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
           </span>
           <div className="cs-rest-group">
             <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest">Short Rest</button>
@@ -886,11 +892,12 @@ export default memo(function HeroSheet(props: {
           <div className="cs-vital-cell cs-vital-hp">
             <span className="cs-vital-label">Hit Points</span>
             <div className="cs-vital-hp-row"><strong>{props.character.currentHp}</strong><span className="cs-vital-hp-max">/ {props.character.maxHp}</span></div>
+            <span className="sr-only" aria-live="polite">{props.character.currentHp} of {props.character.maxHp} hit points{props.character.tempHp > 0 ? ` plus ${props.character.tempHp} temporary` : ""}</span>
             {props.character.tempHp > 0 ? <span className="cs-hp-temp">+{props.character.tempHp}</span> : null}
             <div className="cs-hp-bar"><span style={{ width: `${hpPercent}%` }} /></div>
             <div className="cs-hp-steppers">
-              <button type="button" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
-              <button type="button" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
+              <button type="button" aria-label="Decrease HP" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
+              <button type="button" aria-label="Increase HP" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
             </div>
           </div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie}</strong>
@@ -899,9 +906,9 @@ export default memo(function HeroSheet(props: {
           <div className="cs-vital-cell cs-vital-death">
             <span className="cs-vital-label"><Skull size={12} />Death Saves</span>
             <div className="cs-vital-death-row">
-              <span>S</span>{[0,1,2].map((i) => (<button key={`s-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.successes ?? 0) ? " dot-success" : ""}`} onClick={() => toggleDeathSave("successes")} aria-label={`Death save success ${i + 1}`} />))}
-              <span>F</span>{[0,1,2].map((i) => (<button key={`f-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.failures ?? 0) ? " dot-fail" : ""}`} onClick={() => toggleDeathSave("failures")} aria-label={`Death save failure ${i + 1}`} />))}
-              <button className="cs-death-reset" type="button" onClick={resetDeathSaves}>R</button>
+              <span>S</span>{[0,1,2].map((i) => (<button key={`s-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.successes ?? 0) ? " dot-success" : ""}`} onClick={() => toggleDeathSave("successes")} aria-pressed={i < (props.character.deathSaves?.successes ?? 0)} aria-label={`Death save success ${i + 1}`} />))}
+              <span>F</span>{[0,1,2].map((i) => (<button key={`f-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.failures ?? 0) ? " dot-fail" : ""}`} onClick={() => toggleDeathSave("failures")} aria-pressed={i < (props.character.deathSaves?.failures ?? 0)} aria-label={`Death save failure ${i + 1}`} />))}
+              <button className="cs-death-reset" type="button" aria-label="Reset death saves" onClick={resetDeathSaves}>R</button>
             </div>
           </div>
         </div>
@@ -912,7 +919,7 @@ export default memo(function HeroSheet(props: {
       case "saves": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow"><Shield size={12} />Saving Throws</h3>
-          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} save`, bonus, key)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title={d20OptionsForAbility(key) ? "Right-click to toggle proficiency. Armor penalty: rolls with disadvantage." : "Right-click to toggle proficiency"}><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
+          <div className="cs-save-grid">{abilityKeys.map((key) => { const prof = isSaveProficient(key); const bonus = saveBonus(key); return (<button type="button" className={`cs-save-row${prof ? " cs-prof" : ""}`} key={key} tabIndex={0} onClick={() => rollD20ForAbility(`${abilityLabels[key]} save`, bonus, key)} onContextMenu={(e) => { e.preventDefault(); toggleSaveProficiency(key); }} onKeyDown={(e) => { if (e.key === "p" || e.key === "P") { e.preventDefault(); toggleSaveProficiency(key); } }} aria-label={`${abilityLabels[key]} save ${signed(bonus)}${prof ? " proficient" : ""}`} title={d20OptionsForAbility(key) ? "Right-click or press P to toggle proficiency. Armor penalty: rolls with disadvantage." : "Right-click or press P to toggle proficiency"}><span className="cs-prof-marker" aria-hidden="true">{prof ? "\u25CF" : "\u25CB"}</span><span className="cs-save-name">{abilityLabels[key]}</span><span className="cs-save-bonus">{signed(bonus)}</span></button>); })}</div>
           {saveAllBonus !== 0 ? <p className="cs-rule-note">All saves: {signed(saveAllBonus)}{equipmentItemBonuses.saves !== 0 ? ` (${signed(equipmentItemBonuses.saves)} items)` : ""}</p> : null}
         </section>
       );
@@ -998,7 +1005,7 @@ export default memo(function HeroSheet(props: {
                   <div className={`cs-effect-row${e.active ? " cs-effect-on" : ""}`} key={e.id}>
                     <button type="button" className={`cs-prof-marker cs-prof-click${e.active ? " cs-prof" : ""}`} onClick={() => toggleEffect(e.id)} aria-pressed={e.active} aria-label={`Toggle ${e.label}`}>{e.active ? "●" : "○"}</button>
                     <div className="cs-effect-text"><strong>{e.label}</strong><span>{describeEffect(e)}{e.source ? ` — ${e.source}` : ""}</span></div>
-                    <button type="button" className="cs-effect-del" onClick={() => removeEffect(e.id)} aria-label={`Remove ${e.label}`}>×</button>
+                    <button type="button" className="cs-effect-del" onClick={() => removeEffect(e.id)} aria-label={`Remove ${e.label}`}>&times;</button>
                   </div>
                 ))}
               </div>
@@ -1012,7 +1019,7 @@ export default memo(function HeroSheet(props: {
             </div>
             {showEffectForm ? (
               <div className="cs-effect-form">
-                <input className="qb-name-input" placeholder="Effect name" value={effForm.label ?? ""} onChange={(ev) => setEffForm({ ...effForm, label: ev.target.value })} maxLength={48} />
+                <input className="qb-name-input" placeholder="Effect name" aria-label="Effect name" value={effForm.label ?? ""} onChange={(ev) => setEffForm({ ...effForm, label: ev.target.value })} maxLength={48} />
                 <div className="cs-effect-nums">
                   {EFFECT_NUMERIC_FIELDS.map((field) => (
                     <label key={field.key}><span>{field.label}</span><input type="number" min={-20} max={20} value={effForm[field.key] ?? ""} onChange={(ev) => setEffForm({ ...effForm, [field.key]: ev.target.value })} /></label>
@@ -1062,7 +1069,7 @@ export default memo(function HeroSheet(props: {
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20ForAbility(row.name, row.toHit, row.ability)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20ForAbility(row.name, row.toHit, row.ability); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No actions</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20ForAbility(row.name, row.toHit, row.ability)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20ForAbility(row.name, row.toHit, row.ability); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
@@ -1156,7 +1163,8 @@ export default memo(function HeroSheet(props: {
                 return (<div key={level} className="cs-spell-group">
                   <span className="cs-spell-level-head">
                     {level === "0" ? "Cantrips" : `Level ${level}`}
-                    {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
+                    {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} aria-pressed={i < used} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
+                    <span className="sr-only" aria-live="polite">{lvlNum > 0 ? `Level ${lvlNum} spells: ${max - used} of ${max} slots remaining` : ""}</span>
                   </span>
                   {shown.map((spell) => {
                     const status = spellStatuses[spell.id];
@@ -1220,6 +1228,7 @@ export default memo(function HeroSheet(props: {
                   <input
                     type="search"
                     placeholder="Search items..."
+                    aria-label="Search items"
                     value={itemSearch}
                     onChange={(e) => setItemSearch(e.target.value)}
                   />
@@ -1283,14 +1292,14 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                       </div>
-                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item">&times;</button></div>
+                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
                     </div>
                   );
                 })}</div>
-              ) : <p className="cs-muted">No equipment</p>}
+              ) : <p className="cs-muted">No items in inventory</p>}
               {showInvForm ? (
                 <div className="cs-inv-form">
-                  <input type="text" placeholder="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} />
+                  <input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} />
                   <select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}>
                     <option value="Mundane">Mundane</option>
                     <option value="Common">Common</option>
@@ -1299,8 +1308,8 @@ export default memo(function HeroSheet(props: {
                     <option value="Very Rare">Very Rare</option>
                     <option value="Legendary">Legendary</option>
                   </select>
-                  <input type="text" placeholder="Notes (optional)" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
-                  <input type="number" placeholder="Weight (lb, optional)" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} />
+                  <input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
+                  <input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} />
                   <div className="cs-inv-form-actions">
                     <button type="button" className="cs-glass-btn" onClick={addItem}>Add</button>
                     <button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button>
@@ -1368,6 +1377,7 @@ export default memo(function HeroSheet(props: {
                                 defaultValue={block.content}
                                 maxLength={5000}
                                 placeholder="Write..."
+                                aria-label="Page content"
                                 onBlur={(e) => updatePageBlock(activePage.id, block.id, { content: e.target.value })}
                               />
                             ) : (
@@ -1394,6 +1404,7 @@ export default memo(function HeroSheet(props: {
                                   key={`${block.id}-url`}
                                   type="text"
                                   placeholder="https://..."
+                                  aria-label="Image URL"
                                   defaultValue={block.url}
                                   maxLength={500}
                                   onBlur={(e) => updatePageBlock(activePage.id, block.id, { url: e.target.value.trim() })}
@@ -1402,6 +1413,7 @@ export default memo(function HeroSheet(props: {
                                   key={`${block.id}-caption`}
                                   type="text"
                                   placeholder="Caption (optional)"
+                                  aria-label="Image caption"
                                   defaultValue={block.caption ?? ""}
                                   maxLength={120}
                                   onBlur={(e) => updatePageBlock(activePage.id, block.id, { caption: e.target.value.trim() || undefined })}
@@ -1586,7 +1598,7 @@ export default memo(function HeroSheet(props: {
       {spellDetail ? (
         <div className="cs-spell-detail-overlay" onClick={() => setSpellDetail(null)}>
           <div className="cs-spell-detail" onClick={(e) => e.stopPropagation()}>
-            <button className="cs-spell-detail-close" type="button" onClick={() => setSpellDetail(null)}>×</button>
+            <button className="cs-spell-detail-close" type="button" onClick={() => setSpellDetail(null)} aria-label="Close">&times;</button>
             <h3 className="cs-section-eyebrow">{spellDetail.name}</h3>
             <p className="cs-spell-detail-meta">{spellDetail.level === 0 ? "Cantrip" : `Level ${spellDetail.level}`} {spellDetail.school}{spellDetail.ritual ? " (ritual)" : ""}{spellDetail.concentration ? " · Concentration" : ""}</p>
             <div className="cs-spell-detail-grid">
@@ -1680,7 +1692,7 @@ export default memo(function HeroSheet(props: {
       {showAcBreakdown ? (
         <div className="cs-spell-detail-overlay" onClick={() => setShowAcBreakdown(false)}>
           <div className="cs-spell-detail cs-ac-breakdown" onClick={(e) => e.stopPropagation()}>
-            <button className="cs-spell-detail-close" type="button" onClick={() => setShowAcBreakdown(false)}>×</button>
+            <button className="cs-spell-detail-close" type="button" onClick={() => setShowAcBreakdown(false)} aria-label="Close">&times;</button>
             <h3 className="cs-section-eyebrow">Armor Class {armorClass}</h3>
             <div className="cs-ac-breakdown-list">
               {acBreakdown.map((part, i) => (
@@ -1707,6 +1719,7 @@ export default memo(function HeroSheet(props: {
           casterType={heroClass.casterType}
           raceName={race.name}
           useFeatPrerequisites={props.character.settings.useFeatPrerequisites}
+          hitPointType={props.character.settings.hitPointType}
           onHpRoll={({ label, sides, modifier, onResult }) => {
             props.onRoll(label, sides, 1, modifier, ({ rolls, total }) => {
               onResult({ roll: rolls[0] ?? 1, total });

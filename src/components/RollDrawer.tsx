@@ -102,6 +102,7 @@ export default memo(function RollDrawer(props: {
   rollMode: RollMode;
   onRollModeChange: (mode: RollMode) => void;
   onRollPool: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
+  onClearHistory?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState<Record<number, number>>({});
@@ -317,7 +318,14 @@ export default memo(function RollDrawer(props: {
           </div>
 
           <div className="roll-history">
-            <span className="roll-drawer-heading">History</span>
+            <div className="roll-history-header">
+              <span className="roll-drawer-heading">History</span>
+              {props.history.length > 0 && props.onClearHistory ? (
+                <button type="button" className="glass-button roll-clear-btn" onClick={props.onClearHistory} title="Clear all rolls">
+                  Clear All
+                </button>
+              ) : null}
+            </div>
             {props.history.length === 0 ? (
               <p className="roll-history-empty">No rolls yet - click a stat on the sheet or build a pool above.</p>
             ) : (

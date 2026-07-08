@@ -2,12 +2,13 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import type { AbilityKey, AbilityScores, ASIChoice, CasterType, SpellStatus } from "@/types/game";
+import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
 import { ALL_SPELLS, learnsIndividualSpells, spellsForClass } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
 type HpRollRequest = {
@@ -33,6 +34,7 @@ export default memo(function LevelUpModal({
   onCancel,
   raceName,
   useFeatPrerequisites = true,
+  hitPointType,
 }: {
   character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus> };
   newLevel: number;
@@ -52,6 +54,8 @@ export default memo(function LevelUpModal({
   onHpRoll?: (request: HpRollRequest) => void;
   onConfirm: (data: Record<string, unknown>) => void;
   onCancel: () => void;
+  /** Character's hit point advancement type (fixed / rolled / manual). */
+  hitPointType?: CharacterSettings["hitPointType"];
 }) {
   const conMod = abilityModifier(finalAbilities.constitution);
 
@@ -76,6 +80,7 @@ export default memo(function LevelUpModal({
   const [hpRolling, setHpRolling] = useState(false);
   const [hpDieRoll, setHpDieRoll] = useState<number | null>(null);
   const [hpGained, setHpGained] = useState(0);
+  const [manualHp, setManualHp] = useState(Math.max(1, Math.floor(hitDie / 2) + 1 + conMod));
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
   const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
@@ -95,17 +100,27 @@ export default memo(function LevelUpModal({
     };
   }, []);
 
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useFocusTrap(true);
+
   useEffect(() => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") {
+        onCancel();
+        queueMicrotask(() => triggerRef.current?.focus());
+      }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      queueMicrotask(() => triggerRef.current?.focus());
+    };
   }, [onCancel]);
 
   const stepComplete = (s: LevelUpStep): boolean => {
     switch (s) {
-      case "hp": return hpRolled;
+      case "hp": return hitPointType === "manual" ? manualHp > 0 : hpRolled;
       case "subclass": return pickedSubclass !== "";
       case "asi": {
         if (pickedFeat === "") return false;
@@ -263,6 +278,7 @@ export default memo(function LevelUpModal({
   return (
     <div className="cs-levelup-overlay" onClick={onCancel}>
       <div
+        ref={dialogRef}
         className="cs-levelup"
         role="dialog"
         aria-modal="true"
@@ -285,18 +301,42 @@ export default memo(function LevelUpModal({
         {/* HP step */}
         {current === "hp" && (
           <div className="cs-levelup-body">
-            <p>Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.</p>
-            {!hpRolled ? (
-              <button className="cs-glass-btn" type="button" onClick={rollHp} disabled={hpRolling}>
-                {hpRolling ? "Rolling..." : "Roll HP"}
-              </button>
+            {hitPointType === "manual" ? (
+              <>
+                <p>Enter the hit point increase for this level (1d{hitDie} {signed(conMod)}).</p>
+                <label className="control-field" style={{ marginTop: 8 }}>
+                  <span>HP Gained</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={hitDie + conMod}
+                    value={manualHp}
+                    onChange={(e) => {
+                      const v = Math.max(1, Math.min(hitDie + conMod, parseInt(e.target.value) || 1));
+                      setManualHp(v);
+                      setHpGained(v);
+                      setHpRolled(true);
+                    }}
+                    style={{ width: 80 }}
+                  />
+                </label>
+              </>
             ) : (
-              <p>
-                <strong>+{hpGained} HP</strong>
-                {" "}
-                ({hpDieRoll ?? hpGained} {signed(conMod)}
-                {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""}; max {character.maxHp} → {character.maxHp + hpGained})
-              </p>
+              <>
+                <p>Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.</p>
+                {!hpRolled ? (
+                  <button className="cs-glass-btn" type="button" onClick={rollHp} disabled={hpRolling}>
+                    {hpRolling ? "Rolling..." : "Roll HP"}
+                  </button>
+                ) : (
+                  <p>
+                    <strong>+{hpGained} HP</strong>
+                    {" "}
+                    ({hpDieRoll ?? hpGained} {signed(conMod)}
+                    {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""}; max {character.maxHp} → {character.maxHp + hpGained})
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}

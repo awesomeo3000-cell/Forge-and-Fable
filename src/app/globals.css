@@ -447,7 +447,7 @@ button:disabled {
 .control-field select:focus,
 .attribute-card select:focus {
   border-color: var(--line-strong);
-  box-shadow: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
 .auth-status {
@@ -3771,6 +3771,7 @@ button:disabled {
 .cs-hex-input:focus {
   outline: none;
   border-color: var(--select);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
 .cs-skin-warn {
@@ -4411,7 +4412,7 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; white-space: nowrap; }
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .cs-feature-group {
   display: grid;
@@ -5188,6 +5189,26 @@ button:disabled {
   .cs-section-chevron {
     transition: none;
   }
+  .roll-drawer {
+    transition: none !important;
+  }
+  .roll-drawer-body {
+    transition: none !important;
+  }
+  .dj-rail,
+  .dj-rail-step {
+    transition: none !important;
+  }
+  .cs-reftab,
+  .cs-reftab-panel,
+  .cs-reftab-hidden {
+    transition: none !important;
+  }
+  .dice-overlay,
+  .dice-overlay * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ── Equipment section ── */
@@ -5564,6 +5585,7 @@ button:disabled {
   color: var(--roll-ink, var(--parchment, #e8dcc2));
   font-family: var(--roll-font, var(--font-body, Georgia, serif));
   pointer-events: none;
+  transition: right 0.3s ease;
 }
 .roll-drawer > * { pointer-events: auto; }
 .roll-drawer-tab {
@@ -6423,6 +6445,14 @@ button.dj-card {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--doc-accent);
+}
+
+/* Screen-reader utility */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
 }
 
 .dj-name-field input,

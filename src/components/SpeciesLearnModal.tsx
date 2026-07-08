@@ -1,10 +1,11 @@
 "use client";
 
 import { ChevronRight, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Race } from "@/types/game";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 import { memo } from "react";
 
@@ -14,20 +15,29 @@ export default memo(function SpeciesLearnModal(props: {
   onClose: () => void;
   onSelect: () => void;
 }) {
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useFocusTrap(true);
+
   useEffect(() => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         props.onClose();
+        queueMicrotask(() => triggerRef.current?.focus());
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      queueMicrotask(() => triggerRef.current?.focus());
+    };
   }, [props]);
 
   return createPortal(
     <div className="modal-scrim" role="presentation" onMouseDown={props.onClose}>
       <section
+        ref={dialogRef}
         aria-labelledby="species-learn-title"
         aria-modal="true"
         className="class-modal species-modal paper-surface"

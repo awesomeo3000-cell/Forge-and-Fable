@@ -1,4 +1,4 @@
-import type { AbilityKey, AbilityScores, Character, CharacterSettings, Currency, CustomRule, InventoryItem, Ruleset } from "@/types/game";
+import type { AbilityKey, AbilityScores, Character, CharacterEffect, CharacterSettings, Currency, CustomRule, InventoryItem, Ruleset } from "@/types/game";
 import { DEFAULT_STARTING_HP } from "@/lib/constants";
 import { BACKGROUND_TOOL_GRANTS, CLASS_TOOL_GRANTS } from "@/lib/srd";
 
@@ -281,6 +281,12 @@ export function characterPayload(
   const characterDraft = { ...draft };
   delete characterDraft.startingHpRolls;
 
+  // Auto-add Darkvision sense effect if the species has a Darkvision trait
+  const effects: CharacterEffect[] = [];
+  if (race.traits.some((t) => t.name.toLowerCase().includes("darkvision"))) {
+    effects.push({ id: "darkvision-60", label: "Darkvision 60 ft.", active: true, source: race.id, sense: "Darkvision 60 ft." });
+  }
+
   return {
     ...characterDraft,
     currentHp: maxHp,
@@ -293,6 +299,7 @@ export function characterPayload(
     languages: draft.languages ?? [],
     currency: draft.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
     hpRolls: hpRolls.length > 0 ? hpRolls : undefined,
+    ...(effects.length > 0 ? { effects } : {}),
   };
 }
 

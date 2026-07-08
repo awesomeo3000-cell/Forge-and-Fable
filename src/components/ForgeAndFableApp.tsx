@@ -167,6 +167,7 @@ export default function ForgeAndFableApp() {
     ].slice(0, 30));
   };
 
+  const clearHistory = () => setRollHistory([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroDone(true), SPLASH_DURATION_MS);
@@ -287,29 +288,33 @@ export default function ForgeAndFableApp() {
     event.preventDefault();
     setStatus("");
 
-    const response = await fetch(authMode === "login" ? "/api/auth/login" : "/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: authEmail,
-        password: authPassword,
-        ...(authMode === "register" ? { inviteCode: authInviteCode } : {}),
-      }),
-    });
+    try {
+      const response = await fetch(authMode === "login" ? "/api/auth/login" : "/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: authEmail,
+          password: authPassword,
+          ...(authMode === "register" ? { inviteCode: authInviteCode } : {}),
+        }),
+      });
 
-    const data = (await response.json()) as { user?: PublicUser; error?: string };
+      const data = (await response.json()) as { user?: PublicUser; error?: string };
 
-    if (!response.ok || !data.user) {
-      setStatus(data.error ?? "Vault access failed.");
-      return;
+      if (!response.ok || !data.user) {
+        setStatus(data.error ?? "Vault access failed.");
+        return;
+      }
+
+      setUser(data.user);
+      window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
+      setAuthInviteCode("");
+      setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
+    } catch {
+      setStatus("Network error — please try again.");
     }
-
-    setUser(data.user);
-    window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
-    setAuthInviteCode("");
-    setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
   }
 
   function logOut() {
@@ -545,46 +550,50 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const payload = {
-      ...characterPayload(draft, ruleset),
-      ...(choices
-        ? {
-            asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
-            subclassId: choices.subclassId,
-            spellsKnown: choices.spellsKnown,
-            spellStatuses: choices.spellStatuses,
-          }
-        : {}),
-    };
+    try {
+      const payload = {
+        ...characterPayload(draft, ruleset),
+        ...(choices
+          ? {
+              asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
+              subclassId: choices.subclassId,
+              spellsKnown: choices.spellsKnown,
+              spellStatuses: choices.spellStatuses,
+            }
+          : {}),
+      };
 
-    const response = await fetch("/api/characters", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch("/api/characters", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      });
 
-    const data = (await response.json()) as { character?: Character; error?: string };
+      const data = (await response.json()) as { character?: Character; error?: string };
 
-    if (response.status === 401) {
-      logOut();
-      setStatus("Session expired — please log in again.");
-      return;
+      if (response.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+        return;
+      }
+
+      if (!response.ok || !data.character) {
+        setStatus(data.error ?? "Hero could not be forged.");
+        return;
+      }
+
+      setCharacters((current) => [data.character!, ...current]);
+      setSelectedId(data.character.id);
+      setCreationPromptOpen(false);
+      setCreatorOpen(false);
+      setCreatorStep(0);
+      setDraft(createInitialDraft(ruleset) as DraftCharacter);
+      setStatMethod("point-buy");
+      setCreationSeq(null);
+      setStatus(`${data.character.name} forged`);
+    } catch {
+      setStatus("Connection lost — please try again.");
     }
-
-    if (!response.ok || !data.character) {
-      setStatus(data.error ?? "Hero could not be forged.");
-      return;
-    }
-
-    setCharacters((current) => [data.character!, ...current]);
-    setSelectedId(data.character.id);
-    setCreationPromptOpen(false);
-    setCreatorOpen(false);
-    setCreatorStep(0);
-    setDraft(createInitialDraft(ruleset) as DraftCharacter);
-    setStatMethod("point-buy");
-    setCreationSeq(null);
-    setStatus(`${data.character.name} forged`);
   }
 
   /** Apply one level's level-up choices during creation, then advance to the
@@ -613,29 +622,33 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const response = await fetch(`/api/characters/${selected.id}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify(patch),
-    });
-    const data = (await response.json()) as { character?: Character; error?: string };
+    try {
+      const response = await fetch(`/api/characters/${selected.id}`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(patch),
+      });
+      const data = (await response.json()) as { character?: Character; error?: string };
 
-    if (response.status === 401) {
-      logOut();
-      setStatus("Session expired — please log in again.");
-      return;
+      if (response.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+        return;
+      }
+
+      if (!response.ok || !data.character) {
+        setStatus(data.error ?? "Update failed.");
+        return;
+      }
+
+      setCharacters((current) =>
+        current.map((character) =>
+          character.id === data.character!.id ? data.character! : character,
+        ),
+      );
+    } catch {
+      setStatus("Connection lost — changes not saved.");
     }
-
-    if (!response.ok || !data.character) {
-      setStatus(data.error ?? "Update failed.");
-      return;
-    }
-
-    setCharacters((current) =>
-      current.map((character) =>
-        character.id === data.character!.id ? data.character! : character,
-      ),
-    );
   }
 
   async function deleteSelected() {
@@ -643,25 +656,29 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const response = await fetch(`/api/characters/${selected.id}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    });
+    try {
+      const response = await fetch(`/api/characters/${selected.id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
 
-    if (response.status === 401) {
-      logOut();
-      setStatus("Session expired — please log in again.");
-      return;
+      if (response.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+        return;
+      }
+
+      if (!response.ok) {
+        setStatus("Hero could not be retired.");
+        return;
+      }
+
+      setCharacters((current) => current.filter((character) => character.id !== selected.id));
+      setSelectedId("");
+      setStatus(`${selected.name} retired`);
+    } catch {
+      setStatus("Connection lost — hero not retired.");
     }
-
-    if (!response.ok) {
-      setStatus("Hero could not be retired.");
-      return;
-    }
-
-    setCharacters((current) => current.filter((character) => character.id !== selected.id));
-    setSelectedId("");
-    setStatus(`${selected.name} retired`);
   }
 
   async function loadFeedback() {
@@ -669,24 +686,27 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const response = await fetch("/api/feedback", {
-      headers: authHeaders(),
-    });
+    try {
+      const response = await fetch("/api/feedback", {
+        headers: authHeaders(),
+      });
 
-    const data = (await response.json()) as { feedback?: FeedbackEntry[]; error?: string };
+      const data = (await response.json()) as { feedback?: FeedbackEntry[]; error?: string };
 
-    if (response.status === 401) {
-      logOut();
-      setStatus("Session expired â€” please log in again.");
-      return;
+      if (response.status === 401) {
+        logOut();
+        return;
+      }
+
+      if (!response.ok || !data.feedback) {
+        setFeedbackStatus(data.error ?? "Feedback could not be loaded.");
+        return;
+      }
+
+      setFeedbackEntries(data.feedback);
+    } catch {
+      setFeedbackStatus("Feedback could not be loaded.");
     }
-
-    if (!response.ok || !data.feedback) {
-      setFeedbackStatus(data.error ?? "Feedback could not be loaded.");
-      return;
-    }
-
-    setFeedbackEntries(data.feedback);
   }
 
   async function submitFeedback(input: FeedbackInput) {
@@ -812,19 +832,18 @@ export default function ForgeAndFableApp() {
     const cleaned = groups.filter((g) => g.count > 0);
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
     const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20);
-    if (totalCount === 0 || totalCount + (useD20Mode ? 1 : 0) > 40) return;
+    const d20Total = cleaned.reduce((s, g) => s + (g.sides === 20 ? g.count : 0), 0);
+    const extraDice = useD20Mode ? d20Total : 0; // one extra die per d20 for adv/dis pair
+    if (totalCount === 0 || totalCount + extraDice > 40) return;
 
     if (useD20Mode) {
       const mode = rollMode === "advantage" ? "advantage" : "disadvantage";
-      const d20s = [rollDie(20), rollDie(20)];
-      const keptIndex =
-        mode === "advantage"
-          ? d20s[0] >= d20s[1] ? 0 : 1
-          : d20s[0] <= d20s[1] ? 0 : 1;
-      const keptD20 = d20s[keptIndex];
       const rolledDice: { sides: number; value: number }[] = [];
       const newDice: RollingDie[] = [];
       let index = 0;
+
+      // Track all d20 pairs: { pair: [d20a, d20b], keptIndex, keptValue }
+      const d20Pairs: { pair: [number, number]; keptIndex: number; keptValue: number }[] = [];
 
       const makeDie = (sides: number, result: number, dropped = false) => {
         const dieIndex = index++;
@@ -844,47 +863,60 @@ export default function ForgeAndFableApp() {
         });
       };
 
-      d20s.forEach((value, i) => makeDie(20, value, i !== keptIndex));
-
+      // Roll adv/dis pairs for every d20
       for (const group of cleaned) {
-        const count = group.sides === 20 ? group.count - 1 : group.count;
-        for (let i = 0; i < count; i++) {
-          const value = rollDie(group.sides);
-          rolledDice.push({ sides: group.sides, value });
-          makeDie(group.sides, value);
+        if (group.sides === 20) {
+          for (let i = 0; i < group.count; i++) {
+            const pair: [number, number] = [rollDie(20), rollDie(20)];
+            const keptIndex =
+              mode === "advantage"
+                ? pair[0] >= pair[1] ? 0 : 1
+                : pair[0] <= pair[1] ? 0 : 1;
+            d20Pairs.push({ pair, keptIndex, keptValue: pair[keptIndex] });
+            pair.forEach((value, pi) => makeDie(20, value, pi !== keptIndex));
+          }
+        } else {
+          for (let i = 0; i < group.count; i++) {
+            const value = rollDie(group.sides);
+            rolledDice.push({ sides: group.sides, value });
+            makeDie(group.sides, value);
+          }
         }
       }
 
+      const keptD20Sum = d20Pairs.reduce((s, p) => s + p.keptValue, 0);
       const extraSum = rolledDice.reduce((sum, die) => sum + die.value, 0);
-      const total = keptD20 + extraSum + modifier;
-      const d20Part = `d20 ${mode === "advantage" ? "adv" : "dis"} [${d20s.join(", ")}] keep ${keptD20}`;
+      const total = keptD20Sum + extraSum + modifier;
+
+      const d20Parts = d20Pairs.map((p) =>
+        `d20 ${mode === "advantage" ? "adv" : "dis"} [${p.pair.join(", ")}] keep ${p.keptValue}`,
+      ).join(" + ");
       const extraPart = cleaned
+        .filter((group) => group.sides !== 20)
         .map((group) => {
-          const count = group.sides === 20 ? group.count - 1 : group.count;
-          if (count <= 0) return "";
           const values = rolledDice.filter((die) => die.sides === group.sides).map((die) => die.value);
-          return ` + ${count}d${group.sides} [${values.join(", ")}]`;
+          return ` + ${group.count}d${group.sides} [${values.join(", ")}]`;
         })
         .join("");
-      const detail = `${d20Part}${extraPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
-      const nat: RollHistoryEntry["nat"] =
-        keptD20 === 20 ? "crit" : keptD20 === 1 ? "fumble" : undefined;
-      const resultSummary = rollResultSummary(total);
-      newDice.forEach((die, dieIndex) => {
-        const isAdvantagePairDie = dieIndex < d20s.length && die.sides === 20;
-        const isKeptAdvantageDie = isAdvantagePairDie && dieIndex === keptIndex;
+      const detail = `${d20Parts}${extraPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
 
-        die.resultSummary = isAdvantagePairDie && die.dropped ? "Dropped" : resultSummary;
-        die.resultDetail = isAdvantagePairDie && die.dropped ? `${die.result}` : detail;
-        die.lingerMs = isKeptAdvantageDie
-          ? KEPT_D20_LINGER_MS
-          : die.dropped
-            ? DROPPED_D20_LINGER_MS
-            : NORMAL_ROLL_LINGER_MS;
+      const over20 = d20Pairs.some((p) => p.keptValue === 20);
+      const nat: RollHistoryEntry["nat"] =
+        d20Pairs.length === 1 && d20Pairs[0].keptValue === 20 ? "crit"
+        : d20Pairs.length === 1 && d20Pairs[0].keptValue === 1 ? "fumble"
+        : undefined;
+      const resultSummary = rollResultSummary(total);
+      newDice.forEach((die) => {
+        die.resultSummary = die.dropped ? "Dropped" : resultSummary;
+        die.resultDetail = die.dropped ? `${die.result}` : detail;
+        die.lingerMs = die.dropped ? DROPPED_D20_LINGER_MS : d20Pairs.length > 0 ? KEPT_D20_LINGER_MS : NORMAL_ROLL_LINGER_MS;
       });
 
+      const histModeData: RollHistoryEntry["adv"] = d20Pairs.length === 1
+        ? { mode, dice: d20Pairs[0].pair, keptIndex: d20Pairs[0].keptIndex }
+        : undefined;
       setConsoleLog((prev) => [`${label} -> ${detail}`, ...prev].slice(0, 20));
-      recordHistory(label, detail, total, { mode, dice: d20s, keptIndex }, nat);
+      recordHistory(label, detail, total, histModeData, nat);
       setFlyingDice((prev) => [...prev, ...newDice]);
       setRollMode("normal");
       return;
@@ -1116,7 +1148,7 @@ export default function ForgeAndFableApp() {
   return (
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
-    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} rollMode={rollMode} onRollModeChange={setRollMode} onRollPool={pushPool} />
+    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} rollMode={rollMode} onRollModeChange={setRollMode} onRollPool={pushPool} onClearHistory={clearHistory} />
     {creationSeq && draft && creationSeqFinalAbilities ? (() => {
       const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
       if (!heroClass) return null;
@@ -1136,6 +1168,7 @@ export default function ForgeAndFableApp() {
           casterType={heroClass.casterType}
           raceName={raceName}
           useFeatPrerequisites={draft.settings.useFeatPrerequisites}
+          hitPointType={draft.settings.hitPointType}
           skipHp
           onConfirm={advanceCreationSeq}
           onCancel={() => setCreationSeq(null)}
@@ -1226,12 +1259,18 @@ export default function ForgeAndFableApp() {
 
         <section className="studio-surface">
           {buildMode !== "standard" && !creatorOpen ? (
-            <QuickbuilderPanel
-              ruleset={ruleset}
-              mode={buildMode}
-              onComplete={handleQuickbuildComplete}
-              onCancel={() => { setCreationPromptOpen(true); setBuildMode("standard"); }}
-            />
+            ruleset ? (
+              <QuickbuilderPanel
+                ruleset={ruleset}
+                mode={buildMode}
+                onComplete={handleQuickbuildComplete}
+                onCancel={() => { setCreationPromptOpen(true); setBuildMode("standard"); }}
+              />
+            ) : (
+              <div className="paper-surface dj-start" style={{ display: "grid", placeItems: "center", padding: 48 }}>
+                <p className="cs-muted">Loading...</p>
+              </div>
+            )
           ) : showCreationPrompt ? (
             <CharacterStartPanel onSelectBuild={beginBuild} />
           ) : showCreator && draftFinalAbilities ? (

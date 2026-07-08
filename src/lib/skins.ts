@@ -48,7 +48,7 @@ export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[]
       presetId: "ellewoods",
       paper: "#fbdcec",
       ink: "#5a1f3d",
-      accent: "#bd1c7f",
+      accent: "#a0116d",
       fontKey: "bubble",
       backgroundKey: "sparkle",
       backgroundOpacity: 0.4,
@@ -61,7 +61,7 @@ export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[]
       presetId: "necro",
       paper: "#1c2230",
       ink: "#d7e0ea",
-      accent: "#9076ff",
+      accent: "#a78bfa",
       fontKey: "blackletter",
       backgroundKey: "dungeon",
     },
@@ -73,7 +73,7 @@ export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[]
       presetId: "ranger",
       paper: "#e9e6cf",
       ink: "#23301d",
-      accent: "#466f2d",
+      accent: "#345420",
       fontKey: "storybook",
       backgroundKey: "forest",
     },
@@ -85,7 +85,7 @@ export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[]
       presetId: "scroll",
       paper: "#f3e9cf",
       ink: "#2a2140",
-      accent: "#816527",
+      accent: "#6b4f1d",
       fontKey: "script",
       backgroundKey: "linen",
     },
@@ -113,7 +113,7 @@ export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[]
   {
     id: "printer",
     name: "Printer Friendly",
-    theme: { presetId: "printer", paper: "#ffffff", ink: "#111111", accent: "#444444", fontKey: "tome", backgroundKey: "plain", backgroundOpacity: 0.1 },
+    theme: { presetId: "printer", paper: "#ffffff", ink: "#111111",     accent: "#2d2d2d", fontKey: "tome", backgroundKey: "plain", backgroundOpacity: 0.1 },
   },
   {
     id: "divine",
@@ -226,7 +226,8 @@ export function sanitizeSkinTheme(raw: unknown): CharacterTheme | null {
 }
 
 export function encodeSkinCode(theme: CharacterTheme): string {
-  const { presetId: _drop, ...rest } = theme;
+  const { presetId, ...rest } = theme;
+  void presetId;
   const json = JSON.stringify(rest);
   return SKIN_CODE_PREFIX + btoa(String.fromCharCode(...new TextEncoder().encode(json)));
 }
