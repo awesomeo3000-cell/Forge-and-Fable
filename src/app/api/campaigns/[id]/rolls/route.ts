@@ -30,22 +30,20 @@ export async function POST(
     if (typeof detail !== "string" || detail.length > 200) {
       return NextResponse.json({ error: "Detail must be a string (max 200 chars)." }, { status: 400 });
     }
-    if (typeof total !== "number" || total < -999 || total > 999) {
+    if (typeof total !== "number" || !Number.isInteger(total) || total < -999 || total > 999) {
       return NextResponse.json({ error: "Total must be an integer between -999 and 999." }, { status: 400 });
     }
-    if (!characterName || typeof characterName !== "string") {
+    if (!characterName || typeof characterName !== "string" || characterName.length > 80) {
       return NextResponse.json({ error: "Character name is required." }, { status: 400 });
     }
 
-    const roll = postRoll(campaignId, userId, characterName, label, detail, Math.round(total));
+    const roll = postRoll(campaignId, userId, characterName, label, detail, total);
     return NextResponse.json({ roll }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to post roll." },
-      { status: 400 },
-    );
+    const message = error instanceof Error ? error.message : "Failed to post roll.";
+    return NextResponse.json({ error: message }, { status: message.includes("member") ? 404 : 400 });
   }
 }

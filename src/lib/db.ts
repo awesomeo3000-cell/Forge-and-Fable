@@ -18,7 +18,10 @@ type LegacyVaultJson = {
 
 declare global {
   var __forgeDb: DatabaseSync | undefined;
+  var __forgeDbSchemaRevision: number | undefined;
 }
+
+const SCHEMA_REVISION = 2;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -107,6 +110,25 @@ function createSchema(db: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_rolls_campaign_time ON campaign_rolls(campaign_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS campaign_events (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      target_user_id TEXT,
+      type TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_initiative (
+      campaign_id TEXT PRIMARY KEY REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL,
+      version INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_events_campaign_time ON campaign_events(campaign_id, created_at);
   `);
 }
 
@@ -176,5 +198,9 @@ function openDb() {
 
 export function getDb() {
   globalThis.__forgeDb ??= openDb();
+  if (globalThis.__forgeDbSchemaRevision !== SCHEMA_REVISION) {
+    createSchema(globalThis.__forgeDb);
+    globalThis.__forgeDbSchemaRevision = SCHEMA_REVISION;
+  }
   return globalThis.__forgeDb;
 }

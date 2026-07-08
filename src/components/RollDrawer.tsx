@@ -6,6 +6,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
 import { FONT_STACKS } from "@/lib/skins";
 import type { CharacterTheme, RollMode } from "@/types/game";
+import type { InitiativeCombatant, InitiativeState } from "@/types/campaign";
 
 export type RollHistoryEntry = {
   id: string;
@@ -28,19 +29,6 @@ type DrawerLayout = {
 };
 
 type RollPoolOutcome = { rolls: number[]; modifier: number; total: number };
-
-type InitiativeCombatant = {
-  id: string;
-  name: string;
-  initiative: number;
-  isPlayer?: boolean;
-};
-
-type InitiativeState = {
-  combatants: InitiativeCombatant[];
-  turnIndex: number;
-  round: number;
-};
 
 const DIE_SIZES = [4, 6, 8, 10, 12, 20, 100];
 const LAYOUT_STORAGE_KEY = "forge-and-fable-roll-drawer-layout";
@@ -172,6 +160,9 @@ export default memo(function RollDrawer(props: {
   rollModeIsFromEffect?: boolean;
   activeCharacterName?: string;
   activeCharacterInitiative?: number;
+  currentUserId?: string;
+  campaignInitiative?: { data: InitiativeState; version: number };
+  campaignIsDm?: boolean;
   onRollModeChange: (mode: RollMode) => void;
   onRollPool: (
     groups: { sides: number; count: number }[],
@@ -179,6 +170,8 @@ export default memo(function RollDrawer(props: {
     label: string,
     onResult?: (outcome: RollPoolOutcome) => void,
   ) => void;
+  onCampaignInitiativeUpdate?: (data: InitiativeState, version: number) => void;
+  onCampaignInitiativeRoll?: (initiative: number) => void;
   onClearHistory?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -190,6 +183,9 @@ export default memo(function RollDrawer(props: {
   const [combatantName, setCombatantName] = useState("");
   const [combatantInitiative, setCombatantInitiative] = useState(0);
   const layoutRef = useRef(layout);
+  const sharedInitiative = props.campaignInitiative;
+  const isSharedInitiative = Boolean(sharedInitiative);
+  const canManageInitiative = !isSharedInitiative || props.campaignIsDm;
 
   useEffect(() => {
     const loaded = loadLayout();
@@ -330,7 +326,15 @@ export default memo(function RollDrawer(props: {
     props.onRollPool(groups, modifier, notation);
   };
 
+  const displayedInitiative = sharedInitiative?.data ?? initiativeState;
+
   const updateInitiative = (updater: (current: InitiativeState) => InitiativeState) => {
+    if (sharedInitiative) {
+      if (!props.campaignIsDm) return;
+      const next = clampTurnIndex(updater(sharedInitiative.data));
+      props.onCampaignInitiativeUpdate?.(next, sharedInitiative.version);
+      return;
+    }
     setInitiativeState((current) => {
       const next = clampTurnIndex(updater(current));
       saveInitiative(next);
@@ -376,7 +380,13 @@ export default memo(function RollDrawer(props: {
       [{ sides: 20, count: 1 }],
       props.activeCharacterInitiative,
       `${name} Initiative`,
-      (outcome) => addCombatant(name, outcome.total, true),
+      (outcome) => {
+        if (sharedInitiative) {
+          props.onCampaignInitiativeRoll?.(outcome.total);
+        } else {
+          addCombatant(name, outcome.total, true);
+        }
+      },
     );
   };
 
@@ -405,13 +415,14 @@ export default memo(function RollDrawer(props: {
   };
 
   const clearCombat = () => {
-    if (initiativeState.combatants.length === 0) return;
+    if (displayedInitiative.combatants.length === 0) return;
     if (!window.confirm("Clear the current combat order?")) return;
     updateInitiative(() => EMPTY_INITIATIVE);
   };
 
-  const sortedCombatants = sortCombatants(initiativeState.combatants);
-  const currentCombatantId = sortedCombatants[initiativeState.turnIndex]?.id;
+  const sortedCombatants = sortCombatants(displayedInitiative.combatants);
+  const currentCombatantId = sortedCombatants[displayedInitiative.turnIndex]?.id;
+  const isMyTurn = Boolean(props.currentUserId && currentCombatantId === `player:${props.currentUserId}`);
 
   return (
     <div className={`roll-drawer${open ? " open" : ""}`} style={rootStyle}>
@@ -536,26 +547,34 @@ export default memo(function RollDrawer(props: {
             </>
           ) : (
             <div className="initiative-panel">
-              <div className="initiative-add-row">
-                <input
-                  type="text"
-                  value={combatantName}
-                  onChange={(event) => setCombatantName(event.currentTarget.value)}
-                  onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
-                  placeholder="Combatant"
-                  maxLength={80}
-                />
-                <input
-                  type="number"
-                  value={combatantInitiative}
-                  onChange={(event) => setCombatantInitiative(Number(event.currentTarget.value))}
-                  onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
-                  aria-label="Initiative"
-                />
-                <button type="button" className="gold-button" onClick={submitCombatant} disabled={!combatantName.trim()}>
-                  Add
-                </button>
-              </div>
+              {isSharedInitiative ? (
+                <div className="initiative-shared-banner">
+                  <strong>Campaign initiative</strong>
+                  {isMyTurn ? <span>Your turn</span> : null}
+                </div>
+              ) : null}
+              {canManageInitiative ? (
+                <div className="initiative-add-row">
+                  <input
+                    type="text"
+                    value={combatantName}
+                    onChange={(event) => setCombatantName(event.currentTarget.value)}
+                    onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
+                    placeholder="Combatant"
+                    maxLength={80}
+                  />
+                  <input
+                    type="number"
+                    value={combatantInitiative}
+                    onChange={(event) => setCombatantInitiative(Number(event.currentTarget.value))}
+                    onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
+                    aria-label="Initiative"
+                  />
+                  <button type="button" className="gold-button" onClick={submitCombatant} disabled={!combatantName.trim()}>
+                    Add
+                  </button>
+                </div>
+              ) : null}
               <button
                 type="button"
                 className="glass-button initiative-roll-current"
@@ -564,16 +583,22 @@ export default memo(function RollDrawer(props: {
               >
                 Add {props.activeCharacterName ?? "current character"} (roll)
               </button>
-              <div className="initiative-controls">
-                <button type="button" className="gold-button" onClick={nextTurn} disabled={sortedCombatants.length === 0}>
-                  Next turn
-                </button>
-                <strong>Round {initiativeState.round}</strong>
-                <button type="button" className="glass-button" onClick={clearCombat} disabled={sortedCombatants.length === 0}>
-                  <Trash2 size={13} />
-                  Clear combat
-                </button>
-              </div>
+              {canManageInitiative ? (
+                <div className="initiative-controls">
+                  <button type="button" className="gold-button" onClick={nextTurn} disabled={sortedCombatants.length === 0}>
+                    Next turn
+                  </button>
+                  <strong>Round {displayedInitiative.round}</strong>
+                  <button type="button" className="glass-button" onClick={clearCombat} disabled={sortedCombatants.length === 0}>
+                    <Trash2 size={13} />
+                    Clear combat
+                  </button>
+                </div>
+              ) : (
+                <div className="initiative-controls">
+                  <strong>Round {displayedInitiative.round}</strong>
+                </div>
+              )}
               <div className="initiative-list">
                 {sortedCombatants.length === 0 ? (
                   <p className="roll-history-empty">No combatants yet.</p>
@@ -585,9 +610,11 @@ export default memo(function RollDrawer(props: {
                         {combatant.isPlayer ? <em>PC</em> : null}
                       </span>
                       <b>{combatant.initiative}</b>
-                      <button type="button" onClick={() => removeCombatant(combatant.id)} aria-label={`Remove ${combatant.name}`}>
-                        <X size={14} />
-                      </button>
+                      {canManageInitiative ? (
+                        <button type="button" onClick={() => removeCombatant(combatant.id)} aria-label={`Remove ${combatant.name}`}>
+                          <X size={14} />
+                        </button>
+                      ) : null}
                     </div>
                   ))
                 )}

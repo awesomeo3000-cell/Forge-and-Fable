@@ -7447,6 +7447,30 @@ button.dj-card {
   gap: 10px;
 }
 
+.initiative-shared-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--roll-accent, #c9a25a) 44%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--roll-accent, #c9a25a) 14%, var(--roll-paper, #15110d));
+  color: var(--roll-ink, #e8dcc2);
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.initiative-shared-banner span {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--roll-accent, #c9a25a) 82%, #fff 6%);
+  color: color-mix(in srgb, var(--roll-paper, #15110d) 86%, #000);
+  font-weight: 800;
+}
+
 .initiative-add-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72px auto;
@@ -7984,7 +8008,7 @@ button.dj-card {
   position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: min(720px, 100%);
+  width: min(880px, 100%);
   max-height: min(760px, calc(100dvh - 40px));
   overflow: hidden;
   gap: 16px;
@@ -8066,6 +8090,12 @@ button.dj-card {
   color: var(--accent);
 }
 
+.campaign-code-button {
+  margin-top: 6px;
+  cursor: pointer;
+  background: transparent;
+}
+
 .campaign-form {
   display: grid;
   gap: 14px;
@@ -8082,7 +8112,9 @@ button.dj-card {
 }
 
 .campaign-form input,
-.campaign-form select {
+.campaign-form select,
+.campaign-dm-tools input,
+.campaign-dm-tools select {
   padding: 8px 12px;
   border: 1px solid var(--rule);
   border-radius: 8px;
@@ -8138,6 +8170,125 @@ button.dj-card {
 .campaign-info-bar strong { display: block; color: var(--parchment); font-size: 1.1rem; }
 
 .campaign-info-actions { display: flex; gap: 6px; }
+
+.campaign-empty {
+  padding: 24px;
+  text-align: center;
+}
+
+.campaign-party-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.campaign-party-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground-2) 88%, var(--accent) 8%);
+}
+
+.campaign-party-card strong {
+  color: var(--parchment);
+  font-size: 0.9rem;
+}
+
+.campaign-party-card small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.campaign-party-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.campaign-party-stats span {
+  padding: 2px 6px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  color: var(--parchment);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.campaign-events,
+.campaign-dm-tools {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground-2) 88%, transparent);
+}
+
+.campaign-events h3,
+.campaign-dm-tools h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-family: var(--font-label);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.campaign-event-card {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 8px;
+  background: var(--ground);
+}
+
+.campaign-event-card strong {
+  color: var(--parchment);
+  font-size: 0.84rem;
+}
+
+.campaign-event-card small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.campaign-event-actions,
+.campaign-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campaign-tool-row input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.campaign-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.campaign-tool-grid label {
+  display: grid;
+  gap: 4px;
+}
+
+.campaign-tool-grid span {
+  color: var(--muted);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
 .campaign-detail-grid {
   display: grid;

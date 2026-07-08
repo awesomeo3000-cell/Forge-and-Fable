@@ -10,7 +10,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type {
   AbilityKey,
@@ -19,6 +19,7 @@ import type {
   AuthMode,
   BuildMode,
   Character,
+  CharacterEffect,
   CustomRule,
   DraftCharacter,
   FeedbackEntry,
@@ -63,7 +64,9 @@ import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
-import { effectTotal, effectiveAdvantageMode } from "@/lib/effects";
+import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effects";
+import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
+import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
 
 function authHeaders(): Record<string, string> {
   return {
@@ -146,6 +149,12 @@ export default function ForgeAndFableApp() {
   const [status, setStatus] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
+    () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null,
+  );
+  const [campaignSync, setCampaignSync] = useState<CampaignSyncPayload | null>(null);
+  const [campaignEvents, setCampaignEvents] = useState<CampaignEvent[]>([]);
+  const [resolvedCampaignEvents, setResolvedCampaignEvents] = useState<Set<string>>(() => new Set());
   const [readOnlyViewChar, setReadOnlyViewChar] = useState<Character | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState("");
@@ -158,6 +167,9 @@ export default function ForgeAndFableApp() {
   const [manualRollMode, setManualRollMode] = useState<RollMode | null>(null);
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
   const [spellsReady, setSpellsReady] = useState(false);
+  const campaignCursorRef = useRef<Record<string, string>>({});
+  const processedCampaignEventsRef = useRef<Set<string>>(new Set());
+  const lastTurnCombatantRef = useRef<string | null>(null);
 
   const recordHistory = (
     label: string,
@@ -180,16 +192,13 @@ export default function ForgeAndFableApp() {
     ].slice(0, 100));
 
     // Roll sharing: fire-and-forget POST to active campaign
-    const campaignId = typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null;
+    const campaignId = activeCampaignId;
     if (campaignId && selected?.name) {
-      const token = localStorage.getItem("forge-and-fable-token");
-      if (token) {
-        fetch(`/api/campaigns/${campaignId}/rolls`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ label, detail, total, characterName: selected.name }),
+      fetch(`/api/campaigns/${campaignId}/rolls`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ label, detail, total, characterName: selected.name }),
         }).catch(() => { /* fire-and-forget — errors logged to console only */ });
-      }
     }
   };
 
@@ -266,6 +275,90 @@ export default function ForgeAndFableApp() {
     [characters, selectedId],
   );
 
+  function setActiveCampaign(id: string | null) {
+    setActiveCampaignId(id);
+    setCampaignSync(null);
+    setCampaignEvents([]);
+    lastTurnCombatantRef.current = null;
+    if (id) {
+      localStorage.setItem("forge-and-fable-active-campaign", id);
+      const cursorKey = `forge-and-fable-campaign-cursor-${id}`;
+      if (!localStorage.getItem(cursorKey)) {
+        const cursor = new Date().toISOString();
+        localStorage.setItem(cursorKey, cursor);
+        campaignCursorRef.current[id] = cursor;
+      }
+    } else {
+      localStorage.removeItem("forge-and-fable-active-campaign");
+    }
+  }
+
+  function parseCampaignPayload(event: CampaignEvent): Record<string, unknown> {
+    try {
+      const parsed = JSON.parse(event.payload);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function rememberCampaignEvents(events: CampaignEvent[]) {
+    if (events.length === 0) return;
+    setCampaignEvents((current) => {
+      const byId = new Map(current.map((event) => [event.id, event]));
+      for (const event of events) byId.set(event.id, event);
+      return Array.from(byId.values()).sort((a, b) => a.created_at.localeCompare(b.created_at)).slice(-80);
+    });
+  }
+
+  function processCampaignEvents(events: CampaignEvent[]) {
+    if (!selected || events.length === 0) return;
+    let nextEffects = selected.effects ?? [];
+    let changedEffects = false;
+
+    for (const event of events) {
+      if (processedCampaignEventsRef.current.has(event.id)) continue;
+      processedCampaignEventsRef.current.add(event.id);
+      const payload = parseCampaignPayload(event);
+
+      if (event.type === "condition-apply") {
+        const label = typeof payload.label === "string" ? payload.label.trim() : "";
+        if (!label) continue;
+        const exists = nextEffects.some((effect) => effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+        if (!exists) {
+          nextEffects = [
+            ...nextEffects,
+            {
+              ...(payload as Partial<CharacterEffect>),
+              id: `dm-${event.id}`,
+              label,
+              source: "DM",
+              active: true,
+            } as CharacterEffect,
+          ];
+          changedEffects = true;
+          setStatus(`DM applied ${label}`);
+        }
+      } else if (event.type === "condition-remove") {
+        const label = typeof payload.label === "string" ? payload.label.trim() : "";
+        if (!label) continue;
+        const filtered = nextEffects.filter((effect) => !(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+        if (filtered.length !== nextEffects.length) {
+          nextEffects = filtered;
+          changedEffects = true;
+          setStatus(`DM removed ${label}`);
+        }
+      } else if (event.type === "announce") {
+        const message = typeof payload.message === "string" ? payload.message.trim() : "";
+        if (message) setStatus(message);
+      }
+    }
+
+    if (changedEffects) {
+      updateSelected({ effects: nextEffects });
+    }
+  }
+
   const effectDrivenMode = effectiveAdvantageMode(selected?.effects);
   const rollMode = manualRollMode ?? effectDrivenMode;
   const rollModeIsFromEffect = manualRollMode === null && effectDrivenMode !== "normal";
@@ -309,6 +402,67 @@ export default function ForgeAndFableApp() {
       effectTotal(selected.effects, "initiative")
     );
   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+
+  useEffect(() => {
+    if (!user || !activeCampaignId) return;
+    const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`;
+    campaignCursorRef.current[activeCampaignId] =
+      campaignCursorRef.current[activeCampaignId] ??
+      localStorage.getItem(cursorKey) ??
+      new Date().toISOString();
+    let cancelled = false;
+
+    const sync = async () => {
+      if (document.visibilityState === "hidden") return;
+      const since = campaignCursorRef.current[activeCampaignId];
+      try {
+        const res = await fetch(`/api/campaigns/${activeCampaignId}/sync?since=${encodeURIComponent(since)}`, {
+          headers: authHeaders(),
+        });
+        if (!res.ok) {
+          if (!cancelled) setActiveCampaign(null);
+          return;
+        }
+        const data = await res.json() as CampaignSyncPayload;
+        if (cancelled) return;
+        setCampaignSync(data);
+        rememberCampaignEvents(data.events);
+        processCampaignEvents(data.events);
+
+        const myTurnId = user.id ? `player:${user.id}` : null;
+        const sorted = [...data.initiative.data.combatants].sort((a, b) => b.initiative - a.initiative);
+        const currentCombatant = sorted[data.initiative.data.turnIndex]?.id ?? null;
+        if (myTurnId && currentCombatant === myTurnId && lastTurnCombatantRef.current !== currentCombatant) {
+          setStatus("Your turn");
+        }
+        lastTurnCombatantRef.current = currentCombatant;
+
+        const timestamps = [
+          ...data.events.map((event) => event.created_at),
+          ...data.rolls.map((roll) => roll.created_at),
+        ].filter(Boolean);
+        if (timestamps.length > 0) {
+          const nextCursor = timestamps.sort().at(-1)!;
+          campaignCursorRef.current[activeCampaignId] = nextCursor;
+          localStorage.setItem(cursorKey, nextCursor);
+        }
+      } catch {
+        // Keep the local UI responsive; the next polling tick can recover.
+      }
+    };
+
+    sync();
+    const interval = window.setInterval(sync, 5000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") sync();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [activeCampaignId, selected, user]);
 
   const draftFinalAbilities = useMemo(() => {
     if (!draft || !ruleset) {
@@ -806,6 +960,164 @@ export default function ForgeAndFableApp() {
     void loadFeedback();
   }
 
+  function isAbilityKey(value: unknown): value is AbilityKey {
+    return typeof value === "string" && abilityKeys.includes(value as AbilityKey);
+  }
+
+  function proficiencyBonusFor(level: number) {
+    return 2 + Math.floor((Math.max(1, level) - 1) / 4);
+  }
+
+  function resolveCampaignEvent(id: string) {
+    setResolvedCampaignEvents((current) => {
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+  }
+
+  async function postCampaignEvent(type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) {
+    if (!activeCampaignId) return false;
+    try {
+      const response = await fetch(`/api/campaigns/${activeCampaignId}/events`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ type, payload, targetUserId: targetUserId ?? null }),
+      });
+      const data = await response.json().catch(() => ({})) as { event?: CampaignEvent; error?: string };
+      if (!response.ok || !data.event) {
+        setStatus(data.error ?? "Campaign event could not be sent.");
+        return false;
+      }
+      rememberCampaignEvents([data.event]);
+      setStatus("Campaign event sent");
+      return true;
+    } catch {
+      setStatus("Campaign event could not be sent.");
+      return false;
+    }
+  }
+
+  async function updateCampaignInitiative(data: InitiativeState, version: number) {
+    if (!activeCampaignId) return;
+    try {
+      const response = await fetch(`/api/campaigns/${activeCampaignId}/initiative`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({ data, version }),
+      });
+      const payload = await response.json().catch(() => ({})) as { initiative?: CampaignSyncPayload["initiative"]; error?: string };
+      if (response.status === 409) {
+        setStatus("Initiative changed. Refreshed from the campaign.");
+        return;
+      }
+      if (!response.ok || !payload.initiative) {
+        setStatus(payload.error ?? "Initiative could not be updated.");
+        return;
+      }
+      setCampaignSync((current) => current ? { ...current, initiative: payload.initiative! } : current);
+    } catch {
+      setStatus("Initiative could not be updated.");
+    }
+  }
+
+  async function submitCampaignInitiativeRoll(initiative: number) {
+    if (!activeCampaignId || !selected) return;
+    try {
+      const response = await fetch(`/api/campaigns/${activeCampaignId}/initiative/roll`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ initiative, characterName: selected.name }),
+      });
+      const payload = await response.json().catch(() => ({})) as { initiative?: CampaignSyncPayload["initiative"]; error?: string };
+      if (!response.ok || !payload.initiative) {
+        setStatus(payload.error ?? "Initiative roll could not be shared.");
+        return;
+      }
+      setCampaignSync((current) => current ? { ...current, initiative: payload.initiative! } : current);
+      setStatus("Initiative shared with campaign");
+    } catch {
+      setStatus("Initiative roll could not be shared.");
+    }
+  }
+
+  function handleCampaignRollRequest(event: CampaignEvent) {
+    if (!selected || !selectedFinalAbilities) {
+      setStatus("Pick a character before answering the roll request.");
+      return;
+    }
+    const payload = parseCampaignPayload(event);
+    const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "Requested roll";
+    const kind = typeof payload.kind === "string" ? payload.kind : "check";
+    const key = payload.key;
+    const dc = typeof payload.dc === "number" && Number.isFinite(payload.dc) ? payload.dc : undefined;
+    const pb = proficiencyBonusFor(selected.level);
+    let modifier = 0;
+    let label = prompt;
+
+    if (kind === "initiative") {
+      modifier = selectedInitiative ?? 0;
+      label = dc ? `${prompt} (DC ${dc})` : prompt;
+    } else if ((kind === "check" || kind === "save") && isAbilityKey(key)) {
+      modifier = abilityModifier(selectedFinalAbilities[key]);
+      if (kind === "save") {
+        const hasSave =
+          selected.savingThrowProficiencies?.includes(key) ||
+          SAVE_PROFICIENCIES[selected.classId]?.abilities.includes(key);
+        if (hasSave) modifier += pb;
+      }
+      label = dc ? `${prompt} (DC ${dc})` : prompt;
+    } else if (kind === "skill" && typeof key === "string") {
+      const skill = SKILLS.find((item) => item.id === key);
+      if (skill) {
+        const proficiencies = new Set([
+          ...(selected.skillProficiencies ?? []),
+          ...(BACKGROUND_SKILLS[selected.background] ?? []),
+        ]);
+        modifier = abilityModifier(selectedFinalAbilities[skill.ability]) + (proficiencies.has(skill.id) ? pb : 0);
+        label = dc ? `${prompt} (DC ${dc})` : prompt;
+      }
+    }
+
+    pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(selected.effects)], modifier, label, (outcome) => {
+      if (dc) {
+        setStatus(`${prompt}: ${outcome.total} ${outcome.total >= dc ? "passes" : "fails"} DC ${dc}`);
+      }
+      resolveCampaignEvent(event.id);
+    });
+  }
+
+  function applyCampaignRest(type: CampaignEvent["type"], eventId?: string) {
+    if (!selected) return;
+    if (type === "rest-short") {
+      const heroClass = ruleset?.classes.find((item) => item.id === selected.classId);
+      if (heroClass?.casterType === "pact") {
+        void updateSelected({ pactSlotsUsed: 0 });
+      }
+      setStatus("Short rest acknowledged");
+    } else if (type === "rest-long") {
+      const spent = selected.hitDiceSpent ?? 0;
+      const recovered = Math.max(1, Math.floor(selected.level / 2));
+      const restedSpellStatuses = Object.fromEntries(
+        Object.entries(selected.spellStatuses ?? {}).map(([spellId, status]) => [
+          spellId,
+          status.freeUse ? { ...status, freeUsed: false } : status,
+        ]),
+      );
+      void updateSelected({
+        currentHp: selected.maxHp,
+        tempHp: 0,
+        spellSlotsUsed: {},
+        pactSlotsUsed: 0,
+        concentratingOn: null,
+        hitDiceSpent: Math.max(0, spent - recovered),
+        spellStatuses: restedSpellStatuses,
+      });
+      setStatus("Long rest complete");
+    }
+    if (eventId) resolveCampaignEvent(eventId);
+  }
+
   function pushRoll(
     label: string,
     sides: number,
@@ -1227,8 +1539,13 @@ export default function ForgeAndFableApp() {
       rollModeIsFromEffect={rollModeIsFromEffect}
       activeCharacterName={selected?.name}
       activeCharacterInitiative={selectedInitiative}
+      currentUserId={user.id}
+      campaignInitiative={campaignSync?.initiative}
+      campaignIsDm={campaignSync?.campaign.dmUserId === user.id}
       onRollModeChange={setRollMode}
       onRollPool={pushPool}
+      onCampaignInitiativeUpdate={updateCampaignInitiative}
+      onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
       onClearHistory={clearHistory}
     />
     {creationSeq && draft && creationSeqFinalAbilities ? (() => {
@@ -1289,8 +1606,17 @@ export default function ForgeAndFableApp() {
     ) : null}
     {campaignOpen ? (
       <CampaignPanel
-        token={localStorage.getItem("forge-and-fable-token") ?? ""}
         characters={characters}
+        currentUserId={user.id}
+        activeCampaignId={activeCampaignId}
+        campaignSync={campaignSync}
+        campaignEvents={campaignEvents}
+        resolvedEventIds={resolvedCampaignEvents}
+        onActiveCampaignChange={setActiveCampaign}
+        onPostEvent={postCampaignEvent}
+        onRespondRollRequest={handleCampaignRollRequest}
+        onAcceptRest={applyCampaignRest}
+        onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onClose={() => setCampaignOpen(false)}
       />

@@ -1,49 +1,125 @@
 "use client";
 
-import { memo, useState, useEffect, useRef, useCallback } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Plus, Users, Swords, Copy, Trash2, Loader2, Eye } from "lucide-react";
-import type { CampaignDetail, CampaignSummary } from "@/lib/campaignStore";
-import type { Character } from "@/types/game";
-
-// ── Types ──
+import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
+import type { CampaignSummary } from "@/lib/campaignStore";
+import { SKILLS } from "@/lib/srd";
+import type { AbilityKey, Character } from "@/types/game";
+import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 
 type PanelView = "list" | "create" | "join" | "detail";
 
 type Props = {
-  token: string;
   characters: Character[];
+  currentUserId?: string;
+  activeCampaignId: string | null;
+  campaignSync: CampaignSyncPayload | null;
+  campaignEvents: CampaignEvent[];
+  resolvedEventIds: Set<string>;
+  onActiveCampaignChange: (campaignId: string | null) => void;
+  onPostEvent: (type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) => Promise<boolean>;
+  onRespondRollRequest: (event: CampaignEvent) => void;
+  onAcceptRest: (type: CampaignEvent["type"], eventId?: string) => void;
+  onResolveEvent: (eventId: string) => void;
   onOpenSheet?: (character: Character) => void;
   onClose: () => void;
 };
 
-// ── Component ──
+const ABILITY_OPTIONS: { key: AbilityKey; label: string }[] = [
+  { key: "strength", label: "Strength" },
+  { key: "dexterity", label: "Dexterity" },
+  { key: "constitution", label: "Constitution" },
+  { key: "intelligence", label: "Intelligence" },
+  { key: "wisdom", label: "Wisdom" },
+  { key: "charisma", label: "Charisma" },
+];
 
-export default memo(function CampaignPanel({ token, characters, onOpenSheet, onClose }: Props) {
-  const [view, setView] = useState<PanelView>("list");
+function authHeaders(): Record<string, string> {
+  return { "Content-Type": "application/json" };
+}
+
+function eventPayload(event: CampaignEvent): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(event.payload);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function eventTitle(event: CampaignEvent) {
+  const payload = eventPayload(event);
+  if (event.type === "roll-request") return typeof payload.prompt === "string" ? payload.prompt : "Roll requested";
+  if (event.type === "rest-short") return "Short rest called";
+  if (event.type === "rest-long") return "Long rest called";
+  if (event.type === "announce") return typeof payload.message === "string" ? payload.message : "Campaign announcement";
+  if (event.type === "condition-apply") return `Condition applied: ${typeof payload.label === "string" ? payload.label : "Effect"}`;
+  if (event.type === "condition-remove") return `Condition removed: ${typeof payload.label === "string" ? payload.label : "Effect"}`;
+  return "Campaign event";
+}
+
+export default memo(function CampaignPanel({
+  characters,
+  currentUserId,
+  activeCampaignId,
+  campaignSync,
+  campaignEvents,
+  resolvedEventIds,
+  onActiveCampaignChange,
+  onPostEvent,
+  onRespondRollRequest,
+  onAcceptRest,
+  onResolveEvent,
+  onOpenSheet,
+  onClose,
+}: Props) {
+  const [view, setView] = useState<PanelView>(activeCampaignId ? "detail" : "list");
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(
-    () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null
-  );
-  const [detail, setDetail] = useState<CampaignDetail | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(activeCampaignId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  // Form state
   const [newName, setNewName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [joinCharId, setJoinCharId] = useState("");
   const [createdCode, setCreatedCode] = useState("");
-
+  const [announcement, setAnnouncement] = useState("");
+  const [rollPrompt, setRollPrompt] = useState("Initiative");
+  const [rollKind, setRollKind] = useState<"initiative" | "save" | "check" | "skill">("initiative");
+  const [rollKey, setRollKey] = useState("dexterity");
+  const [rollDc, setRollDc] = useState("");
+  const [conditionLabel, setConditionLabel] = useState("Poisoned");
+  const [conditionTarget, setConditionTarget] = useState("");
   const triggerRef = useRef<HTMLElement | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Escape key ──
+  const detail = activeId && campaignSync?.campaign.id === activeId ? campaignSync : null;
+  const isDm = Boolean(detail && currentUserId && detail.campaign.dmUserId === currentUserId);
+  const visibleEvents = useMemo(
+    () => campaignEvents
+      .filter((event) =>
+        !resolvedEventIds.has(event.id) &&
+        (event.type === "roll-request" || event.type === "rest-short" || event.type === "rest-long" || event.type === "announce"),
+      )
+      .slice()
+      .reverse(),
+    [campaignEvents, resolvedEventIds],
+  );
+
+  const loadCampaigns = useCallback(async () => {
+    try {
+      const response = await fetch("/api/campaigns", { headers: authHeaders() });
+      if (!response.ok) return;
+      const data = await response.json() as { campaigns?: CampaignSummary[] };
+      setCampaigns(data.campaigns ?? []);
+    } catch {
+      // Campaigns refresh on the next panel open.
+    }
+  }, []);
 
   useEffect(() => {
     triggerRef.current = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         onClose();
         queueMicrotask(() => triggerRef.current?.focus());
       }
@@ -55,89 +131,70 @@ export default memo(function CampaignPanel({ token, characters, onOpenSheet, onC
     };
   }, [onClose]);
 
-  // ── Auth header ──
-
-  const authHeaders = useCallback((): Record<string, string> => ({
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  }), [token]);
-
-  // ── Load campaigns ──
-
-  const loadCampaigns = useCallback(async () => {
-    try {
-      const res = await fetch("/api/campaigns", { headers: authHeaders() });
-      if (!res.ok) return;
-      const data = await res.json();
-      setCampaigns(data.campaigns ?? []);
-    } catch { /* silent */ }
-  }, [authHeaders]);
-
-  useEffect(() => { loadCampaigns(); }, [loadCampaigns]);
-
-  // ── Poll detail ──
+  useEffect(() => {
+    setActiveId(activeCampaignId);
+    if (activeCampaignId) setView("detail");
+  }, [activeCampaignId]);
 
   useEffect(() => {
-    if (!activeId) return;
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/campaigns/${activeId}`, { headers: authHeaders() });
-        if (!res.ok) { setActiveId(null); return; }
-        const data = await res.json();
-        setDetail(data);
-      } catch { /* silent */ }
-    };
-    poll(); // immediate first fetch
-    pollRef.current = setInterval(poll, 5000);
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") poll();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [activeId, authHeaders]);
-
-  // ── Actions ──
+    void loadCampaigns();
+  }, [loadCampaigns]);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
     try {
-      const res = await fetch("/api/campaigns", {
-        method: "POST", headers: authHeaders(),
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: authHeaders(),
         body: JSON.stringify({ name: newName.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Failed."); return; }
+      const data = await response.json() as { campaign?: { id: string; code: string }; error?: string };
+      if (!response.ok || !data.campaign) {
+        setError(data.error ?? "Campaign could not be created.");
+        return;
+      }
       setCreatedCode(data.campaign.code);
+      setActiveId(data.campaign.id);
+      onActiveCampaignChange(data.campaign.id);
       await loadCampaigns();
-      setView("list");
-    } catch { setError("Network error."); }
-    setBusy(false);
+    } catch {
+      setError("Campaign could not be created.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleJoin = async () => {
     if (!joinCode.trim() || !joinCharId) return;
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
     try {
-      const res = await fetch("/api/campaigns/join", {
-        method: "POST", headers: authHeaders(),
+      const response = await fetch("/api/campaigns/join", {
+        method: "POST",
+        headers: authHeaders(),
         body: JSON.stringify({ code: joinCode.trim().toUpperCase(), characterId: joinCharId }),
       });
-      if (!res.ok) { setError((await res.json()).error ?? "Failed."); setBusy(false); return; }
+      const data = await response.json().catch(() => ({})) as { campaign?: { id: string }; error?: string };
+      if (!response.ok || !data.campaign) {
+        setError(data.error ?? "Campaign could not be joined.");
+        return;
+      }
+      setActiveId(data.campaign.id);
+      onActiveCampaignChange(data.campaign.id);
+      setView("detail");
       await loadCampaigns();
-      setView("list");
-    } catch { setError("Network error."); }
-    setBusy(false);
+    } catch {
+      setError("Campaign could not be joined.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSelect = (id: string) => {
     setActiveId(id);
-    localStorage.setItem("forge-and-fable-active-campaign", id);
+    onActiveCampaignChange(id);
     setView("detail");
   };
 
@@ -145,35 +202,71 @@ export default memo(function CampaignPanel({ token, characters, onOpenSheet, onC
     if (!activeId) return;
     setBusy(true);
     try {
-      await fetch(`/api/campaigns/${activeId}/members/me`, { method: "DELETE", headers: authHeaders() });
+      const response = await fetch(`/api/campaigns/${activeId}/members/me`, { method: "DELETE", headers: authHeaders() });
+      if (!response.ok) {
+        setError("Campaign could not be left.");
+        return;
+      }
       setActiveId(null);
-      localStorage.removeItem("forge-and-fable-active-campaign");
-      setDetail(null);
-      await loadCampaigns();
+      onActiveCampaignChange(null);
       setView("list");
-    } catch { setError("Failed to leave."); }
-    setBusy(false);
+      await loadCampaigns();
+    } catch {
+      setError("Campaign could not be left.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDelete = async () => {
-    if (!activeId || !confirm("Delete this campaign? All members will be removed.")) return;
+    if (!activeId || !window.confirm("Delete this campaign for everyone?")) return;
     setBusy(true);
     try {
-      await fetch(`/api/campaigns/${activeId}`, { method: "DELETE", headers: authHeaders() });
+      const response = await fetch(`/api/campaigns/${activeId}`, { method: "DELETE", headers: authHeaders() });
+      if (!response.ok) {
+        setError("Campaign could not be deleted.");
+        return;
+      }
       setActiveId(null);
-      localStorage.removeItem("forge-and-fable-active-campaign");
-      setDetail(null);
-      await loadCampaigns();
+      onActiveCampaignChange(null);
       setView("list");
-    } catch { setError("Failed to delete."); }
-    setBusy(false);
+      await loadCampaigns();
+    } catch {
+      setError("Campaign could not be deleted.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code).catch(() => {});
   };
 
-  // ── Render ──
+  const sendAnnouncement = async () => {
+    const message = announcement.trim();
+    if (!message) return;
+    if (await onPostEvent("announce", { message })) setAnnouncement("");
+  };
+
+  const sendRollRequest = async () => {
+    const prompt = rollPrompt.trim();
+    if (!prompt) return;
+    const dc = rollDc.trim() ? Number(rollDc) : undefined;
+    const key = rollKind === "initiative" ? "dexterity" : rollKey;
+    const payload: Record<string, unknown> = { prompt, kind: rollKind, key };
+    if (Number.isFinite(dc)) payload.dc = dc;
+    await onPostEvent("roll-request", payload);
+  };
+
+  const sendRest = async (type: "rest-short" | "rest-long") => {
+    await onPostEvent(type, {});
+  };
+
+  const sendCondition = async (type: "condition-apply" | "condition-remove") => {
+    const label = conditionLabel.trim();
+    if (!label || !conditionTarget) return;
+    await onPostEvent(type, { label }, conditionTarget);
+  };
 
   return createPortal(
     <div className="modal-scrim" role="presentation" onMouseDown={onClose}>
@@ -182,178 +275,268 @@ export default memo(function CampaignPanel({ token, characters, onOpenSheet, onC
         role="dialog"
         aria-modal="true"
         aria-labelledby="campaign-title"
-        onMouseDown={(e) => e.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
       >
-        {/* Header */}
         <div className="campaign-header">
-          <h2 id="campaign-title"><Swords size={20} style={{ marginRight: 8 }} />Campaigns</h2>
+          <h2 id="campaign-title"><Swords size={20} /> Campaigns</h2>
           <button className="glass-icon modal-close" type="button" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>
 
-        {error && <div className="import-error-banner">{error}</div>}
+        {error ? <div className="import-error-banner">{error}</div> : null}
 
-        {/* ── List view ── */}
-        {view === "list" && (
+        {view === "list" ? (
           <div className="campaign-body">
             <div className="campaign-actions-bar">
-              <button className="dj-btn dj-btn-primary" onClick={() => { setNewName(""); setCreatedCode(""); setError(""); setView("create"); }}>
+              <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setNewName(""); setCreatedCode(""); setError(""); setView("create"); }}>
                 <Plus size={16} /> New Campaign
               </button>
-              <button className="glass-button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
+              <button className="glass-button" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
                 <Users size={16} /> Join
               </button>
             </div>
-
             {campaigns.length === 0 ? (
-              <p className="cs-muted" style={{ textAlign: "center", padding: 24 }}>No campaigns yet — create one or join with a code.</p>
+              <p className="cs-muted campaign-empty">No campaigns yet. Create one or join with a code.</p>
             ) : (
               <div className="campaign-list">
-                {campaigns.map((c) => (
-                  <button key={c.id} type="button" className="campaign-card" onClick={() => handleSelect(c.id)}>
+                {campaigns.map((campaign) => (
+                  <button key={campaign.id} type="button" className="campaign-card" onClick={() => handleSelect(campaign.id)}>
                     <div className="campaign-card-main">
-                      <strong>{c.name}</strong>
-                      <small>{c.memberCount} member{c.memberCount !== 1 ? "s" : ""}</small>
+                      <strong>{campaign.name}</strong>
+                      <small>{campaign.memberCount} member{campaign.memberCount === 1 ? "" : "s"}</small>
                     </div>
-                    <span className="campaign-code-badge">Code: {c.code}</span>
+                    <span className="campaign-code-badge">Code: {campaign.code}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
-        {/* ── Create view ── */}
-        {view === "create" && (
+        {view === "create" ? (
           <div className="campaign-body">
             {createdCode ? (
               <div className="campaign-created">
-                <h3>Campaign Created!</h3>
-                <p>Share this code with your players:</p>
+                <h3>Campaign created</h3>
+                <p>Share this code with your players.</p>
                 <div className="campaign-code-display">
                   <strong>{createdCode}</strong>
-                  <button className="glass-button" onClick={() => copyCode(createdCode)}><Copy size={14} /> Copy</button>
+                  <button className="glass-button" type="button" onClick={() => copyCode(createdCode)}><Copy size={14} /> Copy</button>
                 </div>
-                <button className="dj-btn dj-btn-primary" onClick={() => { loadCampaigns(); setView("list"); }}>Done</button>
+                <button className="dj-btn dj-btn-primary" type="button" onClick={() => setView("detail")}>Open Campaign</button>
               </div>
             ) : (
               <div className="campaign-form">
                 <label>
                   <span>Campaign Name</span>
-                  <input
-                    type="text" maxLength={60} placeholder="e.g. The Dragon's Curse"
-                    value={newName} onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                    autoFocus
-                  />
+                  <input type="text" maxLength={60} value={newName} onChange={(event) => setNewName(event.currentTarget.value)} autoFocus />
                 </label>
                 <div className="campaign-form-actions">
-                  <button className="glass-button" onClick={() => setView("list")}>Cancel</button>
-                  <button className="dj-btn dj-btn-primary" onClick={handleCreate} disabled={busy || !newName.trim()}>
+                  <button className="glass-button" type="button" onClick={() => setView("list")}>Cancel</button>
+                  <button className="dj-btn dj-btn-primary" type="button" onClick={handleCreate} disabled={busy || !newName.trim()}>
                     {busy ? <Loader2 size={16} className="spin" /> : "Create"}
                   </button>
                 </div>
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
-        {/* ── Join view ── */}
-        {view === "join" && (
+        {view === "join" ? (
           <div className="campaign-body">
             <div className="campaign-form">
               <label>
                 <span>Join Code</span>
-                <input
-                  type="text" maxLength={6} placeholder="ABC123"
-                  value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  autoFocus
-                />
+                <input type="text" maxLength={6} value={joinCode} onChange={(event) => setJoinCode(event.currentTarget.value.toUpperCase())} autoFocus />
               </label>
               <label>
                 <span>Your Character</span>
-                <select value={joinCharId} onChange={(e) => setJoinCharId(e.target.value)}>
-                  <option value="">— Select a character —</option>
-                  {characters.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name} (Lvl {c.level} {c.classId})</option>
+                <select value={joinCharId} onChange={(event) => setJoinCharId(event.currentTarget.value)}>
+                  <option value="">Select a character</option>
+                  {characters.map((character) => (
+                    <option key={character.id} value={character.id}>{character.name} (Level {character.level} {character.classId})</option>
                   ))}
                 </select>
               </label>
               <div className="campaign-form-actions">
-                <button className="glass-button" onClick={() => setView("list")}>Cancel</button>
-                <button className="dj-btn dj-btn-primary" onClick={handleJoin} disabled={busy || !joinCode.trim() || !joinCharId}>
+                <button className="glass-button" type="button" onClick={() => setView("list")}>Cancel</button>
+                <button className="dj-btn dj-btn-primary" type="button" onClick={handleJoin} disabled={busy || !joinCode.trim() || !joinCharId}>
                   {busy ? <Loader2 size={16} className="spin" /> : "Join"}
                 </button>
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* ── Detail view ── */}
-        {view === "detail" && detail && (
+        {view === "detail" ? (
           <div className="campaign-body">
-            {/* Campaign info bar */}
             <div className="campaign-info-bar">
               <div>
-                <strong>{detail.name}</strong>
-                <span className="campaign-code-badge">Code: {detail.code} <Copy size={12} style={{ cursor: "pointer" }} onClick={() => copyCode(detail.code)} /></span>
+                <strong>{detail?.campaign.name ?? "Loading campaign..."}</strong>
+                {detail ? (
+                  <button className="campaign-code-badge campaign-code-button" type="button" onClick={() => copyCode(detail.campaign.code)}>
+                    Code: {detail.campaign.code} <Copy size={12} />
+                  </button>
+                ) : null}
               </div>
               <div className="campaign-info-actions">
-                <button className="glass-button" onClick={() => { setView("list"); setDetail(null); }}>← Back</button>
-                {detail.dmUserId !== activeId ? (
-                  <button className="danger-button" onClick={handleLeave} disabled={busy}>Leave</button>
+                <button className="glass-button" type="button" onClick={() => setView("list")}>Back</button>
+                {detail && (isDm ? (
+                  <button className="danger-button" type="button" onClick={handleDelete} disabled={busy}><Trash2 size={14} /> Delete</button>
                 ) : (
-                  <button className="danger-button" onClick={handleDelete} disabled={busy}><Trash2 size={14} /> Delete</button>
-                )}
+                  <button className="danger-button" type="button" onClick={handleLeave} disabled={busy}>Leave</button>
+                ))}
               </div>
             </div>
 
-            <div className="campaign-detail-grid">
-              {/* Members */}
-              <div className="campaign-members">
-                <h3><Users size={14} /> Members ({detail.members.length})</h3>
-                {detail.members.map((m) => (
-                  <div key={m.userId} className="campaign-member-row">
-                    <div>
-                      <strong>{m.userName}</strong>
-                      {m.characterName && <small>{m.characterName} — {m.characterClass} Lvl {m.characterLevel}</small>}
-                      {!m.characterId && <small className="cs-muted">No character selected</small>}
+            {detail ? (
+              <>
+                <div className="campaign-party-strip">
+                  {detail.members.map((member) => (
+                    <div key={member.userId} className="campaign-party-card">
+                      <strong>{member.characterName ?? member.userName}</strong>
+                      <small>{member.characterClass ? `Level ${member.characterLevel} ${member.characterClass}` : "No character selected"}</small>
+                      <div className="campaign-party-stats">
+                        <span>HP {member.currentHp ?? "-"} / {member.maxHp ?? "-"}</span>
+                        <span>AC {member.ac ?? "-"}</span>
+                        <span>PP {member.passivePerception ?? "-"}</span>
+                      </div>
+                      {member.characterJson && onOpenSheet ? (
+                        <button className="glass-button" type="button" onClick={() => onOpenSheet(member.characterJson!)}>
+                          <Eye size={12} /> Sheet
+                        </button>
+                      ) : null}
                     </div>
-                    {m.characterId && m.characterJson && onOpenSheet && (
-                      <button className="glass-button" onClick={() => onOpenSheet(m.characterJson!)}>
-                        <Eye size={12} /> View Sheet
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              {/* Roll feed */}
-              <div className="campaign-feed">
-                <h3>Roll Feed</h3>
-                {detail.rolls.length === 0 ? (
-                  <p className="cs-muted">No rolls yet — rolls will appear here as players make them.</p>
-                ) : (
-                  <div className="campaign-roll-list">
-                    {detail.rolls.map((r) => (
-                      <div key={r.id} className="campaign-roll-row">
-                        <div className="campaign-roll-top">
-                          <strong>{r.character_name}</strong>
-                          <span className="campaign-roll-total">{r.total >= 0 ? r.total : r.total}</span>
+                {visibleEvents.length > 0 ? (
+                  <div className="campaign-events">
+                    <h3><Bell size={14} /> Pending</h3>
+                    {visibleEvents.map((event) => (
+                      <div key={event.id} className="campaign-event-card">
+                        <strong>{eventTitle(event)}</strong>
+                        <small>{new Date(event.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+                        <div className="campaign-event-actions">
+                          {event.type === "roll-request" ? (
+                            <button className="dj-btn dj-btn-primary" type="button" onClick={() => onRespondRollRequest(event)}>Roll</button>
+                          ) : null}
+                          {event.type === "rest-short" || event.type === "rest-long" ? (
+                            <button className="dj-btn dj-btn-primary" type="button" onClick={() => onAcceptRest(event.type, event.id)}>Apply</button>
+                          ) : null}
+                          <button className="glass-button" type="button" onClick={() => onResolveEvent(event.id)}>Dismiss</button>
                         </div>
-                        <small>{r.label}</small>
-                        <small className="cs-muted">{r.detail.slice(0, 100)}</small>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+                ) : null}
 
-        {busy && view === "detail" && (
-          <div className="import-busy"><Loader2 size={16} className="spin" /><span>Loading…</span></div>
-        )}
+                {isDm ? (
+                  <div className="campaign-dm-tools">
+                    <h3><Sparkles size={14} /> DM Tools</h3>
+                    <div className="campaign-tool-row">
+                      <input type="text" value={announcement} onChange={(event) => setAnnouncement(event.currentTarget.value)} placeholder="Send a table announcement" />
+                      <button className="gold-button" type="button" onClick={sendAnnouncement}><Send size={13} /> Send</button>
+                    </div>
+                    <div className="campaign-tool-grid">
+                      <label>
+                        <span>Roll Prompt</span>
+                        <input type="text" value={rollPrompt} onChange={(event) => setRollPrompt(event.currentTarget.value)} />
+                      </label>
+                      <label>
+                        <span>Type</span>
+                        <select value={rollKind} onChange={(event) => {
+                          const next = event.currentTarget.value as typeof rollKind;
+                          setRollKind(next);
+                          setRollKey(next === "skill" ? SKILLS[0]?.id ?? "acrobatics" : "dexterity");
+                        }}>
+                          <option value="initiative">Initiative</option>
+                          <option value="save">Saving Throw</option>
+                          <option value="check">Ability Check</option>
+                          <option value="skill">Skill Check</option>
+                        </select>
+                      </label>
+                      {rollKind !== "initiative" ? (
+                        <label>
+                          <span>{rollKind === "skill" ? "Skill" : "Ability"}</span>
+                          <select value={rollKey} onChange={(event) => setRollKey(event.currentTarget.value)}>
+                            {rollKind === "skill"
+                              ? SKILLS.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)
+                              : ABILITY_OPTIONS.map((ability) => <option key={ability.key} value={ability.key}>{ability.label}</option>)}
+                          </select>
+                        </label>
+                      ) : null}
+                      <label>
+                        <span>DC</span>
+                        <input type="number" min={1} max={40} value={rollDc} onChange={(event) => setRollDc(event.currentTarget.value)} placeholder="Optional" />
+                      </label>
+                    </div>
+                    <button className="dj-btn dj-btn-primary" type="button" onClick={sendRollRequest}>Request Roll</button>
+                    <div className="campaign-tool-row">
+                      <button className="glass-button" type="button" onClick={() => sendRest("rest-short")}>Call Short Rest</button>
+                      <button className="glass-button" type="button" onClick={() => sendRest("rest-long")}>Call Long Rest</button>
+                    </div>
+                    <div className="campaign-tool-grid">
+                      <label>
+                        <span>Condition</span>
+                        <input type="text" value={conditionLabel} onChange={(event) => setConditionLabel(event.currentTarget.value)} />
+                      </label>
+                      <label>
+                        <span>Target</span>
+                        <select value={conditionTarget} onChange={(event) => setConditionTarget(event.currentTarget.value)}>
+                          <option value="">Select player</option>
+                          {detail.members.map((member) => (
+                            <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="campaign-tool-row">
+                      <button className="glass-button" type="button" onClick={() => sendCondition("condition-apply")} disabled={!conditionTarget || !conditionLabel.trim()}>Apply Condition</button>
+                      <button className="glass-button" type="button" onClick={() => sendCondition("condition-remove")} disabled={!conditionTarget || !conditionLabel.trim()}>Remove Condition</button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="campaign-detail-grid">
+                  <div className="campaign-members">
+                    <h3><Users size={14} /> Members ({detail.members.length})</h3>
+                    {detail.members.map((member) => (
+                      <div key={member.userId} className="campaign-member-row">
+                        <div>
+                          <strong>{member.userName}</strong>
+                          <small>{member.characterName ? `${member.characterName} - ${member.characterClass} Level ${member.characterLevel}` : "No character selected"}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="campaign-feed">
+                    <h3>Roll Feed</h3>
+                    {detail.rolls.length === 0 ? (
+                      <p className="cs-muted">No rolls yet.</p>
+                    ) : (
+                      <div className="campaign-roll-list">
+                        {detail.rolls.slice().reverse().map((roll) => (
+                          <div key={roll.id} className="campaign-roll-row">
+                            <div className="campaign-roll-top">
+                              <strong>{roll.character_name}</strong>
+                              <span className="campaign-roll-total">{roll.total}</span>
+                            </div>
+                            <small>{roll.label}</small>
+                            <small className="cs-muted">{roll.detail.slice(0, 120)}</small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="import-busy"><Loader2 size={16} className="spin" /><span>Loading campaign...</span></div>
+            )}
+          </div>
+        ) : null}
+
+        {busy ? <div className="import-busy"><Loader2 size={16} className="spin" /><span>Working...</span></div> : null}
       </section>
     </div>,
     document.body,
