@@ -161,6 +161,10 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
             }
             if (e.sense !== undefined) assertString(e.sense, "effects[].sense", 48);
             if (e.source !== undefined) assertString(e.source, "effects[].source", 24);
+            if (e.advantageMode !== undefined && e.advantageMode !== "advantage" && e.advantageMode !== "disadvantage") {
+              throw new Error(`"effects[].advantageMode" must be "advantage" or "disadvantage".`);
+            }
+            if (e.stack !== undefined) assertInteger(e.stack, "effects[].stack", 1, 6);
           }
         }
         break;

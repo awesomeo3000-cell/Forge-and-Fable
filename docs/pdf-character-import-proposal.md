@@ -442,3 +442,18 @@ Using `AWESOMEOH_75969686.pdf`:
 - Should low-confidence imports be allowed to create a character if required fields are manually completed?
 - Should imported AC/initiative mismatches automatically create custom rules, or only suggest them?
 - Should imports create custom pages for unknown features by default?
+
+---
+
+## Review pass (Claude, 2026-07-08) — implementation verified end-to-end
+
+Ran the REAL sample (`AWESOMEOH_75969686.pdf`, 1.3MB, 7 pages) through the live pipeline:
+analyze → 200 with a per-field confidence/provenance draft (name/class/level/species/
+background/abilities all "confirmed" from form fields) → create → 201 → "Wexford the
+Oathbreaker", Human Paladin 8, Knight, abilities exact, HP 78/78, 4 skills — renders
+correctly on the sheet. Security posture: auth on both routes, 10MB cap, type checks,
+nothing persisted at analyze, create funnels through `validateCharacterInput` +
+existing `createCharacter`. **Approved.** Two follow-ups: (1) `playwright` is in
+production `dependencies` — move to `devDependencies`; (2) test-harness note: uploading
+via curl in Git Bash requires cd-ing to the file's directory (absolute `-F @/e/...`
+paths fail with exit 000 — environment quirk, not an app bug).

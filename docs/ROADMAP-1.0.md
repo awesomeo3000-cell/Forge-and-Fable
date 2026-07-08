@@ -96,7 +96,7 @@ The process that produced everything below, refined over nine rounds:
 ## 8. Suggested sequencing
 
 **Every remaining round now has a complete, hand-off-ready proposal doc — no lead architect required to kick off:**
-R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R16 (a: conditions, b: campaigns) → `ai-project-proposal-16.md` · R17 (optional) → `ai-project-proposal-17.md`. Each contains pre-made design decisions, acceptance gates, and changelog requirements; the executing agent should re-anchor any drifted code references by grep, not redesign.
+R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R16 (a: conditions, b: LIVE campaigns w/ DM push model, c: table extras) → `ai-project-proposal-16.md` (rewritten 2026-07-08 to the push architecture: DM never writes others' characters — events applied by the owning client; shared initiative with versioned writes; 16a is a hard prerequisite of 16b) · R17 (optional) → `ai-project-proposal-17.md`. Each contains pre-made design decisions, acceptance gates, and changelog requirements; the executing agent should re-anchor any drifted code references by grep, not redesign.
 
 | Round | Contents | Tier |
 |---|---|---|

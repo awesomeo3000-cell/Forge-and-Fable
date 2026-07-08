@@ -124,3 +124,16 @@ cast a cantrip
 open level-up spell picker
 verify no browser console errors
 ```
+
+---
+
+## Review pass (Claude, 2026-07-08)
+
+Verified against the running app: `/api/spells` serves with the immutable cache header
+(bundle diet real: −649KB static JS per the recorded measurements); passives correctly
+exclude effect check bonuses (changelog's 11-vs-+5 evidence pattern confirmed by code
+path `skillBonusForPassive`); Bearer fallback removed (cookie-only auth confirmed);
+drawer default-y clamp in place; Combat tab live with the active-character roll shortcut
+("Add Wexford the Oathbreaker (roll)"), Next turn/Clear controls, and high-quality state
+hygiene (stable tie-sort, clamped turn index, validated localStorage load). Tour card
+renders on a fresh profile. **Approved.**

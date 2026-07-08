@@ -219,6 +219,15 @@ export type CharacterEffect = {
   initiative?: number;
   d20Dice?: string;
   sense?: string;
+  /** While active, the character's d20 rolls default to this mode (see
+      effectiveAdvantageMode in lib/effects.ts for the cancellation rule when
+      multiple effects disagree). An explicit user override in the roll
+      drawer wins for one roll, then reverts to this. */
+  advantageMode?: "advantage" | "disadvantage";
+  /** Exhaustion level, 1-6 (2014-RAW simplified: stack >= 1 imposes
+      disadvantage via advantageMode; stack >= 3 is informational only this
+      round, no automated speed/HP penalties). */
+  stack?: number;
 };
 
 export type CustomRule = {

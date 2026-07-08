@@ -60,7 +60,7 @@ import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
-import { effectTotal } from "@/lib/effects";
+import { effectTotal, effectiveAdvantageMode } from "@/lib/effects";
 
 function authHeaders(): Record<string, string> {
   return {
@@ -148,7 +148,9 @@ export default function ForgeAndFableApp() {
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
   const [flyingDice, setFlyingDice] = useState<RollingDie[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
-  const [rollMode, setRollMode] = useState<RollMode>("normal");
+  // Manual drawer selection (null = no override, use the effect-driven mode).
+  // An explicit pick wins for exactly one roll, then reverts to null.
+  const [manualRollMode, setManualRollMode] = useState<RollMode | null>(null);
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
   const [spellsReady, setSpellsReady] = useState(false);
 
@@ -245,6 +247,14 @@ export default function ForgeAndFableApp() {
     () => characters.find((character) => character.id === selectedId) ?? characters[0] ?? null,
     [characters, selectedId],
   );
+
+  const effectDrivenMode = effectiveAdvantageMode(selected?.effects);
+  const rollMode = manualRollMode ?? effectDrivenMode;
+  const rollModeIsFromEffect = manualRollMode === null && effectDrivenMode !== "normal";
+  // Clicking the mode that's already driven by an active effect just clears
+  // the (nonexistent) override; clicking anything else arms a one-roll
+  // override, including "normal" to cancel out an effect's disadvantage.
+  const setRollMode = (mode: RollMode) => setManualRollMode(mode === effectDrivenMode ? null : mode);
 
   const diceAccent = selected?.theme?.accent ?? "#a23f29";
   const diceFont = selected?.theme ? FONT_STACKS[selected.theme.fontKey] : undefined;
@@ -955,7 +965,7 @@ export default function ForgeAndFableApp() {
         total,
       });
       setFlyingDice((prev) => [...prev, ...newDice]);
-      setRollMode("normal");
+      setManualRollMode(null);
       return;
     }
 
@@ -1006,8 +1016,9 @@ export default function ForgeAndFableApp() {
   /** Roll a single d20 check/attack/save, honoring the armed advantage /
       disadvantage mode: advantage rolls 2d20 and keeps the higher, disadvantage
       the lower. Rider dice (e.g. Bless's 1d4) fly and add to the total as usual.
-      The kept d20 alone takes the modifier. The mode is one-shot — it resets to
-      normal after the roll so it can't silently affect the next one. */
+      The kept d20 alone takes the modifier. A manual drawer override is
+      one-shot — it reverts after the roll to whatever mode active effects
+      (e.g. Poisoned) are driving, not necessarily "normal". */
   function pushD20(label: string, modifier = 0, riders: { sides: number; count: number }[] = [], options?: D20RollOptions) {
     const armedMode = rollMode;
     const forcedMode = options?.forcedMode;
@@ -1087,7 +1098,7 @@ export default function ForgeAndFableApp() {
       nat,
     );
     setFlyingDice((prev) => [...prev, ...newDice]);
-    if (armedMode !== "normal") setRollMode("normal");
+    setManualRollMode(null);
   }
 
   function expireDie(id: string) {
@@ -1194,6 +1205,7 @@ export default function ForgeAndFableApp() {
       history={rollHistory}
       theme={selected?.theme ?? null}
       rollMode={rollMode}
+      rollModeIsFromEffect={rollModeIsFromEffect}
       activeCharacterName={selected?.name}
       activeCharacterInitiative={selectedInitiative}
       onRollModeChange={setRollMode}

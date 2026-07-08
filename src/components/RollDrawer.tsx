@@ -169,6 +169,7 @@ export default memo(function RollDrawer(props: {
   history: RollHistoryEntry[];
   theme?: CharacterTheme | null;
   rollMode: RollMode;
+  rollModeIsFromEffect?: boolean;
   activeCharacterName?: string;
   activeCharacterInitiative?: number;
   onRollModeChange: (mode: RollMode) => void;
@@ -472,6 +473,7 @@ export default memo(function RollDrawer(props: {
                 {props.rollMode !== "normal" ? (
                   <p className="roll-mode-hint">
                     Next d20 roll uses <strong>{props.rollMode}</strong>.
+                    {props.rollModeIsFromEffect ? " (from effects)" : ""}
                   </p>
                 ) : null}
                 <div className="roll-pool-mod">

@@ -248,6 +248,8 @@ export default memo(function HeroSheet(props: {
     props.onUpdate({ effects: effectsList.map((e) => (e.id === id ? { ...e, active: !e.active } : e)) });
   const removeEffect = (id: string) =>
     props.onUpdate({ effects: effectsList.filter((e) => e.id !== id) });
+  const setEffectStack = (id: string, stack: number) =>
+    props.onUpdate({ effects: effectsList.map((e) => (e.id === id ? { ...e, stack: Math.max(1, Math.min(6, stack)) } : e)) });
   const addPresetEffect = (index: number) => {
     const preset = EFFECT_PRESETS[index];
     if (!preset) return;
@@ -1016,7 +1018,18 @@ export default memo(function HeroSheet(props: {
                 {effectsList.map((e) => (
                   <div className={`cs-effect-row${e.active ? " cs-effect-on" : ""}`} key={e.id}>
                     <button type="button" className={`cs-prof-marker cs-prof-click${e.active ? " cs-prof" : ""}`} onClick={() => toggleEffect(e.id)} aria-pressed={e.active} aria-label={`Toggle ${e.label}`}>{e.active ? "●" : "○"}</button>
-                    <div className="cs-effect-text"><strong>{e.label}</strong><span>{describeEffect(e)}{e.source ? ` — ${e.source}` : ""}</span></div>
+                    <div className="cs-effect-text">
+                      <strong>{e.label}</strong>
+                      {e.advantageMode ? <span className={`cs-effect-advmode ${e.advantageMode}`}>{e.advantageMode === "advantage" ? "ADV" : "DIS"}</span> : null}
+                      <span>{describeEffect(e)}{e.source ? ` — ${e.source}` : ""}</span>
+                    </div>
+                    {e.active && typeof e.stack === "number" ? (
+                      <div className="cs-effect-stack" aria-label={`${e.label} level`}>
+                        <button type="button" onClick={() => setEffectStack(e.id, (e.stack ?? 1) - 1)} disabled={(e.stack ?? 1) <= 1} aria-label={`Decrease ${e.label} level`}>-</button>
+                        <strong>{e.stack}</strong>
+                        <button type="button" onClick={() => setEffectStack(e.id, (e.stack ?? 1) + 1)} disabled={(e.stack ?? 1) >= 6} aria-label={`Increase ${e.label} level`}>+</button>
+                      </div>
+                    ) : null}
                     <button type="button" className="cs-effect-del" onClick={() => removeEffect(e.id)} aria-label={`Remove ${e.label}`}>&times;</button>
                   </div>
                 ))}

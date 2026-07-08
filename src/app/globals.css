@@ -7886,3 +7886,52 @@ button.dj-card {
 .import-success p {
   color: var(--ink-2);
 }
+
+/* 16a: advantage/disadvantage chip + exhaustion stack stepper on effect rows. */
+.cs-effect-advmode {
+  align-self: flex-start;
+  display: inline-block;
+  margin: 2px 0;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-family: var(--font-label);
+  font-size: 0.58em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.cs-effect-advmode.advantage {
+  background: color-mix(in srgb, #2e9e5b 25%, transparent);
+  color: #2e9e5b;
+}
+
+.cs-effect-advmode.disadvantage {
+  background: color-mix(in srgb, #e2543a 25%, transparent);
+  color: #e2543a;
+}
+
+.cs-effect-stack {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-label);
+  font-size: 0.7em;
+}
+
+.cs-effect-stack button {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--parchment-2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.cs-effect-stack button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
