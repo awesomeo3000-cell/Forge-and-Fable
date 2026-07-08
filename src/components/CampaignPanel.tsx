@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
-import type { AbilityKey, Character } from "@/types/game";
+import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 
 type PanelView = "list" | "create" | "join" | "detail";
@@ -24,6 +24,7 @@ type Props = {
   onResolveEvent: (eventId: string) => void;
   onOpenSheet?: (character: Character) => void;
   onClose: () => void;
+  theme?: CharacterTheme | null;
 };
 
 const ABILITY_OPTIONS: { key: AbilityKey; label: string }[] = [
@@ -73,6 +74,7 @@ export default memo(function CampaignPanel({
   onResolveEvent,
   onOpenSheet,
   onClose,
+  theme,
 }: Props) {
   const [view, setView] = useState<PanelView>(activeCampaignId ? "detail" : "list");
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
@@ -276,6 +278,11 @@ export default memo(function CampaignPanel({
         aria-modal="true"
         aria-labelledby="campaign-title"
         onMouseDown={(event) => event.stopPropagation()}
+        style={theme ? {
+          "--campaign-accent": theme.accent,
+          "--campaign-ink": theme.ink,
+          "--campaign-paper": theme.paper,
+        } as React.CSSProperties : undefined}
       >
         <div className="campaign-header">
           <h2 id="campaign-title"><Swords size={20} /> Campaigns</h2>
@@ -356,6 +363,7 @@ export default memo(function CampaignPanel({
                     <option key={character.id} value={character.id}>{character.name} (Level {character.level} {character.classId})</option>
                   ))}
                 </select>
+                {characters.length === 0 ? <p className="cs-muted" style={{ fontSize: "0.8rem", marginTop: 4 }}>You have no characters yet. Create one first from the Vault.</p> : null}
               </label>
               <div className="campaign-form-actions">
                 <button className="glass-button" type="button" onClick={() => setView("list")}>Cancel</button>

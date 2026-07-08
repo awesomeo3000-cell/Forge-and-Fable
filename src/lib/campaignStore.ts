@@ -155,6 +155,7 @@ function calculateMemberSummary(
   userName: string,
   characterId: string | null,
   isDm: boolean,
+  viewerUserId: string,
 ): CampaignMemberSummary {
   let characterJson: Character | null = null;
 
@@ -206,11 +207,11 @@ function calculateMemberSummary(
     maxHp: characterJson.maxHp,
     ac,
     passivePerception,
-    ...(isDm ? { characterJson } : {}),
+    ...(isDm || userId === viewerUserId ? { characterJson } : {}),
   };
 }
 
-function listMembers(campaignId: string, isDm: boolean): CampaignMemberSummary[] {
+function listMembers(campaignId: string, isDm: boolean, viewerUserId: string): CampaignMemberSummary[] {
   const memberRows = getDb().prepare(`
     SELECT cm.user_id, cm.character_id, u.name AS user_name
     FROM campaign_members cm
@@ -219,7 +220,7 @@ function listMembers(campaignId: string, isDm: boolean): CampaignMemberSummary[]
     ORDER BY cm.joined_at ASC
   `).all(campaignId) as Array<{ user_id: string; character_id: string | null; user_name: string }>;
 
-  return memberRows.map((row) => calculateMemberSummary(row.user_id, row.user_name, row.character_id, isDm));
+  return memberRows.map((row) => calculateMemberSummary(row.user_id, row.user_name, row.character_id, isDm, viewerUserId));
 }
 
 function getInitiativeRow(campaignId: string) {
@@ -246,15 +247,15 @@ export function createCampaign(userId: string, name: string): CampaignRow {
   const createdAt = nowIso();
   const trimmedName = name.trim().slice(0, 60);
 
-  let code = generateCode();
-  for (let attempts = 0; attempts < 10; attempts++) {
-    const existing = db.prepare("SELECT 1 FROM campaigns WHERE code = ?").get(code);
-    if (!existing) break;
-    code = generateCode();
-  }
-
   db.exec("BEGIN IMMEDIATE");
   try {
+    let code = generateCode();
+    for (let attempts = 0; attempts < 10; attempts++) {
+      const existing = db.prepare("SELECT 1 FROM campaigns WHERE code = ?").get(code);
+      if (!existing) break;
+      code = generateCode();
+    }
+
     db.prepare("INSERT INTO campaigns (id, name, code, dm_user_id, created_at) VALUES (?, ?, ?, ?, ?)")
       .run(id, trimmedName, code, userId, createdAt);
     db.prepare("INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at) VALUES (?, ?, NULL, ?)")
@@ -262,12 +263,11 @@ export function createCampaign(userId: string, name: string): CampaignRow {
     db.prepare("INSERT INTO campaign_initiative (campaign_id, data, version, updated_at) VALUES (?, ?, 0, ?)")
       .run(id, JSON.stringify(EMPTY_INITIATIVE), createdAt);
     db.exec("COMMIT");
+    return { id, name: trimmedName, code, dm_user_id: userId, created_at: createdAt };
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
   }
-
-  return { id, name: trimmedName, code, dm_user_id: userId, created_at: createdAt };
 }
 
 export function joinCampaign(userId: string, code: string, characterId: string): CampaignRow {
@@ -281,7 +281,7 @@ export function joinCampaign(userId: string, code: string, characterId: string):
   db.prepare(`
     INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at)
     VALUES (?, ?, ?, ?)
-    ON CONFLICT(campaign_id, user_id) DO UPDATE SET character_id = excluded.character_id
+    ON CONFLICT(campaign_id, user_id) DO UPDATE SET character_id = excluded.character_id, joined_at = excluded.joined_at
   `).run(campaign.id, userId, characterId, nowIso());
 
   return campaign;
@@ -311,7 +311,7 @@ export function getCampaignDetail(campaignId: string, userId: string): CampaignD
   const campaign = getCampaignOrThrow(campaignId);
   requireMembership(campaignId, userId);
   const isDm = campaign.dm_user_id === userId;
-  const members = listMembers(campaignId, isDm);
+  const members = listMembers(campaignId, isDm, userId);
   const rolls = getDb().prepare(
     "SELECT * FROM campaign_rolls WHERE campaign_id = ? ORDER BY created_at DESC LIMIT 50",
   ).all(campaignId) as CampaignRollRow[];
@@ -358,7 +358,7 @@ export function syncCampaign(campaignId: string, userId: string, since?: string)
     events,
     rolls,
     initiative: getInitiativeRow(campaignId),
-    members: listMembers(campaignId, isDm),
+    members: listMembers(campaignId, isDm, userId),
   };
 }
 
@@ -431,47 +431,64 @@ export function postCampaignEvent(
 export function updateCampaignInitiative(campaignId: string, userId: string, data: InitiativeState, version: number) {
   requireDm(campaignId, userId);
   const db = getDb();
-  const current = getInitiativeRow(campaignId);
-  if (current.version !== version) throw new CampaignConflictError("Initiative changed. Refetch and try again.");
-  const nextData = clampInitiativeState(data);
-  const nextVersion = version + 1;
-  const updatedAt = nowIso();
-  db.prepare(`
-    INSERT INTO campaign_initiative (campaign_id, data, version, updated_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(campaign_id) DO UPDATE SET data = excluded.data, version = excluded.version, updated_at = excluded.updated_at
-  `).run(campaignId, JSON.stringify(nextData), nextVersion, updatedAt);
-  return { data: nextData, version: nextVersion, updatedAt };
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const current = getInitiativeRow(campaignId);
+    if (current.version !== version) {
+      db.exec("ROLLBACK");
+      throw new CampaignConflictError("Initiative changed. Refetch and try again.");
+    }
+    const nextData = clampInitiativeState(data);
+    const nextVersion = version + 1;
+    const updatedAt = nowIso();
+    db.prepare(`
+      INSERT INTO campaign_initiative (campaign_id, data, version, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO UPDATE SET data = excluded.data, version = excluded.version, updated_at = excluded.updated_at
+    `).run(campaignId, JSON.stringify(nextData), nextVersion, updatedAt);
+    db.exec("COMMIT");
+    return { data: nextData, version: nextVersion, updatedAt };
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function rollCampaignInitiative(campaignId: string, userId: string, characterName: string, initiative: number) {
   requireMembership(campaignId, userId);
   const db = getDb();
-  const current = getInitiativeRow(campaignId);
-  const playerId = `player:${userId}`;
-  const combatants = current.data.combatants.filter((combatant) => combatant.id !== playerId);
-  combatants.push({
-    id: playerId,
-    name: characterName.trim().slice(0, 80),
-    initiative: Math.max(-99, Math.min(99, Math.trunc(initiative))),
-    isPlayer: true,
-  });
-  const sortedCurrent = sortCombatants(current.data.combatants);
-  const currentId = sortedCurrent[current.data.turnIndex]?.id;
-  const sortedNext = sortCombatants(combatants);
-  const nextData = clampInitiativeState({
-    ...current.data,
-    combatants,
-    turnIndex: currentId ? Math.max(0, sortedNext.findIndex((item) => item.id === currentId)) : 0,
-  });
-  const nextVersion = current.version + 1;
-  const updatedAt = nowIso();
-  db.prepare(`
-    INSERT INTO campaign_initiative (campaign_id, data, version, updated_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(campaign_id) DO UPDATE SET data = excluded.data, version = excluded.version, updated_at = excluded.updated_at
-  `).run(campaignId, JSON.stringify(nextData), nextVersion, updatedAt);
-  return { data: nextData, version: nextVersion, updatedAt };
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const current = getInitiativeRow(campaignId);
+    const playerId = `player:${userId}`;
+    const combatants = current.data.combatants.filter((combatant) => combatant.id !== playerId);
+    combatants.push({
+      id: playerId,
+      name: characterName.trim().slice(0, 80),
+      initiative: Math.max(-99, Math.min(99, Math.trunc(initiative))),
+      isPlayer: true,
+    });
+    const sortedCurrent = sortCombatants(current.data.combatants);
+    const currentId = sortedCurrent[current.data.turnIndex]?.id;
+    const sortedNext = sortCombatants(combatants);
+    const nextData = clampInitiativeState({
+      ...current.data,
+      combatants,
+      turnIndex: currentId ? Math.max(0, sortedNext.findIndex((item) => item.id === currentId)) : 0,
+    });
+    const nextVersion = current.version + 1;
+    const updatedAt = nowIso();
+    db.prepare(`
+      INSERT INTO campaign_initiative (campaign_id, data, version, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO UPDATE SET data = excluded.data, version = excluded.version, updated_at = excluded.updated_at
+    `).run(campaignId, JSON.stringify(nextData), nextVersion, updatedAt);
+    db.exec("COMMIT");
+    return { data: nextData, version: nextVersion, updatedAt };
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 // -- Delete / Leave ---------------------------------------------------------

@@ -8067,7 +8067,7 @@ button.dj-card {
   cursor: pointer;
 }
 
-.campaign-card:hover { border-color: var(--accent); }
+.campaign-card:hover { border-color: var(--campaign-accent, var(--accent)); }
 
 .campaign-card-main {
   display: flex;
@@ -8087,7 +8087,7 @@ button.dj-card {
   border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--accent);
+  color: var(--campaign-accent, var(--accent));
 }
 
 .campaign-code-button {
@@ -8145,16 +8145,16 @@ button.dj-card {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--campaign-accent, var(--accent));
   border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 10%, var(--ground-2));
+  background: color-mix(in srgb, var(--campaign-accent, var(--accent)) 10%, var(--ground-2));
 }
 
 .campaign-code-display strong {
   font-family: var(--font-mono);
   font-size: 1.4rem;
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: var(--campaign-accent, var(--accent));
 }
 
 .campaign-info-bar {
@@ -8349,7 +8349,7 @@ button.dj-card {
 .campaign-roll-total {
   font-family: var(--font-mono);
   font-size: 1rem;
-  color: var(--accent);
+  color: var(--campaign-accent, var(--accent));
   font-weight: 700;
 }
 

@@ -93,7 +93,7 @@ function createSchema(db: DatabaseSync) {
     CREATE TABLE IF NOT EXISTS campaign_members (
       campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
       user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
-      character_id TEXT,
+      character_id TEXT REFERENCES characters(id) ON DELETE SET NULL,
       joined_at TEXT NOT NULL,
       PRIMARY KEY (campaign_id, user_id)
     );

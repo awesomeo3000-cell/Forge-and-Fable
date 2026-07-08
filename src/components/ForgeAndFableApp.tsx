@@ -405,18 +405,22 @@ export default function ForgeAndFableApp() {
 
   useEffect(() => {
     if (!user || !activeCampaignId) return;
+    if (!campaignOpen) return; // pause polling when panel is closed
     const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`;
     campaignCursorRef.current[activeCampaignId] =
       campaignCursorRef.current[activeCampaignId] ??
       localStorage.getItem(cursorKey) ??
-      new Date().toISOString();
+      undefined; // no default — first fetch gets all historical data
     let cancelled = false;
 
     const sync = async () => {
       if (document.visibilityState === "hidden") return;
       const since = campaignCursorRef.current[activeCampaignId];
+      const url = since
+        ? `/api/campaigns/${activeCampaignId}/sync?since=${encodeURIComponent(since)}`
+        : `/api/campaigns/${activeCampaignId}/sync`;
       try {
-        const res = await fetch(`/api/campaigns/${activeCampaignId}/sync?since=${encodeURIComponent(since)}`, {
+        const res = await fetch(url, {
           headers: authHeaders(),
         });
         if (!res.ok) {
@@ -462,7 +466,7 @@ export default function ForgeAndFableApp() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [activeCampaignId, selected, user]);
+  }, [activeCampaignId, selected, user, campaignOpen]);
 
   const draftFinalAbilities = useMemo(() => {
     if (!draft || !ruleset) {
@@ -1619,6 +1623,7 @@ export default function ForgeAndFableApp() {
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onClose={() => setCampaignOpen(false)}
+        theme={selected?.theme ?? null}
       />
     ) : null}
     {readOnlyViewChar ? (

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (!code || typeof code !== "string" || !code.trim()) {
       return NextResponse.json({ error: "Join code is required." }, { status: 400 });
     }
-    if (!characterId || typeof characterId !== "string") {
+    if (!characterId || typeof characterId !== "string" || !characterId.trim()) {
       return NextResponse.json({ error: "Character ID is required." }, { status: 400 });
     }
 

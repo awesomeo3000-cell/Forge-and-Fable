@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
     const message = error instanceof Error ? error.message : "Failed to load campaign.";
-    const status = message.includes("Not a member") ? 404 : 500;
+    const status = message.includes("Not a member") || message.includes("not found") || message.includes("Campaign not found") ? 404 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
