@@ -8065,7 +8065,7 @@ button.dj-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-right: 48px;
+  padding-right: 54px;
 }
 
 .campaign-header h2 {
@@ -8565,6 +8565,8 @@ button.dj-card {
 }
 .campaign-panel .campaign-header h2 svg { color: var(--doc-accent); }
 .campaign-panel .modal-close {
+  top: -4px;
+  right: 4px;
   background: color-mix(in srgb, var(--ink, #241c12) 6%, transparent);
   color: var(--ink, #241c12);
   border: 1px solid var(--cp-hair-strong);
