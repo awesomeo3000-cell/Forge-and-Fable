@@ -5,6 +5,7 @@ import {
   MessageSquare,
   Plus,
   Sparkles,
+  Upload,
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +49,7 @@ import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
+import CharacterImportModal from "@/components/CharacterImportModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import LevelUpModal from "@/components/LevelUpModal";
@@ -140,6 +142,7 @@ export default function ForgeAndFableApp() {
   const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
@@ -1235,6 +1238,25 @@ export default function ForgeAndFableApp() {
         onSubmit={submitFeedback}
       />
     ) : null}
+    {importOpen ? (
+      <CharacterImportModal
+        token={localStorage.getItem("forge-and-fable-token") ?? ""}
+        onCreated={() => {
+          setImportOpen(false);
+          // Refetch characters to include the imported one
+          fetch("/api/characters", { headers: authHeaders() })
+            .then((r) => r.ok ? r.json() as Promise<{ characters: Character[] }> : null)
+            .then((data) => {
+              if (data) {
+                setCharacters(data.characters);
+                setSelectedId(data.characters[0]?.id ?? "");
+              }
+            })
+            .catch(() => {});
+        }}
+        onClose={() => setImportOpen(false)}
+      />
+    ) : null}
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
@@ -1265,6 +1287,14 @@ export default function ForgeAndFableApp() {
         <aside className="vault-rail">
           <div className="rail-heading">
             <span>Vault</span>
+            <button
+              type="button"
+              className="glass-icon"
+              title="Import PDF"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload size={18} />
+            </button>
             <button
               type="button"
               className="glass-icon"
