@@ -36,10 +36,42 @@ export function spellsForClass(className: string): SpellData[] {
    it. So they never get a "choose spells to learn" step, and their sheet
    shows the full class list up to their accessible spell level. Known casters
    (Bard, Ranger, Sorcerer, Warlock) and the Wizard's spellbook DO learn. */
-export const PREPARED_CASTERS = new Set(["cleric", "druid", "paladin", "artificer"]);
+export const PREPARED_CASTERS = new Set(["cleric", "druid", "paladin", "artificer", "wizard"]);
 
 export function learnsIndividualSpells(classId: string, casterType?: string): boolean {
-  return !!casterType && casterType !== "none" && !PREPARED_CASTERS.has(classId);
+  if (!casterType || casterType === "none") return false;
+  // Wizards are prepared casters but still learn spells individually into their spellbook.
+  if (classId === "wizard") return true;
+  return !PREPARED_CASTERS.has(classId);
+}
+
+/** Only Wizards get the freeform spellbook Learn/Forget manager on the HeroSheet. */
+export function isWizardSpellbook(classId: string): boolean {
+  return classId === "wizard";
+}
+
+/**
+ * Leveled (non-cantrip) spells a known caster / wizard learns when REACHING a
+ * given level. Indexed by level (index 0 is unused); levels 1–20. Prepared
+ * casters aren't listed — they prepare freely and never get a "learn" step.
+ * Wizard adds 2 spellbook spells per level after the 6 it starts with at L1.
+ * Source: 2014 5e SRD class tables ("new known" column).
+ */
+export const SPELLS_LEARNED_PER_LEVEL: Record<string, number[]> = {
+  //         L: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+  bard:     [0, 4, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 0, 0],
+  sorcerer: [0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0],
+  warlock:  [0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+  ranger:   [0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+  wizard:   [0, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+};
+
+/** Number of leveled spells a class learns when reaching `level` (0 if none / prepared). */
+export function spellsLearnedReachingLevel(classId: string, level: number): number {
+  const table = SPELLS_LEARNED_PER_LEVEL[classId];
+  if (!table) return 0;
+  const idx = Math.max(0, Math.min(20, Math.trunc(level)));
+  return table[idx] ?? 0;
 }
 
 export function parseDamageDice(text: string): { sides: number; count: number }[] {

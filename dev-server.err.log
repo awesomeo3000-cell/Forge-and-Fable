@@ -944,3 +944,217 @@ Incoming: [14661575-d617-41ca-8c91-635de724139f, [object Object], [object Object
 (Use `node --trace-warnings ...` to show where the warning was created)
 (node:22572) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
+(node:39596) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2836) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13788) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39004) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44324) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48628) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45160) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⨯ ./src/components/LevelUpModal.tsx:170:9
+the name `availableSpells` is defined multiple times
+  [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m169 |[0m
+[31m[1m>[0m [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^[0m
+  [90m171 |[0m     .filter((s) => s.level <= maxCastableLevel && s.level > [35m0[0m)
+  [90m172 |[0m     .filter((s) => !character.spellsKnown.includes(s.id))
+  [90m173 |[0m     .slice([35m0[0m, [35m50[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/LevelUpModal.tsx:168:9
+the name `maxCastableLevel` is defined multiple times
+  [90m166 |[0m   [90m// casters and pact magic don't scale that way).[0m
+  [90m167 |[0m   [36mconst[0m slots = maxSlots((casterType ?? [32m"none"[0m) [36mas[0m [33mCasterType[0m, newLevel);
+[31m[1m>[0m [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^[0m
+  [90m169 |[0m
+  [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+  [90m171 |[0m     .filter((s) => s.level <= maxCastableLevel && s.level > [35m0[0m)
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/LevelUpModal.tsx:167:9
+the name `slots` is defined multiple times
+  [90m165 |[0m   [90m// real slot progression (not a naive ceil(level/2) approximation — half[0m
+  [90m166 |[0m   [90m// casters and pact magic don't scale that way).[0m
+[31m[1m>[0m [90m167 |[0m   [36mconst[0m slots = maxSlots((casterType ?? [32m"none"[0m) [36mas[0m [33mCasterType[0m, newLevel);
+  [90m    |[0m         [31m[1m^^^^^[0m
+  [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m169 |[0m
+  [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+⨯ ./src/components/LevelUpModal.tsx:170:9
+the name `availableSpells` is defined multiple times
+  [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m169 |[0m
+[31m[1m>[0m [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^[0m
+  [90m171 |[0m     .filter((s) => s.level <= maxCastableLevel && s.level > [35m0[0m)
+  [90m172 |[0m     .filter((s) => !character.spellsKnown.includes(s.id))
+  [90m173 |[0m     .slice([35m0[0m, [35m50[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/LevelUpModal.tsx:168:9
+the name `maxCastableLevel` is defined multiple times
+  [90m166 |[0m   [90m// casters and pact magic don't scale that way).[0m
+  [90m167 |[0m   [36mconst[0m slots = maxSlots((casterType ?? [32m"none"[0m) [36mas[0m [33mCasterType[0m, newLevel);
+[31m[1m>[0m [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^[0m
+  [90m169 |[0m
+  [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+  [90m171 |[0m     .filter((s) => s.level <= maxCastableLevel && s.level > [35m0[0m)
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/LevelUpModal.tsx:167:9
+the name `slots` is defined multiple times
+  [90m165 |[0m   [90m// real slot progression (not a naive ceil(level/2) approximation — half[0m
+  [90m166 |[0m   [90m// casters and pact magic don't scale that way).[0m
+[31m[1m>[0m [90m167 |[0m   [36mconst[0m slots = maxSlots((casterType ?? [32m"none"[0m) [36mas[0m [33mCasterType[0m, newLevel);
+  [90m    |[0m         [31m[1m^^^^^[0m
+  [90m168 |[0m   [36mconst[0m maxCastableLevel = slots.reduce((max, count, i) => (count > [35m0[0m ? i + [35m1[0m : max), [35m0[0m);
+  [90m169 |[0m
+  [90m170 |[0m   [36mconst[0m availableSpells = spellsForClass(className)
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+[browser] Uncaught Error: ./src/components/LevelUpModal.tsx:170:9
+the name `availableSpells` is defined multiple times
+  168 |   const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
+  169 |
+> 170 |   const availableSpells = spellsForClass(className)
+      |         ^^^^^^^^^^^^^^^
+  171 |     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
+  172 |     .filter((s) => !character.spellsKnown.includes(s.id))
+  173 |     .slice(0, 50);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/LevelUpModal.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/LevelUpModal.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/LevelUpModal.tsx:170:9)
+    at <unknown> (Error: (./src/components/LevelUpModal.tsx:170:9)
+(node:40132) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23620) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21984) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14048) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9412) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35844) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

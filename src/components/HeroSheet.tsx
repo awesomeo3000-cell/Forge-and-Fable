@@ -32,7 +32,7 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
-import { getSpell, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, spellsForClass } from "@/lib/spells";
+import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
 import { ARMORS, WEAPONS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
@@ -197,17 +197,19 @@ export default memo(function HeroSheet(props: {
   const spellBlockTitle = spellcastingBlockedByArmor ? `${armorPenaltyReason}: cannot cast spells.` : undefined;
   const spellAbility = heroClass.spellcastingAbility;
   const classSpellList = spellsForClass(heroClass.name);
-  const canManageSpellbook = learnsIndividualSpells(heroClass.id, casterType) && classSpellList.length > 0;
+  const canManageSpellbook = isWizardSpellbook(heroClass.id) && classSpellList.length > 0;
   // Prepared casters (cleric/druid/paladin/artificer) have their WHOLE class
   // list available up to their accessible spell level — not a learned subset.
   // Everyone else shows the spells they actually know. (Cantrips stay chosen.)
   const _isPrepared = PREPARED_CASTERS.has(heroClass.id) && casterType !== "none";
   const _maxSpellLvl = maxSlots(casterType, props.character.level).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
   const knownSpells: SpellData[] = _isPrepared
-    ? [
-        ...(props.character.spellsKnown.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
-        ...classSpellList.filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
-      ]
+    ? heroClass.id === "wizard"
+      ? (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[])
+      : [
+          ...(props.character.spellsKnown.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
+          ...classSpellList.filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
+        ]
     : (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[]);
   const spellbookChoices = canManageSpellbook
     ? classSpellList
@@ -215,6 +217,18 @@ export default memo(function HeroSheet(props: {
         .filter((spell) => !props.character.spellsKnown.includes(spell.id))
         .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
     : [];
+  // Cumulative max of leveled (non-cantrip) spells a known caster can know at their current level.
+  const knownSpellsCumulativeMax = useMemo(() => {
+    const table = SPELLS_LEARNED_PER_LEVEL[heroClass.id];
+    if (!table) return 0;
+    let total = 0;
+    for (let i = 1; i <= props.character.level && i < table.length; i++) {
+      total += table[i];
+    }
+    return total;
+  }, [heroClass.id, props.character.level]);
+  // Non-wizard known casters (Bard, Ranger, Sorcerer, Warlock) who learn individual spells.
+  const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass.id, casterType);
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
   const availableSubclasses = subclassesForClass(heroClass.id);
@@ -1147,9 +1161,9 @@ export default memo(function HeroSheet(props: {
               {canManageSpellbook ? (
                 <div className="cs-spellbook-manager">
                   <div className="cs-spellbook-head">
-                    <span className="cs-spell-level-head">{heroClass.id === "wizard" ? "Spellbook" : "Spells Known"}</span>
+                    <span className="cs-spell-level-head">Spellbook</span>
                     <small>
-                      {props.character.spellsKnown.length} learned
+                      {props.character.spellsKnown.length} in spellbook
                       {_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}
                     </small>
                   </div>
@@ -1167,7 +1181,7 @@ export default memo(function HeroSheet(props: {
                       ))}
                     </select>
                     <button className="cs-glass-btn" type="button" disabled={!spellToLearn} onClick={() => learnSpell(spellToLearn)}>
-                      Learn
+                      Add to Spellbook
                     </button>
                   </div>
                   {knownSpells.length > 0 ? (
@@ -1183,6 +1197,28 @@ export default memo(function HeroSheet(props: {
                   {spellbookChoices.length === 0 ? (
                     <p className="cs-muted">No additional spells available at this level.</p>
                   ) : null}
+                </div>
+              ) : isKnownCasterNotWizard ? (
+                <div className="cs-spellbook-manager">
+                  <div className="cs-spellbook-head">
+                    <span className="cs-spell-level-head">Spells Known</span>
+                    <small>
+                      {props.character.spellsKnown.length} known
+                      {knownSpellsCumulativeMax > 0 ? ` (max ${knownSpellsCumulativeMax} at this level)` : ""}
+                    </small>
+                  </div>
+                  {knownSpells.length > 0 ? (
+                    <div className="cs-spellbook-known">
+                      {knownSpells.map((spell) => (
+                        <span key={spell.id} className="cs-known-spell-chip">
+                          {spell.name}
+                          <span>{spell.level === 0 ? "Cantrip" : `Lv ${spell.level}`}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="cs-muted">No spells known. Learn spells when you level up.</p>
+                  )}
                 </div>
               ) : null}
               <div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {

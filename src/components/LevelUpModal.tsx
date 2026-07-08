@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
-import { ALL_SPELLS, learnsIndividualSpells, spellsForClass } from "@/lib/spells";
+import { ALL_SPELLS, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
@@ -62,9 +62,22 @@ export default memo(function LevelUpModal({
   const hasHp = newLevel > 1 && !skipHp;
   const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
   const hasAsi = asiLevels.includes(newLevel);
-  // Only KNOWN casters (bard/ranger/sorcerer/warlock) and the wizard's
-  // spellbook learn individual spells here. Prepared casters skip this step.
-  const hasSpells = learnsIndividualSpells(classId, casterType) && spellsForClass(className).length > 0;
+
+  // Spell learning: known casters (bard, ranger, sorcerer, warlock) and the
+  // wizard's spellbook learn a FIXED number of leveled spells per level, per
+  // the SRD tables. Prepared casters (cleric, druid, paladin, artificer)
+  // never learn a fixed set — they prepare freely each day — so they get no
+  // "learn spells" step. Computed up here so stepComplete can enforce the cap.
+  const slots = maxSlots((casterType ?? "none") as CasterType, newLevel);
+  const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
+  const availableSpells = spellsForClass(className)
+    .filter((s) => s.level <= maxCastableLevel && s.level > 0)
+    .filter((s) => !character.spellsKnown.includes(s.id))
+    .slice(0, 50);
+  const newSpellsCount = spellsLearnedReachingLevel(classId, newLevel);
+  // Can't learn more than remain unlearned on the class list (small-list edge).
+  const spellTarget = Math.min(newSpellsCount, availableSpells.length);
+  const hasSpells = learnsIndividualSpells(classId, casterType) && newSpellsCount > 0 && spellTarget > 0;
 
   const steps: LevelUpStep[] = [];
   if (hasHp) steps.push("hp");
@@ -92,6 +105,7 @@ export default memo(function LevelUpModal({
   const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
+  const [spellToForget, setSpellToForget] = useState<string | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -147,17 +161,6 @@ export default memo(function LevelUpModal({
 
   const canContinue = stepComplete(current);
   const allDone = steps.slice(0, -1).every(stepComplete);
-
-  // Highest spell level this caster can actually cast at newLevel, from the
-  // real slot progression (not a naive ceil(level/2) approximation — half
-  // casters and pact magic don't scale that way).
-  const slots = maxSlots((casterType ?? "none") as CasterType, newLevel);
-  const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
-
-  const availableSpells = spellsForClass(className)
-    .filter((s) => s.level <= maxCastableLevel && s.level > 0)
-    .filter((s) => !character.spellsKnown.includes(s.id))
-    .slice(0, 50);
 
   const feats = availableFeats({
     raceName,
@@ -232,6 +235,13 @@ export default memo(function LevelUpModal({
     );
   };
 
+  // Spells the character already knows that are leveled (not cantrips) —
+  // eligible for the optional "replace one known spell" swap at level-up.
+  const forgettableSpells = (character.spellsKnown ?? [])
+    .map((id) => getSpell(id))
+    .filter((s): s is NonNullable<typeof s> => s != null && s.level > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const finish = () => {
     const data: Record<string, unknown> = { level: newLevel };
     if (hasHp && hpRolled) {
@@ -256,7 +266,11 @@ export default memo(function LevelUpModal({
       if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
     }
     if (hasSpells && pickedSpells.length > 0) {
-      data.spellsKnown = [...character.spellsKnown, ...pickedSpells];
+      let updated = [...character.spellsKnown, ...pickedSpells];
+      if (spellToForget) {
+        updated = updated.filter((id) => id !== spellToForget);
+      }
+      data.spellsKnown = updated;
     }
     // Feat-granted spells: add both fixed and chosen spells, and register them
     // as free-use (once per long rest, no slot) with the feat as their source.
@@ -443,6 +457,25 @@ export default memo(function LevelUpModal({
                 </button>
               ))}
             </div>
+
+            {forgettableSpells.length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <p>Replace one known spell (optional):</p>
+                <select
+                  className="cs-glass-btn"
+                  style={{ width: "100%", padding: "6px 10px", marginTop: 6 }}
+                  value={spellToForget ?? ""}
+                  onChange={(e) => setSpellToForget(e.target.value || null)}
+                >
+                  <option value="">— Don&apos;t replace any —</option>
+                  {forgettableSpells.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} (Lv {s.level})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
@@ -458,7 +491,7 @@ export default memo(function LevelUpModal({
               </p>
             ) : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
-            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: none chosen</p> : null}
+            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned{spellToForget ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: none chosen</p> : null}
             <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
           </div>
         )}
