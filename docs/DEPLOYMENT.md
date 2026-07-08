@@ -1,6 +1,6 @@
 # Deploying Forge & Fable Privately
 
-Forge & Fable is a Next.js server app. It needs a Node web service, environment variables, and persistent storage for the vault file.
+Forge & Fable is a Next.js server app. It needs a Node 22.5+ web service, environment variables, and persistent storage for the SQLite vault database.
 
 Do not deploy this to GitHub Pages or a static-only host.
 
@@ -12,14 +12,15 @@ Use these layers:
 2. Share the hosted URL only with the people you want using the app.
 3. Keep normal app login enabled.
 
-Registration only asks for email and password. Anyone with the live URL can create an account unless the host adds an outer access-control layer.
+Registration asks for email and password, with an optional invite code if you set one in the host environment. Anyone with the live URL can create an account when `REGISTRATION_CODE` is unset.
 
 ## Required Environment Variables
 
 | Name | Purpose |
 | --- | --- |
 | `JWT_SECRET` | Required in production. Use a long random value. |
-| `FORGE_VAULT_DIR` | Optional. Directory that stores `forge-vault.json`. Use a persistent disk path online. |
+| `REGISTRATION_CODE` | Optional. If set, new accounts must enter this exact code. |
+| `FORGE_VAULT_DIR` | Optional. Directory that stores `forge.db` plus SQLite `-wal` and `-shm` sidecar files. Use a persistent disk path online. |
 
 Generate a strong `JWT_SECRET`:
 
@@ -46,11 +47,13 @@ The blueprint creates:
 - a persistent disk mounted at `/var/data`
 - `FORGE_VAULT_DIR=/var/data`
 
-The app writes the vault to:
+The app writes the vault database to:
 
 ```text
-/var/data/forge-vault.json
+/var/data/forge.db
 ```
+
+SQLite may also create `/var/data/forge.db-wal` and `/var/data/forge.db-shm`. Keep all three files on the persistent disk.
 
 ## Railway
 
@@ -77,6 +80,18 @@ Railway automatically exposes the volume path as `RAILWAY_VOLUME_MOUNT_PATH`, an
 FORGE_VAULT_DIR=/data
 ```
 
+The database will live at `/data/forge.db` with possible `-wal` and `-shm` sidecars.
+
+## Vault Migration and Backups
+
+On first boot after this update, Forge & Fable migrates `forge-vault.json` into SQLite if the database has no users yet. After a successful migration, the old JSON file is renamed to `forge-vault.migrated-<timestamp>.json`.
+
+For backups, stop the app and copy `forge.db` plus any `forge.db-wal` and `forge.db-shm` files from the persistent volume. For hot backups while the app is running, use SQLite's `.backup` command from the host shell.
+
+Existing browser sessions may need to log in again after this deployment because authentication now uses an httpOnly `ff_session` cookie instead of a JWT stored in localStorage.
+
+The session cookie uses `SameSite=Lax`, which helps protect normal cross-site form attacks. If the app later accepts cross-site embeds, third-party integrations, or state-changing GET requests, add a dedicated CSRF token flow before enabling that.
+
 ## Local Check Before Deploying
 
 ```bash
@@ -91,3 +106,12 @@ After deployment:
 1. Open the hosted URL.
 2. Create your own account with an email and password.
 3. Share the URL privately with friends.
+
+## HTTPS requirement (session cookie)
+
+In production (`NODE_ENV=production`) the `ff_session` cookie is set with the
+`Secure` flag: browsers will only send it over **HTTPS** (localhost is exempt).
+If you host behind plain HTTP on a LAN or a reverse proxy without TLS, login
+will appear to succeed but the session won't stick. Host with HTTPS (any
+platform TLS terminator counts), or for a strictly-LAN toy deployment run
+without `NODE_ENV=production` — accepting that you also lose the flag.

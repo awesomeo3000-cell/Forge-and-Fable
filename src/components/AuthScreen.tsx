@@ -9,10 +9,12 @@ export default memo(function AuthScreen(props: {
   mode: AuthMode;
   email: string;
   password: string;
+  inviteCode: string;
   status: string;
   onModeChange: (mode: AuthMode) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onInviteCodeChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) {
   return (
@@ -67,6 +69,16 @@ export default memo(function AuthScreen(props: {
             onChange={(event) => props.onPasswordChange(event.target.value)}
           />
         </label>
+        {props.mode === "register" ? (
+          <label className="control-field">
+            <span>Invite code (optional)</span>
+            <input
+              type="text"
+              value={props.inviteCode}
+              onChange={(event) => props.onInviteCodeChange(event.target.value)}
+            />
+          </label>
+        ) : null}
         {props.status ? <span className="auth-status">{props.status}</span> : null}
         <button className="gold-button" type="submit">
           <Vault size={18} />

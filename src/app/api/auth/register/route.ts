@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { registerUser, deleteUserById } from "@/lib/vaultStore";
-import { signToken } from "@/lib/auth";
+import { SESSION_COOKIE_NAME, sessionCookieOptions, signToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +31,14 @@ export async function POST(request: Request) {
       entry.count += 1;
     }
 
+    const requiredInviteCode = process.env.REGISTRATION_CODE?.trim();
+    if (requiredInviteCode && String(body.inviteCode ?? "") !== requiredInviteCode) {
+      return NextResponse.json(
+        { error: "Registration requires a valid invite code." },
+        { status: 403 },
+      );
+    }
+
     const user = await registerUser({
       email,
       password: String(body.password ?? ""),
@@ -47,7 +55,9 @@ export async function POST(request: Request) {
     // Successful registration clears the throttle entry
     attemptLog.delete(email);
 
-    return NextResponse.json({ user, token });
+    const response = NextResponse.json({ user });
+    response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+    return response;
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create vault." },

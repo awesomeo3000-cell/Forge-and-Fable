@@ -1,5 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 
+export const SESSION_COOKIE_NAME = "ff_session";
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -30,15 +33,42 @@ export async function verifyToken(token: string): Promise<TokenPayload> {
   return payload as unknown as TokenPayload;
 }
 
-/** Extract and verify the user ID from a request's Authorization header. */
-export async function authenticateRequest(request: Request): Promise<string> {
-  const header = request.headers.get("authorization")?.trim();
+function getCookieValue(request: Request, name: string): string | null {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
 
-  if (!header || !header.startsWith("Bearer ")) {
-    throw new AuthError("Missing or malformed authorization header.", 401);
+  for (const part of cookieHeader.split(";")) {
+    const [rawKey, ...rawValue] = part.trim().split("=");
+    if (rawKey === name) {
+      return decodeURIComponent(rawValue.join("="));
+    }
   }
 
-  const token = header.slice(7);
+  return null;
+}
+
+function getBearerToken(request: Request): string | null {
+  const header = request.headers.get("authorization")?.trim();
+  if (!header?.startsWith("Bearer ")) return null;
+  return header.slice(7);
+}
+
+export function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  };
+}
+
+/** Extract and verify the user ID from the httpOnly session cookie, with bearer fallback for legacy clients. */
+export async function authenticateRequest(request: Request): Promise<string> {
+  const token = getCookieValue(request, SESSION_COOKIE_NAME) ?? getBearerToken(request);
+  if (!token) {
+    throw new AuthError("Missing session token.", 401);
+  }
 
   try {
     const payload = await verifyToken(token);

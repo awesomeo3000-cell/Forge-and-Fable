@@ -59,10 +59,8 @@ import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
 
 function authHeaders(): Record<string, string> {
-  const token = typeof window !== "undefined" ? window.localStorage.getItem("forge-and-fable-token") : "";
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token ?? ""}`,
   };
 }
 
@@ -137,6 +135,7 @@ export default function ForgeAndFableApp() {
   const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState("");
@@ -181,14 +180,12 @@ export default function ForgeAndFableApp() {
       .catch(() => {}); // already handled above
 
     const storedUser = window.localStorage.getItem("forge-and-fable-user");
-    const storedToken = window.localStorage.getItem("forge-and-fable-token");
-    if (storedUser && storedToken) {
+    if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser) as PublicUser;
         queueMicrotask(() => setUser(parsed));
       } catch {
         window.localStorage.removeItem("forge-and-fable-user");
-        window.localStorage.removeItem("forge-and-fable-token");
       }
     }
 
@@ -203,9 +200,7 @@ export default function ForgeAndFableApp() {
     let mounted = true;
 
     fetch("/api/characters", {
-      headers: {
-        Authorization: `Bearer ${window.localStorage.getItem("forge-and-fable-token") ?? ""}`,
-      },
+      headers: authHeaders(),
     })
       .then((response) => {
         if (response.status === 401) {
@@ -300,30 +295,31 @@ export default function ForgeAndFableApp() {
       body: JSON.stringify({
         email: authEmail,
         password: authPassword,
+        ...(authMode === "register" ? { inviteCode: authInviteCode } : {}),
       }),
     });
 
-    const data = (await response.json()) as { user?: PublicUser; token?: string; error?: string };
+    const data = (await response.json()) as { user?: PublicUser; error?: string };
 
-    if (!response.ok || !data.user || !data.token) {
+    if (!response.ok || !data.user) {
       setStatus(data.error ?? "Vault access failed.");
       return;
     }
 
     setUser(data.user);
     window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
-    window.localStorage.setItem("forge-and-fable-token", data.token);
+    setAuthInviteCode("");
     setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
   }
 
   function logOut() {
+    void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     setUser(null);
     setCharacters([]);
     setSelectedId("");
     setCreationPromptOpen(false);
     setCreatorOpen(false);
     window.localStorage.removeItem("forge-and-fable-user");
-    window.localStorage.removeItem("forge-and-fable-token");
     setStatus("Tome sealed");
   }
 
@@ -1106,10 +1102,12 @@ export default function ForgeAndFableApp() {
         mode={authMode}
         email={authEmail}
         password={authPassword}
+        inviteCode={authInviteCode}
         status={status}
         onModeChange={setAuthMode}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onInviteCodeChange={setAuthInviteCode}
         onSubmit={authRequest}
       />
     );

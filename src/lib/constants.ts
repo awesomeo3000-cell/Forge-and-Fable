@@ -26,7 +26,7 @@ export const INPUT_DEBOUNCE_MS = 300;
 // ──── Auth ────
 
 /** Minimum password length for registration. */
-export const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 10;
 
 /** Salt rounds for bcrypt password hashing. */
 export const BCRYPT_ROUNDS = 10;

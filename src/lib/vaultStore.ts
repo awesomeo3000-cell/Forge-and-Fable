@@ -1,100 +1,40 @@
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 import bcrypt from "bcryptjs";
 import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
+import { getDb } from "@/lib/db";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
   createdAt: string;
 };
 
-type VaultData = {
-  users: StoredUser[];
-  characters: Character[];
-  feedback: FeedbackEntry[];
+type UserRow = {
+  id: string;
+  name: string;
+  email: string;
+  password_hash: string;
+  created_at: string;
 };
 
-const dataDir = path.join(process.cwd(), "data");
-
-function getVaultFile() {
-  const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
-  const dir = configuredDir
-    ? path.isAbsolute(configuredDir)
-      ? configuredDir
-      : path.join(/* turbopackIgnore: true */ process.cwd(), configuredDir)
-    : dataDir;
-
-  return path.join(dir, "forge-vault.json");
-}
-
-function emptyVault(): VaultData {
-  return {
-    users: [],
-    characters: [],
-    feedback: [],
-  };
-}
-
-function validateVaultStructure(data: unknown): data is Omit<VaultData, "feedback"> & {
-  feedback?: FeedbackEntry[];
-} {
-  if (!data || typeof data !== "object") return false;
-  const candidate = data as Record<string, unknown>;
-  return (
-    Array.isArray(candidate.users) &&
-    Array.isArray(candidate.characters) &&
-    (candidate.feedback === undefined || Array.isArray(candidate.feedback))
-  );
-}
-
-async function readVault(): Promise<VaultData> {
-  const vaultFile = getVaultFile();
-  try {
-    const raw = await readFile(vaultFile, "utf8");
-    const parsed = JSON.parse(raw);
-
-    if (!validateVaultStructure(parsed)) {
-      throw new Error("Vault data has an unexpected structure.");
-    }
-
-    return {
-      ...parsed,
-      feedback: parsed.feedback ?? [],
-    };
-  } catch (error) {
-    // File not found is expected on first run — return a fresh vault.
-    if (error instanceof Error && "code" in error && (error as NodeJS.ErrnoException).code === "ENOENT") {
-      return emptyVault();
-    }
-
-    // Corrupted file: back it up so it's never silently overwritten.
-    try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const backupFile = vaultFile.replace(".json", `-backup-${timestamp}.json`);
-      await copyFile(vaultFile, backupFile);
-      console.error(`⚠️ Corrupted vault backed up to ${path.basename(backupFile)}`);
-    } catch {
-      // If backup itself fails (e.g. file truly gone), at least don't destroy data.
-    }
-
-    throw new Error(
-      `The vault file is corrupted and could not be read. A backup has been saved. Original error: ${error instanceof Error ? error.message : "unknown"}`,
-    );
-  }
-}
-
-async function writeVault(data: VaultData) {
-  const vaultFile = getVaultFile();
-  await mkdir(path.dirname(vaultFile), { recursive: true });
-  await writeFile(vaultFile, JSON.stringify(data, null, 2), "utf8");
-}
+type JsonRow = {
+  data: string;
+};
 
 function publicUser(user: StoredUser): PublicUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
+  };
+}
+
+function storedUserFromRow(row: UserRow): StoredUser {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at,
   };
 }
 
@@ -115,6 +55,18 @@ function displayNameFromEmail(email: string) {
     .slice(0, 80);
 }
 
+function isUniqueConstraintError(error: unknown) {
+  return error instanceof Error && /unique|constraint/i.test(error.message);
+}
+
+function parseCharacter(row: JsonRow): Character {
+  return JSON.parse(row.data) as Character;
+}
+
+function parseFeedback(row: JsonRow): FeedbackEntry {
+  return JSON.parse(row.data) as FeedbackEntry;
+}
+
 export async function registerUser(input: {
   name?: string;
   email: string;
@@ -127,13 +79,6 @@ export async function registerUser(input: {
     throw new Error(`Use an email address and a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
 
-  const vault = await readVault();
-  const existing = vault.users.some((user) => user.email === email);
-
-  if (existing) {
-    throw new Error("That email already has a vault.");
-  }
-
   const user: StoredUser = {
     id: crypto.randomUUID(),
     name,
@@ -142,27 +87,46 @@ export async function registerUser(input: {
     createdAt: new Date().toISOString(),
   };
 
-  vault.users.push(user);
-  await writeVault(vault);
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("INSERT INTO users (id, name, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)")
+      .run(user.id, user.name, user.email, user.passwordHash, user.createdAt);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    if (isUniqueConstraintError(error)) {
+      throw new Error("That email already has a vault.");
+    }
+    throw error;
+  }
 
   return publicUser(user);
 }
 
 /** Best-effort rollback for a registration whose post-write step (token signing) failed. */
 export async function deleteUserById(userId: string): Promise<void> {
-  const vault = await readVault();
-  vault.users = vault.users.filter((user) => user.id !== userId);
-  await writeVault(vault);
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export async function loginUser(input: {
   email: string;
   password: string;
 }): Promise<PublicUser> {
-  const vault = await readVault();
+  const db = getDb();
   const email = normalizeEmail(input.email);
-  const user = vault.users.find((candidate) => candidate.email === email);
+  const row = db.prepare("SELECT id, name, email, password_hash, created_at FROM users WHERE email = ?")
+    .get(email) as UserRow | undefined;
 
+  const user = row ? storedUserFromRow(row) : null;
   if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
     throw new Error("The email or password does not match a vault.");
   }
@@ -171,39 +135,47 @@ export async function loginUser(input: {
 }
 
 export async function listCharacters(userId: string): Promise<Character[]> {
-  const vault = await readVault();
-  return vault.characters
-    .filter((character) => character.userId === userId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const rows = getDb()
+    .prepare("SELECT data FROM characters WHERE user_id = ? ORDER BY created_at DESC")
+    .all(userId) as JsonRow[];
+  return rows.map(parseCharacter);
 }
 
 export async function createCharacter(
   userId: string,
   input: Omit<Character, "id" | "userId" | "createdAt">,
 ): Promise<Character> {
-  const vault = await readVault();
-  const hasUser = vault.users.some((candidate) => candidate.id === userId);
-
-  if (!hasUser) {
-    throw new Error("Vault session not found.");
-  }
-
+  const db = getDb();
+  const createdAt = new Date().toISOString();
   const character: Character = {
     ...input,
     id: crypto.randomUUID(),
     userId,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
 
-  vault.characters.push(character);
-  await writeVault(vault);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const user = db.prepare("SELECT id FROM users WHERE id = ?").get(userId);
+    if (!user) {
+      throw new Error("Vault session not found.");
+    }
+    db.prepare("INSERT INTO characters (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(character.id, userId, JSON.stringify(character), createdAt, createdAt);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 
   return character;
 }
 
 export async function getCharacter(userId: string, id: string): Promise<Character | null> {
-  const vault = await readVault();
-  return vault.characters.find((character) => character.userId === userId && character.id === id) ?? null;
+  const row = getDb()
+    .prepare("SELECT data FROM characters WHERE user_id = ? AND id = ?")
+    .get(userId, id) as JsonRow | undefined;
+  return row ? parseCharacter(row) : null;
 }
 
 export async function updateCharacter(
@@ -211,72 +183,91 @@ export async function updateCharacter(
   id: string,
   patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>,
 ): Promise<Character> {
-  const vault = await readVault();
-  const index = vault.characters.findIndex(
-    (character) => character.userId === userId && character.id === id,
-  );
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const row = db.prepare("SELECT data FROM characters WHERE user_id = ? AND id = ?")
+      .get(userId, id) as JsonRow | undefined;
 
-  if (index === -1) {
-    throw new Error("Character not found.");
+    if (!row) {
+      throw new Error("Character not found.");
+    }
+
+    const current = parseCharacter(row);
+    const updated: Character = {
+      ...current,
+      ...patch,
+      id: current.id,
+      userId: current.userId,
+      createdAt: current.createdAt,
+    };
+
+    db.prepare("UPDATE characters SET data = ?, updated_at = ? WHERE user_id = ? AND id = ?")
+      .run(JSON.stringify(updated), new Date().toISOString(), userId, id);
+    db.exec("COMMIT");
+    return updated;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
-
-  const current = vault.characters[index];
-  const updated: Character = {
-    ...current,
-    ...patch,
-    id: current.id,
-    userId: current.userId,
-    createdAt: current.createdAt,
-  };
-
-  vault.characters[index] = updated;
-  await writeVault(vault);
-
-  return updated;
 }
 
 export async function deleteCharacter(userId: string, id: string): Promise<void> {
-  const vault = await readVault();
-  const nextCharacters = vault.characters.filter(
-    (character) => !(character.userId === userId && character.id === id),
-  );
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const result = db.prepare("DELETE FROM characters WHERE user_id = ? AND id = ?").run(userId, id);
 
-  if (nextCharacters.length === vault.characters.length) {
-    throw new Error("Character not found.");
+    if (result.changes === 0) {
+      throw new Error("Character not found.");
+    }
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
-
-  vault.characters = nextCharacters;
-  await writeVault(vault);
 }
 
 export async function listFeedback(): Promise<FeedbackEntry[]> {
-  const vault = await readVault();
-  return vault.feedback.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const rows = getDb()
+    .prepare("SELECT data FROM feedback ORDER BY created_at DESC")
+    .all() as JsonRow[];
+  return rows.map(parseFeedback);
 }
 
 export async function createFeedback(
   userId: string,
   input: Omit<FeedbackEntry, "id" | "userId" | "userName" | "userEmail" | "status" | "createdAt">,
 ): Promise<FeedbackEntry> {
-  const vault = await readVault();
-  const user = vault.users.find((candidate) => candidate.id === userId);
+  const db = getDb();
+  const createdAt = new Date().toISOString();
 
-  if (!user) {
-    throw new Error("Vault session not found.");
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const row = db.prepare("SELECT id, name, email, password_hash, created_at FROM users WHERE id = ?")
+      .get(userId) as UserRow | undefined;
+    if (!row) {
+      throw new Error("Vault session not found.");
+    }
+
+    const user = storedUserFromRow(row);
+    const feedback: FeedbackEntry = {
+      ...input,
+      id: crypto.randomUUID(),
+      userId,
+      userName: user.name,
+      userEmail: user.email,
+      status: "new",
+      createdAt,
+    };
+
+    db.prepare("INSERT INTO feedback (id, user_id, data, created_at) VALUES (?, ?, ?, ?)")
+      .run(feedback.id, userId, JSON.stringify(feedback), createdAt);
+    db.exec("COMMIT");
+    return feedback;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
-
-  const feedback: FeedbackEntry = {
-    ...input,
-    id: crypto.randomUUID(),
-    userId,
-    userName: user.name,
-    userEmail: user.email,
-    status: "new",
-    createdAt: new Date().toISOString(),
-  };
-
-  vault.feedback.push(feedback);
-  await writeVault(vault);
-
-  return feedback;
 }

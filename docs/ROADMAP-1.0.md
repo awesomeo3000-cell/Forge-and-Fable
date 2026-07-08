@@ -1,7 +1,7 @@
 # Forge & Fable — Road to 1.0
 
 **Status date:** 2026-07-08 (reviewed through R12 — see `CHANGES-10-12-review.md`). Build clean.
-**Progress:** R10–R12 done & reviewed (§2.1/.3/.4/.5/.7, §3.10/.11 closed; §3.13 skipped by user decision; §2.6 open). Next: R13 (SQLite + auth hosting gate).
+**Progress:** R10–R13 done & reviewed (§2.1/.3/.4/.5/.7, §3.10/.11, §5.19/.20 closed; §3.13 skipped by user decision; §2.6 open). **The vault write race is fixed (SQLite, transactional updates) — the corresponding landmine below is historical for the JSON era.** Next per sequencing: R14 (P2/P3 + a11y + empty states) or R15; the hosting gate is OPEN — deployment is now viable per DEPLOYMENT.md (note the HTTPS/Secure-cookie requirement).
 **Audience:** whichever AI (or human) picks up a round. Assume no memory of prior sessions — this document plus the repo IS the memory.
 **Companion documents:** `docs/QA-REPORT-2026-07-04.md` (the 43-issue audit; P0s fixed, P1–P3 open), `docs/CHANGES-*.md` (what every prior round did and how it was verified), `docs/ai-project-proposal-*.md` (the proposal format that works).
 
@@ -94,6 +94,9 @@ The process that produced everything below, refined over nine rounds:
 - [ ] `README.md` rewritten for the actual feature set; screenshots refreshed; version tagged.
 
 ## 8. Suggested sequencing
+
+**Every remaining round now has a complete, hand-off-ready proposal doc — no lead architect required to kick off:**
+R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R16 (a: conditions, b: campaigns) → `ai-project-proposal-16.md` · R17 (optional) → `ai-project-proposal-17.md`. Each contains pre-made design decisions, acceptance gates, and changelog requirements; the executing agent should re-anchor any drifted code references by grep, not redesign.
 
 | Round | Contents | Tier |
 |---|---|---|

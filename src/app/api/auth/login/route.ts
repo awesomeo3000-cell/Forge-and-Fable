@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loginUser } from "@/lib/vaultStore";
-import { signToken } from "@/lib/auth";
+import { SESSION_COOKIE_NAME, sessionCookieOptions, signToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,9 @@ export async function POST(request: Request) {
     attemptLog.delete(email);
 
     const token = await signToken({ userId: user.id });
-    return NextResponse.json({ user, token });
+    const response = NextResponse.json({ user });
+    response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+    return response;
   } catch (error) {
     // Record failed attempt
     const now = Date.now();
