@@ -4759,6 +4759,19 @@ button:disabled {
   pointer-events: none;
 }
 
+/* Full-screen click target that dismisses a roll. Active the moment dice
+   appear (clicking flushes any pending result, then clears), so it never feels
+   sluggish. Transparent, but the cursor hints that a click will clear the
+   dice. Rendered last + high z-index so it's always the top hit target. */
+.dice-dismiss-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: auto;
+  cursor: pointer;
+  background: transparent;
+}
+
 @keyframes die-fly {
   0% {
     transform: translate(var(--die-from-x), var(--die-from-y)) rotate(0deg) scale(0.6);
@@ -6501,11 +6514,30 @@ button.dj-card {
 .dj-attribute-builder .mini-stepper b,
 .dj-attribute-builder .method-row button,
 .dj-attribute-builder .points-pill,
+.dj-manual-stat,
 .dj-footer .glass-button,
 .dj-footer .gold-button,
 .dj-qb-name .qb-name-input,
 .dj-start .qb-cancel {
   border-radius: 0;
+}
+
+.dj-manual-stat {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--doc-rule);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  text-align: center;
+  outline: none;
+}
+
+.dj-manual-stat:focus {
+  border-color: var(--doc-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--doc-accent) 28%, transparent);
 }
 
 .dj-settings-panel .settings-section {

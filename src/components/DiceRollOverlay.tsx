@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export type RollingDie = {
   id: string;
@@ -784,11 +784,13 @@ function FumbleBanner({ delayMs }: { delayMs: number }) {
 export default memo(function DiceRollOverlay({
   dice,
   onExpire,
+  onDismissAll,
   accentHex,
   fontStack,
 }: {
   dice: RollingDie[];
   onExpire: (id: string) => void;
+  onDismissAll?: () => void;
   accentHex?: string;
   fontStack?: string;
 }) {
@@ -797,12 +799,35 @@ export default memo(function DiceRollOverlay({
   const crits = dice.filter((d) => d.sides === 20 && d.result === 20 && !d.dropped);
   const fumbles = dice.filter((d) => d.sides === 20 && d.result === 1 && !d.dropped);
 
+  // onFinish is fired exactly once per die — whether the die settles on its
+  // own or the user clicks to dismiss early. Centralizing it here (instead of
+  // in FlyingDie's timer) means a click can flush any pending result
+  // immediately and then clear, so dismiss is instant and no callback
+  // (HP / history) is ever lost or doubled. diceRef + useCallback keep these
+  // handlers stable so FlyingDie's timers aren't reset on parent re-renders.
+  const diceRef = useRef(dice);
+  useEffect(() => { diceRef.current = dice; });
+  const firedRef = useRef<Set<string>>(new Set());
+  const fireOnce = useCallback((d: RollingDie) => {
+    if (firedRef.current.has(d.id)) return;
+    firedRef.current.add(d.id);
+    d.onFinish?.(d.result);
+  }, []);
+  const handleSettled = useCallback((id: string) => {
+    const d = diceRef.current.find((x) => x.id === id);
+    if (d) fireOnce(d);
+  }, [fireOnce]);
+  const handleDismiss = useCallback(() => {
+    for (const d of diceRef.current) fireOnce(d);
+    onDismissAll?.();
+  }, [fireOnce, onDismissAll]);
+
   if (dice.length === 0) return null;
 
   return (
     <div className="dice-fly-overlay" aria-hidden="true">
       {dice.map((die) => (
-        <FlyingDie key={die.id} die={die} onExpire={onExpire} accentHex={accent} fontStack={font} />
+        <FlyingDie key={die.id} die={die} onExpire={onExpire} onSettled={handleSettled} accentHex={accent} fontStack={font} />
       ))}
       {crits.map((die) => (
         <ClarebearCrit key={`crit-${die.id}`} delayMs={die.delayMs + 1680} />
@@ -810,30 +835,42 @@ export default memo(function DiceRollOverlay({
       {fumbles.map((die) => (
         <FumbleBanner key={`fumble-${die.id}`} delayMs={die.delayMs + 1680} />
       ))}
+      {onDismissAll ? (
+        <div className="dice-dismiss-layer" onClick={handleDismiss} />
+      ) : null}
     </div>
   );
 })
 
 /* ── Single animated die ── */
 
-function FlyingDie({ die, onExpire, accentHex, fontStack }: { die: RollingDie; onExpire: (id: string) => void; accentHex: string; fontStack: string }) {
+function FlyingDie({ die, onExpire, onSettled, accentHex, fontStack }: { die: RollingDie; onExpire: (id: string) => void; onSettled?: (id: string) => void; accentHex: string; fontStack: string }) {
   const [visible, setVisible] = useState(true);
   const finishMs = ROLL_ANIMATION_MS + die.delayMs + 100;
   const expireMs = finishMs + (die.lingerMs ?? DEFAULT_RESULT_LINGER_MS);
 
+  // Hold the latest callbacks in refs so the timer effect below depends only on
+  // timing. Otherwise a parent re-render passes new function identities
+  // (onExpire/onSettled), which would tear down this effect, clear the timers,
+  // and re-arm them — stalling finish/expire so dice never complete.
+  const onExpireRef = useRef(onExpire);
+  const onSettledRef = useRef(onSettled);
+  useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
+  useEffect(() => { onSettledRef.current = onSettled; }, [onSettled]);
+
   useEffect(() => {
     const finishTimer = setTimeout(() => {
-      die.onFinish?.(die.result);
+      onSettledRef.current?.(die.id);
     }, finishMs);
     const expireTimer = setTimeout(() => {
       setVisible(false);
-      onExpire(die.id);
+      onExpireRef.current(die.id);
     }, expireMs);
     return () => {
       clearTimeout(finishTimer);
       clearTimeout(expireTimer);
     };
-  }, [die, expireMs, finishMs, onExpire]);
+  }, [die, expireMs, finishMs]);
 
   if (!visible) return null;
 

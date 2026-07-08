@@ -599,6 +599,11 @@ export default function ForgeAndFableApp() {
       return;
     }
 
+    if (method === "manual") {
+      // Keep current scores — user will edit them manually
+      return;
+    }
+
     const nextAssignments = defaultAssignments();
     const values =
       method === "standard-array"
@@ -682,6 +687,15 @@ export default function ForgeAndFableApp() {
     setDraft({
       ...draft,
       abilities: nextAbilities,
+    });
+  }
+
+  function changeManualAbility(ability: AbilityKey, value: number) {
+    if (!draft || statMethod !== "manual") return;
+    const clamped = Math.max(3, Math.min(20, Math.trunc(value)));
+    setDraft({
+      ...draft,
+      abilities: { ...draft.abilities, [ability]: clamped },
     });
   }
 
@@ -1474,6 +1488,10 @@ export default function ForgeAndFableApp() {
     setFlyingDice((prev) => prev.filter((d) => d.id !== id));
   }
 
+  // Click-to-dismiss: clears the whole fly layer at once. Safe because the
+  // overlay only arms this once every die has settled (onFinish already fired).
+  const clearFlyingDice = () => setFlyingDice([]);
+
   function executeConsole(event: FormEvent) {
     event.preventDefault();
 
@@ -1545,7 +1563,7 @@ export default function ForgeAndFableApp() {
     return (
       <>
         <SplashScreen />
-    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
+    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} />
       </>
     );
   }
@@ -1569,7 +1587,7 @@ export default function ForgeAndFableApp() {
 
   return (
     <>
-    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
+    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} />
     <RollDrawer
       history={rollHistory}
       theme={selected?.theme ?? null}
@@ -1814,6 +1832,7 @@ export default function ForgeAndFableApp() {
               onStepChange={setCreatorStep}
               onMethodChange={changeStatMethod}
               onPointBuyChange={changePointBuy}
+              onManualAbilityChange={changeManualAbility}
               onAssignmentChange={setAssignment}
               onRollStats={rollStatBlock}
               onRollStartingHp={rollStartingHp}

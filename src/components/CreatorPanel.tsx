@@ -6,6 +6,7 @@ import {
   Dices,
   Gem,
   Minus,
+  Pencil,
   Plus,
   Save,
   ScrollText,
@@ -174,6 +175,7 @@ export default memo(function CreatorPanel(props: {
   onStepChange: (step: number) => void;
   onMethodChange: (method: StatMethod) => void;
   onPointBuyChange: (ability: AbilityKey, delta: number) => void;
+  onManualAbilityChange: (ability: AbilityKey, value: number) => void;
   onAssignmentChange: (type: "standard" | "rolled", ability: AbilityKey, nextIndex: number) => void;
   onRollStats: () => void;
   onRollStartingHp: (request: {
@@ -908,7 +910,15 @@ export default memo(function CreatorPanel(props: {
                     <Dices size={16} />
                     Roll
                   </button>
-                  <span className="points-pill">{props.pointRemaining} pts</span>
+                  <button
+                    type="button"
+                    className={props.statMethod === "manual" ? "active" : ""}
+                    onClick={() => props.onMethodChange("manual")}
+                  >
+                    <Pencil size={16} />
+                    Manual
+                  </button>
+                  <span className="points-pill">{props.statMethod === "manual" ? "Manual" : `${props.pointRemaining} pts`}</span>
                 </div>
                 {props.statMethod === "roll" ? (
                   <button className="glass-button small" type="button" onClick={props.onRollStats}>
@@ -937,6 +947,19 @@ export default memo(function CreatorPanel(props: {
                               <Plus size={14} />
                             </button>
                           </div>
+                        ) : props.statMethod === "manual" ? (
+                          <input
+                            type="number"
+                            className="dj-manual-stat"
+                            min={3}
+                            max={20}
+                            value={props.draft.abilities[key]}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value, 10);
+                              if (!isNaN(v)) props.onManualAbilityChange(key, v);
+                            }}
+                            aria-label={`${abilityNames[key]} score`}
+                          />
                         ) : (
                           <select
                             value={

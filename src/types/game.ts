@@ -407,7 +407,7 @@ export type DraftCharacter = {
   deathSaves: DeathSaves;
 };
 
-export type StatMethod = "point-buy" | "standard-array" | "roll";
+export type StatMethod = "point-buy" | "standard-array" | "roll" | "manual";
 export type AuthMode = "login" | "register";
 export type BuildMode = "standard" | "quickbuilder" | "premade";
 
