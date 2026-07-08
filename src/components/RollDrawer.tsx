@@ -183,6 +183,7 @@ export default memo(function RollDrawer(props: {
   const [combatantName, setCombatantName] = useState("");
   const [combatantInitiative, setCombatantInitiative] = useState(0);
   const layoutRef = useRef(layout);
+  const dragMovedRef = useRef(false);
   const sharedInitiative = props.campaignInitiative;
   const isSharedInitiative = Boolean(sharedInitiative);
   const canManageInitiative = !isSharedInitiative || props.campaignIsDm;
@@ -246,14 +247,15 @@ export default memo(function RollDrawer(props: {
     height: `${layout.height}px`,
   } as CSSProperties;
 
-  const startMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+  const startMove = useCallback((event: ReactPointerEvent<HTMLDivElement | HTMLButtonElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
 
-    const handle = event.currentTarget;
+    const handle = event.currentTarget as HTMLElement;
     const startX = event.clientX;
     const startY = event.clientY;
     const origin = layoutRef.current;
+    dragMovedRef.current = false;
 
     try {
       handle.setPointerCapture(event.pointerId);
@@ -262,10 +264,13 @@ export default memo(function RollDrawer(props: {
     }
 
     const onMove = (moveEvent: PointerEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMovedRef.current = true;
       const next = clampLayout({
         ...origin,
-        x: origin.x + moveEvent.clientX - startX,
-        y: origin.y + moveEvent.clientY - startY,
+        x: origin.x + dx,
+        y: origin.y + dy,
       });
       layoutRef.current = next;
       setLayout(next);
@@ -426,7 +431,13 @@ export default memo(function RollDrawer(props: {
 
   return (
     <div className={`roll-drawer${open ? " open" : ""}`} style={rootStyle}>
-      <button type="button" className={`roll-drawer-tab${props.rollMode !== "normal" ? " armed" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button
+        type="button"
+        className={`roll-drawer-tab${props.rollMode !== "normal" ? " armed" : ""}`}
+        onClick={() => { if (!dragMovedRef.current) setOpen(!open); }}
+        onPointerDown={startMove}
+        aria-expanded={open}
+      >
         Dice{props.history.length > 0 ? ` (${props.history.length})` : ""}
         {props.rollMode !== "normal" ? <span className={`roll-tab-dot ${props.rollMode}`} title={`${props.rollMode} armed`} aria-hidden="true" /> : null}
       </button>
