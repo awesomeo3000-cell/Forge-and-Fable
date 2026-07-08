@@ -5,8 +5,10 @@ import {
   MessageSquare,
   Plus,
   Sparkles,
+  Swords,
   Upload,
   UserRound,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -49,6 +51,7 @@ import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
+import CampaignPanel from "@/components/CampaignPanel";
 import CharacterImportModal from "@/components/CharacterImportModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
@@ -142,6 +145,8 @@ export default function ForgeAndFableApp() {
   const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [campaignOpen, setCampaignOpen] = useState(false);
+  const [readOnlyViewChar, setReadOnlyViewChar] = useState<Character | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
@@ -173,6 +178,19 @@ export default function ForgeAndFableApp() {
       },
       ...prev,
     ].slice(0, 100));
+
+    // Roll sharing: fire-and-forget POST to active campaign
+    const campaignId = typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null;
+    if (campaignId && selected?.name) {
+      const token = localStorage.getItem("forge-and-fable-token");
+      if (token) {
+        fetch(`/api/campaigns/${campaignId}/rolls`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ label, detail, total, characterName: selected.name }),
+        }).catch(() => { /* fire-and-forget — errors logged to console only */ });
+      }
+    }
   };
 
   const clearHistory = () => setRollHistory([]);
@@ -1269,6 +1287,36 @@ export default function ForgeAndFableApp() {
         onClose={() => setImportOpen(false)}
       />
     ) : null}
+    {campaignOpen ? (
+      <CampaignPanel
+        token={localStorage.getItem("forge-and-fable-token") ?? ""}
+        characters={characters}
+        onOpenSheet={(character) => setReadOnlyViewChar(character)}
+        onClose={() => setCampaignOpen(false)}
+      />
+    ) : null}
+    {readOnlyViewChar ? (
+      <div className="modal-scrim" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>
+        <div onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(1100px, 100%)", maxHeight: "90vh", overflow: "auto", position: "relative" }}>
+          <button className="glass-icon modal-close" type="button" onClick={() => setReadOnlyViewChar(null)} aria-label="Close" style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
+            <X size={18} />
+          </button>
+          <HeroSheet
+            character={readOnlyViewChar}
+            finalAbilities={readOnlyViewChar.abilities}
+            ruleset={ruleset!}
+            onUpdate={() => {}}
+            onRoll={() => {}}
+            onDelete={() => {}}
+            consoleInput=""
+            consoleLog={[]}
+            onConsoleInput={() => {}}
+            onConsoleSubmit={() => {}}
+            readOnly={true}
+          />
+        </div>
+      </div>
+    ) : null}
     <main className="builder-shell">
       <header className="builder-topbar">
         <div className="builder-brand">
@@ -1286,6 +1334,9 @@ export default function ForgeAndFableApp() {
             <UserRound size={16} />
             {user.name}
           </span>
+          <button className="glass-icon" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
+            <Swords size={18} />
+          </button>
           <button className="glass-icon" type="button" onClick={openFeedback} title="Submit feedback">
             <MessageSquare size={18} />
           </button>

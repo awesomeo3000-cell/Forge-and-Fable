@@ -78,6 +78,35 @@ function createSchema(db: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
+
+    CREATE TABLE IF NOT EXISTS campaigns (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      code TEXT NOT NULL UNIQUE,
+      dm_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_members (
+      campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+      user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      character_id TEXT,
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (campaign_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_rolls (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      character_name TEXT NOT NULL,
+      label TEXT NOT NULL,
+      detail TEXT NOT NULL,
+      total INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_rolls_campaign_time ON campaign_rolls(campaign_id, created_at);
   `);
 }
 

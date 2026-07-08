@@ -106,7 +106,10 @@ export default memo(function HeroSheet(props: {
   consoleLog: string[];
   onConsoleInput: (value: string) => void;
   onConsoleSubmit: (event: FormEvent) => void;
+  readOnly?: boolean;
 }) {
+  const isReadOnly = props.readOnly === true;
+
   const race =
     props.ruleset.races.find((r) => r.id === props.character.raceId) ?? props.ruleset.races[0];
   const heroClass =
@@ -1548,11 +1551,14 @@ export default memo(function HeroSheet(props: {
   const spellDetailSource = spellDetailStatus.source?.trim() ?? "";
 
   return (
-    <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment"}>
+    <div className={`cs-sheet${editMode ? " cs-editing" : ""}`} style={themeVars} data-bg={theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment"} {...(isReadOnly ? { "data-readonly": "" } : {})}>
+      {isReadOnly ? (
+        <div className="cs-readonly-banner">Viewing <strong>{props.character.name}</strong> (read-only)</div>
+      ) : null}
       <div className="cs-sheet-tools" role="toolbar" aria-label="Sheet tools">
-        <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>
-        <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>
-        {editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} />Reset</button> : null}
+        {!isReadOnly && <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>}
+        {!isReadOnly && <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>}
+        {!isReadOnly && editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} />Reset</button> : null}
       </div>
       {!tourDismissed ? (
         <div className="cs-tour-card">
