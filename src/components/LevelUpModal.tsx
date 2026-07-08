@@ -76,11 +76,16 @@ export default memo(function LevelUpModal({
   const [step, setStep] = useState(0);
   const current = steps[step];
 
-  const [hpRolled, setHpRolled] = useState(false);
+  // For manual HP the default (the average roll) is a valid gain the user can
+  // accept without touching the input, so seed both the gain and the
+  // "confirmed" flag. Otherwise finish()'s `hasHp && hpRolled` guard would
+  // silently skip the HP update when the default was accepted as-is.
+  const manualDefault = Math.max(1, Math.floor(hitDie / 2) + 1 + conMod);
+  const [hpRolled, setHpRolled] = useState(hitPointType === "manual");
   const [hpRolling, setHpRolling] = useState(false);
   const [hpDieRoll, setHpDieRoll] = useState<number | null>(null);
-  const [hpGained, setHpGained] = useState(0);
-  const [manualHp, setManualHp] = useState(Math.max(1, Math.floor(hitDie / 2) + 1 + conMod));
+  const [hpGained, setHpGained] = useState(hitPointType === "manual" ? manualDefault : 0);
+  const [manualHp, setManualHp] = useState(manualDefault);
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
   const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);

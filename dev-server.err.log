@@ -234,3 +234,283 @@
 (Use `node --trace-warnings ...` to show where the warning was created)
 (node:25020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
+(node:36224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25144) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26112) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25036) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46900) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33780) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47720) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22100) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31412) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39840) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29740) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23568) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13164) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30876) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [, [object Object], [object Object]]
+Incoming: [, [object Object], [object Object], true, function processCampaignEvents(events) {
+        if (!selected || events.length === 0) return;
+        let nextEffects = selected.effects ?? [];
+        let changedEffects = false;
+        for (const event of events){
+            if (processedCampaignEventsRef.current.has(event.id)) continue;
+            processedCampaignEventsRef.current.add(event.id);
+            const payload = parseCampaignPayload(event);
+            if (event.type === "condition-apply") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const exists = nextEffects.some((effect)=>effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+                if (!exists) {
+                    nextEffects = [
+                        ...nextEffects,
+                        {
+                            ...payload,
+                            id: `dm-${event.id}`,
+                            label,
+                            source: "DM",
+                            active: true
+                        }
+                    ];
+                    changedEffects = true;
+                    setStatus(`DM applied ${label}`);
+                }
+            } else if (event.type === "condition-remove") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const filtered = nextEffects.filter((effect)=>!(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+                if (filtered.length !== nextEffects.length) {
+                    nextEffects = filtered;
+                    changedEffects = true;
+                    setStatus(`DM removed ${label}`);
+                }
+            } else if (event.type === "announce") {
+                const message = typeof payload.message === "string" ? payload.message.trim() : "";
+                if (message) setStatus(message);
+            }
+        }
+        if (changedEffects) {
+            updateSelected({
+                effects: nextEffects
+            });
+        }
+    }] 
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:406:12)
+  404 |   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+  405 |
+> 406 |   useEffect(() => {
+      |            ^
+  407 |     if (!user || !activeCampaignId) return;
+  408 |     if (!campaignOpen) return; // pause polling when panel is closed
+  409 |     const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`; (src/components/ForgeAndFableApp.tsx:406:12)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [, [object Object], [object Object], true, function processCampaignEvents(events) {
+        if (!selected || events.length === 0) return;
+        let nextEffects = selected.effects ?? [];
+        let changedEffects = false;
+        for (const event of events){
+            if (processedCampaignEventsRef.current.has(event.id)) continue;
+            processedCampaignEventsRef.current.add(event.id);
+            const payload = parseCampaignPayload(event);
+            if (event.type === "condition-apply") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const exists = nextEffects.some((effect)=>effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+                if (!exists) {
+                    nextEffects = [
+                        ...nextEffects,
+                        {
+                            ...payload,
+                            id: `dm-${event.id}`,
+                            label,
+                            source: "DM",
+                            active: true
+                        }
+                    ];
+                    changedEffects = true;
+                    setStatus(`DM applied ${label}`);
+                }
+            } else if (event.type === "condition-remove") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const filtered = nextEffects.filter((effect)=>!(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+                if (filtered.length !== nextEffects.length) {
+                    nextEffects = filtered;
+                    changedEffects = true;
+                    setStatus(`DM removed ${label}`);
+                }
+            } else if (event.type === "announce") {
+                const message = typeof payload.message === "string" ? payload.message.trim() : "";
+                if (message) setStatus(message);
+            }
+        }
+        if (changedEffects) {
+            updateSelected({
+                effects: nextEffects
+            });
+        }
+    }]
+Incoming: [, [object Object], [object Object], true] 
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:406:12)
+  404 |   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+  405 |
+> 406 |   useEffect(() => {
+      |            ^
+  407 |     if (!user || !activeCampaignId) return;
+  408 |     if (!campaignOpen) return; // pause polling when panel is closed
+  409 |     const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`; (src/components/ForgeAndFableApp.tsx:406:12)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [14661575-d617-41ca-8c91-635de724139f, [object Object], [object Object]]
+Incoming: [14661575-d617-41ca-8c91-635de724139f, [object Object], [object Object], false, function processCampaignEvents(events) {
+        if (!selected || events.length === 0) return;
+        let nextEffects = selected.effects ?? [];
+        let changedEffects = false;
+        for (const event of events){
+            if (processedCampaignEventsRef.current.has(event.id)) continue;
+            processedCampaignEventsRef.current.add(event.id);
+            const payload = parseCampaignPayload(event);
+            if (event.type === "condition-apply") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const exists = nextEffects.some((effect)=>effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+                if (!exists) {
+                    nextEffects = [
+                        ...nextEffects,
+                        {
+                            ...payload,
+                            id: `dm-${event.id}`,
+                            label,
+                            source: "DM",
+                            active: true
+                        }
+                    ];
+                    changedEffects = true;
+                    setStatus(`DM applied ${label}`);
+                }
+            } else if (event.type === "condition-remove") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const filtered = nextEffects.filter((effect)=>!(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+                if (filtered.length !== nextEffects.length) {
+                    nextEffects = filtered;
+                    changedEffects = true;
+                    setStatus(`DM removed ${label}`);
+                }
+            } else if (event.type === "announce") {
+                const message = typeof payload.message === "string" ? payload.message.trim() : "";
+                if (message) setStatus(message);
+            }
+        }
+        if (changedEffects) {
+            updateSelected({
+                effects: nextEffects
+            });
+        }
+    }] 
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:406:12)
+    at Set.forEach (<anonymous>)
+  404 |   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+  405 |
+> 406 |   useEffect(() => {
+      |            ^
+  407 |     if (!user || !activeCampaignId) return;
+  408 |     if (!campaignOpen) return; // pause polling when panel is closed
+  409 |     const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`; (src/components/ForgeAndFableApp.tsx:406:12)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [14661575-d617-41ca-8c91-635de724139f, [object Object], [object Object], false, function processCampaignEvents(events) {
+        if (!selected || events.length === 0) return;
+        let nextEffects = selected.effects ?? [];
+        let changedEffects = false;
+        for (const event of events){
+            if (processedCampaignEventsRef.current.has(event.id)) continue;
+            processedCampaignEventsRef.current.add(event.id);
+            const payload = parseCampaignPayload(event);
+            if (event.type === "condition-apply") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const exists = nextEffects.some((effect)=>effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+                if (!exists) {
+                    nextEffects = [
+                        ...nextEffects,
+                        {
+                            ...payload,
+                            id: `dm-${event.id}`,
+                            label,
+                            source: "DM",
+                            active: true
+                        }
+                    ];
+                    changedEffects = true;
+                    setStatus(`DM applied ${label}`);
+                }
+            } else if (event.type === "condition-remove") {
+                const label = typeof payload.label === "string" ? payload.label.trim() : "";
+                if (!label) continue;
+                const filtered = nextEffects.filter((effect)=>!(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+                if (filtered.length !== nextEffects.length) {
+                    nextEffects = filtered;
+                    changedEffects = true;
+                    setStatus(`DM removed ${label}`);
+                }
+            } else if (event.type === "announce") {
+                const message = typeof payload.message === "string" ? payload.message.trim() : "";
+                if (message) setStatus(message);
+            }
+        }
+        if (changedEffects) {
+            updateSelected({
+                effects: nextEffects
+            });
+        }
+    }]
+Incoming: [14661575-d617-41ca-8c91-635de724139f, [object Object], [object Object], false] 
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:406:12)
+    at Set.forEach (<anonymous>)
+  404 |   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+  405 |
+> 406 |   useEffect(() => {
+      |            ^
+  407 |     if (!user || !activeCampaignId) return;
+  408 |     if (!campaignOpen) return; // pause polling when panel is closed
+  409 |     const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`; (src/components/ForgeAndFableApp.tsx:406:12)
+(node:1444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27104) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:20348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25704) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48456) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28980) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39872) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

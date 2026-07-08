@@ -356,7 +356,10 @@ export default memo(function HeroSheet(props: {
   const subtitleParts = [race.name, heroClass.name, props.character.level > 0 ? `Level ${props.character.level}` : null, props.character.background, props.character.alignment].filter(Boolean);
 
   /* ── Reference tabs ── */
-  const hasSpellTab = casterType !== "none" && Boolean(spellAbility) && (knownSpells.length > 0 || spellbookChoices.length > 0);
+  const hasSpellTab = (casterType !== "none" && Boolean(spellAbility) && (knownSpells.length > 0 || spellbookChoices.length > 0))
+    // Non-casters can still hold feat-granted spells (Fey/Shadow Touched) —
+    // show the tab so those spells and their free-use casting are reachable.
+    || (casterType === "none" && knownSpells.length > 0);
   const visibleTabs = REF_TABS.filter((t) => t.id !== "spells" || hasSpellTab);
   const [refTab, setRefTab] = useState<RefTab>(visibleTabs[0]?.id ?? "features");
   const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
@@ -1688,11 +1691,11 @@ export default memo(function HeroSheet(props: {
             {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => rollD20(`${spellDetail.name} attack`, spellAttack)}>Roll {signed(spellAttack)}</button></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
             <p className="cs-spell-detail-desc">{spellDetail.description}</p>
-            {casterType !== "none" ? (
+            {casterType !== "none" || spellDetailStatus.freeUse ? (
               <div className="cs-spell-detail-cast">
                 <div className="cs-cast-row">
                   <strong>Cast:</strong>
-                  {spellDetail.level === 0 ? (
+                  {casterType !== "none" && spellDetail.level === 0 ? (
                     <button className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => castSpell(spellDetail, 0)}>Cast cantrip</button>
                   ) : (
                     <>
@@ -1704,7 +1707,11 @@ export default memo(function HeroSheet(props: {
                       {slotMax.map((max, i) => {
                         const lvl = i + 1;
                         if (lvl < spellDetail.level || max <= 0) return null;
-                        const remaining = max - (slotsUsed[lvl] ?? 0);
+                        // Pact casters track usage in pactSlotsUsed, not the
+                        // per-level spellSlotsUsed map — mirror the level-list
+                        // logic so "remaining" and the disabled state are right.
+                        const used = isPactCaster ? pactUsed : (slotsUsed[lvl] ?? 0);
+                        const remaining = max - used;
                         return (
                           <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0 || spellcastingBlockedByArmor} onClick={() => castSpell(spellDetail, lvl)} title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
                             Lv {lvl} ({remaining})

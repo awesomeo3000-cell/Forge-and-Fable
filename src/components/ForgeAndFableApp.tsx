@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import type {
   AbilityKey,
   AbilityScores,
@@ -147,6 +147,15 @@ export default function ForgeAndFableApp() {
   const [authPassword, setAuthPassword] = useState("");
   const [authInviteCode, setAuthInviteCode] = useState("");
   const [status, setStatus] = useState("");
+  const [toasts, setToasts] = useState<{ id: string; kind: "announce" | "condition" | "turn"; title: string; body?: string }[]>([]);
+
+  function pushToast(kind: "announce" | "condition" | "turn", title: string, body?: string) {
+    const id = crypto.randomUUID();
+    setToasts((current) => [...current.slice(-3), { id, kind, title, body }]);
+    window.setTimeout(() => {
+      setToasts((current) => current.filter((toast) => toast.id !== id));
+    }, kind === "announce" ? 9000 : 6000);
+  }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
@@ -282,12 +291,10 @@ export default function ForgeAndFableApp() {
     lastTurnCombatantRef.current = null;
     if (id) {
       localStorage.setItem("forge-and-fable-active-campaign", id);
-      const cursorKey = `forge-and-fable-campaign-cursor-${id}`;
-      if (!localStorage.getItem(cursorKey)) {
-        const cursor = new Date().toISOString();
-        localStorage.setItem(cursorKey, cursor);
-        campaignCursorRef.current[id] = cursor;
-      }
+      // Cursor is session-memory only. Event application is idempotent, so a
+      // full-history fetch on the first sync of a session is safe — and it is
+      // the only way pushes sent while this client was away are ever applied.
+      delete campaignCursorRef.current[id];
     } else {
       localStorage.removeItem("forge-and-fable-active-campaign");
     }
@@ -311,52 +318,73 @@ export default function ForgeAndFableApp() {
     });
   }
 
-  function processCampaignEvents(events: CampaignEvent[]) {
-    if (!selected || events.length === 0) return;
-    let nextEffects = selected.effects ?? [];
+  /**
+   * Apply campaign events. Conditions target the character ENROLLED in the
+   * campaign (from the sync membership), never whichever sheet happens to be
+   * open. Returns the created_at of the last event fully handled — the sync
+   * loop must not advance its cursor past an unhandled condition event.
+   */
+  function processCampaignEvents(events: CampaignEvent[], members: CampaignSyncPayload["members"]): string | null {
+    if (events.length === 0) return null;
+    const myMembership = members?.find((member) => member.userId === user?.id);
+    const myCharacter = myMembership?.characterId
+      ? characters.find((character) => character.id === myMembership.characterId) ?? null
+      : null;
+    let nextEffects = myCharacter?.effects ?? [];
     let changedEffects = false;
+    let lastHandled: string | null = null;
 
     for (const event of events) {
-      if (processedCampaignEventsRef.current.has(event.id)) continue;
-      processedCampaignEventsRef.current.add(event.id);
       const payload = parseCampaignPayload(event);
 
-      if (event.type === "condition-apply") {
+      if (event.type === "condition-apply" || event.type === "condition-remove") {
+        // Enrolled character not loaded yet — hold the cursor here and retry
+        // on a later tick rather than consuming the event unapplied.
+        if (!myCharacter) break;
         const label = typeof payload.label === "string" ? payload.label.trim() : "";
-        if (!label) continue;
-        const exists = nextEffects.some((effect) => effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
-        if (!exists) {
-          nextEffects = [
-            ...nextEffects,
-            {
-              ...(payload as Partial<CharacterEffect>),
-              id: `dm-${event.id}`,
-              label,
-              source: "DM",
-              active: true,
-            } as CharacterEffect,
-          ];
-          changedEffects = true;
-          setStatus(`DM applied ${label}`);
-        }
-      } else if (event.type === "condition-remove") {
-        const label = typeof payload.label === "string" ? payload.label.trim() : "";
-        if (!label) continue;
-        const filtered = nextEffects.filter((effect) => !(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
-        if (filtered.length !== nextEffects.length) {
-          nextEffects = filtered;
-          changedEffects = true;
-          setStatus(`DM removed ${label}`);
+        if (label && event.type === "condition-apply") {
+          const exists = nextEffects.some((effect) => effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase());
+          if (!exists) {
+            nextEffects = [
+              ...nextEffects,
+              {
+                ...(payload as Partial<CharacterEffect>),
+                id: `dm-${event.id}`,
+                label,
+                source: "DM",
+                active: true,
+              } as CharacterEffect,
+            ];
+            changedEffects = true;
+            if (!processedCampaignEventsRef.current.has(event.id)) {
+              pushToast("condition", `DM applied ${label}`, myCharacter.name);
+            }
+          }
+        } else if (label && event.type === "condition-remove") {
+          const filtered = nextEffects.filter((effect) => !(effect.source === "DM" && effect.label.toLowerCase() === label.toLowerCase()));
+          if (filtered.length !== nextEffects.length) {
+            nextEffects = filtered;
+            changedEffects = true;
+            if (!processedCampaignEventsRef.current.has(event.id)) {
+              pushToast("condition", `DM removed ${label}`, myCharacter.name);
+            }
+          }
         }
       } else if (event.type === "announce") {
         const message = typeof payload.message === "string" ? payload.message.trim() : "";
-        if (message) setStatus(message);
+        if (message && !processedCampaignEventsRef.current.has(event.id)) {
+          pushToast("announce", message);
+        }
       }
+
+      processedCampaignEventsRef.current.add(event.id);
+      lastHandled = event.created_at;
     }
 
-    if (changedEffects) {
-      updateSelected({ effects: nextEffects });
+    if (changedEffects && myCharacter) {
+      void updateCharacterById(myCharacter.id, { effects: nextEffects });
     }
+    return lastHandled;
   }
 
   const effectDrivenMode = effectiveAdvantageMode(selected?.effects);
@@ -405,12 +433,9 @@ export default function ForgeAndFableApp() {
 
   useEffect(() => {
     if (!user || !activeCampaignId) return;
-    if (!campaignOpen) return; // pause polling when panel is closed
-    const cursorKey = `forge-and-fable-campaign-cursor-${activeCampaignId}`;
-    campaignCursorRef.current[activeCampaignId] =
-      campaignCursorRef.current[activeCampaignId] ??
-      localStorage.getItem(cursorKey) ??
-      undefined; // no default — first fetch gets all historical data
+    // Poll whenever a campaign is active — pushes must reach a player on
+    // their sheet, not only while the campaign panel is open. Cadence is
+    // faster with the panel open; hidden tabs pause below.
     let cancelled = false;
 
     const sync = async () => {
@@ -431,24 +456,28 @@ export default function ForgeAndFableApp() {
         if (cancelled) return;
         setCampaignSync(data);
         rememberCampaignEvents(data.events);
-        processCampaignEvents(data.events);
+        const lastHandled = processCampaignEvents(data.events, data.members);
 
         const myTurnId = user.id ? `player:${user.id}` : null;
         const sorted = [...data.initiative.data.combatants].sort((a, b) => b.initiative - a.initiative);
         const currentCombatant = sorted[data.initiative.data.turnIndex]?.id ?? null;
         if (myTurnId && currentCombatant === myTurnId && lastTurnCombatantRef.current !== currentCombatant) {
-          setStatus("Your turn");
+          pushToast("turn", "Your turn!", `Round ${data.initiative.data.round}`);
         }
         lastTurnCombatantRef.current = currentCombatant;
 
-        const timestamps = [
-          ...data.events.map((event) => event.created_at),
-          ...data.rolls.map((roll) => roll.created_at),
+        // Advance the cursor only through what was actually handled. If a
+        // condition event could not be applied yet, everything from it onward
+        // is refetched next tick (application is idempotent, so replays are
+        // harmless). Roll timestamps may only advance the cursor when every
+        // event in this batch was handled.
+        const allEventsHandled = data.events.length === 0 || lastHandled === data.events[data.events.length - 1]?.created_at;
+        const candidates = [
+          ...(lastHandled ? [lastHandled] : []),
+          ...(allEventsHandled ? data.rolls.map((roll) => roll.created_at) : []),
         ].filter(Boolean);
-        if (timestamps.length > 0) {
-          const nextCursor = timestamps.sort().at(-1)!;
-          campaignCursorRef.current[activeCampaignId] = nextCursor;
-          localStorage.setItem(cursorKey, nextCursor);
+        if (candidates.length > 0) {
+          campaignCursorRef.current[activeCampaignId] = candidates.sort().at(-1)!;
         }
       } catch {
         // Keep the local UI responsive; the next polling tick can recover.
@@ -456,7 +485,7 @@ export default function ForgeAndFableApp() {
     };
 
     sync();
-    const interval = window.setInterval(sync, 5000);
+    const interval = window.setInterval(sync, campaignOpen ? 5000 : 10000);
     const onVisibility = () => {
       if (document.visibilityState === "visible") sync();
     };
@@ -827,12 +856,17 @@ export default function ForgeAndFableApp() {
   }
 
   async function updateSelected(patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
-    if (!user || !selected) {
+    if (!selected) return;
+    await updateCharacterById(selected.id, patch);
+  }
+
+  async function updateCharacterById(characterId: string, patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
+    if (!user) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/characters/${selected.id}`, {
+      const response = await fetch(`/api/characters/${characterId}`, {
         method: "PUT",
         headers: authHeaders(),
         body: JSON.stringify(patch),
@@ -1552,6 +1586,25 @@ export default function ForgeAndFableApp() {
       onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
       onClearHistory={clearHistory}
     />
+    {toasts.length > 0 ? (
+      <div
+        className="ff-toast-stack"
+        aria-live="polite"
+        style={selected?.theme ? ({
+          "--toast-paper": selected.theme.paper,
+          "--toast-ink": selected.theme.ink,
+          "--toast-accent": selected.theme.accent,
+          "--toast-font": FONT_STACKS[selected.theme.fontKey],
+        } as CSSProperties) : undefined}
+      >
+        {toasts.map((toast) => (
+          <button key={toast.id} type="button" className={`ff-toast ff-toast-${toast.kind}`} onClick={() => setToasts((current) => current.filter((t) => t.id !== toast.id))}>
+            <strong>{toast.title}</strong>
+            {toast.body ? <span>{toast.body}</span> : null}
+          </button>
+        ))}
+      </div>
+    ) : null}
     {creationSeq && draft && creationSeqFinalAbilities ? (() => {
       const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
       if (!heroClass) return null;
