@@ -1,6 +1,7 @@
 # Forge & Fable — Road to 1.0
 
-**Status date:** 2026-07-06. Build clean, lint 0 errors / 1 warning.
+**Status date:** 2026-07-08 (reviewed through R12 — see `CHANGES-10-12-review.md`). Build clean.
+**Progress:** R10–R12 done & reviewed (§2.1/.3/.4/.5/.7, §3.10/.11 closed; §3.13 skipped by user decision; §2.6 open). Next: R13 (SQLite + auth hosting gate).
 **Audience:** whichever AI (or human) picks up a round. Assume no memory of prior sessions — this document plus the repo IS the memory.
 **Companion documents:** `docs/QA-REPORT-2026-07-04.md` (the 43-issue audit; P0s fixed, P1–P3 open), `docs/CHANGES-*.md` (what every prior round did and how it was verified), `docs/ai-project-proposal-*.md` (the proposal format that works).
 

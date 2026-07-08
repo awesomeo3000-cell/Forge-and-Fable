@@ -184,7 +184,7 @@ export function defaultCharacterSettings() {
     advancementType: "milestone" as const,
     hitPointType: "fixed" as const,
     usePrerequisites: false,
-    useFeatPrerequisites: false,
+    useFeatPrerequisites: true,
     useMulticlassPrerequisites: false,
     showLevelScaledSpells: false,
     encumbranceType: "standard" as const,

@@ -184,7 +184,10 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
                 assertString(b.content, "pages[].blocks[].content", 5000);
               } else if (b.type === "image") {
                 assertString(b.url, "pages[].blocks[].url", 500);
-                if (!/^https?:\/\//i.test(b.url as string)) {
+                // Empty string = draft placeholder (block added, URL not typed
+                // yet). The client persists immediately on block creation, so
+                // rejecting "" here silently discards the whole patch.
+                if ((b.url as string) !== "" && !/^https?:\/\//i.test(b.url as string)) {
                   throw new Error(`"pages[].blocks[].url" must be an http(s) URL.`);
                 }
                 if (b.caption !== undefined) assertString(b.caption, "pages[].blocks[].caption", 120);
