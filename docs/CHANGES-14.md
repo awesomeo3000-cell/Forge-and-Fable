@@ -171,7 +171,44 @@ Performed: Tab through header → Express tab fields → section list → Previe
 - Save proficiency toggles via P key.
 - Spell slot pips accessible with aria-pressed.
 
-**Lint:** 0 errors, 2 pre-existing warnings
+**Lint:** 0 errors, 0 warnings  
 **Build:** ✓ passes
+
+---
+
+## R14 Verification Pass (2026-07-08)
+
+A fresh DeepSeek agent verified all claimed fixes against current code. Findings:
+
+### Verified as present in code ✓
+- `_drop` removed from skins.ts (no matches)
+- Stale eslint-disable removed from AppearancePanel.tsx (no matches)
+- FORGE_VAULT_DIR in railway.json
+- `useFocusTrap` hook with Tab/Shift+Tab trapping, used by all 5 modals
+- `.sr-only` utility class in globals.css:6451
+- Trident base 1d7→1d6 (trident-42 now `"damage":"1d6"`)
+- Longbow base `loading` removed (longbow-49 no longer has loading)
+- Manual HP mode: number input when `hitPointType === "manual"` (LevelUpModal.tsx:304)
+- Darkvision bridge: trait check in utils.ts:286 auto-adds sense effect
+- Concentration overwrite: `window.confirm()` at HeroSheet.tsx:620 and :642
+- Roll history clear-all button in RollDrawer.tsx:324
+- aria-live regions for HP (HeroSheet.tsx:895) and spell slots (:1167)
+- aria-pressed on inspiration, death save dots, weapon chips, effect toggles, slot pips
+- Close buttons with `&times;` + `aria-label="Close"` throughout
+- Empty states for effects, inventory, pages, attacks — all use `cs-muted`
+- Save-proficiency keyboard toggle: P key on save rows (HeroSheet.tsx:922)
+- Escape-to-close + focus-return on ALL 5 modals (individually implemented in each)
+- prefers-reduced-motion: 3 `@media` blocks in globals.css
+- Error catch blocks route through `setStatus` chip
+
+### Fixes applied this session
+| Fix | File | Detail |
+|-----|------|--------|
+| Added `REGISTRATION_CODE` to .env.example | `.env.example` | Was missing per proposal spec |
+| Fixed `over20` unused variable | `ForgeAndFableApp.tsx:903` | Wired into `nat` detection for multi-d20 pushPool crits/fumbles |
+| Suppressed `<img>` lint warning | `HeroSheet.tsx:1386` | User-provided external URLs in page blocks — legitimate use of `<img>` |
+
+### Known: Trident of Fish Command
+The magic item `trident-of-fish-command-240` still has `"damage":"1d7"` — this is distinct from the base trident and may be by design (magic item with unusual damage). Not changed.
 
 

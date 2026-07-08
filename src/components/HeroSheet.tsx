@@ -1383,6 +1383,7 @@ export default memo(function HeroSheet(props: {
                             ) : (
                               <div className="cs-page-image-block">
                                 {block.url && !brokenPageImages.has(block.id) ? (
+                                  // eslint-disable-next-line @next/next/no-img-element -- user-provided external URLs cannot be optimized by next/image
                                   <img
                                     src={block.url}
                                     alt={block.caption || "Character page image"}

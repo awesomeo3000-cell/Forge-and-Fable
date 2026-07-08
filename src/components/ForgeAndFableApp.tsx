@@ -901,9 +901,10 @@ export default function ForgeAndFableApp() {
       const detail = `${d20Parts}${extraPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
 
       const over20 = d20Pairs.some((p) => p.keptValue === 20);
+      const anyOne = d20Pairs.some((p) => p.keptValue === 1);
       const nat: RollHistoryEntry["nat"] =
-        d20Pairs.length === 1 && d20Pairs[0].keptValue === 20 ? "crit"
-        : d20Pairs.length === 1 && d20Pairs[0].keptValue === 1 ? "fumble"
+        (d20Pairs.length === 1 && d20Pairs[0].keptValue === 20) || over20 ? "crit"
+        : (d20Pairs.length === 1 && d20Pairs[0].keptValue === 1) || anyOne ? "fumble"
         : undefined;
       const resultSummary = rollResultSummary(total);
       newDice.forEach((die) => {
