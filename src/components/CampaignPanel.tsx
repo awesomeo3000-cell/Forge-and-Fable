@@ -279,6 +279,13 @@ export default memo(function CampaignPanel({
         aria-labelledby="campaign-title"
         onMouseDown={(event) => event.stopPropagation()}
         style={theme ? {
+          "--accent": theme.accent,
+          "--parchment": theme.ink,
+          "--ground": theme.paper,
+          "--ground-2": `color-mix(in srgb, ${theme.paper} 82%, ${theme.ink})`,
+          "--rule": `color-mix(in srgb, ${theme.ink} 22%, transparent)`,
+          "--rule-soft": `color-mix(in srgb, ${theme.ink} 14%, transparent)`,
+          "--muted": `color-mix(in srgb, ${theme.ink} 55%, transparent)`,
           "--campaign-accent": theme.accent,
           "--campaign-ink": theme.ink,
           "--campaign-paper": theme.paper,
