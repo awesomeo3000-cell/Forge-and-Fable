@@ -8,9 +8,8 @@
 import type { ImportDraft, ImportSource } from "./pdfTypes";
 import { analyzeDndBeyondPdf } from "./dndBeyondPdf";
 import { analyzeFormFields } from "./pdfFormFields";
-
-// pdfjs-dist needs its worker configured; we use the legacy build for Node.js compatibility
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { loadPdfFromBuffer } from "./pdfJsServer";
+import type * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 
 /** Maximum upload size: 10 MB */
 export const MAX_PDF_SIZE = 10 * 1024 * 1024;
@@ -22,14 +21,7 @@ const MAX_PAGES = 30;
  * Load a PDF from a Buffer and return the pdfjs document object.
  */
 async function loadPdf(buffer: Buffer): Promise<pdfjs.PDFDocumentProxy> {
-  // pdfjs-dist in Node needs the worker disabled — we pass the data directly
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  });
-  return loadingTask.promise;
+  return loadPdfFromBuffer(buffer);
 }
 
 /**
@@ -78,20 +70,28 @@ function detectSourceKind(
 ): ImportSource["kind"] {
   if (hasFormFields) return "fillable-pdf";
 
-  // D&D Beyond sheets have characteristic markers
+  // D&D Beyond sheets have characteristic markers, but the exact section
+  // labels vary between exported versions.
+  const normalizedText = allText.toLowerCase().replace(/\s+/g, " ");
   const dndBeyondMarkers = [
-    "D&D Beyond",
-    "Character Sheet",
-    "SPELLCASTING",
-    "ATTACKS & SPELLCASTING",
-    "PROFICIENCIES & LANGUAGES",
+    "d&d beyond",
+    "character sheet",
+    "character name",
+    "class & level",
+    "spellcasting",
+    "attacks & spellcasting",
+    "weapon attacks & cantrips",
+    "proficiencies & languages",
+    "proficiencies & training",
   ];
-  const markerCount = dndBeyondMarkers.filter((m) => allText.includes(m)).length;
-  if (markerCount >= 3 && numPages >= 2) return "dnd-beyond";
+  const markerCount = dndBeyondMarkers.filter((m) => normalizedText.includes(m)).length;
+  if (numPages >= 2 && (markerCount >= 3 || (normalizedText.includes("d&d beyond") && markerCount >= 2))) {
+    return "dnd-beyond";
+  }
 
   // If text mentions standard D&D labels, treat as generic but hint
-  const dndLabels = ["STR", "DEX", "CON", "INT", "WIS", "CHA", "ARMOR CLASS", "HIT POINTS"];
-  if (dndLabels.some((l) => allText.includes(l))) return "generic-pdf";
+  const dndLabels = ["str", "dex", "con", "int", "wis", "cha", "armor class", "hit points"];
+  if (dndLabels.some((l) => normalizedText.includes(l))) return "generic-pdf";
 
   return "generic-pdf";
 }

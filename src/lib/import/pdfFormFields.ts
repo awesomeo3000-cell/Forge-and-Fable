@@ -5,7 +5,7 @@
  * Uses pdfjs-dist to inspect the document's form field annotations.
  */
 
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { loadPdfFromBuffer } from "./pdfJsServer";
 
 /**
  * Try to extract form fields from a PDF buffer.
@@ -16,13 +16,7 @@ export async function analyzeFormFields(buffer: Buffer): Promise<Record<string, 
   const fields: Record<string, string> = {};
 
   try {
-    const loadingTask = pdfjs.getDocument({
-      data: new Uint8Array(buffer),
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      useSystemFonts: true,
-    });
-    const doc = await loadingTask.promise;
+    const doc = await loadPdfFromBuffer(buffer);
 
     // pdfjs-dist doesn't directly expose form fields via its public API.
     // We try to access them through the document's metadata/annotations.

@@ -7767,6 +7767,24 @@ button.dj-card {
   white-space: nowrap;
 }
 
+.import-field-input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--doc-rule-soft);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--paper) 82%, white 18%);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  padding: 6px 8px;
+}
+
+.import-field-input:focus {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 1px;
+}
+
 .import-val-missing {
   color: var(--ink-3);
   font-style: italic;

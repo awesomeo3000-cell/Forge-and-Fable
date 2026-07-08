@@ -1240,7 +1240,6 @@ export default function ForgeAndFableApp() {
     ) : null}
     {importOpen ? (
       <CharacterImportModal
-        token={localStorage.getItem("forge-and-fable-token") ?? ""}
         onCreated={() => {
           setImportOpen(false);
           // Refetch characters to include the imported one

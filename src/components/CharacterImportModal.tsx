@@ -12,7 +12,6 @@ import { abilityLabels } from "@/lib/utils";
 type ImportStep = "upload" | "review" | "creating";
 
 type Props = {
-  token: string;
   onCreated: () => void;
   onClose: () => void;
 };
@@ -58,9 +57,62 @@ function FieldRow({
   );
 }
 
+function EditableTextRow({
+  label,
+  field,
+  onChange,
+}: {
+  label: string;
+  field: ImportField<string>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="import-field-row">
+      <label className="import-field-label">{label}</label>
+      <input
+        className={`import-field-input import-val-${field.confidence}`}
+        value={field.value ?? ""}
+        onChange={(e) => onChange(e.currentTarget.value)}
+      />
+      <ConfidenceBadge confidence={field.confidence} />
+      {field.note && <span className="import-field-note">{field.note}</span>}
+    </div>
+  );
+}
+
+function EditableNumberRow({
+  label,
+  field,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  field: ImportField<number>;
+  min?: number;
+  max?: number;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="import-field-row">
+      <label className="import-field-label">{label}</label>
+      <input
+        className={`import-field-input import-val-${field.confidence}`}
+        type="number"
+        min={min}
+        max={max}
+        value={field.value ?? ""}
+        onChange={(e) => onChange(e.currentTarget.value)}
+      />
+      <ConfidenceBadge confidence={field.confidence} />
+      {field.note && <span className="import-field-note">{field.note}</span>}
+    </div>
+  );
+}
+
 // ── Main modal ──
 
-export default memo(function CharacterImportModal({ token, onCreated, onClose }: Props) {
+export default memo(function CharacterImportModal({ onCreated, onClose }: Props) {
   const [step, setStep] = useState<ImportStep>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [draft, setDraft] = useState<ImportDraft | null>(null);
@@ -87,6 +139,92 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
 
   // ── Upload & analyze ──
 
+  const updateStringField = (field: ImportField<string>, value: string): ImportField<string> => {
+    const clean = value.trim();
+    return {
+      ...field,
+      value: clean ? value : null,
+      confidence: clean ? "review" : "missing",
+      note: field.confidence === "confirmed" ? "Edited before import" : field.note,
+    };
+  };
+
+  const updateNumberField = (field: ImportField<number>, value: string): ImportField<number> => {
+    const clean = value.trim();
+    const parsed = clean === "" ? null : Number(clean);
+    return {
+      ...field,
+      value: parsed !== null && Number.isInteger(parsed) ? parsed : null,
+      confidence: parsed !== null && Number.isInteger(parsed) ? "review" : "missing",
+      note: field.confidence === "confirmed" ? "Edited before import" : field.note,
+    };
+  };
+
+  const updateIdentityText = (key: "name" | "className" | "species" | "background", value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        identity: {
+          ...current.identity,
+          [key]: updateStringField(current.identity[key], value),
+        },
+      };
+    });
+  };
+
+  const updateIdentityLevel = (value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        identity: {
+          ...current.identity,
+          level: updateNumberField(current.identity.level, value),
+        },
+      };
+    });
+  };
+
+  const updateAbility = (key: AbilityKey, value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        abilities: {
+          ...current.abilities,
+          [key]: updateNumberField(current.abilities[key], value),
+        },
+      };
+    });
+  };
+
+  const updateVitalNumber = (key: "maxHp" | "currentHp" | "tempHp" | "armorClass" | "initiative", value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        vitals: {
+          ...current.vitals,
+          [key]: updateNumberField(current.vitals[key], value),
+        },
+      };
+    });
+  };
+
+  const updateSpeed = (value: string) => {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        vitals: {
+          ...current.vitals,
+          speed: updateStringField(current.vitals.speed, value),
+        },
+      };
+    });
+  };
+
   const handleFile = async (selectedFile: File) => {
     if (!selectedFile.name.toLowerCase().endsWith(".pdf") && selectedFile.type !== "application/pdf") {
       setError("Only PDF files are accepted.");
@@ -102,7 +240,6 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
 
       const res = await fetch("/api/import/pdf/analyze", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -131,10 +268,7 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
     try {
       const res = await fetch("/api/import/pdf/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ draft }),
       });
 
@@ -170,6 +304,13 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
   // ── Render ──
 
   const abilityOrder: AbilityKey[] = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+  const canCreate = Boolean(
+    draft?.identity.name.value &&
+      draft.identity.className.value &&
+      draft.identity.species.value &&
+      draft.identity.level.value &&
+      abilityOrder.every((key) => typeof draft.abilities[key].value === "number"),
+  );
 
   return createPortal(
     <div className="modal-scrim" role="presentation" onMouseDown={step === "creating" ? undefined : onClose}>
@@ -266,22 +407,24 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
             {/* Identity */}
             <section className="import-section">
               <h3>Identity</h3>
-              <FieldRow label="Name" field={draft.identity.name} />
-              <FieldRow label="Class" field={draft.identity.className} />
-              <FieldRow label="Level" field={draft.identity.level} />
-              <FieldRow label="Species" field={draft.identity.species} />
-              <FieldRow label="Background" field={draft.identity.background} />
+              <EditableTextRow label="Name" field={draft.identity.name} onChange={(value) => updateIdentityText("name", value)} />
+              <EditableTextRow label="Class" field={draft.identity.className} onChange={(value) => updateIdentityText("className", value)} />
+              <EditableNumberRow label="Level" field={draft.identity.level} min={1} max={20} onChange={updateIdentityLevel} />
+              <EditableTextRow label="Species" field={draft.identity.species} onChange={(value) => updateIdentityText("species", value)} />
+              <EditableTextRow label="Background" field={draft.identity.background} onChange={(value) => updateIdentityText("background", value)} />
             </section>
 
             {/* Ability scores */}
             <section className="import-section">
               <h3>Ability Scores</h3>
               {abilityOrder.map((key) => (
-                <FieldRow
+                <EditableNumberRow
                   key={key}
                   label={abilityLabels[key]}
                   field={draft.abilities[key]}
-                  fallback="10"
+                  min={1}
+                  max={30}
+                  onChange={(value) => updateAbility(key, value)}
                 />
               ))}
             </section>
@@ -289,10 +432,12 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
             {/* Vitals */}
             <section className="import-section">
               <h3>Vitals</h3>
-              <FieldRow label="Max HP" field={draft.vitals.maxHp} />
-              <FieldRow label="AC (review hint)" field={draft.vitals.armorClass} />
-              <FieldRow label="Initiative (review hint)" field={draft.vitals.initiative} />
-              <FieldRow label="Speed" field={draft.vitals.speed} />
+              <EditableNumberRow label="Max HP" field={draft.vitals.maxHp} min={1} max={999} onChange={(value) => updateVitalNumber("maxHp", value)} />
+              <EditableNumberRow label="Current HP" field={draft.vitals.currentHp} min={0} max={999} onChange={(value) => updateVitalNumber("currentHp", value)} />
+              <EditableNumberRow label="Temp HP" field={draft.vitals.tempHp} min={0} max={999} onChange={(value) => updateVitalNumber("tempHp", value)} />
+              <EditableNumberRow label="AC (review hint)" field={draft.vitals.armorClass} min={1} max={99} onChange={(value) => updateVitalNumber("armorClass", value)} />
+              <EditableNumberRow label="Initiative (review hint)" field={draft.vitals.initiative} min={-99} max={99} onChange={(value) => updateVitalNumber("initiative", value)} />
+              <EditableTextRow label="Speed" field={draft.vitals.speed} onChange={updateSpeed} />
             </section>
 
             {/* Proficiencies */}
@@ -392,10 +537,10 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
             )}
 
             {/* Missing required warning */}
-            {(!draft.identity.name.value || !draft.identity.className.value || !draft.identity.level.value) && (
+            {!canCreate && (
               <div className="import-warning">
                 <AlertTriangle size={16} />
-                <span>Name, class, and level are required before creation. Fill in missing fields.</span>
+                <span>Name, class, species, level, and all six ability scores are required before creation.</span>
               </div>
             )}
 
@@ -413,7 +558,7 @@ export default memo(function CharacterImportModal({ token, onCreated, onClose }:
                 type="button"
                 className="dj-btn dj-btn-primary"
                 onClick={handleCreate}
-                disabled={busy || !draft.identity.name.value || !draft.identity.className.value || !draft.identity.level.value}
+                disabled={busy || !canCreate}
               >
                 {busy ? (
                   <>
