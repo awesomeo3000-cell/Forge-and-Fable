@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
+import { FONT_STACKS } from "@/lib/skins";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
@@ -96,6 +97,9 @@ export default memo(function CampaignPanel({
 
   const detail = activeId && campaignSync?.campaign.id === activeId ? campaignSync : null;
   const isDm = Boolean(detail && currentUserId && detail.campaign.dmUserId === currentUserId);
+  // Same paper-surface technique as the sheet/feedback modal: paint the
+  // chosen background texture over the themed paper so the panel matches.
+  const backgroundKey = theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment";
   const visibleEvents = useMemo(
     () => campaignEvents
       .filter((event) =>
@@ -278,18 +282,37 @@ export default memo(function CampaignPanel({
         aria-modal="true"
         aria-labelledby="campaign-title"
         onMouseDown={(event) => event.stopPropagation()}
-        style={theme ? {
+        data-bg={backgroundKey}
+        style={theme ? ({
+          // Full paper-surface token set — mirrors HeroSheet/FeedbackModal so
+          // the panel inherits the active character's skin (paper, ink, accent,
+          // fonts, scale, background texture) instead of a fixed dark chrome.
+          "--paper": theme.paper,
+          "--paper-raised": `color-mix(in srgb, ${theme.paper} 94%, #000)`,
+          "--ink": theme.ink,
+          "--ink-2": `color-mix(in srgb, ${theme.ink} 65%, ${theme.paper})`,
+          "--ink-3": `color-mix(in srgb, ${theme.ink} 42%, ${theme.paper})`,
+          "--doc-accent": theme.accent,
+          "--doc-accent-deep": `color-mix(in srgb, ${theme.accent} 78%, #000)`,
+          "--doc-rule": `color-mix(in srgb, ${theme.ink} 32%, ${theme.paper})`,
+          "--doc-rule-soft": `color-mix(in srgb, ${theme.ink} 16%, ${theme.paper})`,
+          "--font-body": FONT_STACKS[theme.fontKey],
+          "--font-display": FONT_STACKS[theme.fontKey],
+          "--sheet-scale": `${theme.fontScale ?? 1}`,
+          "--bg-opacity": `${theme.backgroundOpacity ?? 0.5}`,
+          ...(theme.backgroundImageUrl ? { "--skin-bg-image": `url("${theme.backgroundImageUrl.replace(/["\\)]/g, "")}")` } : {}),
+          // Legacy bridge vars retained so any older selectors still resolve.
           "--accent": theme.accent,
-          "--parchment": theme.ink,
           "--ground": theme.paper,
-          "--ground-2": `color-mix(in srgb, ${theme.paper} 82%, ${theme.ink})`,
-          "--rule": `color-mix(in srgb, ${theme.ink} 22%, transparent)`,
-          "--rule-soft": `color-mix(in srgb, ${theme.ink} 14%, transparent)`,
-          "--muted": `color-mix(in srgb, ${theme.ink} 55%, transparent)`,
+          "--ground-2": `color-mix(in srgb, ${theme.paper} 94%, #000)`,
+          "--parchment": theme.ink,
+          "--muted": `color-mix(in srgb, ${theme.ink} 55%, ${theme.paper})`,
+          "--rule": `color-mix(in srgb, ${theme.ink} 32%, ${theme.paper})`,
+          "--rule-soft": `color-mix(in srgb, ${theme.ink} 16%, ${theme.paper})`,
           "--campaign-accent": theme.accent,
           "--campaign-ink": theme.ink,
           "--campaign-paper": theme.paper,
-        } as React.CSSProperties : undefined}
+        } as React.CSSProperties) : undefined}
       >
         <div className="campaign-header">
           <h2 id="campaign-title"><Swords size={20} /> Campaigns</h2>

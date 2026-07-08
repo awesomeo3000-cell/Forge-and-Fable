@@ -1928,18 +1928,21 @@ button:disabled {
   z-index: 1;
 }
 
-.feedback-modal[data-bg="parchment"] {
+.feedback-modal[data-bg="parchment"],
+.campaign-panel[data-bg="parchment"] {
   --skin-bg-pattern: var(--grain);
   --skin-bg-size: 140px 140px;
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.18);
 }
 
-.feedback-modal[data-bg="plain"] {
+.feedback-modal[data-bg="plain"],
+.campaign-panel[data-bg="plain"] {
   --skin-bg-pattern: none;
   --skin-bg-opacity: 0;
 }
 
-.feedback-modal[data-bg="linen"] {
+.feedback-modal[data-bg="linen"],
+.campaign-panel[data-bg="linen"] {
   --skin-bg-pattern:
     linear-gradient(90deg, color-mix(in srgb, var(--ink) 16%, transparent) 1px, transparent 1px),
     linear-gradient(0deg, color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1px);
@@ -1947,7 +1950,8 @@ button:disabled {
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.65);
 }
 
-.feedback-modal[data-bg="stars"] {
+.feedback-modal[data-bg="stars"],
+.campaign-panel[data-bg="stars"] {
   --skin-bg-pattern:
     radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--doc-accent) 62%, transparent) 0 1.5px, transparent 2.5px),
     radial-gradient(circle at 35% 44%, color-mix(in srgb, var(--ink) 34%, transparent) 0 1px, transparent 2px),
@@ -1957,7 +1961,8 @@ button:disabled {
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.9);
 }
 
-.feedback-modal[data-bg="sparkle"] {
+.feedback-modal[data-bg="sparkle"],
+.campaign-panel[data-bg="sparkle"] {
   --skin-bg-pattern:
     radial-gradient(circle at 22% 30%, color-mix(in srgb, var(--doc-accent) 68%, transparent) 0 1.5px, transparent 2.5px),
     radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--doc-accent) 30%, transparent) 0 1px, transparent 7px),
@@ -1967,7 +1972,8 @@ button:disabled {
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.95);
 }
 
-.feedback-modal[data-bg="forest"] {
+.feedback-modal[data-bg="forest"],
+.campaign-panel[data-bg="forest"] {
   --skin-bg-pattern:
     radial-gradient(ellipse at 32% 28%, color-mix(in srgb, var(--doc-accent) 32%, transparent) 0 7px, transparent 8px),
     radial-gradient(ellipse at 70% 74%, color-mix(in srgb, var(--ink) 20%, transparent) 0 9px, transparent 10px),
@@ -1976,7 +1982,8 @@ button:disabled {
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.8);
 }
 
-.feedback-modal[data-bg="dungeon"] {
+.feedback-modal[data-bg="dungeon"],
+.campaign-panel[data-bg="dungeon"] {
   --skin-bg-pattern:
     linear-gradient(color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--ink) 22%, transparent) 1px, transparent 1px),
@@ -1985,7 +1992,8 @@ button:disabled {
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.85);
 }
 
-.feedback-modal[data-bg="custom"] {
+.feedback-modal[data-bg="custom"],
+.campaign-panel[data-bg="custom"] {
   --skin-bg-pattern: var(--skin-bg-image, none);
   --skin-bg-size: cover;
   --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.35);
@@ -8460,4 +8468,291 @@ button.dj-card {
 }
 .campaign-panel [class*="accent"], .campaign-panel .campaign-code {
   color: var(--campaign-accent, var(--accent));
+}
+
+/* ════════════════════════════════════════════════════════════════════ */
+/* ── Campaign Panel — paper-surface restyle                             */
+/* Consumes the active character's theme tokens (--paper / --ink /       */
+/* --doc-accent / fonts / scale / data-bg texture) exactly like the      */
+/* sheet, so the panel matches the skin. Contrast strategy: every        */
+/* text-bearing surface uses the --ink/--paper pair (AAA on all 16       */
+/* presets, light AND dark); --doc-accent is reserved for decoration,    */
+/* hairlines, and large/bold numerals. Surface tints mix paper↔ink so    */
+/* they read as "raised" on light skins and "lifted" on dark skins.      */
+/* ════════════════════════════════════════════════════════════════════ */
+
+.campaign-panel {
+  /* paper↔ink mixes auto-adapt to light and dark themes. */
+  --cp-card: color-mix(in srgb, var(--paper, #ece1c9) 92%, var(--ink, #241c12));
+  --cp-card-hi: color-mix(in srgb, var(--paper, #ece1c9) 85%, var(--ink, #241c12));
+  --cp-well: color-mix(in srgb, var(--paper, #ece1c9) 80%, var(--ink, #241c12));
+  --cp-hair: color-mix(in srgb, var(--ink, #241c12) 15%, var(--paper, #ece1c9));
+  --cp-hair-strong: color-mix(in srgb, var(--ink, #241c12) 30%, var(--paper, #ece1c9));
+  --cp-text-2: color-mix(in srgb, var(--ink, #241c12) 68%, var(--paper, #ece1c9));
+  --cp-text-3: color-mix(in srgb, var(--ink, #241c12) 45%, var(--paper, #ece1c9));
+  font-family: var(--font-body, var(--font-newsreader, Georgia, serif));
+  font-size: calc(0.95rem * var(--sheet-scale, 1));
+  color: var(--ink, #241c12);
+  background:
+    radial-gradient(120% 80% at 15% 0%, color-mix(in srgb, var(--paper, #ece1c9) 100%, #fff 6%), transparent 60%),
+    linear-gradient(color-mix(in srgb, var(--paper, #ece1c9) 97%, #000), color-mix(in srgb, var(--paper, #ece1c9) 90%, #000));
+  border: 1px solid var(--cp-hair-strong);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 28%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--ink, #241c12) 8%, transparent),
+    0 34px 90px -28px rgba(0, 0, 0, 0.62),
+    0 10px 26px -14px rgba(0, 0, 0, 0.42);
+}
+
+/* Texture overlay (parchment grain / pattern) painted over the paper. */
+.campaign-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--skin-bg-pattern, none);
+  background-size: var(--skin-bg-size, auto);
+  opacity: var(--skin-bg-opacity, 0);
+  pointer-events: none;
+  z-index: 0;
+}
+.campaign-panel > * { position: relative; z-index: 1; }
+
+/* ── Header ── */
+.campaign-panel .campaign-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cp-hair);
+}
+.campaign-panel .campaign-header h2 {
+  color: var(--ink);
+  font-family: var(--font-display, var(--font-body, Georgia, serif));
+  font-size: 1.5rem;
+  letter-spacing: 0.01em;
+  font-weight: 700;
+}
+.campaign-panel .campaign-header h2 svg { color: var(--doc-accent); }
+.campaign-panel .modal-close {
+  background: color-mix(in srgb, var(--ink, #241c12) 6%, transparent);
+  color: var(--ink, #241c12);
+  border: 1px solid var(--cp-hair-strong);
+}
+.campaign-panel .modal-close:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink, #241c12) 14%, transparent);
+  color: var(--ink, #241c12);
+}
+
+/* ── Section headings: small-caps with a hairline rule + accent icon ── */
+.campaign-panel .campaign-events h3,
+.campaign-panel .campaign-dm-tools h3,
+.campaign-panel .campaign-members h3,
+.campaign-panel .campaign-feed h3 {
+  color: var(--cp-text-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cp-hair);
+}
+.campaign-panel .campaign-events h3 svg,
+.campaign-panel .campaign-dm-tools h3 svg,
+.campaign-panel .campaign-members h3 svg,
+.campaign-panel .campaign-feed h3 svg { color: var(--doc-accent); }
+
+/* ── Inset wells (pending events, DM tools) ── */
+.campaign-panel .campaign-events,
+.campaign-panel .campaign-dm-tools {
+  background: var(--cp-well);
+  border: 1px solid var(--cp-hair);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+/* ── Raised cards (shared treatment) ── */
+.campaign-panel .campaign-card,
+.campaign-panel .campaign-party-card,
+.campaign-panel .campaign-event-card,
+.campaign-panel .campaign-roll-row,
+.campaign-panel .campaign-member-row {
+  background: var(--cp-card);
+  border: 1px solid var(--cp-hair);
+  border-radius: 10px;
+  color: var(--ink);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.campaign-panel .campaign-card { cursor: pointer; }
+.campaign-panel .campaign-card:hover {
+  border-color: var(--doc-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.45);
+}
+.campaign-panel .campaign-card-main strong { color: var(--ink); }
+.campaign-panel .campaign-card-main small { color: var(--cp-text-2); }
+
+/* ── Party member cards: accent spine, crisp stat chips ── */
+.campaign-panel .campaign-party-card {
+  border-left: 3px solid var(--doc-accent);
+}
+.campaign-panel .campaign-party-card strong { color: var(--ink); }
+.campaign-panel .campaign-party-card small { color: var(--cp-text-2); }
+.campaign-panel .campaign-party-stats span {
+  background: var(--paper, #ece1c9);
+  border: 1px solid var(--cp-hair);
+  color: var(--ink);
+  border-radius: 6px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* ── Code badges / share codes ── */
+.campaign-panel .campaign-code-badge {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 80%, var(--doc-accent, var(--accent)));
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--doc-accent, var(--accent)) 42%, var(--paper, #ece1c9));
+  border-radius: 999px;
+}
+.campaign-panel .campaign-code-display {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 84%, var(--doc-accent, var(--accent)));
+  border: 1px solid var(--doc-accent, var(--accent));
+  border-radius: 12px;
+}
+.campaign-panel .campaign-code-display strong {
+  color: var(--doc-accent, var(--accent));
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+/* ── Info bar (campaign title) ── */
+.campaign-panel .campaign-info-bar { border-bottom: 1px solid var(--cp-hair); }
+.campaign-panel .campaign-info-bar strong {
+  color: var(--ink);
+  font-family: var(--font-display, var(--font-body, Georgia, serif));
+  font-size: 1.2rem;
+}
+
+/* ── Roll feed: ledger entries with a prominent accent total ── */
+.campaign-panel .campaign-roll-top strong { color: var(--ink); }
+.campaign-panel .campaign-roll-total {
+  color: var(--doc-accent, var(--accent));
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.campaign-panel .campaign-roll-row small { color: var(--cp-text-2); }
+.campaign-panel .campaign-member-row strong { color: var(--ink); }
+.campaign-panel .campaign-member-row small { color: var(--cp-text-2); }
+
+/* ── Form fields ── */
+.campaign-panel .campaign-form label,
+.campaign-panel .campaign-tool-grid span {
+  color: var(--cp-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.campaign-panel input,
+.campaign-panel select {
+  background: var(--paper, #ece1c9);
+  color: var(--ink, #241c12);
+  border: 1px solid var(--cp-hair-strong);
+  border-radius: 8px;
+  font-family: var(--font-body, Georgia, serif);
+}
+.campaign-panel input::placeholder { color: var(--cp-text-3); }
+.campaign-panel input:focus,
+.campaign-panel select:focus {
+  outline: none;
+  border-color: var(--doc-accent, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--doc-accent, var(--accent)) 22%, transparent);
+}
+
+/* ── Empty / muted copy ── */
+.campaign-panel .cs-muted,
+.campaign-panel .campaign-empty { color: var(--cp-text-2); }
+
+/* ── Buttons (guaranteed AA via the ink/paper pair) ── */
+/* Primary: "stamped ink" — ink fill, paper text = AAA on every preset. */
+.campaign-panel .dj-btn-primary {
+  background: var(--ink, #241c12);
+  color: var(--paper, #ece1c9);
+  border: 1px solid var(--ink, #241c12);
+  font-family: var(--font-display, var(--font-body, Georgia, serif));
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 18%, transparent) inset;
+}
+.campaign-panel .dj-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink, #241c12) 86%, var(--paper, #ece1c9));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--doc-accent, var(--accent)) 30%, transparent),
+    0 1px 0 color-mix(in srgb, #fff 18%, transparent) inset;
+}
+.campaign-panel .dj-btn-primary:disabled { opacity: 0.45; }
+
+/* Secondary: hairline outline, ink text. */
+.campaign-panel .glass-button {
+  background: transparent;
+  color: var(--ink, #241c12);
+  border: 1px solid var(--cp-hair-strong);
+  font-family: var(--font-body, Georgia, serif);
+}
+.campaign-panel .glass-button:hover:not(:disabled) {
+  background: var(--cp-card);
+  border-color: var(--doc-accent, var(--accent));
+  color: var(--ink, #241c12);
+}
+
+/* Gold (announcement send): accent-tinted, ink text. */
+.campaign-panel .gold-button {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 82%, var(--doc-accent, var(--accent)));
+  color: var(--ink, #241c12);
+  border: 1px solid color-mix(in srgb, var(--doc-accent, var(--accent)) 55%, var(--ink, #241c12));
+  font-weight: 600;
+}
+.campaign-panel .gold-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 70%, var(--doc-accent, var(--accent)));
+}
+
+/* Danger: outline + crimson border/icon, ink text. */
+.campaign-panel .danger-button {
+  background: transparent;
+  color: var(--ink, #241c12);
+  border: 1px solid color-mix(in srgb, #b91c1c 55%, var(--ink, #241c12));
+}
+.campaign-panel .danger-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 82%, #b91c1c);
+  border-color: #b91c1c;
+}
+
+/* ── Status banners inside the panel ── */
+.campaign-panel .import-error-banner {
+  background: color-mix(in srgb, var(--paper, #ece1c9) 82%, #b91c1c);
+  color: var(--ink, #241c12);
+  border: 1px solid color-mix(in srgb, #b91c1c 50%, var(--ink, #241c12));
+  border-radius: 8px;
+}
+.campaign-panel .import-busy { color: var(--cp-text-2); }
+
+/* ── Scrollbar ── */
+.campaign-panel .campaign-body::-webkit-scrollbar { width: 10px; }
+.campaign-panel .campaign-body::-webkit-scrollbar-track { background: transparent; }
+.campaign-panel .campaign-body::-webkit-scrollbar-thumb {
+  background: var(--cp-hair-strong);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ── Focus visibility + reduced motion ── */
+.campaign-panel button:focus-visible,
+.campaign-panel input:focus-visible,
+.campaign-panel select:focus-visible,
+.campaign-panel .campaign-card:focus-visible {
+  outline: 2px solid var(--doc-accent, var(--accent));
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .campaign-panel *,
+  .campaign-panel *::before { transition: none !important; }
+  .campaign-panel .campaign-card:hover { transform: none; }
 }
