@@ -153,6 +153,8 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
             assertString(e.label, "effects[].label", 48);
             if (!(e.label as string).trim()) throw new Error(`"effects[].label" is required.`);
             if (typeof e.active !== "boolean") throw new Error(`"effects[].active" must be a boolean.`);
+            assertString(e.id, "effects[].id", 64);
+            if (!(e.id as string).trim()) throw new Error(`"effects[].id" is required.`);
             for (const k of ["ac", "attack", "damage", "saves", "checks", "initiative"]) {
               if (e[k] !== undefined) assertInteger(e[k], `effects[].${k}`, -20, 20);
             }

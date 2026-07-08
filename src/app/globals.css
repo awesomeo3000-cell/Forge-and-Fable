@@ -7931,6 +7931,16 @@ button.dj-card {
   padding: 0;
 }
 
+.cs-effect-stack button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--parchment-2) 15%, transparent);
+  color: var(--parchment);
+}
+
+.cs-effect-stack button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .cs-effect-stack button:disabled {
   opacity: 0.4;
   cursor: default;

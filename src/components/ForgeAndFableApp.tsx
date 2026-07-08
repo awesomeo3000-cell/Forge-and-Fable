@@ -1011,6 +1011,7 @@ export default function ForgeAndFableApp() {
       total,
     });
     setFlyingDice((prev) => [...prev, ...newDice]);
+    setManualRollMode(null);
   }
 
   /** Roll a single d20 check/attack/save, honoring the armed advantage /
