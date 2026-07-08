@@ -1,6 +1,6 @@
 "use client";
 
-import { GripHorizontal } from "lucide-react";
+import { GripHorizontal, Trash2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
@@ -27,12 +27,29 @@ type DrawerLayout = {
   height: number;
 };
 
+type RollPoolOutcome = { rolls: number[]; modifier: number; total: number };
+
+type InitiativeCombatant = {
+  id: string;
+  name: string;
+  initiative: number;
+  isPlayer?: boolean;
+};
+
+type InitiativeState = {
+  combatants: InitiativeCombatant[];
+  turnIndex: number;
+  round: number;
+};
+
 const DIE_SIZES = [4, 6, 8, 10, 12, 20, 100];
 const LAYOUT_STORAGE_KEY = "forge-and-fable-roll-drawer-layout";
+const INITIATIVE_STORAGE_KEY = "forge-and-fable-initiative";
 const TAB_WIDTH = 34;
 const MIN_WIDTH = 260;
 const MIN_HEIGHT = 320;
 const FALLBACK_LAYOUT: DrawerLayout = { x: 902, y: 112, width: 300, height: 520 };
+const EMPTY_INITIATIVE: InitiativeState = { combatants: [], turnIndex: 0, round: 1 };
 
 function defaultLayout(): DrawerLayout {
   if (typeof window === "undefined") return FALLBACK_LAYOUT;
@@ -41,7 +58,7 @@ function defaultLayout(): DrawerLayout {
   const height = Math.min(560, Math.max(MIN_HEIGHT, window.innerHeight - 32));
   return {
     x: Math.max(8, window.innerWidth - width - TAB_WIDTH),
-    y: Math.max(16, Math.round((window.innerHeight - height) / 2)),
+    y: Math.max(180, Math.round((window.innerHeight - height) / 2)),
     width,
     height,
   };
@@ -86,6 +103,58 @@ function saveLayout(layout: DrawerLayout) {
   window.localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
 }
 
+function clampTurnIndex(state: InitiativeState): InitiativeState {
+  if (state.combatants.length === 0) return { ...state, turnIndex: 0, round: Math.max(1, state.round || 1) };
+  return {
+    ...state,
+    round: Math.max(1, state.round || 1),
+    turnIndex: Math.min(Math.max(0, state.turnIndex || 0), state.combatants.length - 1),
+  };
+}
+
+function sortCombatants(combatants: InitiativeCombatant[]) {
+  return combatants
+    .map((combatant, index) => ({ combatant, index }))
+    .sort((a, b) => b.combatant.initiative - a.combatant.initiative || a.index - b.index)
+    .map((item) => item.combatant);
+}
+
+function loadInitiative(): InitiativeState {
+  if (typeof window === "undefined") return EMPTY_INITIATIVE;
+
+  try {
+    const raw = window.localStorage.getItem(INITIATIVE_STORAGE_KEY);
+    if (!raw) return EMPTY_INITIATIVE;
+    const parsed = JSON.parse(raw) as Partial<InitiativeState>;
+    if (!Array.isArray(parsed.combatants)) return EMPTY_INITIATIVE;
+    const combatants = parsed.combatants
+      .filter((item): item is InitiativeCombatant =>
+        !!item &&
+        typeof item.id === "string" &&
+        typeof item.name === "string" &&
+        typeof item.initiative === "number",
+      )
+      .map((item) => ({
+        id: item.id,
+        name: item.name.slice(0, 80),
+        initiative: Math.max(-99, Math.min(99, Math.trunc(item.initiative))),
+        ...(item.isPlayer ? { isPlayer: true } : {}),
+      }));
+    return clampTurnIndex({
+      combatants,
+      turnIndex: typeof parsed.turnIndex === "number" ? parsed.turnIndex : 0,
+      round: typeof parsed.round === "number" ? parsed.round : 1,
+    });
+  } catch {
+    return EMPTY_INITIATIVE;
+  }
+}
+
+function saveInitiative(state: InitiativeState) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(INITIATIVE_STORAGE_KEY, JSON.stringify(clampTurnIndex(state)));
+}
+
 /**
  * Right-edge drawer: an ad-hoc dice pool builder on top, a log of every roll
  * made this session (sheet clicks included) underneath.
@@ -100,20 +169,32 @@ export default memo(function RollDrawer(props: {
   history: RollHistoryEntry[];
   theme?: CharacterTheme | null;
   rollMode: RollMode;
+  activeCharacterName?: string;
+  activeCharacterInitiative?: number;
   onRollModeChange: (mode: RollMode) => void;
-  onRollPool: (groups: { sides: number; count: number }[], modifier: number, label: string) => void;
+  onRollPool: (
+    groups: { sides: number; count: number }[],
+    modifier: number,
+    label: string,
+    onResult?: (outcome: RollPoolOutcome) => void,
+  ) => void;
   onClearHistory?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dice" | "combat">("dice");
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [modifier, setModifier] = useState(0);
   const [layout, setLayout] = useState<DrawerLayout>(FALLBACK_LAYOUT);
+  const [initiativeState, setInitiativeState] = useState<InitiativeState>(EMPTY_INITIATIVE);
+  const [combatantName, setCombatantName] = useState("");
+  const [combatantInitiative, setCombatantInitiative] = useState(0);
   const layoutRef = useRef(layout);
 
   useEffect(() => {
     const loaded = loadLayout();
     layoutRef.current = loaded;
     setLayout(loaded);
+    setInitiativeState(loadInitiative());
   }, []);
 
   useEffect(() => {
@@ -248,6 +329,89 @@ export default memo(function RollDrawer(props: {
     props.onRollPool(groups, modifier, notation);
   };
 
+  const updateInitiative = (updater: (current: InitiativeState) => InitiativeState) => {
+    setInitiativeState((current) => {
+      const next = clampTurnIndex(updater(current));
+      saveInitiative(next);
+      return next;
+    });
+  };
+
+  const addCombatant = (name: string, initiative: number, isPlayer = false) => {
+    const cleanName = name.trim().slice(0, 80);
+    if (!cleanName || !Number.isFinite(initiative)) return;
+
+    updateInitiative((current) => {
+      const sortedCurrent = sortCombatants(current.combatants);
+      const currentId = sortedCurrent[current.turnIndex]?.id;
+      const combatants = [
+        ...current.combatants,
+        {
+          id: crypto.randomUUID(),
+          name: cleanName,
+          initiative: Math.max(-99, Math.min(99, Math.trunc(initiative))),
+          ...(isPlayer ? { isPlayer: true } : {}),
+        },
+      ];
+      const sortedNext = sortCombatants(combatants);
+      return {
+        ...current,
+        combatants,
+        turnIndex: currentId ? Math.max(0, sortedNext.findIndex((item) => item.id === currentId)) : 0,
+      };
+    });
+  };
+
+  const submitCombatant = () => {
+    addCombatant(combatantName, combatantInitiative);
+    setCombatantName("");
+    setCombatantInitiative(0);
+  };
+
+  const addActiveCharacter = () => {
+    if (!props.activeCharacterName || props.activeCharacterInitiative == null) return;
+    const name = props.activeCharacterName;
+    props.onRollPool(
+      [{ sides: 20, count: 1 }],
+      props.activeCharacterInitiative,
+      `${name} Initiative`,
+      (outcome) => addCombatant(name, outcome.total, true),
+    );
+  };
+
+  const removeCombatant = (id: string) => {
+    updateInitiative((current) => {
+      const sortedCurrent = sortCombatants(current.combatants);
+      const currentId = sortedCurrent[current.turnIndex]?.id;
+      const combatants = current.combatants.filter((item) => item.id !== id);
+      const sortedNext = sortCombatants(combatants);
+      const nextTurnIndex = currentId && currentId !== id
+        ? Math.max(0, sortedNext.findIndex((item) => item.id === currentId))
+        : Math.min(current.turnIndex, Math.max(0, combatants.length - 1));
+      return { ...current, combatants, turnIndex: nextTurnIndex };
+    });
+  };
+
+  const nextTurn = () => {
+    updateInitiative((current) => {
+      if (current.combatants.length === 0) return current;
+      const nextIndex = current.turnIndex + 1;
+      if (nextIndex >= current.combatants.length) {
+        return { ...current, turnIndex: 0, round: current.round + 1 };
+      }
+      return { ...current, turnIndex: nextIndex };
+    });
+  };
+
+  const clearCombat = () => {
+    if (initiativeState.combatants.length === 0) return;
+    if (!window.confirm("Clear the current combat order?")) return;
+    updateInitiative(() => EMPTY_INITIATIVE);
+  };
+
+  const sortedCombatants = sortCombatants(initiativeState.combatants);
+  const currentCombatantId = sortedCombatants[initiativeState.turnIndex]?.id;
+
   return (
     <div className={`roll-drawer${open ? " open" : ""}`} style={rootStyle}>
       <button type="button" className={`roll-drawer-tab${props.rollMode !== "normal" ? " armed" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
@@ -257,105 +421,177 @@ export default memo(function RollDrawer(props: {
       {open ? (
         <div className="roll-drawer-body" style={bodyStyle}>
           <div className="roll-drawer-titlebar" onPointerDown={startMove} title="Drag dice drawer">
-            <span className="roll-drawer-heading">Roll dice</span>
+            <span className="roll-drawer-heading">Dice & Combat</span>
             <GripHorizontal size={16} aria-hidden="true" />
           </div>
 
-          <div className="roll-pool">
-            <div className="roll-pool-grid">
-              {DIE_SIZES.map((sides) => {
-                const n = counts[sides] ?? 0;
-                return (
-                  <div className={`roll-pool-die${n > 0 ? " has-dice" : ""}`} key={sides}>
-                    <button type="button" className="roll-pool-add" onClick={() => bump(sides, 1)} title={`Add a d${sides}`}>
-                      d{sides}
-                      {n > 0 ? <em>{n}</em> : null}
-                    </button>
-                    {n > 0 ? (
-                      <button type="button" className="roll-pool-minus" onClick={() => bump(sides, -1)} aria-label={`Remove a d${sides}`}>
-                        -
-                      </button>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="roll-mode" role="group" aria-label="d20 roll mode">
-              {ROLL_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`roll-mode-btn${props.rollMode === m.id ? " active" : ""}${m.id !== "normal" ? ` ${m.id}` : ""}`}
-                  aria-pressed={props.rollMode === m.id}
-                  title={m.title}
-                  onClick={() => props.onRollModeChange(m.id)}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-            {props.rollMode !== "normal" ? (
-              <p className="roll-mode-hint">
-                Next d20 roll uses <strong>{props.rollMode}</strong>.
-              </p>
-            ) : null}
-            <div className="roll-pool-mod">
-              <span>Modifier</span>
-              <button type="button" onClick={() => setModifier((m) => Math.max(-20, m - 1))}>-</button>
-              <strong>{signed(modifier)}</strong>
-              <button type="button" onClick={() => setModifier((m) => Math.min(20, m + 1))}>+</button>
-            </div>
-            <div className="roll-pool-actions">
-              <button type="button" className="gold-button roll-pool-roll" disabled={groups.length === 0} onClick={rollPool}>
-                Roll {groups.length > 0 ? notation : "dice"}
-              </button>
-              {groups.length > 0 || modifier !== 0 ? (
-                <button type="button" className="glass-button" onClick={() => { setCounts({}); setModifier(0); }}>
-                  Clear
-                </button>
-              ) : null}
-            </div>
+          <div className="roll-drawer-tabs" role="tablist" aria-label="Roll drawer tabs">
+            <button type="button" role="tab" aria-selected={activeTab === "dice"} className={activeTab === "dice" ? "active" : ""} onClick={() => setActiveTab("dice")}>
+              Dice
+            </button>
+            <button type="button" role="tab" aria-selected={activeTab === "combat"} className={activeTab === "combat" ? "active" : ""} onClick={() => setActiveTab("combat")}>
+              Combat
+            </button>
           </div>
 
-          <div className="roll-history">
-            <div className="roll-history-header">
-              <span className="roll-drawer-heading">History</span>
-              {props.history.length > 0 && props.onClearHistory ? (
-                <button type="button" className="glass-button roll-clear-btn" onClick={props.onClearHistory} title="Clear all rolls">
-                  Clear All
-                </button>
-              ) : null}
-            </div>
-            {props.history.length === 0 ? (
-              <p className="roll-history-empty">No rolls yet - click a stat on the sheet or build a pool above.</p>
-            ) : (
-              <ul className="roll-history-list">
-                {props.history.map((entry) => (
-                  <li key={entry.id}>
-                    <div className="roll-history-top">
-                      <span className="roll-history-label">
-                        {entry.label}
-                        {entry.adv ? <em className={`roll-history-badge ${entry.adv.mode}`}>{entry.adv.mode === "advantage" ? "ADV" : "DIS"}</em> : null}
-                        {entry.nat ? <em className={`roll-history-badge nat ${entry.nat}`}>{entry.nat === "crit" ? "NAT 20" : "NAT 1"}</em> : null}
-                      </span>
-                      <strong className="roll-history-total">{entry.total}</strong>
-                    </div>
-                    {entry.adv ? (
-                      <div className="roll-history-dice" aria-label={`d20 rolls ${entry.adv.dice.join(", ")}, kept ${entry.adv.dice[entry.adv.keptIndex]}`}>
-                        {entry.adv.dice.map((d, i) => (
-                          <span key={i} className={`roll-history-die${i === entry.adv!.keptIndex ? " kept" : " dropped"}`}>{d}</span>
-                        ))}
+          {activeTab === "dice" ? (
+            <>
+              <div className="roll-pool">
+                <div className="roll-pool-grid">
+                  {DIE_SIZES.map((sides) => {
+                    const n = counts[sides] ?? 0;
+                    return (
+                      <div className={`roll-pool-die${n > 0 ? " has-dice" : ""}`} key={sides}>
+                        <button type="button" className="roll-pool-add" onClick={() => bump(sides, 1)} title={`Add a d${sides}`}>
+                          d{sides}
+                          {n > 0 ? <em>{n}</em> : null}
+                        </button>
+                        {n > 0 ? (
+                          <button type="button" className="roll-pool-minus" onClick={() => bump(sides, -1)} aria-label={`Remove a d${sides}`}>
+                            -
+                          </button>
+                        ) : null}
                       </div>
-                    ) : null}
-                    <div className="roll-history-detail">
-                      <span>{entry.detail}</span>
-                      <time>{entry.time}</time>
+                    );
+                  })}
+                </div>
+                <div className="roll-mode" role="group" aria-label="d20 roll mode">
+                  {ROLL_MODES.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={`roll-mode-btn${props.rollMode === m.id ? " active" : ""}${m.id !== "normal" ? ` ${m.id}` : ""}`}
+                      aria-pressed={props.rollMode === m.id}
+                      title={m.title}
+                      onClick={() => props.onRollModeChange(m.id)}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                {props.rollMode !== "normal" ? (
+                  <p className="roll-mode-hint">
+                    Next d20 roll uses <strong>{props.rollMode}</strong>.
+                  </p>
+                ) : null}
+                <div className="roll-pool-mod">
+                  <span>Modifier</span>
+                  <button type="button" onClick={() => setModifier((m) => Math.max(-20, m - 1))}>-</button>
+                  <strong>{signed(modifier)}</strong>
+                  <button type="button" onClick={() => setModifier((m) => Math.min(20, m + 1))}>+</button>
+                </div>
+                <div className="roll-pool-actions">
+                  <button type="button" className="gold-button roll-pool-roll" disabled={groups.length === 0} onClick={rollPool}>
+                    Roll {groups.length > 0 ? notation : "dice"}
+                  </button>
+                  {groups.length > 0 || modifier !== 0 ? (
+                    <button type="button" className="glass-button" onClick={() => { setCounts({}); setModifier(0); }}>
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="roll-history">
+                <div className="roll-history-header">
+                  <span className="roll-drawer-heading">History</span>
+                  {props.history.length > 0 && props.onClearHistory ? (
+                    <button type="button" className="glass-button roll-clear-btn" onClick={props.onClearHistory} title="Clear all rolls">
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+                {props.history.length === 0 ? (
+                  <p className="roll-history-empty">No rolls yet - click a stat on the sheet or build a pool above.</p>
+                ) : (
+                  <ul className="roll-history-list">
+                    {props.history.map((entry) => (
+                      <li key={entry.id}>
+                        <div className="roll-history-top">
+                          <span className="roll-history-label">
+                            {entry.label}
+                            {entry.adv ? <em className={`roll-history-badge ${entry.adv.mode}`}>{entry.adv.mode === "advantage" ? "ADV" : "DIS"}</em> : null}
+                            {entry.nat ? <em className={`roll-history-badge nat ${entry.nat}`}>{entry.nat === "crit" ? "NAT 20" : "NAT 1"}</em> : null}
+                          </span>
+                          <strong className="roll-history-total">{entry.total}</strong>
+                        </div>
+                        {entry.adv ? (
+                          <div className="roll-history-dice" aria-label={`d20 rolls ${entry.adv.dice.join(", ")}, kept ${entry.adv.dice[entry.adv.keptIndex]}`}>
+                            {entry.adv.dice.map((d, i) => (
+                              <span key={i} className={`roll-history-die${i === entry.adv!.keptIndex ? " kept" : " dropped"}`}>{d}</span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <div className="roll-history-detail">
+                          <span>{entry.detail}</span>
+                          <time>{entry.time}</time>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="initiative-panel">
+              <div className="initiative-add-row">
+                <input
+                  type="text"
+                  value={combatantName}
+                  onChange={(event) => setCombatantName(event.currentTarget.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
+                  placeholder="Combatant"
+                  maxLength={80}
+                />
+                <input
+                  type="number"
+                  value={combatantInitiative}
+                  onChange={(event) => setCombatantInitiative(Number(event.currentTarget.value))}
+                  onKeyDown={(event) => { if (event.key === "Enter") submitCombatant(); }}
+                  aria-label="Initiative"
+                />
+                <button type="button" className="gold-button" onClick={submitCombatant} disabled={!combatantName.trim()}>
+                  Add
+                </button>
+              </div>
+              <button
+                type="button"
+                className="glass-button initiative-roll-current"
+                onClick={addActiveCharacter}
+                disabled={!props.activeCharacterName || props.activeCharacterInitiative == null}
+              >
+                Add {props.activeCharacterName ?? "current character"} (roll)
+              </button>
+              <div className="initiative-controls">
+                <button type="button" className="gold-button" onClick={nextTurn} disabled={sortedCombatants.length === 0}>
+                  Next turn
+                </button>
+                <strong>Round {initiativeState.round}</strong>
+                <button type="button" className="glass-button" onClick={clearCombat} disabled={sortedCombatants.length === 0}>
+                  <Trash2 size={13} />
+                  Clear combat
+                </button>
+              </div>
+              <div className="initiative-list">
+                {sortedCombatants.length === 0 ? (
+                  <p className="roll-history-empty">No combatants yet.</p>
+                ) : (
+                  sortedCombatants.map((combatant) => (
+                    <div key={combatant.id} className={`initiative-row${combatant.id === currentCombatantId ? " active" : ""}`}>
+                      <span>
+                        <strong>{combatant.name}</strong>
+                        {combatant.isPlayer ? <em>PC</em> : null}
+                      </span>
+                      <b>{combatant.initiative}</b>
+                      <button type="button" onClick={() => removeCombatant(combatant.id)} aria-label={`Remove ${combatant.name}`}>
+                        <X size={14} />
+                      </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
           <button type="button" className="roll-drawer-resize" onPointerDown={startResize} aria-label="Resize dice drawer" title="Resize dice drawer">
             <GripHorizontal size={13} aria-hidden="true" />

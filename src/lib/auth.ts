@@ -47,12 +47,6 @@ function getCookieValue(request: Request, name: string): string | null {
   return null;
 }
 
-function getBearerToken(request: Request): string | null {
-  const header = request.headers.get("authorization")?.trim();
-  if (!header?.startsWith("Bearer ")) return null;
-  return header.slice(7);
-}
-
 export function sessionCookieOptions() {
   return {
     httpOnly: true,
@@ -63,9 +57,9 @@ export function sessionCookieOptions() {
   };
 }
 
-/** Extract and verify the user ID from the httpOnly session cookie, with bearer fallback for legacy clients. */
+/** Extract and verify the user ID from the httpOnly session cookie. */
 export async function authenticateRequest(request: Request): Promise<string> {
-  const token = getCookieValue(request, SESSION_COOKIE_NAME) ?? getBearerToken(request);
+  const token = getCookieValue(request, SESSION_COOKIE_NAME);
   if (!token) {
     throw new AuthError("Missing session token.", 401);
   }

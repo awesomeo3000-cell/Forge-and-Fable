@@ -74,6 +74,7 @@ const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "spells", label: "Spells" },
   { id: "inventory", label: "Inventory" },
 ];
+const TOUR_STORAGE_KEY = "forge-and-fable-tour-dismissed";
 
 function armorProficienciesFromFeatures(features: { name: string; description: string }[]) {
   const proficiencies = new Set<string>();
@@ -181,10 +182,11 @@ export default memo(function HeroSheet(props: {
 
   const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
   const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0) + effChecks;
+  const skillBonusForPassive = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0);
 
-  const passiveInsight = 10 + skillBonus(SKILLS.find((s) => s.id === "insight")!);
-  const passiveInvestigation = 10 + skillBonus(SKILLS.find((s) => s.id === "investigation")!);
-  const passivePerception = 10 + skillBonus(SKILLS.find((s) => s.id === "perception")!);
+  const passiveInsight = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "insight")!);
+  const passiveInvestigation = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "investigation")!);
+  const passivePerception = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "perception")!);
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
   const casterType = heroClass.casterType ?? "none";
@@ -214,11 +216,21 @@ export default memo(function HeroSheet(props: {
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
+  const [tourDismissed, setTourDismissed] = useState(true);
 
   const toggleSkillProficiency = (skillId: string) => {
     if (isBackgroundSkill(skillId)) return; // background-granted — cannot toggle
     const cur = props.character.skillProficiencies ?? [];
     props.onUpdate({ skillProficiencies: cur.includes(skillId) ? cur.filter((s) => s !== skillId) : [...cur, skillId] });
+  };
+
+  useEffect(() => {
+    setTourDismissed(window.localStorage.getItem(TOUR_STORAGE_KEY) === "true");
+  }, []);
+
+  const dismissTour = () => {
+    window.localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    setTourDismissed(true);
   };
   const toggleSaveProficiency = (key: AbilityKey) => {
     const cur = props.character.savingThrowProficiencies ?? proficientSaves;
@@ -1529,6 +1541,18 @@ export default memo(function HeroSheet(props: {
         <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>
         {editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} />Reset</button> : null}
       </div>
+      {!tourDismissed ? (
+        <div className="cs-tour-card">
+          <div>
+            <span className="cs-section-eyebrow">First look</span>
+            <p>Click stats to roll.</p>
+            <p>Adv/Dis lives in the dice drawer.</p>
+            <p>Effects handles Bless and +1 weapons.</p>
+            <p>Skin themes the sheet; Layout rearranges sections.</p>
+          </div>
+          <button type="button" className="cs-glass-btn" onClick={dismissTour}>Got it</button>
+        </div>
+      ) : null}
       {/* Full-width banner: identity + vitals (pinned, not draggable). */}
       <div className="cs-sheet-top">
         {PINNED_TOP.map((id) => (

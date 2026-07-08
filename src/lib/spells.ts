@@ -1,9 +1,27 @@
-import raw from "@/data/spells.json";
 import type { SpellData } from "@/types/game";
+import { fetchSpellCatalog } from "@/lib/spellsClient";
 
-export const ALL_SPELLS: SpellData[] = raw as SpellData[];
+export const ALL_SPELLS: SpellData[] = [];
 
-export const SPELLS_BY_ID = new Map(ALL_SPELLS.map((s) => [s.id, s]));
+export const SPELLS_BY_ID = new Map<string, SpellData>();
+
+let loaded = false;
+
+export function hydrateSpells(spells: SpellData[]) {
+  ALL_SPELLS.splice(0, ALL_SPELLS.length, ...spells);
+  SPELLS_BY_ID.clear();
+  for (const spell of ALL_SPELLS) {
+    SPELLS_BY_ID.set(spell.id, spell);
+  }
+  loaded = true;
+}
+
+export async function loadSpells(): Promise<SpellData[]> {
+  if (loaded) return ALL_SPELLS;
+  const spells = await fetchSpellCatalog();
+  hydrateSpells(spells);
+  return ALL_SPELLS;
+}
 
 export function getSpell(id: string): SpellData | undefined {
   return SPELLS_BY_ID.get(id);

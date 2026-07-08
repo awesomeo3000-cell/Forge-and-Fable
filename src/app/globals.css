@@ -7399,3 +7399,198 @@ button.dj-card {
   display: flex;
   gap: 8px;
 }
+
+/* R15: Roll drawer tabs, combat tracker, and first-run sheet tour. */
+.roll-drawer-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.roll-drawer-tabs button {
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, var(--roll-ink, #e8dcc2) 18%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--roll-paper, #15110d) 86%, var(--roll-ink, #e8dcc2) 10%);
+  color: color-mix(in srgb, var(--roll-ink, #e8dcc2) 72%, transparent);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+}
+
+.roll-drawer-tabs button.active {
+  border-color: color-mix(in srgb, var(--roll-accent, #c9a25a) 68%, #fff 8%);
+  background: color-mix(in srgb, var(--roll-accent, #c9a25a) 24%, var(--roll-paper, #15110d));
+  color: var(--roll-ink, #e8dcc2);
+}
+
+.roll-history-header,
+.initiative-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roll-clear-btn {
+  padding: 4px 8px;
+  font-size: 0.68rem;
+}
+
+.initiative-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.initiative-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px auto;
+  gap: 6px;
+}
+
+.initiative-add-row input {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--roll-ink, #e8dcc2) 18%, transparent);
+  border-radius: 8px;
+  padding: 7px 8px;
+  background: color-mix(in srgb, var(--roll-paper, #15110d) 86%, var(--roll-ink, #e8dcc2) 10%);
+  color: var(--roll-ink, #e8dcc2);
+  font-family: var(--roll-font, var(--font-body));
+}
+
+.initiative-add-row .gold-button,
+.initiative-controls .gold-button,
+.initiative-roll-current {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.72rem;
+}
+
+.initiative-roll-current {
+  width: 100%;
+  justify-content: center;
+}
+
+.initiative-controls strong {
+  flex: 0 0 auto;
+  color: var(--roll-accent, #c9a25a);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.initiative-controls .glass-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 9px;
+  font-size: 0.68rem;
+}
+
+.initiative-list {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.initiative-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 24px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid color-mix(in srgb, var(--roll-ink, #e8dcc2) 13%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--roll-paper, #15110d) 88%, var(--roll-ink, #e8dcc2) 12%);
+}
+
+.initiative-row.active {
+  border-color: color-mix(in srgb, var(--roll-accent, #c9a25a) 72%, #fff 8%);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--roll-accent, #c9a25a) 24%, transparent), transparent 62%),
+    color-mix(in srgb, var(--roll-paper, #15110d) 88%, var(--roll-ink, #e8dcc2) 12%);
+}
+
+.initiative-row span {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.initiative-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.initiative-row em {
+  color: var(--roll-accent, #c9a25a);
+  font-family: var(--font-label);
+  font-size: 0.58rem;
+  font-style: normal;
+  letter-spacing: 0.07em;
+}
+
+.initiative-row b {
+  color: var(--roll-accent, #c9a25a);
+  font-size: 1rem;
+}
+
+.initiative-row button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid color-mix(in srgb, var(--roll-ink, #e8dcc2) 16%, transparent);
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in srgb, var(--roll-ink, #e8dcc2) 72%, transparent);
+  cursor: pointer;
+}
+
+.initiative-row button:hover {
+  border-color: var(--roll-accent, #c9a25a);
+  color: var(--roll-ink, #e8dcc2);
+}
+
+.cs-tour-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 66%),
+    var(--paper-raised);
+  color: var(--ink);
+}
+
+.cs-tour-card p {
+  margin: 3px 0;
+  color: var(--ink-2);
+  font-size: 0.82em;
+  line-height: 1.35;
+}
+
+.cs-tour-card .cs-section-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cs-tour-card .cs-glass-btn {
+  flex: 0 0 auto;
+}

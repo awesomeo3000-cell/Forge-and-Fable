@@ -30,6 +30,7 @@ import type {
 } from "@/types/game";
 import {
   abilityKeys,
+  abilityModifier,
   applyRaceBonuses,
   characterPayload,
   createInitialDraft,
@@ -50,13 +51,14 @@ import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import LevelUpModal from "@/components/LevelUpModal";
-import { learnsIndividualSpells, spellsForClass } from "@/lib/spells";
+import { learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
+import { effectTotal } from "@/lib/effects";
 
 function authHeaders(): Record<string, string> {
   return {
@@ -145,6 +147,7 @@ export default function ForgeAndFableApp() {
   const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
   const [rollMode, setRollMode] = useState<RollMode>("normal");
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
+  const [spellsReady, setSpellsReady] = useState(false);
 
   const recordHistory = (
     label: string,
@@ -164,21 +167,26 @@ export default function ForgeAndFableApp() {
         ...(nat ? { nat } : {}),
       },
       ...prev,
-    ].slice(0, 30));
+    ].slice(0, 100));
   };
 
   const clearHistory = () => setRollHistory([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIntroDone(true), SPLASH_DURATION_MS);
-    fetch("/api/ruleset")
-      .then((response) => response.json())
-      .then((data: Ruleset) => {
+    Promise.all([
+      fetch("/api/ruleset").then((response) => {
+        if (!response.ok) throw new Error("Ruleset failed to load.");
+        return response.json() as Promise<Ruleset>;
+      }),
+      loadSpells(),
+    ])
+      .then(([data]) => {
         setRuleset(data);
         setDraft(createInitialDraft(data) as DraftCharacter);
+        setSpellsReady(true);
       })
-      .catch(() => setStatus("Ruleset failed to load."))
-      .catch(() => {}); // already handled above
+      .catch(() => setStatus("Ruleset or spell catalog failed to load."));
 
     const storedUser = window.localStorage.getItem("forge-and-fable-user");
     if (storedUser) {
@@ -258,6 +266,18 @@ export default function ForgeAndFableApp() {
     if (!selected) return null;
     return computeFeatBonuses(selected.asiChoices);
   }, [selected]);
+  const selectedInitiative = useMemo(() => {
+    if (!selected || !selectedFinalAbilities) return undefined;
+    const ruleInit = selected.customRules
+      .filter((rule) => rule.type === "initiative")
+      .reduce((sum, rule) => sum + rule.value, 0);
+    return (
+      abilityModifier(selectedFinalAbilities.dexterity) +
+      ruleInit +
+      (selectedFeatBonuses?.initiativeBonus ?? 0) +
+      effectTotal(selected.effects, "initiative")
+    );
+  }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
 
   const draftFinalAbilities = useMemo(() => {
     if (!draft || !ruleset) {
@@ -828,7 +848,12 @@ export default function ForgeAndFableApp() {
 
   /** Roll a mixed pool (e.g. 2d6 + 1d20 + mod) as one flight of dice and one
       history entry. Used by the roll drawer's ad-hoc pool builder. */
-  function pushPool(groups: { sides: number; count: number }[], modifier: number, label: string) {
+  function pushPool(
+    groups: { sides: number; count: number }[],
+    modifier: number,
+    label: string,
+    onResult?: (outcome: RollOutcome) => void,
+  ) {
     const cleaned = groups.filter((g) => g.count > 0);
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
     const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20);
@@ -918,6 +943,14 @@ export default function ForgeAndFableApp() {
         : undefined;
       setConsoleLog((prev) => [`${label} -> ${detail}`, ...prev].slice(0, 20));
       recordHistory(label, detail, total, histModeData, nat);
+      onResult?.({
+        rolls: [
+          ...d20Pairs.map((pair) => pair.keptValue),
+          ...rolledDice.map((die) => die.value),
+        ],
+        modifier,
+        total,
+      });
       setFlyingDice((prev) => [...prev, ...newDice]);
       setRollMode("normal");
       return;
@@ -959,6 +992,11 @@ export default function ForgeAndFableApp() {
     });
     setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
     recordHistory(label, detail, total);
+    onResult?.({
+      rolls: rolledDice.map((die) => die.value),
+      modifier,
+      total,
+    });
     setFlyingDice((prev) => [...prev, ...newDice]);
   }
 
@@ -1120,7 +1158,7 @@ export default function ForgeAndFableApp() {
     nextLog("Command not recognized");
   }
 
-  if (!introDone || !ruleset || !draft) {
+    if (!introDone || !ruleset || !draft || !spellsReady) {
     return (
       <>
         <SplashScreen />
@@ -1149,7 +1187,16 @@ export default function ForgeAndFableApp() {
   return (
     <>
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} accentHex={diceAccent} fontStack={diceFont} />
-    <RollDrawer history={rollHistory} theme={selected?.theme ?? null} rollMode={rollMode} onRollModeChange={setRollMode} onRollPool={pushPool} onClearHistory={clearHistory} />
+    <RollDrawer
+      history={rollHistory}
+      theme={selected?.theme ?? null}
+      rollMode={rollMode}
+      activeCharacterName={selected?.name}
+      activeCharacterInitiative={selectedInitiative}
+      onRollModeChange={setRollMode}
+      onRollPool={pushPool}
+      onClearHistory={clearHistory}
+    />
     {creationSeq && draft && creationSeqFinalAbilities ? (() => {
       const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
       if (!heroClass) return null;
