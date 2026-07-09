@@ -25,6 +25,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Early size check via content-length (if available)
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength && contentLength > MAX_PDF_SIZE + 1024 * 1024) {
+      return NextResponse.json(
+        { error: `PDF too large (max ${MAX_PDF_SIZE / 1024 / 1024} MB).` },
+        { status: 413 },
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -32,6 +41,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "No file provided. Send a 'file' field with the PDF." },
         { status: 400 },
+      );
+    }
+
+    // Check File.size before reading into memory
+    if (file.size > MAX_PDF_SIZE) {
+      return NextResponse.json(
+        { error: `PDF too large (max ${MAX_PDF_SIZE / 1024 / 1024} MB).` },
+        { status: 413 },
       );
     }
 
@@ -54,11 +71,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Size check
+    // Redundant size check after reading (defense in depth)
     if (buffer.length > MAX_PDF_SIZE) {
       return NextResponse.json(
         { error: `PDF too large (max ${MAX_PDF_SIZE / 1024 / 1024} MB).` },
-        { status: 400 },
+        { status: 413 },
       );
     }
 

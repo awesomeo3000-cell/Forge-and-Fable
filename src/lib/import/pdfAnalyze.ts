@@ -99,6 +99,12 @@ function detectSourceKind(
 /**
  * Main entry point: analyze a PDF buffer and return an ImportDraft.
  *
+ * TODO: Future enhancement — expose uncertain candidates (unstructured text
+ * fragments that the parser couldn't categorize) as a separate list in the
+ * ImportDraft, so the review screen can let players assign them to stats,
+ * spells, inventory, features, or ignore them. Currently all extracted data
+ * is mapped directly into structured fields.
+ *
  * @param buffer - Raw PDF file bytes
  * @param fileName - Original filename (for source metadata)
  */

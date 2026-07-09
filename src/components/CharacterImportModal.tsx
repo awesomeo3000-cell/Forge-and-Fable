@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import type { ImportDraft, ImportField, ImportConfidence } from "@/lib/import/pdfTypes";
 import type { AbilityKey } from "@/types/game";
 import { abilityLabels } from "@/lib/utils";
+import { analyzePdf, createCharacterFromPdfDraft } from "@/lib/client/importApi";
 
 // ── Types ──
 
@@ -235,25 +236,11 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
     setBusy(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      const res = await fetch("/api/import/pdf/analyze", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to analyze PDF.");
-        setBusy(false);
-        return;
-      }
-
-      setDraft(data.draft);
+      const draft = await analyzePdf(selectedFile);
+      setDraft(draft);
       setStep("review");
-    } catch {
-      setError("Network error — please try again.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error — please try again.");
     }
     setBusy(false);
   };
@@ -266,19 +253,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
     setError("");
 
     try {
-      const res = await fetch("/api/import/pdf/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draft }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to create character.");
-        setBusy(false);
-        return;
-      }
-
+      await createCharacterFromPdfDraft(draft);
       setStep("creating");
       onCreated();
     } catch {
@@ -402,6 +377,32 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
                   {draft.identity.name.value ? ` named ${draft.identity.name.value}` : ""}.
                 </p>
               )}
+              {/* Confidence summary: count confirmed / needs-review / missing fields */}
+              {(() => {
+                const collect = (obj: Record<string, ImportField<unknown>>) => Object.values(obj);
+                const allFields: ImportField<unknown>[] = [
+                  ...collect(draft.identity),
+                  ...collect(draft.abilities),
+                  ...collect(draft.vitals),
+                  ...collect(draft.proficiencies),
+                  draft.notes.features,
+                  draft.notes.backstory,
+                  draft.notes.personality,
+                  draft.notes.appearance,
+                ];
+                const confirmed = allFields.filter((f) => f?.confidence === "confirmed").length;
+                const review = allFields.filter((f) => f?.confidence === "review").length;
+                const missing = allFields.filter((f) => f?.confidence === "missing").length;
+                const total = confirmed + review + missing;
+                if (total === 0) return null;
+                return (
+                  <div className="import-confidence-summary" style={{ marginTop: 6, display: "flex", gap: 10, fontSize: "0.82rem" }}>
+                    <span title="High confidence" style={{ color: "var(--ok)" }}>&#x2713; {confirmed} confirmed</span>
+                    <span title="Needs review" style={{ color: "var(--warn)" }}>&#x26A0; {review} need review</span>
+                    {missing > 0 && <span title="Not found" style={{ color: "var(--ink-faint)" }}>? {missing} missing</span>}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Identity */}

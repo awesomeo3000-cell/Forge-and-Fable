@@ -160,7 +160,9 @@ function calculateMemberSummary(
   let characterJson: Character | null = null;
 
   if (characterId) {
-    const charRow = getDb().prepare("SELECT data FROM characters WHERE id = ?").get(characterId) as { data: string } | undefined;
+    const charRow = getDb()
+      .prepare("SELECT data FROM characters WHERE id = ? AND user_id = ?")
+      .get(characterId, userId) as { data: string } | undefined;
     if (charRow) characterJson = parseCharacter(charRow.data);
   }
 
@@ -507,5 +509,16 @@ export function leaveCampaign(campaignId: string, userId: string): void {
 
 export function switchCampaignCharacter(campaignId: string, userId: string, characterId: string): void {
   requireMembership(campaignId, userId);
-  getDb().prepare("UPDATE campaign_members SET character_id = ? WHERE campaign_id = ? AND user_id = ?").run(characterId, campaignId, userId);
+
+  const charRow = getDb()
+    .prepare("SELECT id FROM characters WHERE id = ? AND user_id = ?")
+    .get(characterId, userId) as { id: string } | undefined;
+
+  if (!charRow) {
+    throw new Error("Character not found or does not belong to you.");
+  }
+
+  getDb()
+    .prepare("UPDATE campaign_members SET character_id = ? WHERE campaign_id = ? AND user_id = ?")
+    .run(characterId, campaignId, userId);
 }

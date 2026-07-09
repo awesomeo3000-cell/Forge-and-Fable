@@ -17,6 +17,22 @@ function assertArray(val: unknown, name: string): asserts val is unknown[] {
   if (!Array.isArray(val)) throw new Error(`"${name}" must be an array.`);
 }
 
+function assertPlainObjectOrString(value: unknown, label: string, maxStringLength = 160, maxObjectJsonLength = 4000): void {
+  if (typeof value === "string") {
+    assertString(value, label, maxStringLength);
+    return;
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`"${label}" must be an object or string.`);
+  }
+
+  const json = JSON.stringify(value);
+  if (json.length > maxObjectJsonLength) {
+    throw new Error(`"${label}" is too large.`);
+  }
+}
+
 /** Fields that may be updated via PATCH or set at creation. id, userId, and createdAt are immutable. */
 export const ALLOWED_PATCH_FIELDS = new Set([
   "name", "level", "alignment", "background",
@@ -79,11 +95,38 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         }
         break;
       case "inventory":
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 500) throw new Error(`"${key}" must have at most 500 entries.`);
+          for (const entry of val) assertPlainObjectOrString(entry, `${key}[]`);
+        }
+        break;
       case "spellsKnown":
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 300) throw new Error(`"${key}" must have at most 300 entries.`);
+          for (const entry of val) assertString(entry, `${key}[]`, 96);
+        }
+        break;
       case "skillProficiencies":
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 64) throw new Error(`"${key}" must have at most 64 entries.`);
+          for (const entry of val) assertString(entry, `${key}[]`, 96);
+        }
+        break;
       case "skillExpertise":
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 64) throw new Error(`"${key}" must have at most 64 entries.`);
+          for (const entry of val) assertString(entry, `${key}[]`, 96);
+        }
+        break;
       case "preparedSpells":
-        if (val !== undefined) assertArray(val, key);
+        if (val !== undefined) {
+          assertArray(val, key);
+          for (const entry of val) assertString(entry, `${key}[]`, 128);
+        }
         break;
       case "toolProficiencies":
       case "languages":
@@ -133,10 +176,18 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         }
         break;
       case "customRules":
-        if (val !== undefined) assertArray(val, "customRules");
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 100) throw new Error(`"${key}" must have at most 100 entries.`);
+          for (const entry of val) assertPlainObjectOrString(entry, `${key}[]`, 500, 6000);
+        }
         break;
       case "hpRolls":
-        if (val !== undefined) assertArray(val, "hpRolls");
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 20) throw new Error(`"${key}" must have at most 20 entries.`);
+          for (const roll of val) assertInteger(roll, `${key}[]`, 1, 30);
+        }
         break;
       case "hitDiceSpent":
         if (val !== undefined) assertInteger(val, "hitDiceSpent", 0, 20);

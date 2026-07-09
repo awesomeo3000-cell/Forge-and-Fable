@@ -58,6 +58,8 @@ import { cantripsKnownAt, learnsIndividualSpells, loadSpells, spellsForClass } f
 import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
+import { SaveStatusBadge, type SaveStatus } from "@/components/SaveStatusBadge";
+import { postCampaignEvent as postCampaignEventApi, updateCampaignInitiative as updateCampaignInitiativeApi, submitCampaignInitiativeRoll as submitCampaignInitiativeRollApi, postCampaignRoll } from "@/lib/client/campaignApi";
 import { FONT_STACKS } from "@/lib/skins";
 import { ordinalLevel } from "@/lib/ledgerCopy";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
@@ -178,6 +180,7 @@ export default function ForgeAndFableApp() {
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
   const [spellsReady, setSpellsReady] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const sessionSnapshotCreated = useRef(false);
   const campaignCursorRef = useRef<Record<string, string>>({});
   const campaignSyncFailRef = useRef<number>(0);
@@ -207,11 +210,7 @@ export default function ForgeAndFableApp() {
     // Roll sharing: fire-and-forget POST to active campaign
     const campaignId = activeCampaignId;
     if (campaignId && selected?.name) {
-      fetch(`/api/campaigns/${campaignId}/rolls`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ label, detail, total, characterName: selected.name }),
-        }).catch(() => { /* fire-and-forget — errors logged to console only */ });
+      postCampaignRoll(campaignId, label, detail, total, selected.name);
     }
   };
 
@@ -953,6 +952,8 @@ export default function ForgeAndFableApp() {
       return;
     }
 
+    setSaveStatus("saving");
+
     // Snapshot pre-patch state for potential revert
     let prePatchChar: Character | undefined;
     setCharacters((current) => {
@@ -974,6 +975,8 @@ export default function ForgeAndFableApp() {
       if (response.status === 401) {
         logOut();
         setStatus("Session expired — please log in again.");
+        setSaveStatus("error");
+        window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
         // Revert optimistic update
         if (prePatchChar) {
           setCharacters((current) =>
@@ -985,6 +988,8 @@ export default function ForgeAndFableApp() {
 
       if (!response.ok || !data.character) {
         setStatus(data.error ?? "Update failed.");
+        setSaveStatus("error");
+        window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
         // Revert optimistic update on failure
         if (prePatchChar) {
           setCharacters((current) =>
@@ -1000,8 +1005,12 @@ export default function ForgeAndFableApp() {
           character.id === data.character!.id ? data.character! : character,
         ),
       );
+      setSaveStatus("saved");
+      window.setTimeout(() => { setSaveStatus((current) => current === "saved" ? "idle" : current); }, 1800);
     } catch {
       setStatus("Connection lost — changes not saved.");
+      setSaveStatus("error");
+      window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
       // Revert optimistic update on network failure
       if (prePatchChar) {
         setCharacters((current) =>
@@ -1056,6 +1065,18 @@ export default function ForgeAndFableApp() {
       if ((s.character as Record<string, unknown>).snapshots) delete (s.character as Record<string, unknown>).snapshots;
     }
     return capped;
+  }
+
+  function formatSnapshotTime(value: string | number | Date): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Unknown time";
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
   }
 
   function createSnapshot(label: string) {
@@ -1167,21 +1188,12 @@ export default function ForgeAndFableApp() {
   async function postCampaignEvent(type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) {
     if (!activeCampaignId) return false;
     try {
-      const response = await fetch(`/api/campaigns/${activeCampaignId}/events`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ type, payload, targetUserId: targetUserId ?? null }),
-      });
-      const data = await response.json().catch(() => ({})) as { event?: CampaignEvent; error?: string };
-      if (!response.ok || !data.event) {
-        setStatus(data.error ?? "Campaign event could not be sent.");
-        return false;
-      }
-      rememberCampaignEvents([data.event]);
+      const event = await postCampaignEventApi(activeCampaignId, type, payload, targetUserId);
+      rememberCampaignEvents([event]);
       setStatus("Campaign event sent");
       return true;
-    } catch {
-      setStatus("Campaign event could not be sent.");
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Campaign event could not be sent.");
       return false;
     }
   }
@@ -1189,43 +1201,25 @@ export default function ForgeAndFableApp() {
   async function updateCampaignInitiative(data: InitiativeState, version: number) {
     if (!activeCampaignId) return;
     try {
-      const response = await fetch(`/api/campaigns/${activeCampaignId}/initiative`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({ data, version }),
-      });
-      const payload = await response.json().catch(() => ({})) as { initiative?: CampaignSyncPayload["initiative"]; error?: string };
-      if (response.status === 409) {
+      const result = await updateCampaignInitiativeApi(activeCampaignId, data, version);
+      if (result.conflict) {
         setStatus("Initiative changed. Refreshed from the campaign.");
         return;
       }
-      if (!response.ok || !payload.initiative) {
-        setStatus(payload.error ?? "Initiative could not be updated.");
-        return;
-      }
-      setCampaignSync((current) => current ? { ...current, initiative: payload.initiative! } : current);
-    } catch {
-      setStatus("Initiative could not be updated.");
+      setCampaignSync((current) => current ? { ...current, initiative: result.initiative } : current);
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Initiative could not be updated.");
     }
   }
 
   async function submitCampaignInitiativeRoll(initiative: number) {
     if (!activeCampaignId || !selected) return;
     try {
-      const response = await fetch(`/api/campaigns/${activeCampaignId}/initiative/roll`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ initiative, characterName: selected.name }),
-      });
-      const payload = await response.json().catch(() => ({})) as { initiative?: CampaignSyncPayload["initiative"]; error?: string };
-      if (!response.ok || !payload.initiative) {
-        setStatus(payload.error ?? "Initiative roll could not be shared.");
-        return;
-      }
-      setCampaignSync((current) => current ? { ...current, initiative: payload.initiative! } : current);
+      const result = await submitCampaignInitiativeRollApi(activeCampaignId, initiative, selected.name);
+      setCampaignSync((current) => current ? { ...current, initiative: result } : current);
       setStatus("Initiative shared with campaign");
-    } catch {
-      setStatus("Initiative roll could not be shared.");
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Initiative roll could not be shared.");
     }
   }
 
@@ -1871,6 +1865,7 @@ export default function ForgeAndFableApp() {
         </div>
         <div className="builder-actions">
           {status ? <span className="system-status">{status}</span> : null}
+          <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
           <button className="glass-icon ink-action" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
             <Swords size={18} />
@@ -2032,26 +2027,46 @@ export default function ForgeAndFableApp() {
               {(selected.snapshots ?? []).length === 0 ? (
                 <p className="cs-muted">No snapshots yet. Snapshots are auto-created on session load, level-up, and long rest.</p>
               ) : (
-                <div className="campaign-list">
-                  {(selected.snapshots ?? []).map((snap) => (
-                    <div key={snap.id} className="campaign-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <strong>{snap.label}</strong>
-                        <small style={{ display: "block", color: "var(--ink-faint)" }}>
-                          {new Date(snap.createdAt).toLocaleString()} · Lv {snap.character.level} · HP {snap.character.currentHp}/{snap.character.maxHp}
-                        </small>
-                      </div>
-                      <button
-                        className="glass-button"
-                        type="button"
-                        onClick={() => restoreSnapshot(snap)}
-                        title="Restore this snapshot"
-                      >
-                        Restore
-                      </button>
+                <>
+                  <div className="campaign-card" style={{ borderColor: "var(--gold)", marginBottom: 12 }}>
+                    <div style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--gold)", marginBottom: 4 }}>
+                      Last safe point
                     </div>
-                  ))}
-                </div>
+                    <strong>{selected.snapshots![0].label}</strong>
+                    <small style={{ display: "block", color: "var(--ink-faint)" }}>
+                      {formatSnapshotTime(selected.snapshots![0].createdAt)} · Lv {selected.snapshots![0].character.level} · HP {selected.snapshots![0].character.currentHp}/{selected.snapshots![0].character.maxHp}
+                    </small>
+                    <button
+                      className="glass-button"
+                      type="button"
+                      onClick={() => restoreSnapshot(selected.snapshots![0])}
+                      title="Restore last safe point"
+                      style={{ marginTop: 6 }}
+                    >
+                      Restore
+                    </button>
+                  </div>
+                  <div className="campaign-list">
+                    {selected.snapshots!.slice(1).map((snap) => (
+                      <div key={snap.id} className="campaign-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <strong>{snap.label}</strong>
+                          <small style={{ display: "block", color: "var(--ink-faint)" }}>
+                            {new Date(snap.createdAt).toLocaleString()} · Lv {snap.character.level} · HP {snap.character.currentHp}/{snap.character.maxHp}
+                          </small>
+                        </div>
+                        <button
+                          className="glass-button"
+                          type="button"
+                          onClick={() => restoreSnapshot(snap)}
+                          title="Restore this snapshot"
+                        >
+                          Restore
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </section>
