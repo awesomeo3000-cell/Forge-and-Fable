@@ -37,6 +37,22 @@ rounds UP (Tasha's): 2 first-level slots at level 1.
 warlock); wizard spellbooks never forget. The swap UI and its application in
 `finish()` are now gated on `classId !== "wizard"`.
 
+## 4. (Same-day follow-up) Expertise step unfillable in the creation sequence
+The (undocumented) expertise feature added earlier today rendered "Choose 0
+skills" with a disabled Continue when a bard was CREATED at level 3+ — a
+hard dead-end. Two causes:
+- The step gated on the class's raw pick count, not the achievable target, so
+  it appeared even with zero eligible skills. Now `hasExpertise` derives from
+  `expertiseTarget` — no eligible skills means no step.
+- The creation-sequence modal received `creationSeq.soFar`, which carries no
+  `skillProficiencies`/`background`, so nothing was ever eligible. The call
+  site now passes both from the draft.
+Also: step completion is strict (`picked >= target`), matching the new
+spells-step rule. Verified with 10 source-extracted assertions: bard L3
+bare → skipped; bard L3 with 2 skills + Sage → target 2, eligible includes
+background grants; L10 re-pick excludes existing expertise; rogue L1/L6
+targets 2/1; fighter and off-level bard get no step.
+
 ## Verification
 - `npm run build` clean.
 - 25-assertion unit run against the live source (extracted, not re-typed):

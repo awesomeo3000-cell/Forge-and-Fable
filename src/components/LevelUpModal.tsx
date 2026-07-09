@@ -67,13 +67,16 @@ export default memo(function LevelUpModal({
   // Expertise: Rogue gains at 1 (2 picks) and 6 (1 pick); Bard at 3 (2 picks) and 10 (1 pick).
   const EXPERTISE_COUNTS: Record<string, Record<number, number>> = { rogue: { 1: 2, 6: 1 }, bard: { 3: 2, 10: 1 } };
   const expertisePickCount = EXPERTISE_COUNTS[classId]?.[newLevel] ?? 0;
-  const hasExpertise = expertisePickCount > 0;
   const bgSkillIds = BACKGROUND_SKILLS[character.background ?? ""] ?? [];
   const proficientSkillIds = [...(character.skillProficiencies ?? []), ...bgSkillIds];
   const existingExpertise = new Set(character.skillExpertise ?? []);
   // Eligible = proficient but NOT yet expert
   const expertiseEligible = SKILLS.filter((s) => proficientSkillIds.includes(s.id) && !existingExpertise.has(s.id));
   const expertiseTarget = Math.min(expertisePickCount, expertiseEligible.length);
+  // Gate on the TARGET, not the raw pick count — if no proficient skill is
+  // eligible (or the caller didn't provide proficiencies), skip the step
+  // instead of rendering an unfillable "Choose 0 skills".
+  const hasExpertise = expertiseTarget > 0;
 
   // Spell learning: known casters (bard, ranger, sorcerer, warlock) and the
   // wizard's spellbook learn a FIXED number of leveled spells per level, per
@@ -168,7 +171,7 @@ export default memo(function LevelUpModal({
     switch (s) {
       case "hp": return hitPointType === "manual" ? manualHp > 0 : hpRolled;
       case "subclass": return pickedSubclass !== "";
-      case "expertise": return pickedExpertise.length > 0 && pickedExpertise.length <= expertiseTarget;
+      case "expertise": return pickedExpertise.length >= expertiseTarget;
       case "asi": {
         if (pickedFeat === "") return false;
         if (pickedFeat === "asi") return Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2;

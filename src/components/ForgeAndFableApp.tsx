@@ -1767,7 +1767,13 @@ export default function ForgeAndFableApp() {
       return (
         <LevelUpModal
           key={`create-${creationSeq.index}`}
-          character={creationSeq.soFar}
+          character={{
+            ...creationSeq.soFar,
+            // The modal derives expertise eligibility from proficiencies and
+            // background; soFar doesn't carry them — the draft does.
+            skillProficiencies: draft.skillProficiencies,
+            background: draft.background,
+          }}
           newLevel={targetLevel}
           finalAbilities={creationSeqFinalAbilities}
           classId={heroClass.id}
