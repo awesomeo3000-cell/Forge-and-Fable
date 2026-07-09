@@ -472,7 +472,16 @@ export default memo(function CampaignPanel({
 
                 {visibleEvents.length > 0 ? (
                   <div className="campaign-events">
-                    <h3><Bell size={14} /> Pending</h3>
+                    <div className="campaign-events-header">
+                      <h3><Bell size={14} /> Notifications</h3>
+                      <button
+                        className="glass-button"
+                        type="button"
+                        onClick={() => { for (const event of visibleEvents) onResolveEvent(event.id); }}
+                      >
+                        Clear all
+                      </button>
+                    </div>
                     {visibleEvents.map((event) => (
                       <div key={event.id} className="campaign-event-card">
                         <strong>{eventTitle(event)}</strong>

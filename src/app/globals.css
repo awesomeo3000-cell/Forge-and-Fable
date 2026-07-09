@@ -8299,6 +8299,22 @@ button.dj-card {
   letter-spacing: 0.06em;
 }
 
+.campaign-events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.campaign-events-header h3 {
+  margin: 0;
+}
+
+.campaign-events-header .glass-button {
+  padding: 3px 9px;
+  font-size: 0.68rem;
+}
+
 .campaign-event-card {
   display: grid;
   gap: 6px;
@@ -8464,23 +8480,24 @@ button.dj-card {
 /* ── Campaign push toasts (themed via --toast-* from the active character) ── */
 .ff-toast-stack {
   position: fixed;
-  bottom: 20px;
+  top: 100px;
   left: 20px;
   z-index: 240;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 340px;
+  gap: 10px;
+  max-width: 440px;
 }
 .ff-toast {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 11px 14px;
+  min-width: 0;
+  gap: 4px;
+  padding: 16px 20px;
   border: 1px solid color-mix(in srgb, var(--toast-ink, #e8dcc2) 25%, transparent);
-  border-left: 4px solid var(--toast-accent, #c9a25a);
-  border-radius: 8px;
+  border-left: 5px solid var(--toast-accent, #c9a25a);
+  border-radius: 10px;
   background: var(--toast-paper, #15110d);
   color: var(--toast-ink, #e8dcc2);
   font-family: var(--toast-font, var(--font-body));
@@ -8489,14 +8506,20 @@ button.dj-card {
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
   animation: ff-toast-in 220ms ease-out;
 }
-.ff-toast strong { font-size: 0.92rem; }
-.ff-toast span { font-size: 0.76rem; opacity: 0.75; }
+.ff-toast strong,
+.ff-toast span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.ff-toast strong { font-size: 1.15rem; }
+.ff-toast span { font-size: 0.9rem; opacity: 0.75; }
 .ff-toast-announce { border-left-color: var(--toast-accent, #c9a25a); }
 .ff-toast-announce strong::before { content: "✦ "; color: var(--toast-accent, #c9a25a); }
 .ff-toast-turn {
   background: color-mix(in srgb, var(--toast-accent, #c9a25a) 18%, var(--toast-paper, #15110d));
 }
-.ff-toast-turn strong { font-size: 1.05rem; }
+.ff-toast-turn strong { font-size: 1.3rem; }
 @keyframes ff-toast-in {
   from { transform: translateY(8px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
