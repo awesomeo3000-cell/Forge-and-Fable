@@ -10087,3 +10087,136 @@ button.dj-card {
 .ledger-page > .modal-close {
   position: absolute;
 }
+
+/* ── Level-up modal inherits the character's skin ──
+   The modal renders inside .cs-sheet, which sets --paper/--ink/--doc-* from
+   the character theme; the level-up rules hardcoded the dark-chrome root vars
+   and ignored them (owner note: "old dark theme rather than the tome or
+   whatever the user selected"). Every rule falls back to the original dark
+   value for un-themed characters and for the creation-flow instance, which
+   renders outside the sheet. */
+.cs-levelup {
+  background: var(--paper, var(--ground));
+  border-color: var(--doc-rule, var(--rule));
+  color: var(--ink, var(--parchment));
+}
+
+.cs-lvl-step {
+  border-color: var(--doc-rule, var(--rule-soft));
+  color: var(--ink-3, var(--ink-faint));
+}
+
+.cs-lvl-step.active {
+  border-color: var(--doc-select, var(--select));
+  color: var(--ink, var(--parchment));
+}
+
+.cs-lvl-step.done {
+  border-color: var(--doc-accent, var(--accent));
+  color: var(--doc-accent, var(--accent));
+}
+
+.cs-lvl-subcard {
+  border-color: var(--doc-rule, var(--rule-soft));
+  color: var(--ink, var(--parchment));
+}
+
+.cs-lvl-subcard p {
+  color: var(--ink-2, var(--parchment-2));
+}
+
+.cs-lvl-subcard.active {
+  border-color: var(--doc-select, var(--select));
+}
+
+.cs-lvl-spell-row {
+  border-color: var(--doc-rule, var(--rule-soft));
+  color: var(--ink, var(--parchment));
+}
+
+.cs-lvl-spell-row small {
+  color: var(--ink-3, var(--ink-faint));
+}
+
+.cs-lvl-spell-row.active {
+  border-color: var(--doc-select, var(--select));
+}
+
+.cs-levelup .cs-glass-btn {
+  border-color: var(--doc-rule, var(--rule));
+  color: var(--ink, var(--parchment));
+}
+
+.cs-levelup .control-field input {
+  border-color: var(--doc-rule, var(--rule));
+  background: transparent;
+  color: var(--ink, var(--parchment));
+}
+
+/* ── Chapter VI certificate, take 2 (owner sketch): centered masthead stack
+      (chapter · name · seal), recap rows as supporting middle, attributes
+      pulled out and enlarged below. Flavor lines removed. ── */
+.ledger-cert-mast {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 6px 0 20px;
+  text-align: center;
+}
+
+.ledger-cert-chapter {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ledger-cert-mast .ledger-cert-name {
+  font-size: clamp(32px, 5vw, 44px);
+  text-align: center;
+}
+
+.ledger-cert-mast .ledger-cert-line {
+  margin: 0;
+  text-align: center;
+}
+
+.ledger-cert-attrs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px 38px;
+  padding: 26px 0 8px;
+}
+
+.ledger-cert-attr {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+
+.ledger-cert-attr > span {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-cert-attr b {
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.ledger-cert-attr i {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 14px;
+  font-style: italic;
+}

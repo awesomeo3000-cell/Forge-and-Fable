@@ -378,7 +378,6 @@ export default memo(function CreatorPanel(props: {
               </button>
             );
           })}
-          <p className="ledger-footnote ledger-toc-footnote">Each chapter inks the record as it is decided.</p>
         </nav>
 
         <section className="dj-document">
@@ -397,12 +396,14 @@ export default memo(function CreatorPanel(props: {
           </header>
 
           <section className="dj-section" aria-labelledby="dj-section-title">
-            <div className="ledger-chapter-head">
-              <h3 className="ledger-chapter-title" id="dj-section-title">
-                {`Chapter ${CHAPTERS[props.step].numeral} · ${CHAPTERS[props.step].name}`}
-              </h3>
-              <p className="ledger-chapter-sub">{CHAPTERS[props.step].subtitle}</p>
-            </div>
+            {props.step !== 5 ? (
+              <div className="ledger-chapter-head">
+                <h3 className="ledger-chapter-title" id="dj-section-title">
+                  {`Chapter ${CHAPTERS[props.step].numeral} · ${CHAPTERS[props.step].name}`}
+                </h3>
+                <p className="ledger-chapter-sub">{CHAPTERS[props.step].subtitle}</p>
+              </div>
+            ) : null}
 
             {props.step === 0 ? (
               <div className="dj-setup">
@@ -979,15 +980,24 @@ export default memo(function CreatorPanel(props: {
 
             {props.step === 5 ? (
               <div className="ledger-certificate">
-                <span className="ledger-eyebrow">The record, read back</span>
-                <h3 className="ledger-cert-name">{props.draft.name.trim() || "Unwritten"}</h3>
-                <p className="ledger-cert-line">
-                  {ordinalLevel(props.draft.level)}-level
-                  {race ? ` ${parseSpeciesName(race.name).displayName}` : ""}
-                  {selectedClass ? ` ${selectedClass.name}` : ""}
-                  {props.draft.background ? ` · ${props.draft.background}` : ""}
-                  {props.draft.alignment ? ` · ${props.draft.alignment}` : ""}
-                </p>
+                <div className="ledger-cert-mast">
+                  <span className="ledger-cert-chapter" id="dj-section-title">
+                    {`Chapter VI · The Seal`}
+                  </span>
+                  <h3 className="ledger-cert-name">{props.draft.name.trim() || "Unwritten"}</h3>
+                  {selectedClass ? (
+                    <span className="ledger-cert-seal" data-class={selectedClass.id} aria-hidden="true">
+                      <ClassIconPlaceholder classId={selectedClass.id} size={30} strokeWidth={1.6} />
+                    </span>
+                  ) : null}
+                  <p className="ledger-cert-line">
+                    {ordinalLevel(props.draft.level)}-level
+                    {race ? ` ${parseSpeciesName(race.name).displayName}` : ""}
+                    {selectedClass ? ` ${selectedClass.name}` : ""}
+                    {props.draft.background ? ` · ${props.draft.background}` : ""}
+                    {props.draft.alignment ? ` · ${props.draft.alignment}` : ""}
+                  </p>
+                </div>
                 <div className="ledger-cert-rows">
                   <div className="ledger-cert-row">
                     <span className="ledger-cert-label">Provenance</span>
@@ -1035,18 +1045,6 @@ export default memo(function CreatorPanel(props: {
                       <span className="ledger-cert-value missing">undecided — return to Chapter IV</span>
                     )}
                   </div>
-                  <div className="ledger-cert-row">
-                    <span className="ledger-cert-label">Attributes</span>
-                    <span className="ledger-cert-stats">
-                      {abilityKeys.map((key) => (
-                        <span className="ledger-cert-stat" key={key}>
-                          {abilityLabels[key]}
-                          <b>{props.finalAbilities[key]}</b>
-                          <i>{signed(abilityModifier(props.finalAbilities[key]))}</i>
-                        </span>
-                      ))}
-                    </span>
-                  </div>
                   {selectedClass && selectedClass.startingGear.length > 0 ? (
                     <div className="ledger-cert-row">
                       <span className="ledger-cert-label">Provisions</span>
@@ -1054,16 +1052,14 @@ export default memo(function CreatorPanel(props: {
                     </div>
                   ) : null}
                 </div>
-                <div className="ledger-cert-seal-row">
-                  {selectedClass ? (
-                    <span className="ledger-cert-seal" data-class={selectedClass.id} aria-hidden="true">
-                      <ClassIconPlaceholder classId={selectedClass.id} size={30} strokeWidth={1.6} />
+                <div className="ledger-cert-attrs">
+                  {abilityKeys.map((key) => (
+                    <span className="ledger-cert-attr" key={key}>
+                      <span>{abilityLabels[key]}</span>
+                      <b>{props.finalAbilities[key]}</b>
+                      <i>{signed(abilityModifier(props.finalAbilities[key]))}</i>
                     </span>
-                  ) : null}
-                  <p className="ledger-footnote">
-                    † Scores set by {methodLabels[props.statMethod] ?? "hand"}. Pressing the seal binds this
-                    record to the roster; every entry can still be revised from the sheet.
-                  </p>
+                  ))}
                 </div>
               </div>
             ) : null}
