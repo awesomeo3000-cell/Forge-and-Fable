@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
@@ -10,6 +10,17 @@ import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
+import "./LevelUpModal.css";
+
+/** Ritual display labels for each internal step (spec: stepper copy map). */
+const STEP_LABELS: Record<LevelUpStep, string> = {
+  hp: "HP",
+  subclass: "Path",
+  expertise: "Mastery",
+  asi: "Feat",
+  spells: "Spells",
+  summary: "Chronicle",
+};
 
 type LevelUpStep = "hp" | "subclass" | "expertise" | "asi" | "spells" | "summary";
 type HpRollRequest = {
@@ -347,254 +358,478 @@ export default memo(function LevelUpModal({
     onConfirm(data);
   };
 
+  // Readable names for the Rite Summary and (final step) Chronicle recap.
+  const chosenSubclassName = subclassesForClass(classId).find((s) => s.id === pickedSubclass)?.name ?? "";
+  const chosenFeatName = pickedFeat && pickedFeat !== "asi" ? (feats.find((f) => f.id === pickedFeat)?.name ?? "") : "";
+  const expertiseNames = pickedExpertise.map((id) => SKILLS.find((s) => s.id === id)?.name ?? id);
+  const chosenCantripNames = pickedCantrips.map((id) => getSpell(id)?.name ?? id);
+  const chosenSpellNames = pickedSpells.map((id) => getSpell(id)?.name ?? id);
+
   return (
-    <div className="cs-levelup-overlay" onClick={onCancel}>
+    <div className="level-rite-backdrop" onClick={onCancel}>
       <div
         ref={dialogRef}
-        className="cs-levelup"
+        className="level-rite-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="cs-levelup-title"
+        aria-labelledby="level-rite-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="cs-levelup-head">
-          <h2 id="cs-levelup-title">Level {newLevel}</h2>
-          <button type="button" className="cs-glass-btn" onClick={onCancel} aria-label="Close level up" title="Close"><X size={14} /></button>
-        </div>
+        <button type="button" className="level-rite-close" onClick={onCancel} aria-label="Close level up" title="Close"><X size={14} /></button>
 
-        <div className="cs-levelup-steps">
-          {steps.map((s, i) => (
-            <button key={s} type="button" className={`cs-lvl-step${i === step ? " active" : ""}${i < step ? " done" : ""}`} onClick={() => setStep(i)}>
-              {s === "hp" ? "HP" : s === "subclass" ? "Subclass" : s === "expertise" ? "Expertise" : s === "asi" ? "Feat" : s === "spells" ? "Spells" : "Done"}
-            </button>
-          ))}
-        </div>
-
-        {/* HP step */}
-        {current === "hp" && (
-          <div className="cs-levelup-body">
-            {hitPointType === "manual" ? (
-              <>
-                <p>Enter the hit point increase for this level (1d{hitDie} {signed(conMod)}).</p>
-                <label className="control-field" style={{ marginTop: 8 }}>
-                  <span>HP Gained</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={hitDie + conMod}
-                    value={manualHp}
-                    onChange={(e) => {
-                      const v = Math.max(1, Math.min(hitDie + conMod, parseInt(e.target.value) || 1));
-                      setManualHp(v);
-                      setHpGained(v);
-                      setHpRolled(true);
-                    }}
-                    style={{ width: 80 }}
-                  />
-                </label>
-              </>
-            ) : (
-              <>
-                <p>Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.</p>
-                {!hpRolled ? (
-                  <button className="cs-glass-btn" type="button" onClick={rollHp} disabled={hpRolling}>
-                    {hpRolling ? "Rolling..." : "Roll HP"}
-                  </button>
-                ) : (
-                  <p>
-                    <strong>+{hpGained} HP</strong>
-                    {" "}
-                    ({hpDieRoll ?? hpGained} {signed(conMod)}
-                    {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""}; max {character.maxHp} → {character.maxHp + hpGained})
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Subclass step */}
-        {current === "subclass" && (
-          <div className="cs-levelup-body cs-lvl-subclass-grid">
-            {subclassesForClass(classId).map((sub) => (
-              <button key={sub.id} type="button" className={`cs-lvl-subcard${pickedSubclass === sub.id ? " active" : ""}`} onClick={() => setPickedSubclass(sub.id)}>
-                <strong>{sub.name}</strong>
-                <p>{sub.description}</p>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Expertise step */}
-        {current === "expertise" && (
-          <div className="cs-levelup-body">
-            <p>Choose {expertiseTarget} skill{expertiseTarget > 1 ? "s" : ""} to gain expertise (2× proficiency bonus):</p>
-            <div className="cs-lvl-spell-grid">
-              {expertiseEligible.map((s) => (
-                <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedExpertise.includes(s.id) ? " active" : ""}`} onClick={() => setPickedExpertise((prev) =>
-                  prev.includes(s.id) ? prev.filter((id) => id !== s.id) : prev.length < expertiseTarget ? [...prev, s.id] : prev,
-                )}>
-                  <span>{s.name}</span>
-                  <small>{abilityLabels[s.ability]}</small>
-                </button>
-              ))}
+        <div className="level-rite-inner">
+          {/* ── Header ── */}
+          <header className="level-rite-header">
+            <div className="level-rite-seal" aria-hidden="true">
+              <span className="level-rite-seal-text">
+                <span className="level-rite-seal-label">Level</span>
+                <span className="level-rite-seal-number">{newLevel}</span>
+              </span>
             </div>
-          </div>
-        )}
+            <h2 id="level-rite-title" className="level-rite-title">The Chronicle Advances</h2>
+            <p className="level-rite-subtitle">{className} · Level {character.level} → {newLevel}</p>
+          </header>
 
-        {/* Feat step — Ability Score Improvement is the first option in the list */}
-        {current === "asi" && (
-          <div className="cs-levelup-body">
-            <p>Choose a feat, or take an Ability Score Improvement.</p>
-            <div className="cs-lvl-subclass-grid">
-              <button type="button" className={`cs-lvl-subcard${pickedFeat === "asi" ? " active" : ""}`} onClick={() => setPickedFeat("asi")}>
-                <strong>Ability Score Improvement</strong>
-                <p>Increase one ability score by 2, or two ability scores by 1 (max 20).</p>
-              </button>
-              {feats.map((f) => (
-                <button key={f.id} type="button" className={`cs-lvl-subcard${pickedFeat === f.id ? " active" : ""}`} onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); setFeatSpellChoices([]); }}>
-                  <strong>{f.name}</strong>
-                  <p>{f.description.slice(0, 150)}</p>
-                </button>
-              ))}
-            </div>
-            {pickedFeat === "asi" ? (
-              <div className="cs-asi-grid">
-                {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as AbilityKey[]).map((a) => (
-                  <div key={a} className="cs-asi-row">
-                    <span>{abilityLabels[a]} {finalAbilities[a] + (asiIncreases[a] ?? 0)}</span>
-                    <button type="button" className="cs-lvl-stepper" onClick={() => removeAsi(a)}>−</button>
-                    <button type="button" className="cs-lvl-stepper" onClick={() => applyAsi(a)}>+</button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            {pickedFeat && pickedFeat !== "asi" && (() => {
-              const chosenFeat = getFeat(pickedFeat);
-              if (!chosenFeat?.chooseAbility || chosenFeat.abilityBonuses.length <= 1) return null;
+          {/* ── Stepper ── */}
+          <nav className="level-rite-stepper" aria-label="Level up steps">
+            {steps.map((s, i) => {
+              const state = i < step ? "is-done" : i === step ? "is-current" : "";
               return (
-                <div className="cs-feat-ability-choice">
-                  <span className="cs-section-eyebrow">+1 to…</span>
-                  <div className="cs-feat-ability-options">
-                    {chosenFeat.abilityBonuses.map((a) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`level-rite-step ${state}`}
+                  onClick={() => setStep(i)}
+                  aria-current={i === step ? "step" : undefined}
+                >
+                  <span className="level-rite-step-bubble">
+                    {i < step ? <Check size={13} aria-label="complete" /> : i + 1}
+                  </span>
+                  <span className="level-rite-step-label">{STEP_LABELS[s]}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* ── Body: main panel + rite summary ── */}
+          <div className="level-rite-body">
+            <div className="level-rite-main">
+              {/* HP step */}
+              {current === "hp" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">Vigor</h3>
+                  <p className="level-rite-panel-sub">
+                    {hitPointType === "manual"
+                      ? `Enter the hit point increase for this level (1d${hitDie} ${signed(conMod)}).`
+                      : `Roll 1d${hitDie} ${signed(conMod)} to determine your hit point increase.`}
+                  </p>
+                  <div className="level-rite-hp-card">
+                    {hitPointType === "manual" ? (
+                      <label className="control-field">
+                        <span>HP Gained</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={hitDie + conMod}
+                          value={manualHp}
+                          onChange={(e) => {
+                            const v = Math.max(1, Math.min(hitDie + conMod, parseInt(e.target.value) || 1));
+                            setManualHp(v);
+                            setHpGained(v);
+                            setHpRolled(true);
+                          }}
+                          style={{ width: 90 }}
+                        />
+                      </label>
+                    ) : !hpRolled ? (
+                      <button className="level-rite-button" type="button" onClick={rollHp} disabled={hpRolling}>
+                        {hpRolling ? "Rolling…" : "Roll the Die"}
+                      </button>
+                    ) : (
+                      <p className="level-rite-hp-result">
+                        +{hpGained} HP
+                        <small>
+                          {hpDieRoll ?? hpGained} {signed(conMod)}
+                          {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""} · max HP {character.maxHp} → {character.maxHp + hpGained}
+                        </small>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Subclass step */}
+              {current === "subclass" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">Discipline</h3>
+                  <p className="level-rite-panel-sub">the path within the vocation</p>
+                  <div className="level-rite-choice-grid">
+                    {subclassesForClass(classId).map((sub) => (
                       <button
-                        key={a}
+                        key={sub.id}
                         type="button"
-                        className={`cs-lvl-subcard compact${featAbilityChoice === a ? " active" : ""}`}
-                        onClick={() => setFeatAbilityChoice(a)}
+                        className={`level-rite-card${pickedSubclass === sub.id ? " is-selected" : ""}`}
+                        onClick={() => setPickedSubclass(sub.id)}
                       >
-                        {abilityLabels[a]}
+                        <strong>{sub.name}</strong>
+                        <p>{sub.description}</p>
                       </button>
                     ))}
                   </div>
                 </div>
-              );
-            })()}
-            {featSpellOptions.length > 0 ? (
-              <div className="cs-feat-ability-choice">
-                <span className="cs-section-eyebrow">
-                  Choose {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.count ?? 0; })()} spell{(() => { const f = getFeat(pickedFeat); return (f?.grantsSpells?.choose?.count ?? 0) > 1 ? "s" : ""; })()} (Level {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.level ?? 1; })()})
-                </span>
-                <div className="cs-lvl-spell-grid">
-                  {featSpellOptions.map((s) => (
+              )}
+
+              {/* Expertise step */}
+              {current === "expertise" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">Mastery</h3>
+                  <p className="level-rite-panel-sub">
+                    Choose {expertiseTarget} skill{expertiseTarget > 1 ? "s" : ""} to gain expertise (2× proficiency bonus).
+                  </p>
+                  <div className="level-rite-choice-grid compact">
+                    {expertiseEligible.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`level-rite-option${pickedExpertise.includes(s.id) ? " is-selected" : ""}`}
+                        onClick={() => setPickedExpertise((prev) =>
+                          prev.includes(s.id) ? prev.filter((id) => id !== s.id) : prev.length < expertiseTarget ? [...prev, s.id] : prev,
+                        )}
+                      >
+                        <span className="level-rite-option-name">{s.name}</span>
+                        <span className="level-rite-option-detail">{abilityLabels[s.ability]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Feat / ASI step — top-level fork */}
+              {current === "asi" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">Choose Your Advancement</h3>
+                  <p className="level-rite-panel-sub">a talent refined, or a new knack</p>
+
+                  {/* Fork: ASI vs Feat */}
+                  <div className="level-rite-fork">
                     <button
-                      key={s.id}
                       type="button"
-                      className={`cs-lvl-spell-row${featSpellChoices.includes(s.id) ? " active" : ""}`}
-                      onClick={() => setFeatSpellChoices((prev) =>
-                        prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id],
-                      )}
+                      className={`level-rite-card${pickedFeat === "asi" ? " is-selected" : ""}`}
+                      onClick={() => setPickedFeat("asi")}
                     >
-                      <span>{s.name}</span>
-                      <small>Lv {s.level} {s.school}</small>
+                      <strong>Raise Ability Scores</strong>
+                      <p>Increase your ability scores.</p>
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      className={`level-rite-card${pickedFeat && pickedFeat !== "asi" ? " is-selected" : ""}`}
+                      onClick={() => { if (!pickedFeat || pickedFeat === "asi") { setPickedFeat(feats[0]?.id ?? ""); } setFeatAbilityChoice(null); setFeatSpellChoices([]); }}
+                    >
+                      <strong>Claim a Feat</strong>
+                      <p>Choose a feat to gain new power.</p>
+                    </button>
+                  </div>
+
+                  {/* ASI steppers */}
+                  {pickedFeat === "asi" ? (
+                    <div className="level-rite-asi-grid">
+                      {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as AbilityKey[]).map((a) => (
+                        <div key={a} className="level-rite-asi-row">
+                          <span>{abilityLabels[a]} {finalAbilities[a] + (asiIncreases[a] ?? 0)}</span>
+                          <span className="level-rite-steppers">
+                            <button type="button" className="level-rite-stepper-btn" onClick={() => removeAsi(a)} aria-label={`Decrease ${abilityLabels[a]}`}>−</button>
+                            <span className="level-rite-stepper-count">{asiIncreases[a] ?? 0}</span>
+                            <button type="button" className="level-rite-stepper-btn" onClick={() => applyAsi(a)} aria-label={`Increase ${abilityLabels[a]}`}>+</button>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {/* Feat list (only when Claim a Feat is the active fork) */}
+                  {pickedFeat && pickedFeat !== "asi" ? (
+                    <>
+                      <div className="level-rite-choice-grid">
+                        {feats.map((f) => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            className={`level-rite-card${pickedFeat === f.id ? " is-selected" : ""}`}
+                            onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); setFeatSpellChoices([]); }}
+                          >
+                            <strong>{f.name}</strong>
+                            <p>{f.description.slice(0, 150)}</p>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Selected feat description panel */}
+                      {(() => {
+                        const chosenFeat = getFeat(pickedFeat);
+                        if (!chosenFeat) return null;
+                        return (
+                          <div className="level-rite-description">
+                            <div className="level-rite-description-head">
+                              <span className="level-rite-tag is-chosen">Chosen Feat</span>
+                              <span className="level-rite-description-name">{chosenFeat.name}</span>
+                            </div>
+                            <p className="level-rite-description-body">{chosenFeat.description}</p>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Feat ability choice (+1 to…) */}
+                      {(() => {
+                        const chosenFeat = getFeat(pickedFeat);
+                        if (!chosenFeat?.chooseAbility || chosenFeat.abilityBonuses.length <= 1) return null;
+                        return (
+                          <div>
+                            <span className="level-rite-eyebrow">+1 to…</span>
+                            <div className="level-rite-choice-grid compact">
+                              {chosenFeat.abilityBonuses.map((a) => (
+                                <button
+                                  key={a}
+                                  type="button"
+                                  className={`level-rite-option${featAbilityChoice === a ? " is-selected" : ""}`}
+                                  onClick={() => setFeatAbilityChoice(a)}
+                                >
+                                  <span className="level-rite-option-name">{abilityLabels[a]}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Feat-granted spell choices */}
+                      {featSpellOptions.length > 0 ? (
+                        <div>
+                          <span className="level-rite-eyebrow">
+                            Choose {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.count ?? 0; })()} spell{(() => { const f = getFeat(pickedFeat); return (f?.grantsSpells?.choose?.count ?? 0) > 1 ? "s" : ""; })()} (Level {(() => { const f = getFeat(pickedFeat); return f?.grantsSpells?.choose?.level ?? 1; })()})
+                          </span>
+                          <div className="level-rite-choice-grid compact">
+                            {featSpellOptions.map((s) => (
+                              <button
+                                key={s.id}
+                                type="button"
+                                className={`level-rite-option${featSpellChoices.includes(s.id) ? " is-selected" : ""}`}
+                                onClick={() => setFeatSpellChoices((prev) =>
+                                  prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id],
+                                )}
+                              >
+                                <span className="level-rite-option-name">{s.name}</span>
+                                <span className="level-rite-option-detail">Lv {s.level} {s.school}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
+              )}
+
+              {/* Spells step */}
+              {current === "spells" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">Arcana</h3>
+                  <p className="level-rite-panel-sub">new mysteries committed to memory</p>
+
+                  {hasCantrips ? (
+                    <>
+                      <span className="level-rite-eyebrow">New Cantrips · {pickedCantrips.length}/{cantripTarget}</span>
+                      <div className="level-rite-choice-grid compact scroll">
+                        {availableCantrips.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`level-rite-option${pickedCantrips.includes(s.id) ? " is-selected" : ""}`}
+                            onClick={() => toggleCantrip(s.id)}
+                          >
+                            <span className="level-rite-option-name">{s.name}</span>
+                            <span className="level-rite-option-detail">Cantrip {s.school}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {hasSpells ? (
+                    <>
+                      <span className="level-rite-eyebrow">Learn Spells · {pickedSpells.length}/{spellTarget}</span>
+                      <div className="level-rite-choice-grid compact scroll">
+                        {availableSpells.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`level-rite-option${pickedSpells.includes(s.id) ? " is-selected" : ""}`}
+                            onClick={() => toggleSpell(s.id)}
+                          >
+                            <span className="level-rite-option-name">{s.name}</span>
+                            <span className="level-rite-option-detail">Lv {s.level} {s.school}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {hasSpells && classId !== "wizard" && forgettableSpells.length > 0 && (
+                    <div>
+                      <span className="level-rite-eyebrow">Replace one known spell (optional)</span>
+                      <select
+                        className="level-rite-hp-select"
+                        style={{ width: "100%" }}
+                        value={spellToForget ?? ""}
+                        onChange={(e) => setSpellToForget(e.target.value || null)}
+                      >
+                        <option value="">— Don&apos;t replace any —</option>
+                        {forgettableSpells.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} (Lv {s.level})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Summary / Chronicle step */}
+              {current === "summary" && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">The Chronicle</h3>
+                  <p className="level-rite-panel-sub">read it back, then press the seal</p>
+                  <ul className="level-rite-summary-list">
+                    {hasHp ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">Health</span>
+                        <span className={`level-rite-summary-value${hpRolled ? "" : " pending"}`}>
+                          {hpRolled ? `${character.maxHp} → ${character.maxHp + hpGained} Max HP (+${hpGained})` : "not yet rolled"}
+                        </span>
+                      </li>
+                    ) : null}
+                    {hasSubclass ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">Subclass</span>
+                        <span className={`level-rite-summary-value${chosenSubclassName ? "" : " pending"}`}>
+                          {chosenSubclassName || "not yet chosen"}
+                        </span>
+                      </li>
+                    ) : null}
+                    {hasExpertise ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">Mastery</span>
+                        <span className={`level-rite-summary-value${expertiseNames.length > 0 ? "" : " pending"}`}>
+                          {expertiseNames.length > 0 ? expertiseNames.join(", ") : `${pickedExpertise.length} of ${expertiseTarget} chosen`}
+                        </span>
+                      </li>
+                    ) : null}
+                    {hasAsi ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">Advancement</span>
+                        <span className={`level-rite-summary-value${pickedFeat ? "" : " pending"}`}>
+                          {pickedFeat === "asi"
+                            ? (Object.keys(asiIncreases).length > 0
+                                ? `Ability Score Improvement (${Object.entries(asiIncreases).map(([k, v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")})`
+                                : "ASI · no increases allocated")
+                            : pickedFeat
+                              ? `${chosenFeatName}${featAbilityChoice ? ` (+1 ${abilityLabels[featAbilityChoice]})` : ""}`
+                              : "not yet chosen"}
+                        </span>
+                      </li>
+                    ) : null}
+                    {hasCantrips ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">New Cantrips</span>
+                        <span className={`level-rite-summary-value${chosenCantripNames.length >= cantripTarget ? "" : " pending"}`}>
+                          {chosenCantripNames.length > 0 ? chosenCantripNames.join(", ") : `${pickedCantrips.length} of ${cantripTarget} chosen`}
+                        </span>
+                      </li>
+                    ) : null}
+                    {hasSpells ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">New Spells</span>
+                        <span className={`level-rite-summary-value${chosenSpellNames.length > 0 ? "" : " pending"}`}>
+                          {chosenSpellNames.length > 0
+                            ? `${chosenSpellNames.length} of ${spellTarget} learned${spellToForget && classId !== "wizard" ? `, 1 replaced` : ""}`
+                            : `0 of ${spellTarget} chosen`}
+                        </span>
+                      </li>
+                    ) : null}
+                  </ul>
+                  {allDone
+                    ? <p className="level-rite-summary-empty">Everything is sealed. Inscribe the level to finish.</p>
+                    : <p className="level-rite-summary-empty" style={{ color: "var(--ember)" }}>Some gains remain unsealed — return to complete them.</p>}
+                </div>
+              )}
+            </div>
+
+            {/* ── Rite Summary panel (right rail) ── */}
+            <aside className="level-rite-summary" aria-label="Rite summary">
+              <div className="level-rite-summary-head">
+                <span className="level-rite-tag">Rite Summary</span>
               </div>
-            ) : null}
+              <ul className="level-rite-summary-list">
+                {hasHp ? (
+                  <li className="level-rite-summary-item">
+                    <span className="level-rite-summary-label">Health</span>
+                    <span className={`level-rite-summary-value${hpRolled ? "" : " pending"}`}>
+                      {hpRolled ? `${character.maxHp} → ${character.maxHp + hpGained}` : "pending"}
+                    </span>
+                  </li>
+                ) : null}
+                {hasSubclass ? (
+                  <li className="level-rite-summary-item">
+                    <span className="level-rite-summary-label">Subclass</span>
+                    <span className={`level-rite-summary-value${chosenSubclassName ? "" : " pending"}`}>
+                      {chosenSubclassName || character.subclassId || "pending"}
+                    </span>
+                  </li>
+                ) : null}
+                {hasExpertise ? (
+                  <li className="level-rite-summary-item">
+                    <span className="level-rite-summary-label">Mastery</span>
+                    <span className={`level-rite-summary-value${expertiseNames.length > 0 ? "" : " pending"}`}>
+                      {expertiseNames.length > 0 ? expertiseNames.join(", ") : `${pickedExpertise.length}/${expertiseTarget}`}
+                    </span>
+                  </li>
+                ) : null}
+                {hasAsi ? (
+                  <li className="level-rite-summary-item">
+                    <span className="level-rite-summary-label">Advancement</span>
+                    <span className={`level-rite-summary-value${pickedFeat ? "" : " pending"}`}>
+                      {pickedFeat === "asi" ? "Ability Score Improvement" : pickedFeat ? chosenFeatName : "pending"}
+                    </span>
+                  </li>
+                ) : null}
+                {hasCantrips || hasSpells ? (
+                  <li className="level-rite-summary-item">
+                    <span className="level-rite-summary-label">New Magic</span>
+                    <span className="level-rite-summary-value">
+                      {[
+                        hasCantrips ? `${pickedCantrips.length}/${cantripTarget} cantrip${cantripTarget !== 1 ? "s" : ""}` : null,
+                        hasSpells ? `${pickedSpells.length}/${spellTarget} spell${spellTarget !== 1 ? "s" : ""}` : null,
+                      ].filter(Boolean).join(" · ")}
+                    </span>
+                  </li>
+                ) : null}
+                {!hasHp && !hasSubclass && !hasExpertise && !hasAsi && !hasSpells && !hasCantrips ? (
+                  <li className="level-rite-summary-empty">No gains this level.</li>
+                ) : null}
+              </ul>
+            </aside>
           </div>
-        )}
 
-        {/* Spells step */}
-        {current === "spells" && (
-          <div className="cs-levelup-body">
-            {hasCantrips ? (
-              <>
-                <p>New cantrips — choose {cantripTarget} ({pickedCantrips.length}/{cantripTarget}):</p>
-                <div className="cs-lvl-spell-grid">
-                  {availableCantrips.map((s) => (
-                    <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedCantrips.includes(s.id) ? " active" : ""}`} onClick={() => toggleCantrip(s.id)}>
-                      <span>{s.name}</span>
-                      <small>Cantrip {s.school}</small>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : null}
-            {hasSpells ? (
-              <>
-                <p>Choose {spellTarget} spell{spellTarget > 1 ? "s" : ""} to learn ({pickedSpells.length}/{spellTarget}):</p>
-                <div className="cs-lvl-spell-grid">
-                  {availableSpells.map((s) => (
-                    <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedSpells.includes(s.id) ? " active" : ""}`} onClick={() => toggleSpell(s.id)}>
-                      <span>{s.name}</span>
-                      <small>Lv {s.level} {s.school}</small>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : null}
-
-            {hasSpells && classId !== "wizard" && forgettableSpells.length > 0 && (
-              <div style={{ marginTop: 20 }}>
-                <p>Replace one known spell (optional):</p>
-                <select
-                  className="cs-glass-btn"
-                  style={{ width: "100%", padding: "6px 10px", marginTop: 6 }}
-                  value={spellToForget ?? ""}
-                  onChange={(e) => setSpellToForget(e.target.value || null)}
-                >
-                  <option value="">— Don&apos;t replace any —</option>
-                  {forgettableSpells.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} (Lv {s.level})
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* ── Footer ── */}
+          <div className="level-rite-footer">
+            <button className="level-rite-button" type="button" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>Back</button>
+            {step < steps.length - 1 ? (
+              <button className="level-rite-button-primary" type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>Continue</button>
+            ) : (
+              <button className="level-rite-button-primary" type="button" onClick={finish} disabled={!allDone}>Inscribe Level {newLevel}</button>
             )}
           </div>
-        )}
-
-        {/* Summary */}
-        {current === "summary" && (
-          <div className="cs-levelup-body cs-lvl-summary">
-            {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : hasHp ? <p style={{ color: "var(--accent)" }}>HP: not rolled</p> : null}
-            {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : hasSubclass ? <p style={{ color: "var(--accent)" }}>Subclass: not chosen</p> : null}
-            {hasExpertise && pickedExpertise.length > 0 ? <p>Expertise: {pickedExpertise.map((id) => SKILLS.find((s) => s.id === id)?.name ?? id).join(", ")}</p> : hasExpertise ? <p style={{ color: "var(--accent)" }}>Expertise: not chosen</p> : null}
-            {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length > 0 ? <p>Ability Score Improvement: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
-            {hasAsi && pickedFeat && pickedFeat !== "asi" ? (
-              <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}
-                {featAbilityChoice ? ` (+1 ${abilityLabels[featAbilityChoice]})` : ""}
-              </p>
-            ) : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
-            {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
-            {hasCantrips ? (
-              pickedCantrips.length >= cantripTarget
-                ? <p>Cantrips: {pickedCantrips.map((id) => getSpell(id)?.name ?? id).join(", ")}</p>
-                : <p style={{ color: "var(--accent)" }}>Cantrips: {pickedCantrips.length} of {cantripTarget} chosen</p>
-            ) : null}
-            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} of {spellTarget} learned{spellToForget && classId !== "wizard" ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: 0 of {spellTarget} chosen</p> : null}
-            <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
-          </div>
-        )}
-
-        {step < steps.length - 1 ? (
-          <div className="cs-levelup-foot">
-            <button className="glass-button" type="button" onClick={() => setStep(Math.max(0, step - 1))}>Back</button>
-            <button className="gold-button" type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>Continue</button>
-          </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );

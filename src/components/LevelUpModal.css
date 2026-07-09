@@ -1,0 +1,750 @@
+/* ════════════════════════════════════════════════════════════════════════
+   The Level-Up Rite — a parchment advancement ceremony.
+   Imported by LevelUpModal.tsx. Uses the Printed-Tome root tokens from
+   globals.css (:root). Deliberately self-contained: the modal anchors to the
+   tome palette regardless of the host sheet's theme, so the ceremony looks
+   the same at creation (outside .cs-sheet) and in play (inside it).
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Backdrop: dark forge-table with warm ember glow ── */
+.level-rite-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(178, 69, 47, 0.20) 0%, rgba(178, 69, 47, 0.06) 28%, transparent 60%),
+    rgba(12, 9, 5, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+/* ── Modal: the parchment decree with iron framing ── */
+.level-rite-modal {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  /* Dark iron frame wrapping a parchment face */
+  padding: 3px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, var(--ground-2), var(--ground-3) 55%, var(--ground-2));
+  box-shadow:
+    0 0 0 1px var(--rule-soft),
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 8px 20px rgba(0, 0, 0, 0.45);
+  color: var(--ground);
+  font-family: var(--font-body);
+}
+
+.level-rite-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  /* Parchment face */
+  background: var(--parchment);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(178, 69, 47, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 88% 92%, rgba(201, 162, 90, 0.06) 0%, transparent 45%);
+  overflow: hidden;
+}
+
+/* Subtle paper grain over the parchment */
+.level-rite-inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--grain);
+  background-size: 140px 140px;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Engraved double rule under the header, sits above grain */
+.level-rite-inner > * { position: relative; z-index: 1; }
+
+/* ── Close button ── */
+.level-rite-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--rule-soft);
+  border-radius: 50%;
+  background: rgba(16, 12, 7, 0.06);
+  color: var(--ground-2);
+  cursor: pointer;
+  transition: border-color 140ms, color 140ms, background 140ms;
+}
+.level-rite-close:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+  background: rgba(178, 69, 47, 0.08);
+}
+.level-rite-close:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ── Header: ceremonial seal + title ── */
+.level-rite-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 24px 18px;
+  text-align: center;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* Faint arcane watermark behind the header (CSS only) */
+.level-rite-header::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -52%);
+  border-radius: 50%;
+  border: 1px solid var(--rule-soft);
+  opacity: 0.10;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, transparent 38%, rgba(201, 162, 90, 0.12) 39%, transparent 41%),
+    radial-gradient(circle, transparent 56%, rgba(201, 162, 90, 0.10) 57%, transparent 59%),
+    conic-gradient(from 0deg, rgba(178, 69, 47, 0.06), transparent 25%, rgba(178, 69, 47, 0.06) 50%, transparent 75%, rgba(178, 69, 47, 0.06));
+}
+
+/* The glowing circular seal */
+.level-rite-seal {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, var(--ground-2), var(--ground-3));
+  border: 2px solid var(--gold);
+  box-shadow:
+    0 0 0 4px var(--parchment),
+    0 0 0 5px var(--rule-soft),
+    0 0 22px rgba(201, 162, 90, 0.35),
+    inset 0 0 14px rgba(0, 0, 0, 0.5);
+  color: var(--parchment);
+  font-family: var(--font-display);
+  text-align: center;
+  line-height: 1;
+}
+.level-rite-seal-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.level-rite-seal-label {
+  font-family: var(--font-label);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--parchment-2);
+}
+.level-rite-seal-number {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(201, 162, 90, 0.5);
+}
+
+.level-rite-title {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  font-weight: 700;
+  color: var(--ground);
+  letter-spacing: 0.01em;
+}
+
+.level-rite-subtitle {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-label);
+  font-size: 0.74em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ── Stepper: ritual progress chain ── */
+.level-rite-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule-soft);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.level-rite-step {
+  flex: 1 0 auto;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-faint);
+  font-family: var(--font-label);
+}
+.level-rite-step:focus-visible {
+  outline: none;
+}
+.level-rite-step:focus-visible .level-rite-step-bubble {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.level-rite-step-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The bubble (number / checkmark) */
+.level-rite-step-bubble {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule);
+  background: var(--parchment);
+  color: var(--ink-faint);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 180ms ease;
+}
+
+/* Connector line between steps */
+.level-rite-step:not(:last-child) .level-rite-step-bubble::after {
+  content: "";
+  position: absolute;
+  left: calc(50% + 16px);
+  top: 50%;
+  width: 0; /* set via flex gap on container; line drawn by border below */
+  height: 0;
+}
+.level-rite-stepper {
+  gap: 0;
+}
+.level-rite-step + .level-rite-step::before {
+  content: "";
+  flex: 1 1 0;
+  min-width: 10px;
+  height: 1.5px;
+  align-self: center;
+  margin: 0 4px;
+  margin-bottom: 17px; /* align with bubble center */
+  background: var(--rule-soft);
+  order: 0;
+}
+
+/* Completed step */
+.level-rite-step.is-done .level-rite-step-bubble {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ground);
+  box-shadow: 0 0 10px rgba(201, 162, 90, 0.4);
+}
+.level-rite-step.is-done .level-rite-step-label {
+  color: var(--ground-2);
+}
+.level-rite-step.is-done + .level-rite-step::before {
+  background: var(--gold);
+}
+
+/* Current step */
+.level-rite-step.is-current .level-rite-step-bubble {
+  border-color: var(--ember);
+  background: var(--parchment);
+  color: var(--ember);
+  box-shadow: 0 0 0 3px rgba(178, 69, 47, 0.18), 0 0 14px rgba(178, 69, 47, 0.3);
+}
+.level-rite-step.is-current .level-rite-step-label {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+/* ── Body: two-column on desktop ── */
+.level-rite-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.level-rite-main {
+  padding: 22px 24px;
+  min-width: 0;
+}
+.level-rite-summary {
+  border-left: 1px solid var(--rule-soft);
+  background: rgba(16, 12, 7, 0.035);
+  padding: 22px 18px;
+}
+
+/* Panel heading inside main */
+.level-rite-panel-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ground);
+  margin-bottom: 4px;
+}
+.level-rite-panel-sub {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+
+/* Engraved divider */
+.level-rite-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rule-soft) 12%, var(--rule-soft) 88%, transparent);
+  border: 0;
+  margin: 14px 0;
+}
+
+/* ── Choice grids & cards ── */
+.level-rite-choice-grid {
+  display: grid;
+  gap: 10px;
+}
+.level-rite-choice-grid.compact { gap: 6px; }
+
+.level-rite-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--rule-soft);
+  border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, 0.18);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms, background 150ms;
+}
+.level-rite-card:hover {
+  border-color: var(--rule);
+}
+.level-rite-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.level-rite-card strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--ground);
+}
+.level-rite-card p {
+  font-size: 0.8rem;
+  color: var(--ground-2);
+  line-height: 1.4;
+}
+.level-rite-card.is-selected {
+  border-color: var(--gold);
+  background: rgba(201, 162, 90, 0.12);
+  box-shadow: 0 0 0 1px var(--gold), 0 0 16px rgba(201, 162, 90, 0.22);
+}
+
+/* Compact option rows (spells, cantrips, expertise, feat spells) */
+.level-rite-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.14);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms;
+}
+.level-rite-option:hover { border-color: var(--rule); }
+.level-rite-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.level-rite-option-name {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--ground);
+}
+.level-rite-option-detail {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+.level-rite-option.is-selected {
+  border-color: var(--ember);
+  background: rgba(178, 69, 47, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(178, 69, 47, 0.2);
+}
+.level-rite-option.is-selected .level-rite-option-name { color: var(--ember); }
+
+/* Scrollable grids for long spell lists */
+.level-rite-choice-grid.scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.level-rite-choice-grid.scroll::-webkit-scrollbar { width: 6px; }
+.level-rite-choice-grid.scroll::-webkit-scrollbar-thumb {
+  background: var(--rule-soft);
+  border-radius: 3px;
+}
+
+/* Small tag / eyebrow chip */
+.level-rite-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 100px;
+  font-family: var(--font-label);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: rgba(16, 12, 7, 0.04);
+}
+.level-rite-tag.is-chosen {
+  border-color: var(--gold);
+  color: var(--ground);
+  background: rgba(201, 162, 90, 0.16);
+}
+
+/* Section eyebrow label (e.g. "+1 to…", "Choose 2 spells") */
+.level-rite-eyebrow {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember);
+  margin: 12px 0 8px;
+}
+
+/* Selected feat description panel */
+.level-rite-description {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.22);
+}
+.level-rite-description-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.level-rite-description-name {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ground);
+}
+.level-rite-description-body {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ground-2);
+}
+
+/* ── Fork (ASI vs Feat top-level choice) ── */
+.level-rite-fork {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.level-rite-fork .level-rite-card {
+  align-items: center;
+  text-align: center;
+  padding: 16px 12px;
+}
+.level-rite-fork .level-rite-card strong { font-size: 1rem; }
+.level-rite-fork .level-rite-card p { font-size: 0.76rem; }
+
+/* ── ASI steppers ── */
+.level-rite-asi-grid {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+.level-rite-asi-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.14);
+}
+.level-rite-asi-row span {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--ground);
+}
+.level-rite-steppers { display: flex; gap: 6px; align-items: center; }
+.level-rite-stepper-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--parchment);
+  color: var(--ember);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.level-rite-stepper-btn:hover { border-color: var(--ember); background: rgba(178, 69, 47, 0.08); }
+.level-rite-stepper-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.level-rite-stepper-count {
+  min-width: 18px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ground);
+}
+
+/* HP step */
+.level-rite-hp-card {
+  padding: 18px 20px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-lg);
+  background: rgba(255, 255, 255, 0.18);
+  text-align: center;
+}
+.level-rite-hp-result {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--ember);
+  font-weight: 700;
+}
+.level-rite-hp-result small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+/* Form controls inside the modal */
+.level-rite-modal .control-field {
+  margin-top: 8px;
+}
+.level-rite-modal .control-field span {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.level-rite-modal .control-field input,
+.level-rite-hp-select {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--ground);
+  font-family: var(--font-body);
+  padding: 6px 10px;
+}
+.level-rite-modal .control-field input:focus,
+.level-rite-hp-select:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 0;
+  border-color: var(--gold);
+}
+
+/* ── Rite Summary panel ── */
+.level-rite-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.level-rite-summary-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ground);
+}
+.level-rite-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+.level-rite-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.level-rite-summary-label {
+  font-family: var(--font-label);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.level-rite-summary-value {
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  color: var(--ground);
+}
+.level-rite-summary-value.pending {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.level-rite-summary-empty {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+/* ── Footer: dark forge strip ── */
+.level-rite-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--rule-soft);
+  background: linear-gradient(180deg, var(--ground-2), var(--ground-3));
+}
+
+.level-rite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--parchment);
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 150ms, color 150ms, background 150ms;
+}
+.level-rite-button:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.level-rite-button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.level-rite-button-primary {
+  border: 1px solid var(--accent-deep);
+  background: linear-gradient(180deg, var(--ember), var(--accent-deep));
+  color: var(--parchment);
+  font-weight: 700;
+  box-shadow:
+    0 0 18px rgba(178, 69, 47, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.level-rite-button-primary:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ember) 85%, var(--gold)), var(--accent-deep));
+  box-shadow:
+    0 0 24px rgba(178, 69, 47, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.level-rite-button:disabled,
+.level-rite-button-primary:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.4);
+}
+.level-rite-button-primary:disabled:hover {
+  background: linear-gradient(180deg, var(--ember), var(--accent-deep));
+  box-shadow: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .level-rite-backdrop { padding: 0; }
+  .level-rite-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  .level-rite-inner { border-radius: 0; }
+  .level-rite-body {
+    grid-template-columns: 1fr;
+  }
+  .level-rite-summary {
+    order: 2;
+    border-left: 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .level-rite-main { padding: 18px 16px; }
+  .level-rite-header { padding: 22px 16px 14px; }
+  .level-rite-stepper { gap: 0; padding: 10px 12px; }
+  .level-rite-step { min-width: 56px; }
+  .level-rite-fork { grid-template-columns: 1fr; }
+  .level-rite-footer { padding: 12px 14px; }
+  .level-rite-button { min-height: 40px; padding: 0 14px; font-size: 0.74rem; }
+}
