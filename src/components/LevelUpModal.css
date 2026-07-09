@@ -144,7 +144,7 @@
     conic-gradient(from 0deg, rgba(178, 69, 47, 0.06), transparent 25%, rgba(178, 69, 47, 0.06) 50%, transparent 75%, rgba(178, 69, 47, 0.06));
 }
 
-/* The glowing circular seal — always dark metal, reads against either surface */
+/* The circular seal — adapts to the current ground via a darkened surface */
 .level-rite-seal {
   position: relative;
   z-index: 1;
@@ -153,13 +153,13 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 38%, #2a2418, #100c07);
+  background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--ground) 82%, #000), var(--ground-3));
   border: 2px solid var(--select);
   box-shadow:
     0 0 0 4px var(--ground),
     0 0 0 5px var(--rule),
     0 0 22px rgba(201, 162, 90, 0.35),
-    inset 0 0 14px rgba(0, 0, 0, 0.5);
+    inset 0 0 14px rgba(0, 0, 0, 0.38);
   color: var(--parchment);
   font-family: var(--font-display);
   text-align: center;
@@ -177,7 +177,7 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #b8a888;
+  color: var(--parchment-2);
 }
 .level-rite-seal-number {
   font-size: 26px;
@@ -651,21 +651,20 @@
   color: var(--parchment-2);
 }
 
-/* ── Footer: dark forge strip (always dark) ── */
+/* ── Footer: adapts to the current ground ── */
 .level-rite-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 20px;
-  border-top: 1px solid #6a5c3e;
-  background: linear-gradient(180deg, #2a2418, #100c07);
+  border-top: 1px solid var(--rule);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ground) 74%, #000), var(--ground-3));
 }
 
-/* Secondary button — base is tuned for the parchment/document surface
-   ("Roll the Die"). On the footer (dark forge strip) it is overridden below
-   to light text + a bright border. */
-.level-rite-button {
+/* All footer buttons share the same base style. */
+.level-rite-button,
+.level-rite-button-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -684,49 +683,32 @@
   cursor: pointer;
   transition: border-color 150ms, color 150ms, background 150ms;
 }
-.level-rite-button:hover {
+.level-rite-button:hover,
+.level-rite-button-primary:hover {
   border-color: var(--ember);
   color: var(--ember);
   background: color-mix(in srgb, var(--ember) 10%, transparent);
 }
-.level-rite-button:focus-visible {
+.level-rite-button:focus-visible,
+.level-rite-button-primary:focus-visible {
   outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 
-/* Secondary button on the DARK forge strip (footer "Back"): invert to light
-   text + a bright parchment border so the outline clears 3:1 on the near-black
-   ground. */
-.level-rite-footer .level-rite-button {
-  border-color: #b8a888;
-  background: rgba(236, 224, 200, 0.06);
-  color: #ece0c8;
+/* Footer strip overrides — apply to both buttons */
+.level-rite-footer .level-rite-button,
+.level-rite-footer .level-rite-button-primary {
+  border-color: var(--parchment-2);
+  background: color-mix(in srgb, var(--parchment) 8%, transparent);
+  color: var(--parchment);
 }
-.level-rite-footer .level-rite-button:hover {
+.level-rite-footer .level-rite-button:hover,
+.level-rite-footer .level-rite-button-primary:hover {
   border-color: var(--select);
   color: var(--select);
   background: rgba(201, 162, 90, 0.14);
 }
 
-/* Primary button — a real visible outline, not an ember-on-ember blob.
-   Gold rim on an ember fill; the gold ring is the outline. */
-.level-rite-button-primary {
-  border: 1.5px solid var(--select);
-  background: linear-gradient(180deg, var(--ember), var(--accent-deep));
-  color: #f3e8cf;
-  font-weight: 700;
-  box-shadow:
-    0 0 0 1px rgba(201, 162, 90, 0.55),
-    0 0 18px rgba(178, 69, 47, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-.level-rite-button-primary:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ember) 80%, var(--select)), var(--accent-deep));
-  box-shadow:
-    0 0 0 1px var(--select),
-    0 0 24px rgba(178, 69, 47, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
 .level-rite-button:disabled,
 .level-rite-button-primary:disabled {
   opacity: 0.45;
@@ -735,13 +717,15 @@
   filter: grayscale(0.4);
 }
 .level-rite-button-primary:disabled:hover {
-  background: linear-gradient(180deg, var(--ember), var(--accent-deep));
-  box-shadow: none;
+  border-color: var(--rule);
+  color: var(--parchment);
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
 }
-.level-rite-footer .level-rite-button:disabled:hover {
-  border-color: #b8a888;
-  color: #ece0c8;
-  background: rgba(236, 224, 200, 0.06);
+.level-rite-footer .level-rite-button:disabled:hover,
+.level-rite-footer .level-rite-button-primary:disabled:hover {
+  border-color: var(--parchment-2);
+  color: var(--parchment);
+  background: color-mix(in srgb, var(--parchment) 8%, transparent);
 }
 
 /* ── Responsive ── */
