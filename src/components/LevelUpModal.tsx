@@ -231,7 +231,11 @@ export default memo(function LevelUpModal({
 
   const toggleSpell = (id: string) => {
     setPickedSpells((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+      prev.includes(id)
+        ? prev.filter((s) => s !== id)
+        : prev.length < spellTarget
+          ? [...prev, id]
+          : prev,
     );
   };
 
@@ -491,7 +495,7 @@ export default memo(function LevelUpModal({
               </p>
             ) : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
-            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} learned{spellToForget ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: none chosen</p> : null}
+            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} of {spellTarget} learned{spellToForget ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: 0 of {spellTarget} chosen</p> : null}
             <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
           </div>
         )}
