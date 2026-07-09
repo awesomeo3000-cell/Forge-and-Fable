@@ -29,7 +29,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
-  "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects", "pages",
+  "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects", "pages", "snapshots",
 ]);
 
 /** Validate a character creation payload or partial update patch. */
@@ -231,6 +231,19 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
           const bg = (val as Record<string, unknown>).backgroundImageUrl;
           if (bg !== undefined && (typeof bg !== "string" || bg.length > 500 || !/^https?:\/\//i.test(bg))) {
             throw new Error(`"theme.backgroundImageUrl" must be an http(s) URL of at most 500 characters.`);
+          }
+        }
+        break;
+      case "snapshots":
+        if (val !== undefined) {
+          assertArray(val, "snapshots");
+          if (val.length > 10) throw new Error(`"snapshots" must have at most 10 entries.`);
+          for (const entry of val) {
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error(`"snapshots" entries must be objects.`);
+            const s = entry as Record<string, unknown>;
+            assertString(s.id, "snapshots[].id", 64);
+            assertString(s.label, "snapshots[].label", 120);
+            assertString(s.createdAt, "snapshots[].createdAt", 40);
           }
         }
         break;
