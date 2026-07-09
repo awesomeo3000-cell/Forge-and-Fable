@@ -54,7 +54,7 @@ import CharacterImportModal from "@/components/CharacterImportModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
 import LevelUpModal from "@/components/LevelUpModal";
-import { learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
+import { cantripsKnownAt, learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
@@ -89,10 +89,11 @@ type CreationChoices = {
 type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
 
 /** Levels 1..target that require a player choice when starting above level 1:
-    subclass, ASI/feat, or a spell pick for known casters. Level 1 is included
-    only for level-1-subclass classes (sorcerer/warlock/cleric) so a high-level
-    start still picks its origin. HP-only levels are skipped — the creator
-    already computes starting HP for the chosen level. */
+    subclass, ASI/feat, a spell pick for known casters, or a cantrip gain (any
+    caster with cantrips — prepared casters included, e.g. cleric at 4/10).
+    Level 1 is included only for level-1-subclass classes (sorcerer/warlock/
+    cleric) so a high-level start still picks its origin. HP-only levels are
+    skipped — the creator already computes starting HP for the chosen level. */
 function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number[] {
   const asiLevels = heroClass.asiLevels ?? [4, 8, 12, 16, 19];
   const subclassLevel = getClassData(heroClass.id)?.subclassLevel;
@@ -105,7 +106,8 @@ function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number
       if (isSubclass) out.push(1);
       continue;
     }
-    if (isSubclass || asiLevels.includes(level) || knownCaster) out.push(level);
+    const gainsCantrip = cantripsKnownAt(heroClass.id, level) > cantripsKnownAt(heroClass.id, level - 1);
+    if (isSubclass || asiLevels.includes(level) || knownCaster || gainsCantrip) out.push(level);
   }
   return out;
 }

@@ -221,7 +221,7 @@ export default memo(function HeroSheet(props: {
   // list available up to their accessible spell level — not a learned subset.
   // Everyone else shows the spells they actually know. (Cantrips stay chosen.)
   const _isPrepared = PREPARED_CASTERS.has(heroClass.id) && casterType !== "none";
-  const _maxSpellLvl = maxSlots(casterType, props.character.level).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
+  const _maxSpellLvl = maxSlots(casterType, props.character.level, heroClass.id).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
   const knownSpells: SpellData[] = _isPrepared
     ? heroClass.id === "wizard"
       ? (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[])
@@ -571,7 +571,7 @@ export default memo(function HeroSheet(props: {
   const hitDiceRolling = useRef(false);
   const [showHitDiceRest, setShowHitDiceRest] = useState(false);
   const isPactCaster = casterType === "pact";
-  const slotMax = maxSlots(casterType, props.character.level);
+  const slotMax = maxSlots(casterType, props.character.level, heroClass.id);
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
   // Pact slots live at the first non-zero entry of slotMax (index = slotLevel - 1), not always [0].
   const pactMax = isPactCaster ? (slotMax.find((c) => c > 0) ?? 0) : 0;

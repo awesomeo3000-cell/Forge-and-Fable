@@ -66,6 +66,33 @@ export const SPELLS_LEARNED_PER_LEVEL: Record<string, number[]> = {
   wizard:   [0, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
 };
 
+/**
+ * Cantrips known by class level — thresholds of [level, total]. 2014 SRD
+ * tables; artificer per Tasha's. Classes absent never know cantrips
+ * (ranger, paladin, non-casters). Unlike leveled spells, EVERY caster with
+ * cantrips picks them individually — including prepared casters.
+ */
+export const CANTRIPS_KNOWN: Record<string, [level: number, total: number][]> = {
+  bard:      [[1, 2], [4, 3], [10, 4]],
+  cleric:    [[1, 3], [4, 4], [10, 5]],
+  druid:     [[1, 2], [4, 3], [10, 4]],
+  sorcerer:  [[1, 4], [4, 5], [10, 6]],
+  warlock:   [[1, 2], [4, 3], [10, 4]],
+  wizard:    [[1, 3], [4, 4], [10, 5]],
+  artificer: [[1, 2], [10, 3], [14, 4]],
+};
+
+/** Total cantrips a class knows at `level` (0 for classes without cantrips). */
+export function cantripsKnownAt(classId: string, level: number): number {
+  const rows = CANTRIPS_KNOWN[classId];
+  if (!rows || level < 1) return 0;
+  let total = 0;
+  for (const [lvl, count] of rows) {
+    if (level >= lvl) total = count;
+  }
+  return total;
+}
+
 /** Number of leveled spells a class learns when reaching `level` (0 if none / prepared). */
 export function spellsLearnedReachingLevel(classId: string, level: number): number {
   const table = SPELLS_LEARNED_PER_LEVEL[classId];

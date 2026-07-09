@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
-import { ALL_SPELLS, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
+import { ALL_SPELLS, cantripsKnownAt, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
@@ -80,7 +80,7 @@ export default memo(function LevelUpModal({
   // the SRD tables. Prepared casters (cleric, druid, paladin, artificer)
   // never learn a fixed set — they prepare freely each day — so they get no
   // "learn spells" step. Computed up here so stepComplete can enforce the cap.
-  const slots = maxSlots((casterType ?? "none") as CasterType, newLevel);
+  const slots = maxSlots((casterType ?? "none") as CasterType, newLevel, classId);
   const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
   const availableSpells = spellsForClass(classId)
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
@@ -91,12 +91,24 @@ export default memo(function LevelUpModal({
   const spellTarget = Math.min(newSpellsCount, availableSpells.length);
   const hasSpells = learnsIndividualSpells(classId, casterType) && newSpellsCount > 0 && spellTarget > 0;
 
+  // Cantrips are chosen individually by EVERY caster that has them — prepared
+  // casters included — at the levels where the class total increases
+  // (e.g. bard 4/10, artificer 10/14). Per the SRD cantrip-known columns.
+  const newCantripsCount = Math.max(0, cantripsKnownAt(classId, newLevel) - cantripsKnownAt(classId, newLevel - 1));
+  const availableCantrips = spellsForClass(classId)
+    .filter((s) => s.level === 0)
+    .filter((s) => !character.spellsKnown.includes(s.id))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 50);
+  const cantripTarget = Math.min(newCantripsCount, availableCantrips.length);
+  const hasCantrips = cantripTarget > 0;
+
   const steps: LevelUpStep[] = [];
   if (hasHp) steps.push("hp");
   if (hasSubclass) steps.push("subclass");
   if (hasExpertise) steps.push("expertise");
   if (hasAsi) steps.push("asi");
-  if (hasSpells) steps.push("spells");
+  if (hasSpells || hasCantrips) steps.push("spells");
   steps.push("summary");
 
   const [step, setStep] = useState(0);
@@ -118,6 +130,7 @@ export default memo(function LevelUpModal({
   const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
+  const [pickedCantrips, setPickedCantrips] = useState<string[]>([]);
   const [spellToForget, setSpellToForget] = useState<string | null>(null);
   const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
   const mounted = useRef(true);
@@ -169,7 +182,11 @@ export default memo(function LevelUpModal({
         }
         return true;
       }
-      case "spells": return pickedSpells.length > 0;
+      case "spells":
+        return (
+          (!hasSpells || pickedSpells.length >= spellTarget) &&
+          (!hasCantrips || pickedCantrips.length >= cantripTarget)
+        );
       case "summary": return true;
     }
   };
@@ -254,6 +271,16 @@ export default memo(function LevelUpModal({
     );
   };
 
+  const toggleCantrip = (id: string) => {
+    setPickedCantrips((prev) =>
+      prev.includes(id)
+        ? prev.filter((s) => s !== id)
+        : prev.length < cantripTarget
+          ? [...prev, id]
+          : prev,
+    );
+  };
+
   // Spells the character already knows that are leveled (not cantrips) —
   // eligible for the optional "replace one known spell" swap at level-up.
   const forgettableSpells = (character.spellsKnown ?? [])
@@ -287,9 +314,10 @@ export default memo(function LevelUpModal({
       }
       if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
     }
-    if (hasSpells && pickedSpells.length > 0) {
-      let updated = [...character.spellsKnown, ...pickedSpells];
-      if (spellToForget) {
+    if ((hasSpells && pickedSpells.length > 0) || (hasCantrips && pickedCantrips.length > 0)) {
+      let updated = [...character.spellsKnown, ...pickedCantrips, ...pickedSpells];
+      // The swap is a known-caster feature; wizard spellbooks never forget.
+      if (spellToForget && classId !== "wizard") {
         updated = updated.filter((id) => id !== spellToForget);
       }
       data.spellsKnown = updated;
@@ -487,17 +515,34 @@ export default memo(function LevelUpModal({
         {/* Spells step */}
         {current === "spells" && (
           <div className="cs-levelup-body">
-            <p>Choose spells to learn:</p>
-            <div className="cs-lvl-spell-grid">
-              {availableSpells.map((s) => (
-                <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedSpells.includes(s.id) ? " active" : ""}`} onClick={() => toggleSpell(s.id)}>
-                  <span>{s.name}</span>
-                  <small>Lv {s.level} {s.school}</small>
-                </button>
-              ))}
-            </div>
+            {hasCantrips ? (
+              <>
+                <p>New cantrips — choose {cantripTarget} ({pickedCantrips.length}/{cantripTarget}):</p>
+                <div className="cs-lvl-spell-grid">
+                  {availableCantrips.map((s) => (
+                    <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedCantrips.includes(s.id) ? " active" : ""}`} onClick={() => toggleCantrip(s.id)}>
+                      <span>{s.name}</span>
+                      <small>Cantrip {s.school}</small>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {hasSpells ? (
+              <>
+                <p>Choose {spellTarget} spell{spellTarget > 1 ? "s" : ""} to learn ({pickedSpells.length}/{spellTarget}):</p>
+                <div className="cs-lvl-spell-grid">
+                  {availableSpells.map((s) => (
+                    <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedSpells.includes(s.id) ? " active" : ""}`} onClick={() => toggleSpell(s.id)}>
+                      <span>{s.name}</span>
+                      <small>Lv {s.level} {s.school}</small>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
 
-            {forgettableSpells.length > 0 && (
+            {hasSpells && classId !== "wizard" && forgettableSpells.length > 0 && (
               <div style={{ marginTop: 20 }}>
                 <p>Replace one known spell (optional):</p>
                 <select
@@ -531,7 +576,12 @@ export default memo(function LevelUpModal({
               </p>
             ) : hasAsi && !pickedFeat ? <p style={{ color: "var(--accent)" }}>ASI/Feat: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length === 0 ? <p style={{ color: "var(--accent)" }}>ASI: no increases allocated</p> : null}
-            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} of {spellTarget} learned{spellToForget ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: 0 of {spellTarget} chosen</p> : null}
+            {hasCantrips ? (
+              pickedCantrips.length >= cantripTarget
+                ? <p>Cantrips: {pickedCantrips.map((id) => getSpell(id)?.name ?? id).join(", ")}</p>
+                : <p style={{ color: "var(--accent)" }}>Cantrips: {pickedCantrips.length} of {cantripTarget} chosen</p>
+            ) : null}
+            {hasSpells && pickedSpells.length > 0 ? <p>Spells: {pickedSpells.length} of {spellTarget} learned{spellToForget && classId !== "wizard" ? <>, 1 replaced ({getSpell(spellToForget)?.name ?? spellToForget})</> : null}</p> : hasSpells ? <p style={{ color: "var(--accent)" }}>Spells: 0 of {spellTarget} chosen</p> : null}
             <button className="gold-button" type="button" onClick={finish} disabled={!allDone}>Confirm Level Up</button>
           </div>
         )}
