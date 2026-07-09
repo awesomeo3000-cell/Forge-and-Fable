@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
+import { EFFECT_PRESETS } from "@/lib/effects";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
@@ -27,6 +28,8 @@ type Props = {
   onClose: () => void;
   theme?: CharacterTheme | null;
 };
+
+const CONDITION_OPTIONS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
 
 const ABILITY_OPTIONS: { key: AbilityKey; label: string }[] = [
   { key: "strength", label: "Strength" },
@@ -548,7 +551,11 @@ export default memo(function CampaignPanel({
                     <div className="campaign-tool-grid">
                       <label>
                         <span>Condition</span>
-                        <input type="text" value={conditionLabel} onChange={(event) => setConditionLabel(event.currentTarget.value)} />
+                        <select value={conditionLabel} onChange={(event) => setConditionLabel(event.currentTarget.value)}>
+                          {CONDITION_OPTIONS.map((preset) => (
+                            <option key={preset.label} value={preset.label}>{preset.label}</option>
+                          ))}
+                        </select>
                       </label>
                       <label>
                         <span>Target</span>
