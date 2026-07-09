@@ -1776,3 +1776,572 @@ Import traces:
 ⚠ Fast Refresh had to perform a full reload due to a runtime error.
 ⚠ Fast Refresh had to perform a full reload due to a runtime error.
 ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:23316) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:21084) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:3224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:49224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:33972) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:29620) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:48560) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50324) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[browser] Uncaught ReferenceError: Cannot access 'hasJackOfAllTrades' before initialization
+    at skillBonusForPassive (src/components/HeroSheet.tsx:201:18)
+    at HeroSheet (src/components/HeroSheet.tsx:205:31)
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:2029:13)
+    at Home (src\app\page.tsx:4:10)
+  199 |     const prof = isSkillProficient(s.id);
+  200 |     const expert = isSkillExpert(s.id);
+> 201 |     const joaT = hasJackOfAllTrades && !prof ? halfPb : 0;
+      |                  ^
+  202 |     return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT;
+  203 |   };
+  204 |
+⨯ ./src/components/HeroSheet.tsx:252:9
+the name `featuresUpToLevel` is defined multiple times
+  [90m250 |[0m   [36mconst[0m isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass....
+  [90m251 |[0m   [36mconst[0m spellsByLevel = knownSpells.reduce((acc, spell) => { [36mconst[0m lv = spell.level; [36mif[0m (...
+[31m[1m>[0m [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^^[0m
+  [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+  [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/HeroSheet.tsx:254:9
+the name `halfPb` is defined multiple times
+  [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+  [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+[31m[1m>[0m [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m    |[0m         [31m[1m^^^^^^[0m
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+  [90m256 |[0m   [36mconst[0m [levelUpTarget, setLevelUpTarget] = useState<number | [36mnull[0m>([36mnull[0m);
+  [90m257 |[0m   [36mconst[0m [tourDismissed, setTourDismissed] = useState([36mtrue[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/HeroSheet.tsx:253:9
+the name `hasJackOfAllTrades` is defined multiple times
+  [90m251 |[0m   [36mconst[0m spellsByLevel = knownSpells.reduce((acc, spell) => { [36mconst[0m lv = spell.level; [36mif[0m (...
+  [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+[31m[1m>[0m [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+  [90m256 |[0m   [36mconst[0m [levelUpTarget, setLevelUpTarget] = useState<number | [36mnull[0m>([36mnull[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+⨯ ./src/components/HeroSheet.tsx:252:9
+the name `featuresUpToLevel` is defined multiple times
+  [90m250 |[0m   [36mconst[0m isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass....
+  [90m251 |[0m   [36mconst[0m spellsByLevel = knownSpells.reduce((acc, spell) => { [36mconst[0m lv = spell.level; [36mif[0m (...
+[31m[1m>[0m [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^^[0m
+  [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+  [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/HeroSheet.tsx:254:9
+the name `halfPb` is defined multiple times
+  [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+  [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+[31m[1m>[0m [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m    |[0m         [31m[1m^^^^^^[0m
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+  [90m256 |[0m   [36mconst[0m [levelUpTarget, setLevelUpTarget] = useState<number | [36mnull[0m>([36mnull[0m);
+  [90m257 |[0m   [36mconst[0m [tourDismissed, setTourDismissed] = useState([36mtrue[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+
+./src/components/HeroSheet.tsx:253:9
+the name `hasJackOfAllTrades` is defined multiple times
+  [90m251 |[0m   [36mconst[0m spellsByLevel = knownSpells.reduce((acc, spell) => { [36mconst[0m lv = spell.level; [36mif[0m (...
+  [90m252 |[0m   [36mconst[0m featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+[31m[1m>[0m [90m253 |[0m   [36mconst[0m hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === [32m"Jack of All Trades"[0m);
+  [90m    |[0m         [31m[1m^^^^^^^^^^^^^^^^^^[0m
+  [90m254 |[0m   [36mconst[0m halfPb = hasJackOfAllTrades ? [33mMath[0m.max([35m1[0m, [33mMath[0m.floor(pb / [35m2[0m)) : [35m0[0m;
+  [90m255 |[0m   [36mconst[0m availableSubclasses = subclassesForClass(heroClass.id);
+  [90m256 |[0m   [36mconst[0m [levelUpTarget, setLevelUpTarget] = useState<number | [36mnull[0m>([36mnull[0m);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+[browser] Uncaught Error: ./src/components/HeroSheet.tsx:252:9
+the name `featuresUpToLevel` is defined multiple times
+  250 |   const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass....
+  251 |   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (...
+> 252 |   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+      |         ^^^^^^^^^^^^^^^^^
+  253 |   const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
+  254 |   const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
+  255 |   const availableSubclasses = subclassesForClass(heroClass.id);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/HeroSheet.tsx:252:9)
+    at <unknown> (Error: (./src/components/HeroSheet.tsx:252:9)
+[browser] Uncaught Error: ./src/components/HeroSheet.tsx:252:9
+the name `featuresUpToLevel` is defined multiple times
+  250 |   const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass....
+  251 |   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (...
+> 252 |   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.cha...
+      |         ^^^^^^^^^^^^^^^^^
+  253 |   const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
+  254 |   const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
+  255 |   const availableSubclasses = subclassesForClass(heroClass.id);
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/HeroSheet.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/HeroSheet.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/HeroSheet.tsx:252:9)
+    at <unknown> (Error: (./src/components/HeroSheet.tsx:252:9)
+(node:37132) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27908) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35152) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5276) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27908) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36320) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49408) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49692) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50184) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29632) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19092) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34180) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37220) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1740) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47772) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50368) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49696) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29860) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8704) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14948) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26800) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41812) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18872) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27684) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46652) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18292) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47464) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49988) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12776) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28432) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15104) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34772) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41000) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46176) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18392) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43084) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2172) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46584) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14584) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33968) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13572) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27872) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17000) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45176) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15672) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33452) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29384) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8684) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[browser] Uncaught ReferenceError: vaultSearch is not defined
+    at ForgeAndFableApp (src/components/ForgeAndFableApp.tsx:464:19)
+    at Home (src\app\page.tsx:4:10)
+  462 |       return true;
+  463 |     });
+> 464 |   }, [characters, vaultSearch, vaultActiveClassFilter, ruleset]);
+      |                   ^
+  465 |
+  466 |   useEffect(() => {
+  467 |     if (!user || !activeCampaignId) return;
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:50996) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50156) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21364) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11988) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49684) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10236) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34860) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8380) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43804) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40388) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42848) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47532) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:6956) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30176) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40400) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48816) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42100) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50892) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2140) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29220) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5840) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42644) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49900) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44060) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23164) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39580) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40732) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2092) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7044) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39308) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46660) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48260) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:15748) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+(node:43680) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:43684) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17764) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42064) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31944) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:51136) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32316) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:21200) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15580) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1332) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33544) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31712) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48044) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35192) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19596) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47520) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26384) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48192) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34628) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38812) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24460) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4980) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37244) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25508) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:12084) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48352) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49060) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15920) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42644) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26076) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17236) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:41756) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38752) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39972) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19948) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

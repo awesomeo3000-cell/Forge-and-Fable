@@ -642,9 +642,18 @@ export const ruleset: Ruleset = {
   backgrounds: [
     "Custom Background",
     "Acolyte",
+    "Charlatan",
     "Criminal",
+    "Entertainer",
+    "Folk Hero",
+    "Guild Artisan",
+    "Hermit",
+    "Noble",
+    "Outlander",
     "Sage",
+    "Sailor",
     "Soldier",
+    "Urchin",
   ],
   races: [
     {

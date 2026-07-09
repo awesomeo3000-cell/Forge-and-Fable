@@ -45,10 +45,19 @@ export const SAVE_PROFICIENCIES: Record<string, { label: string; abilities: [Abi
 
 /** Background skill proficiency grants (SRD pairings). */
 export const BACKGROUND_SKILLS: Record<string, string[]> = {
-  Acolyte:  ["insight", "religion"],
-  Criminal: ["deception", "stealth"],
-  Sage:     ["arcana", "history"],
-  Soldier:  ["athletics", "intimidation"],
+  Acolyte:       ["insight", "religion"],
+  Charlatan:     ["deception", "sleight-of-hand"],
+  Criminal:      ["deception", "stealth"],
+  Entertainer:   ["acrobatics", "performance"],
+  "Folk Hero":   ["animal-handling", "survival"],
+  "Guild Artisan": ["insight", "persuasion"],
+  Hermit:        ["medicine", "religion"],
+  Noble:         ["history", "persuasion"],
+  Outlander:     ["athletics", "survival"],
+  Sage:          ["arcana", "history"],
+  Sailor:        ["athletics", "perception"],
+  Soldier:       ["athletics", "intimidation"],
+  Urchin:        ["sleight-of-hand", "stealth"],
   // "Custom Background" grants none.
 };
 
@@ -109,20 +118,44 @@ export const CLASS_TOOL_CHOICES: Record<string, { count: number; options: string
 
 /** Fixed (no-choice) tool proficiencies a background grants, per PHB. */
 export const BACKGROUND_TOOL_GRANTS: Record<string, string[]> = {
-  Criminal: ["Thieves' tools"],
-  Soldier: ["Land vehicles"],
+  Charlatan:     ["Disguise kit", "Forgery kit"],
+  Criminal:      ["Thieves' tools"],
+  Entertainer:   ["Disguise kit"],
+  "Folk Hero":   ["Land vehicles"],
+  "Guild Artisan": [], // choice-based, see BACKGROUND_TOOL_CHOICES
+  Hermit:        ["Herbalism kit"],
+  Noble:         [], // choice-based, see BACKGROUND_TOOL_CHOICES
+  Outlander:     [], // choice-based, see BACKGROUND_TOOL_CHOICES
+  Sailor:        ["Navigator's tools", "Water vehicles"],
+  Soldier:       ["Land vehicles"],
+  Urchin:        ["Thieves' tools"],
   // Acolyte, Sage, "Custom Background" grant no tools.
 };
 
 /** Background tool proficiency choices (PHB): pick `count` from `options`. */
 export const BACKGROUND_TOOL_CHOICES: Record<string, { count: number; options: string[] }> = {
-  Criminal: { count: 1, options: GAMING_SETS },
-  Soldier: { count: 1, options: GAMING_SETS },
+  Criminal:      { count: 1, options: GAMING_SETS },
+  "Folk Hero":   { count: 1, options: ARTISAN_TOOLS },
+  "Guild Artisan": { count: 1, options: ARTISAN_TOOLS },
+  Noble:         { count: 1, options: GAMING_SETS },
+  Outlander:     { count: 1, options: MUSICAL_INSTRUMENTS },
+  Soldier:       { count: 1, options: GAMING_SETS },
 };
 
 /** How many languages of the player's choice a background grants. */
 export const BACKGROUND_LANGUAGE_CHOICES: Record<string, number> = {
-  Acolyte: 2,
-  Sage: 2,
-  // Criminal, Soldier, "Custom Background" grant no extra languages.
+  Acolyte:       2,
+  Charlatan:     0,
+  Criminal:      0,
+  Entertainer:   0,
+  "Folk Hero":   0,
+  "Guild Artisan": 0,
+  Hermit:        1,
+  Noble:         1,
+  Outlander:     1,
+  Sage:          2,
+  Sailor:        0,
+  Soldier:       0,
+  Urchin:        0,
+  // "Custom Background" grants no extra languages.
 };

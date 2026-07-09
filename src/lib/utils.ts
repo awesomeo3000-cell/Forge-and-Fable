@@ -311,3 +311,74 @@ export function applyRaceBonuses(abilities: AbilityScores, raceId: string, rules
     return scores;
   }, {} as AbilityScores);
 }
+
+// ── Custom Dice Formula Parser ──
+
+export type DiceGroup = { sides: number; count: number; keepHighest?: number };
+export type ParsedFormula = { groups: DiceGroup[]; modifier: number; error?: string };
+
+const DICE_RE = /(\d+)?d(\d+)(?:kh(\d+))?/gi;
+const MOD_RE = /([+-]\s*\d+)/g;
+
+export function parseDiceFormula(formula: string): ParsedFormula {
+  const cleaned = formula.replace(/\s+/g, "").toLowerCase();
+  if (!cleaned) return { groups: [], modifier: 0, error: "Empty formula." };
+
+  const groups: DiceGroup[] = [];
+  let match: RegExpExecArray | null;
+  DICE_RE.lastIndex = 0;
+
+  while ((match = DICE_RE.exec(cleaned)) !== null) {
+    const count = match[1] ? parseInt(match[1], 10) : 1;
+    const sides = parseInt(match[2], 10);
+    const keepHighest = match[3] ? parseInt(match[3], 10) : undefined;
+
+    if (![4, 6, 8, 10, 12, 20, 100].includes(sides)) {
+      return { groups: [], modifier: 0, error: `Invalid die: d${sides}. Use d4, d6, d8, d10, d12, d20, or d100.` };
+    }
+    if (count < 1 || count > 100) {
+      return { groups: [], modifier: 0, error: `Invalid die count: ${count}. Must be 1–100.` };
+    }
+    if (keepHighest !== undefined && (keepHighest < 1 || keepHighest > count)) {
+      return { groups: [], modifier: 0, error: `Keep-highest (${keepHighest}) must be 1–${count}.` };
+    }
+
+    groups.push({ sides, count, keepHighest });
+  }
+
+  if (groups.length === 0 && !/[+-]\d/.test(cleaned)) {
+    return { groups: [], modifier: 0, error: "No dice found. Use format like 2d6+1d4+3 or 4d6kh3." };
+  }
+
+  // Parse flat modifier from non-dice parts
+  let modifier = 0;
+  MOD_RE.lastIndex = 0;
+  while ((match = MOD_RE.exec(cleaned)) !== null) {
+    modifier += parseInt(match[1].replace(/\s+/g, ""), 10);
+  }
+
+  return { groups, modifier };
+}
+
+export function rollFormula(parsed: ParsedFormula): { rolls: number[][]; total: number; error?: string } {
+  if (parsed.error) return { rolls: [], total: 0, error: parsed.error };
+  if (parsed.groups.length === 0) return { rolls: [], total: parsed.modifier };
+
+  const allRolls: number[][] = [];
+  let total = 0;
+
+  for (const group of parsed.groups) {
+    const rolls: number[] = [];
+    for (let i = 0; i < group.count; i++) {
+      rolls.push(rollDie(group.sides));
+    }
+    rolls.sort((a, b) => b - a);
+
+    const kept = group.keepHighest ? rolls.slice(0, group.keepHighest) : rolls;
+    allRolls.push(rolls);
+    total += kept.reduce((sum, v) => sum + v, 0);
+  }
+
+  total += parsed.modifier;
+  return { rolls: allRolls, total };
+}

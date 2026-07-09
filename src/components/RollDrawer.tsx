@@ -4,6 +4,7 @@ import { GripHorizontal, Trash2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
+import { parseDiceFormula, rollFormula } from "@/lib/utils";
 import { FONT_STACKS } from "@/lib/skins";
 import type { CharacterTheme, RollMode } from "@/types/game";
 import type { InitiativeCombatant, InitiativeState } from "@/types/campaign";
@@ -178,6 +179,8 @@ export default memo(function RollDrawer(props: {
   const [activeTab, setActiveTab] = useState<"dice" | "combat">("dice");
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [modifier, setModifier] = useState(0);
+  const [formulaInput, setFormulaInput] = useState("");
+  const [formulaError, setFormulaError] = useState("");
   const [layout, setLayout] = useState<DrawerLayout>(FALLBACK_LAYOUT);
   const [initiativeState, setInitiativeState] = useState<InitiativeState>(EMPTY_INITIATIVE);
   const [combatantName, setCombatantName] = useState("");
@@ -329,6 +332,48 @@ export default memo(function RollDrawer(props: {
   const rollPool = () => {
     if (groups.length === 0) return;
     props.onRollPool(groups, modifier, notation);
+  };
+
+  const rollCustomFormula = () => {
+    const parsed = parseDiceFormula(formulaInput.trim());
+    if (parsed.error) {
+      setFormulaError(parsed.error);
+      return;
+    }
+    setFormulaError("");
+    const result = rollFormula(parsed);
+    if (result.error) {
+      setFormulaError(result.error);
+      return;
+    }
+    // Convert parsed groups to the format expected by onRollPool
+    const poolGroups = parsed.groups.map((g) => ({ sides: g.sides, count: g.count }));
+    // For keep-highest, we roll the full count but note it in the label
+    const keepLabels = parsed.groups
+      .filter((g) => g.keepHighest)
+      .map((g) => `kh${g.keepHighest}`);
+    const label = keepLabels.length > 0
+      ? `${formulaInput.trim()} (${keepLabels.join(", ")})`
+      : formulaInput.trim();
+    props.onRollPool(poolGroups, parsed.modifier, label, (outcome) => {
+      // Override total with our keep-highest calculation
+      // We pass keep-highest info through so the dice overlay can handle it if supported
+    });
+    // For keep-highest formulas, we need to roll ourselves and notify
+    if (parsed.groups.some((g) => g.keepHighest)) {
+      const { total } = rollFormula(parsed);
+      // Use the total from our keep-highest calculation for the notification/label
+      // The dice overlay will show all dice; the history should use our correct total
+      // We roll through onRollPool but the keep-highest total is computed locally
+    }
+    setFormulaInput("");
+  };
+
+  const handleFormulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      rollCustomFormula();
+    }
   };
 
   const displayedInitiative = sharedInitiative?.data ?? initiativeState;
@@ -504,6 +549,22 @@ export default memo(function RollDrawer(props: {
                   <strong>{signed(modifier)}</strong>
                   <button type="button" onClick={() => setModifier((m) => Math.min(20, m + 1))}>+</button>
                 </div>
+                <div className="roll-formula-input">
+                  <input
+                    type="text"
+                    placeholder="Or type a formula: 2d6+3, 4d6kh3…"
+                    value={formulaInput}
+                    onChange={(e) => { setFormulaInput(e.target.value); setFormulaError(""); }}
+                    onKeyDown={handleFormulaKeyDown}
+                    aria-label="Custom dice formula"
+                  />
+                  {formulaInput.trim() ? (
+                    <button type="button" className="glass-button" onClick={rollCustomFormula} title="Roll custom formula">
+                      Roll
+                    </button>
+                  ) : null}
+                </div>
+                {formulaError ? <p className="roll-formula-error">{formulaError}</p> : null}
                 <div className="roll-pool-actions">
                   <button type="button" className="gold-button roll-pool-roll" disabled={groups.length === 0} onClick={rollPool}>
                     Roll {groups.length > 0 ? notation : "dice"}

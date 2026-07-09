@@ -431,7 +431,7 @@ export default memo(function CampaignPanel({
                         const response = await fetch(`/api/campaigns/${activeId}/members/me`, { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ characterId: e.target.value }) });
                         if (!response.ok) { setError("Could not switch character."); return; }
                         onActiveCampaignChange(activeId);
-                        setError(null);
+                        setError("");
                       } catch { setError("Could not switch character."); } finally { setBusy(false); }
                       e.target.value = "";
                     }}

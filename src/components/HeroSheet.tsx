@@ -186,6 +186,10 @@ export default memo(function HeroSheet(props: {
     return sources;
   };
 
+  const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
+  const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
+  const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
+
   const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
   const skillBonus = (s: SkillDef) => {
     const mod = abilityModifier(props.finalAbilities[s.ability]);
@@ -245,9 +249,6 @@ export default memo(function HeroSheet(props: {
   // Non-wizard known casters (Bard, Ranger, Sorcerer, Warlock) who learn individual spells.
   const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass.id, casterType);
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
-  const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
-  const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
-  const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
   const [tourDismissed, setTourDismissed] = useState(true);
@@ -568,6 +569,7 @@ export default memo(function HeroSheet(props: {
   }, [itemCategory, itemRarity, itemSearch]);
   const visibleItemMatches = itemMatches.slice(0, 24);
   const hitDiceRolling = useRef(false);
+  const [showHitDiceRest, setShowHitDiceRest] = useState(false);
   const isPactCaster = casterType === "pact";
   const slotMax = maxSlots(casterType, props.character.level);
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
@@ -624,15 +626,36 @@ export default memo(function HeroSheet(props: {
     const available = props.character.level - (props.character.hitDiceSpent ?? 0);
     if (isPactCaster) {
       props.onUpdate({ pactSlotsUsed: 0 });
-      const parts = ["Short rest — pact slots recovered."];
-      if (available > 0) parts.push(`${available} hit dice available — spend them in Hit Dice.`);
-      else parts.push("No hit dice remaining.");
-      props.onNotify?.(parts.join(" "));
-    } else if (available > 0) {
-      props.onNotify?.(`Short rest — ${available} hit dice available. Spend them in Hit Dice to heal.`);
+    }
+    if (available > 0) {
+      setShowHitDiceRest(true);
+    } else if (isPactCaster) {
+      props.onNotify?.("Short rest — pact slots recovered. No hit dice remaining.");
     } else {
       props.onNotify?.("Short rest — no hit dice remaining.");
     }
+  };
+  const rollHitDie = () => {
+    const available = props.character.level - (props.character.hitDiceSpent ?? 0);
+    if (available <= 0) return;
+    const conMod = abilityModifier(props.finalAbilities.constitution);
+    const spent = props.character.hitDiceSpent ?? 0;
+    props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => {
+      const healed = Math.max(0, outcome.total);
+      props.onUpdate({
+        currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed),
+        hitDiceSpent: spent + 1,
+      });
+    });
+  };
+  const finishShortRest = () => {
+    setShowHitDiceRest(false);
+    const remaining = props.character.level - (props.character.hitDiceSpent ?? 0);
+    const parts: string[] = ["Short rest complete."];
+    if (isPactCaster) parts.push("Pact slots recovered.");
+    if (remaining > 0) parts.push(`${remaining} hit dice remaining.`);
+    else parts.push("No hit dice remaining.");
+    props.onNotify?.(parts.join(" "));
   };
   const doLongRest = () => {
     if (!window.confirm("Take a long rest? HP and spell slots will be restored.")) return;
@@ -647,6 +670,23 @@ export default memo(function HeroSheet(props: {
       ]),
     );
     spellStatusesRef.current = restedSpellStatuses;
+
+    // Class-specific resets
+    const classId = props.character.classId;
+    const classResetNotes: string[] = [];
+    const effectPatches: Partial<CharacterEffect>[] = [];
+
+    if (classId === "fighter") {
+      classResetNotes.push("Second Wind");
+      // Reset any effect that looks like Second Wind usage tracking
+      effectPatches.push({ id: "__fighter-second-wind", label: "Second Wind", active: true } as CharacterEffect);
+    }
+    if (classId === "monk") {
+      classResetNotes.push("Ki points");
+      // Reset Ki point tracking
+      effectPatches.push({ id: "__monk-ki", label: "Ki", active: true } as CharacterEffect);
+    }
+
     const recoveredParts: string[] = [];
     recoveredParts.push(`HP restored to ${props.character.maxHp}`);
     if (props.character.tempHp > 0) recoveredParts.push("temp HP cleared");
@@ -655,7 +695,9 @@ export default memo(function HeroSheet(props: {
     if (spent > 0) recoveredParts.push(`${Math.min(recovered, spent)} hit dice recovered`);
     const hadFreeUsed = Object.values(allStatuses).some((s) => s.freeUse && s.freeUsed);
     if (hadFreeUsed) recoveredParts.push("per-rest spell uses restored");
-    props.onUpdate({
+    if (classResetNotes.length > 0) recoveredParts.push(`${classResetNotes.join(", ")} recovered`);
+
+    const updatePatch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {
       currentHp: props.character.maxHp,
       tempHp: 0,
       spellSlotsUsed: {},
@@ -663,7 +705,9 @@ export default memo(function HeroSheet(props: {
       concentratingOn: null,
       hitDiceSpent: Math.max(0, spent - recovered),
       spellStatuses: restedSpellStatuses,
-    });
+    };
+
+    props.onUpdate(updatePatch);
     props.onNotify?.(`Long rest — ${recoveredParts.join(", ")}.`);
   };
 
@@ -964,6 +1008,19 @@ export default memo(function HeroSheet(props: {
             <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest">Short Rest</button>
             <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest">Long Rest</button>
           </div>
+          {showHitDiceRest ? (
+            <div className="cs-hd-rest-panel">
+              <span className="cs-hd-rest-info">
+                Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
+              </span>
+              <div className="cs-hd-rest-actions">
+                <button className="cs-glass-btn" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
+                  Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
+                </button>
+                <button className="cs-glass-btn" type="button" onClick={finishShortRest}>Done</button>
+              </div>
+            </div>
+          ) : null}
           <button className={`cs-glass-btn cs-inspire-btn${props.character.heroicInspiration ? " cs-inspire-on" : ""}`} type="button" aria-pressed={!!props.character.heroicInspiration} title="Heroic Inspiration" onClick={() => props.onUpdate({ heroicInspiration: !props.character.heroicInspiration })}>{props.character.heroicInspiration ? "✦ " : ""}Inspiration</button>
           <button className="cs-retire-btn" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={12} /></button>
         </div>
@@ -1015,12 +1072,79 @@ export default memo(function HeroSheet(props: {
           <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const expert = isSkillExpert(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${expert ? " cs-expert" : prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} onContextMenu={(e) => { e.preventDefault(); cycleSkillExpertise(skill.id); }} onKeyDown={(e) => { if (e.key === "e" || e.key === "E") { e.preventDefault(); cycleSkillExpertise(skill.id); } }} aria-label={`Toggle ${skill.name} proficiency — right-click or E for expertise${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{expert ? "\u2726" : prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20ForAbility(skill.name, bonus, skill.ability)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`} title={d20OptionsForAbility(skill.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : source === "EXP" ? "expertise" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : source === "EXP" ? "Expertise (2× proficiency)" : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
         </section>
       );
-      case "senses": return (
+      case "senses": {
+        // Collect senses from active effects and race traits, keeping highest per type
+        const sensePatterns: { regex: RegExp; label: string }[] = [
+          { regex: /darkvision\s+(\d+)/i, label: "Darkvision" },
+          { regex: /truesight\s+(\d+)/i, label: "Truesight" },
+          { regex: /blindsight\s+(\d+)/i, label: "Blindsight" },
+          { regex: /tremorsense\s+(\d+)/i, label: "Tremorsense" },
+        ];
+        const senseMax: Record<string, number> = {};
+
+        // Check race traits for senses (e.g., Darkvision from elf/dwarf)
+        for (const trait of race.traits) {
+          const text = `${trait.name} ${trait.description}`;
+          for (const { regex, label } of sensePatterns) {
+            const m = regex.exec(text);
+            if (m) {
+              const dist = parseInt(m[1], 10);
+              if (!Number.isNaN(dist) && dist > (senseMax[label] ?? 0)) {
+                senseMax[label] = dist;
+              }
+            }
+          }
+        }
+
+        // Check active effects for senses
+        for (const eff of activeEffects) {
+          if (!eff.sense) continue;
+          for (const { regex, label } of sensePatterns) {
+            const m = regex.exec(eff.sense);
+            if (m) {
+              const dist = parseInt(m[1], 10);
+              if (!Number.isNaN(dist) && dist > (senseMax[label] ?? 0)) {
+                senseMax[label] = dist;
+              }
+            }
+          }
+          // Also check effect label for sense-like descriptions
+          const effText = `${eff.label} ${eff.sense}`;
+          for (const { regex, label } of sensePatterns) {
+            regex.lastIndex = 0;
+            const m = regex.exec(effText);
+            if (m) {
+              const dist = parseInt(m[1], 10);
+              if (!Number.isNaN(dist) && dist > (senseMax[label] ?? 0)) {
+                senseMax[label] = dist;
+              }
+            }
+          }
+        }
+
+        // Also check any effect sense that doesn't match a pattern — show raw
+        const rawSenses = activeEffects
+          .filter((e) => e.sense)
+          .map((e) => e.sense!.trim())
+          .filter((s) => s && !sensePatterns.some((p) => p.regex.test(s)));
+
+        return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Senses</h3>
-          <div className="cs-sense-list"><div className="cs-sense-row"><span>Passive Perception</span><strong>{passivePerception}</strong></div><div className="cs-sense-row"><span>Passive Investigation</span><strong>{passiveInvestigation}</strong></div><div className="cs-sense-row"><span>Passive Insight</span><strong>{passiveInsight}</strong></div>{activeEffects.filter((e) => e.sense).map((e) => (<div className="cs-sense-row" key={e.id}><span>{e.sense}</span><strong title={e.label}>{"◈"}</strong></div>))}</div>
+          <div className="cs-sense-list">
+            <div className="cs-sense-row"><span>Passive Perception</span><strong>{passivePerception}</strong></div>
+            <div className="cs-sense-row"><span>Passive Investigation</span><strong>{passiveInvestigation}</strong></div>
+            <div className="cs-sense-row"><span>Passive Insight</span><strong>{passiveInsight}</strong></div>
+            {Object.entries(senseMax).map(([label, dist]) => (
+              <div className="cs-sense-row" key={label}><span>{label}</span><strong>{dist} ft.</strong></div>
+            ))}
+            {rawSenses.map((s, i) => (
+              <div className="cs-sense-row" key={`raw-${i}`}><span>{s}</span><strong>◈</strong></div>
+            ))}
+          </div>
         </section>
-      );
+        );
+      }
       case "profs": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Proficiencies &amp; Training</h3>

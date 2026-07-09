@@ -360,8 +360,16 @@ export type Character = {
   heroicInspiration?: boolean;
   effects?: CharacterEffect[];
   pages?: CharacterPage[];
+  snapshots?: CharacterSnapshot[];
   createdAt: string;
 }
+
+export type CharacterSnapshot = {
+  id: string;
+  label: string;
+  character: Character;
+  createdAt: string;
+};
 
 export type DeathSaves = {
   successes: number;

@@ -3,6 +3,7 @@
 import {
   LogOut,
   MessageSquare,
+  RotateCcw,
   Swords,
   X,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import type {
   BuildMode,
   Character,
   CharacterEffect,
+  CharacterSnapshot,
   CustomRule,
   DraftCharacter,
   FeedbackEntry,
@@ -57,7 +59,7 @@ import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
-import { ordinalLevel, soulsRecorded } from "@/lib/ledgerCopy";
+import { ordinalLevel } from "@/lib/ledgerCopy";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
 import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effects";
@@ -173,6 +175,8 @@ export default function ForgeAndFableApp() {
   const [manualRollMode, setManualRollMode] = useState<RollMode | null>(null);
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
   const [spellsReady, setSpellsReady] = useState(false);
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const sessionSnapshotCreated = useRef(false);
   const campaignCursorRef = useRef<Record<string, string>>({});
   const campaignSyncFailRef = useRef<number>(0);
   const processedCampaignEventsRef = useRef<Set<string>>(new Set());
@@ -396,6 +400,18 @@ export default function ForgeAndFableApp() {
   const diceAccent = selected?.theme?.accent ?? "#a23f29";
   const diceFont = selected?.theme ? FONT_STACKS[selected.theme.fontKey] : undefined;
 
+  const vaultThemeVars = useMemo(() => {
+    const theme = selected?.theme;
+    if (!theme) return undefined;
+    return {
+      "--paper": theme.paper,
+      "--ink": theme.ink,
+      "--ink-2": `color-mix(in srgb, ${theme.ink} 65%, ${theme.paper})`,
+      "--ink-3": `color-mix(in srgb, ${theme.ink} 45%, ${theme.paper})`,
+      "--doc-accent": theme.accent,
+    } as CSSProperties;
+  }, [selected?.theme]);
+
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   const showCreator = creatorOpen;
   const selectedFinalAbilities = useMemo(() => {
@@ -436,6 +452,8 @@ export default function ForgeAndFableApp() {
       effectTotal(selected.effects, "initiative")
     );
   }, [selected, selectedFinalAbilities, selectedFeatBonuses]);
+
+  const filteredVaultChars = characters;
 
   useEffect(() => {
     if (!user || !activeCampaignId) return;
@@ -511,6 +529,15 @@ export default function ForgeAndFableApp() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [activeCampaignId, selected, user, campaignOpen]);
+
+  // Auto-snapshot on session load (once per session)
+  useEffect(() => {
+    if (!selected || sessionSnapshotCreated.current || !user) return;
+    sessionSnapshotCreated.current = true;
+    const label = `Session start — ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+    createSnapshot(label);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id, user]);
 
   const draftFinalAbilities = useMemo(() => {
     if (!draft || !ruleset) {
@@ -897,13 +924,42 @@ export default function ForgeAndFableApp() {
 
   async function updateSelected(patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
     if (!selected) return;
-    await updateCharacterById(selected.id, patch);
+
+    const mergedPatch = { ...patch };
+
+    // Auto-snapshot on long rest: HP restored to max AND spell slots reset
+    if (
+      patch.currentHp !== undefined &&
+      patch.currentHp === selected.maxHp &&
+      (patch.spellSlotsUsed !== undefined || patch.pactSlotsUsed !== undefined)
+    ) {
+      const snapshots = buildSnapshot(`Long rest — ${new Date().toISOString().slice(0, 16).replace("T", " ")}`);
+      if (snapshots) mergedPatch.snapshots = snapshots as unknown as CharacterSnapshot[];
+    }
+
+    // Auto-snapshot on level-up
+    if (patch.level !== undefined && patch.level > selected.level) {
+      const snapshots = buildSnapshot(`Level ${patch.level} — ${new Date().toISOString().slice(0, 16).replace("T", " ")}`);
+      if (snapshots) mergedPatch.snapshots = snapshots as unknown as CharacterSnapshot[];
+    }
+
+    await updateCharacterById(selected.id, mergedPatch);
   }
 
   async function updateCharacterById(characterId: string, patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
     if (!user) {
       return;
     }
+
+    // Snapshot pre-patch state for potential revert
+    let prePatchChar: Character | undefined;
+    setCharacters((current) => {
+      prePatchChar = current.find((c) => c.id === characterId);
+      // Optimistic: apply patch immediately
+      return current.map((c) =>
+        c.id === characterId ? { ...c, ...patch } as Character : c,
+      );
+    });
 
     try {
       const response = await fetch(`/api/characters/${characterId}`, {
@@ -916,14 +972,27 @@ export default function ForgeAndFableApp() {
       if (response.status === 401) {
         logOut();
         setStatus("Session expired — please log in again.");
+        // Revert optimistic update
+        if (prePatchChar) {
+          setCharacters((current) =>
+            current.map((c) => (c.id === characterId ? prePatchChar! : c)),
+          );
+        }
         return;
       }
 
       if (!response.ok || !data.character) {
         setStatus(data.error ?? "Update failed.");
+        // Revert optimistic update on failure
+        if (prePatchChar) {
+          setCharacters((current) =>
+            current.map((c) => (c.id === characterId ? prePatchChar! : c)),
+          );
+        }
         return;
       }
 
+      // Replace optimistic with server response
       setCharacters((current) =>
         current.map((character) =>
           character.id === data.character!.id ? data.character! : character,
@@ -931,6 +1000,12 @@ export default function ForgeAndFableApp() {
       );
     } catch {
       setStatus("Connection lost — changes not saved.");
+      // Revert optimistic update on network failure
+      if (prePatchChar) {
+        setCharacters((current) =>
+          current.map((c) => (c.id === characterId ? prePatchChar! : c)),
+        );
+      }
     }
   }
 
@@ -962,6 +1037,39 @@ export default function ForgeAndFableApp() {
     } catch {
       setStatus("Connection lost — hero not retired.");
     }
+  }
+
+  function buildSnapshot(label: string): CharacterSnapshot[] | null {
+    if (!selected) return null;
+    const now = new Date().toISOString();
+    const snapshot: CharacterSnapshot = {
+      id: crypto.randomUUID(),
+      label: label || `Snapshot ${now.slice(0, 16).replace("T", " ")}`,
+      character: JSON.parse(JSON.stringify(selected)) as Character,
+      createdAt: now,
+    };
+    const existing = selected.snapshots ?? [];
+    const capped = [snapshot, ...existing].slice(0, 10);
+    for (const s of capped) {
+      if ((s.character as Record<string, unknown>).snapshots) delete (s.character as Record<string, unknown>).snapshots;
+    }
+    return capped;
+  }
+
+  function createSnapshot(label: string) {
+    const snapshots = buildSnapshot(label);
+    if (!snapshots || !selected) return;
+    updateCharacterById(selected.id, { snapshots: snapshots as unknown as CharacterSnapshot[] });
+  }
+
+  function restoreSnapshot(snapshot: CharacterSnapshot) {
+    if (!selected) return;
+    if (!window.confirm(`Restore snapshot "${snapshot.label}"? Current unsaved changes will be lost.`)) return;
+    const restored = JSON.parse(JSON.stringify(snapshot.character)) as Character;
+    // Preserve snapshots
+    restored.snapshots = selected.snapshots;
+    updateCharacterById(selected.id, restored as Partial<Omit<Character, "id" | "userId" | "createdAt">>);
+    setSnapshotsOpen(false);
   }
 
   async function loadFeedback() {
@@ -1759,6 +1867,11 @@ export default function ForgeAndFableApp() {
           <button className="glass-icon ink-action" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
             <Swords size={18} />
           </button>
+          {selected ? (
+            <button className="glass-icon ink-action" type="button" onClick={() => setSnapshotsOpen(true)} title="Snapshots">
+              <RotateCcw size={18} />
+            </button>
+          ) : null}
           <button className="glass-icon ink-action" type="button" onClick={openFeedback} title="Submit feedback">
             <MessageSquare size={18} />
           </button>
@@ -1769,34 +1882,20 @@ export default function ForgeAndFableApp() {
       </header>
 
       <section className="builder-layout">
-        <aside className="vault-rail ledger-rail">
+        <aside className="vault-rail ledger-rail" style={vaultThemeVars}>
           <div className="rail-heading">
-            <span>Roster</span>
-            <button
-              type="button"
-              className="glass-icon ink-action-dark"
-              title="Import PDF"
-              onClick={() => setImportOpen(true)}
-            >
-              Import
-            </button>
-            <button
-              type="button"
-              className="glass-icon ink-action-dark"
-              title="New character"
-              onClick={() => {
-                setCreationPromptOpen(true);
-                setCreatorOpen(false);
-              }}
-            >
-              New
-            </button>
+            <button type="button" className="rail-action" title="Import PDF" onClick={() => setImportOpen(true)}>Import</button>
+            <button type="button" className="rail-action" title="New character" onClick={() => { setCreationPromptOpen(true); setCreatorOpen(false); }}>New</button>
           </div>
-          {characters.length > 0 ? (
-            <p className="ledger-rail-count">{soulsRecorded(characters.length)}</p>
-          ) : null}
           <div className="vault-list">
-            {characters.map((character) => {
+            {characters.length === 0 && !ruleset ? (
+              <>
+                <div className="skeleton-row"><div className="skeleton skeleton-avatar" /><div className="skeleton skeleton-text" /><div className="skeleton skeleton-text short" /></div>
+                <div className="skeleton-row"><div className="skeleton skeleton-avatar" /><div className="skeleton skeleton-text" /><div className="skeleton skeleton-text short" /></div>
+                <div className="skeleton-row"><div className="skeleton skeleton-avatar" /><div className="skeleton skeleton-text" /><div className="skeleton skeleton-text short" /></div>
+              </>
+            ) : (
+              filteredVaultChars.map((character) => {
               const race = ruleset.races.find((item) => item.id === character.raceId);
               const heroClass = ruleset.classes.find((item) => item.id === character.classId);
               const recordLine = [race?.name, heroClass?.name, `${ordinalLevel(character.level)} level`]
@@ -1821,7 +1920,7 @@ export default function ForgeAndFableApp() {
                   <small>{recordLine}</small>
                 </button>
               );
-            })}
+            }))}
             <button
               type="button"
               className="ledger-ghost-row"
@@ -1894,6 +1993,62 @@ export default function ForgeAndFableApp() {
           ) : null}
         </section>
       </section>
+
+      {/* Snapshots Panel */}
+      {snapshotsOpen && selected ? (
+        <div className="modal-scrim" role="presentation" onMouseDown={() => setSnapshotsOpen(false)}>
+          <section
+            className="campaign-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="snapshots-title"
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{ maxWidth: 480 }}
+          >
+            <div className="campaign-header">
+              <h2 id="snapshots-title"><RotateCcw size={18} /> Snapshots — {selected.name}</h2>
+              <button className="glass-icon modal-close" type="button" onClick={() => setSnapshotsOpen(false)} aria-label="Close"><X size={18} /></button>
+            </div>
+            <div className="campaign-body">
+              <button
+                className="dj-btn dj-btn-primary"
+                type="button"
+                onClick={() => {
+                  const label = window.prompt("Snapshot label (optional):")?.trim() || "";
+                  if (label !== null) createSnapshot(label);
+                }}
+                style={{ marginBottom: 12 }}
+              >
+                Save Snapshot
+              </button>
+              {(selected.snapshots ?? []).length === 0 ? (
+                <p className="cs-muted">No snapshots yet. Snapshots are auto-created on session load, level-up, and long rest.</p>
+              ) : (
+                <div className="campaign-list">
+                  {(selected.snapshots ?? []).map((snap) => (
+                    <div key={snap.id} className="campaign-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <strong>{snap.label}</strong>
+                        <small style={{ display: "block", color: "var(--ink-faint)" }}>
+                          {new Date(snap.createdAt).toLocaleString()} · Lv {snap.character.level} · HP {snap.character.currentHp}/{snap.character.maxHp}
+                        </small>
+                      </div>
+                      <button
+                        className="glass-button"
+                        type="button"
+                        onClick={() => restoreSnapshot(snap)}
+                        title="Restore this snapshot"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
     </>
   );
