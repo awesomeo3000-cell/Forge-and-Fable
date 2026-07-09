@@ -435,7 +435,6 @@ export function updateCampaignInitiative(campaignId: string, userId: string, dat
   try {
     const current = getInitiativeRow(campaignId);
     if (current.version !== version) {
-      db.exec("ROLLBACK");
       throw new CampaignConflictError("Initiative changed. Refetch and try again.");
     }
     const nextData = clampInitiativeState(data);
@@ -504,4 +503,9 @@ export function leaveCampaign(campaignId: string, userId: string): void {
   const campaign = getCampaignOrThrow(campaignId);
   if (campaign.dm_user_id === userId) throw new Error("The DM cannot leave. Delete the campaign instead.");
   getDb().prepare("DELETE FROM campaign_members WHERE campaign_id = ? AND user_id = ?").run(campaignId, userId);
+}
+
+export function switchCampaignCharacter(campaignId: string, userId: string, characterId: string): void {
+  requireMembership(campaignId, userId);
+  getDb().prepare("UPDATE campaign_members SET character_id = ? WHERE campaign_id = ? AND user_id = ?").run(characterId, campaignId, userId);
 }

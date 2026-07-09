@@ -81,6 +81,7 @@ type CreationChoices = {
   asiChoices: ASIChoice[];
   hpRolls?: number[];
   spellStatuses?: Record<string, SpellStatus>;
+  skillExpertise?: string[];
 };
 
 type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
@@ -94,7 +95,7 @@ function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number
   const asiLevels = heroClass.asiLevels ?? [4, 8, 12, 16, 19];
   const subclassLevel = getClassData(heroClass.id)?.subclassLevel;
   const knownCaster =
-    learnsIndividualSpells(heroClass.id, heroClass.casterType) && spellsForClass(heroClass.name).length > 0;
+    learnsIndividualSpells(heroClass.id, heroClass.casterType) && spellsForClass(heroClass.id).length > 0;
   const out: number[] = [];
   for (let level = 1; level <= targetLevel; level++) {
     const isSubclass = subclassLevel != null && level === subclassLevel;
@@ -173,6 +174,7 @@ export default function ForgeAndFableApp() {
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
   const [spellsReady, setSpellsReady] = useState(false);
   const campaignCursorRef = useRef<Record<string, string>>({});
+  const campaignSyncFailRef = useRef<number>(0);
   const processedCampaignEventsRef = useRef<Set<string>>(new Set());
   const lastTurnCombatantRef = useRef<string | null>(null);
 
@@ -401,6 +403,14 @@ export default function ForgeAndFableApp() {
       return null;
     }
     const raced = applyRaceBonuses(selected.abilities, selected.raceId, ruleset);
+    // Apply player-chosen racial ability bonuses (e.g. Half-Elf's +1 to two abilities)
+    const raceChoices = selected.raceBonusChoices;
+    if (raceChoices) {
+      for (const key of abilityKeys) {
+        const bonus = raceChoices[key] ?? 0;
+        if (bonus > 0) raced[key] += bonus;
+      }
+    }
     // Apply ASI and feat ability score increases
     const featInfo = computeFeatBonuses(selected.asiChoices);
     for (const key of abilityKeys) {
@@ -454,6 +464,7 @@ export default function ForgeAndFableApp() {
         }
         const data = await res.json() as CampaignSyncPayload;
         if (cancelled) return;
+        campaignSyncFailRef.current = 0;
         setCampaignSync(data);
         rememberCampaignEvents(data.events);
         const lastHandled = processCampaignEvents(data.events, data.members);
@@ -480,7 +491,11 @@ export default function ForgeAndFableApp() {
           campaignCursorRef.current[activeCampaignId] = candidates.sort().at(-1)!;
         }
       } catch {
-        // Keep the local UI responsive; the next polling tick can recover.
+        // Track consecutive sync failures to surface sustained outages.
+        campaignSyncFailRef.current = (campaignSyncFailRef.current ?? 0) + 1;
+        if (campaignSyncFailRef.current >= 3) {
+          setStatus("Campaign sync interrupted — check your connection.");
+        }
       }
     };
 
@@ -501,7 +516,16 @@ export default function ForgeAndFableApp() {
     if (!draft || !ruleset) {
       return null;
     }
-    return applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
+    const raced = applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
+    // Apply player-chosen racial bonuses (e.g. Half-Elf's +1 to two abilities)
+    const raceChoices = draft.raceBonusChoices;
+    if (raceChoices) {
+      for (const key of abilityKeys) {
+        const bonus = raceChoices[key] ?? 0;
+        if (bonus > 0) raced[key] += bonus;
+      }
+    }
+    return raced;
   }, [draft, ruleset]);
 
   // Abilities for the in-progress creation level-up (race bonuses + the ASIs
@@ -811,6 +835,7 @@ export default function ForgeAndFableApp() {
               subclassId: choices.subclassId,
               spellsKnown: choices.spellsKnown,
               spellStatuses: choices.spellStatuses,
+              skillExpertise: choices.skillExpertise,
             }
           : {}),
       };
@@ -861,6 +886,7 @@ export default function ForgeAndFableApp() {
       subclassId: (patch.subclassId as string | undefined) ?? creationSeq.soFar.subclassId,
       spellsKnown: (patch.spellsKnown as string[] | undefined) ?? creationSeq.soFar.spellsKnown,
       spellStatuses: (patch.spellStatuses as Record<string, SpellStatus> | undefined) ?? creationSeq.soFar.spellStatuses,
+      skillExpertise: (patch.skillExpertise as string[] | undefined) ?? creationSeq.soFar.skillExpertise,
     };
     if (creationSeq.index + 1 < creationSeq.levels.length) {
       setCreationSeq({ ...creationSeq, index: creationSeq.index + 1, soFar });

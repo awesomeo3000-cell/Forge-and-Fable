@@ -418,6 +418,29 @@ export default memo(function CampaignPanel({
               </div>
               <div className="campaign-info-actions">
                 <button className="glass-button" type="button" onClick={() => setView("list")}>Back</button>
+                {detail && !isDm && characters.length > 1 ? (
+                  <select
+                    className="glass-button"
+                    style={{ padding: "4px 8px" }}
+                    disabled={busy}
+                    onChange={async (e) => {
+                      if (!e.target.value || !activeId) return;
+                      if (!window.confirm(`Switch to ${characters.find((c) => c.id === e.target.value)?.name ?? "this character"}?`)) { e.target.value = ""; return; }
+                      setBusy(true);
+                      try {
+                        const response = await fetch(`/api/campaigns/${activeId}/members/me`, { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ characterId: e.target.value }) });
+                        if (!response.ok) { setError("Could not switch character."); return; }
+                        onActiveCampaignChange(activeId);
+                        setError(null);
+                      } catch { setError("Could not switch character."); } finally { setBusy(false); }
+                      e.target.value = "";
+                    }}
+                    aria-label="Switch enrolled character"
+                  >
+                    <option value="">Switch character…</option>
+                    {characters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                ) : null}
                 {detail && (isDm ? (
                   <button className="danger-button" type="button" onClick={handleDelete} disabled={busy}><Trash2 size={14} /> Delete</button>
                 ) : (

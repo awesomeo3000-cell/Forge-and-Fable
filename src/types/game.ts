@@ -19,6 +19,8 @@ export type Race = {
   speed: string;
   bonuses: Partial<AbilityScores>;
   traits: FeatureUnlock[];
+  /** Number of ability scores the player can choose to receive +1 each (e.g. Half-Elf: 2). */
+  bonusChoices?: number;
   /** Groups subspecies variants (e.g. Hill/Mountain Dwarf) under one family
       card in the builder. Races without a familyId render as their own card. */
   familyId?: string;
@@ -333,6 +335,10 @@ export type Character = {
   spellsKnown: string[];
   customRules: CustomRule[];
   skillProficiencies?: string[];
+  /** Skills with expertise (2× proficiency bonus). Must also be proficient. */
+  skillExpertise?: string[];
+  /** Player-chosen ability score bonuses from racial traits (e.g. Half-Elf's +1 to two abilities). */
+  raceBonusChoices?: Partial<AbilityScores>;
   savingThrowProficiencies?: AbilityKey[];
   toolProficiencies?: string[];
   languages?: string[];
@@ -400,6 +406,7 @@ export type DraftCharacter = {
   spellsKnown: string[];
   customRules: CustomRule[];
   skillProficiencies: string[];
+  raceBonusChoices?: Partial<AbilityScores>;
   toolProficiencies: string[];
   languages: string[];
   currency: Currency;

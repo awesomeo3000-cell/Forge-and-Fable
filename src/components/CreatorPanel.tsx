@@ -975,9 +975,47 @@ export default memo(function CreatorPanel(props: {
                     );
                   })}
                 </div>
+                {race?.bonusChoices && race.bonusChoices > 0 ? (() => {
+                  const currentChoices = props.draft.raceBonusChoices ?? {};
+                  const chosenCount = abilityKeys.reduce((sum, k) => sum + (currentChoices[k] ?? 0), 0);
+                  const remaining = race.bonusChoices - chosenCount;
+                  return (
+                    <div className="dj-race-bonus-choices" style={{ marginTop: 12 }}>
+                      <p style={{ fontSize: "0.85em", marginBottom: 6 }}>
+                        {race.name}: choose <strong>{race.bonusChoices}</strong> ability{race.bonusChoices > 1 ? " scores" : ""} to receive +1 each{" "}
+                        <small style={{ color: "var(--ink-faint)" }}>({remaining} remaining)</small>
+                      </p>
+                      <div className="attribute-grid" style={{ gap: 6 }}>
+                        {abilityKeys.map((key) => (
+                          <div className="attribute-card" key={`bc-${key}`} style={{ padding: "4px 8px" }}>
+                            <span>{abilityNames[key]}</span>
+                            <small>{props.finalAbilities[key]}{(currentChoices[key] ?? 0) > 0 ? " (+1)" : ""}</small>
+                            <button
+                              type="button"
+                              className={`cs-prof-marker cs-prof-click${(currentChoices[key] ?? 0) > 0 ? " cs-prof" : ""}`}
+                              disabled={remaining <= 0 && (currentChoices[key] ?? 0) === 0}
+                              onClick={() => {
+                                const cur = currentChoices[key] ?? 0;
+                                const updated = { ...currentChoices };
+                                if (cur > 0) {
+                                  updated[key] = 0;
+                                } else if (remaining > 0) {
+                                  updated[key] = 1;
+                                }
+                                props.onDraftChange({ ...props.draft, raceBonusChoices: updated });
+                              }}
+                              aria-label={`Toggle +1 ${abilityNames[key]}`}
+                            >
+                              {(currentChoices[key] ?? 0) > 0 ? "\u25CF" : "\u25CB"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })() : null}
               </div>
             ) : null}
-
             {props.step === 5 ? (
               <div className="ledger-certificate">
                 <div className="ledger-cert-mast">

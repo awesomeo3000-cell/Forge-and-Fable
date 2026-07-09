@@ -1710,3 +1710,69 @@ Import traces:
 (Use `node --trace-warnings ...` to show where the warning was created)
 (node:30920) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
+(node:29332) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48608) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ./src/components/CreatorPanel.tsx:1018:20
+Expected '</', got 'ident'
+  [90m1016 |[0m                 })() : [36mnull[0m}
+  [90m1017 |[0m               </div>
+[31m[1m>[0m [90m1018 |[0m               <div className=[32m"ledger-certificate"[0m>
+  [90m     |[0m                    [31m[1m^^^^^^^^^[0m
+  [90m1019 |[0m                 <div className=[32m"ledger-cert-mast"[0m>
+  [90m1020 |[0m                   <span className=[32m"ledger-cert-chapter"[0m id=[32m"dj-section-title"[0m>
+  [90m1021 |[0m                     {[32m`Chapter VI · The Seal`[0m}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/CreatorPanel.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/CreatorPanel.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+[browser] Uncaught Error: ./src/components/CreatorPanel.tsx:1018:20
+Expected '</', got 'ident'
+  1016 |                 })() : null}
+  1017 |               </div>
+> 1018 |               <div className="ledger-certificate">
+       |                    ^^^^^^^^^
+  1019 |                 <div className="ledger-cert-mast">
+  1020 |                   <span className="ledger-cert-chapter" id="dj-section-title">
+  1021 |                     {`Chapter VI · The Seal`}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/CreatorPanel.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Client Component Browser]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/CreatorPanel.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Client Component SSR]
+    ./src/components/ForgeAndFableApp.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/CreatorPanel.tsx:1018:20)
+    at <unknown> (Error: (./src/components/CreatorPanel.tsx:1018:20)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.

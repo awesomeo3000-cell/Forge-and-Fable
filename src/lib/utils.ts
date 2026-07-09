@@ -254,6 +254,7 @@ export function characterPayload(
     spellsKnown: string[];
     customRules: CustomRule[];
     skillProficiencies: string[];
+    raceBonusChoices?: Partial<AbilityScores>;
     toolProficiencies?: string[];
     languages?: string[];
     currency?: Currency;

@@ -899,7 +899,8 @@ export const ruleset: Ruleset = {
       creatureType: "Humanoid",
       size: "Medium",
       speed: "30 ft.",
-      bonuses: { charisma: 2, dexterity: 1, constitution: 1 },
+      bonuses: { charisma: 2 },
+      bonusChoices: 2,
       traits: [
         speciesTrait("Darkvision", "See in dim light and darkness with elven influence."),
         speciesTrait("Fey Ancestry", "Resist charm effects and magical sleep."),

@@ -9,8 +9,9 @@ import { ALL_SPELLS, getSpell, learnsIndividualSpells, spellsForClass, spellsLea
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
+import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 
-type LevelUpStep = "hp" | "subclass" | "asi" | "spells" | "summary";
+type LevelUpStep = "hp" | "subclass" | "expertise" | "asi" | "spells" | "summary";
 type HpRollRequest = {
   label: string;
   sides: number;
@@ -36,7 +37,7 @@ export default memo(function LevelUpModal({
   useFeatPrerequisites = true,
   hitPointType,
 }: {
-  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus> };
+  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -63,6 +64,17 @@ export default memo(function LevelUpModal({
   const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
   const hasAsi = asiLevels.includes(newLevel);
 
+  // Expertise: Rogue gains at 1 (2 picks) and 6 (1 pick); Bard at 3 (2 picks) and 10 (1 pick).
+  const EXPERTISE_COUNTS: Record<string, Record<number, number>> = { rogue: { 1: 2, 6: 1 }, bard: { 3: 2, 10: 1 } };
+  const expertisePickCount = EXPERTISE_COUNTS[classId]?.[newLevel] ?? 0;
+  const hasExpertise = expertisePickCount > 0;
+  const bgSkillIds = BACKGROUND_SKILLS[character.background ?? ""] ?? [];
+  const proficientSkillIds = [...(character.skillProficiencies ?? []), ...bgSkillIds];
+  const existingExpertise = new Set(character.skillExpertise ?? []);
+  // Eligible = proficient but NOT yet expert
+  const expertiseEligible = SKILLS.filter((s) => proficientSkillIds.includes(s.id) && !existingExpertise.has(s.id));
+  const expertiseTarget = Math.min(expertisePickCount, expertiseEligible.length);
+
   // Spell learning: known casters (bard, ranger, sorcerer, warlock) and the
   // wizard's spellbook learn a FIXED number of leveled spells per level, per
   // the SRD tables. Prepared casters (cleric, druid, paladin, artificer)
@@ -70,7 +82,7 @@ export default memo(function LevelUpModal({
   // "learn spells" step. Computed up here so stepComplete can enforce the cap.
   const slots = maxSlots((casterType ?? "none") as CasterType, newLevel);
   const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
-  const availableSpells = spellsForClass(className)
+  const availableSpells = spellsForClass(classId)
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
     .filter((s) => !character.spellsKnown.includes(s.id))
     .slice(0, 50);
@@ -82,6 +94,7 @@ export default memo(function LevelUpModal({
   const steps: LevelUpStep[] = [];
   if (hasHp) steps.push("hp");
   if (hasSubclass) steps.push("subclass");
+  if (hasExpertise) steps.push("expertise");
   if (hasAsi) steps.push("asi");
   if (hasSpells) steps.push("spells");
   steps.push("summary");
@@ -106,6 +119,7 @@ export default memo(function LevelUpModal({
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const [spellToForget, setSpellToForget] = useState<string | null>(null);
+  const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -141,6 +155,7 @@ export default memo(function LevelUpModal({
     switch (s) {
       case "hp": return hitPointType === "manual" ? manualHp > 0 : hpRolled;
       case "subclass": return pickedSubclass !== "";
+      case "expertise": return pickedExpertise.length > 0 && pickedExpertise.length <= expertiseTarget;
       case "asi": {
         if (pickedFeat === "") return false;
         if (pickedFeat === "asi") return Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2;
@@ -256,6 +271,9 @@ export default memo(function LevelUpModal({
     if (hasSubclass && pickedSubclass) {
       data.subclassId = pickedSubclass;
     }
+    if (hasExpertise && pickedExpertise.length > 0) {
+      data.skillExpertise = [...(character.skillExpertise ?? []), ...pickedExpertise];
+    }
     if (hasAsi) {
       const choices = [...(character.asiChoices ?? [])];
       if (pickedFeat === "asi") {
@@ -316,7 +334,7 @@ export default memo(function LevelUpModal({
         <div className="cs-levelup-steps">
           {steps.map((s, i) => (
             <button key={s} type="button" className={`cs-lvl-step${i === step ? " active" : ""}${i < step ? " done" : ""}`} onClick={() => setStep(i)}>
-              {s === "hp" ? "HP" : s === "subclass" ? "Subclass" : s === "asi" ? "Feat" : s === "spells" ? "Spells" : "Done"}
+              {s === "hp" ? "HP" : s === "subclass" ? "Subclass" : s === "expertise" ? "Expertise" : s === "asi" ? "Feat" : s === "spells" ? "Spells" : "Done"}
             </button>
           ))}
         </div>
@@ -373,6 +391,23 @@ export default memo(function LevelUpModal({
                 <p>{sub.description}</p>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Expertise step */}
+        {current === "expertise" && (
+          <div className="cs-levelup-body">
+            <p>Choose {expertiseTarget} skill{expertiseTarget > 1 ? "s" : ""} to gain expertise (2× proficiency bonus):</p>
+            <div className="cs-lvl-spell-grid">
+              {expertiseEligible.map((s) => (
+                <button key={s.id} type="button" className={`cs-lvl-spell-row${pickedExpertise.includes(s.id) ? " active" : ""}`} onClick={() => setPickedExpertise((prev) =>
+                  prev.includes(s.id) ? prev.filter((id) => id !== s.id) : prev.length < expertiseTarget ? [...prev, s.id] : prev,
+                )}>
+                  <span>{s.name}</span>
+                  <small>{abilityLabels[s.ability]}</small>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -488,6 +523,7 @@ export default memo(function LevelUpModal({
           <div className="cs-levelup-body cs-lvl-summary">
             {hasHp && hpRolled ? <p>HP: +{hpGained}</p> : hasHp ? <p style={{ color: "var(--accent)" }}>HP: not rolled</p> : null}
             {hasSubclass && pickedSubclass ? <p>Subclass: {pickedSubclass}</p> : hasSubclass ? <p style={{ color: "var(--accent)" }}>Subclass: not chosen</p> : null}
+            {hasExpertise && pickedExpertise.length > 0 ? <p>Expertise: {pickedExpertise.map((id) => SKILLS.find((s) => s.id === id)?.name ?? id).join(", ")}</p> : hasExpertise ? <p style={{ color: "var(--accent)" }}>Expertise: not chosen</p> : null}
             {hasAsi && pickedFeat === "asi" && Object.keys(asiIncreases).length > 0 ? <p>Ability Score Improvement: {Object.entries(asiIncreases).map(([k,v]) => `${abilityLabels[k as AbilityKey]} +${v}`).join(", ")}</p> : null}
             {hasAsi && pickedFeat && pickedFeat !== "asi" ? (
               <p>Feat: {feats.find((f) => f.id === pickedFeat)?.name ?? pickedFeat}

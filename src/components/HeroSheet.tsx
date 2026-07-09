@@ -171,21 +171,36 @@ export default memo(function HeroSheet(props: {
 
   const backgroundSkillIds: string[] = BACKGROUND_SKILLS[props.character.background] ?? [];
   const characterSkillIds = props.character.skillProficiencies ?? [];
+  const expertiseIds: string[] = props.character.skillExpertise ?? [];
   const isBackgroundSkill = (id: string) => backgroundSkillIds.includes(id);
   const isCharacterSkill = (id: string) => characterSkillIds.includes(id);
   const isSkillProficient = (id: string) =>
     characterSkillIds.includes(id) || isBackgroundSkill(id);
+  const isSkillExpert = (id: string) => isSkillProficient(id) && expertiseIds.includes(id);
 
   const skillProficiencySources = (id: string) => {
     const sources: string[] = [];
     if (isBackgroundSkill(id)) sources.push("BG");
     if (isCharacterSkill(id)) sources.push("PROF");
+    if (isSkillExpert(id)) sources.push("EXP");
     return sources;
   };
 
   const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
-  const skillBonus = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0) + effChecks;
-  const skillBonusForPassive = (s: SkillDef) => abilityModifier(props.finalAbilities[s.ability]) + (isSkillProficient(s.id) ? pb : 0);
+  const skillBonus = (s: SkillDef) => {
+    const mod = abilityModifier(props.finalAbilities[s.ability]);
+    const prof = isSkillProficient(s.id);
+    const expert = isSkillExpert(s.id);
+    const joaT = hasJackOfAllTrades && !prof ? halfPb : 0;
+    return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT + effChecks;
+  };
+  const skillBonusForPassive = (s: SkillDef) => {
+    const mod = abilityModifier(props.finalAbilities[s.ability]);
+    const prof = isSkillProficient(s.id);
+    const expert = isSkillExpert(s.id);
+    const joaT = hasJackOfAllTrades && !prof ? halfPb : 0;
+    return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT;
+  };
 
   const passiveInsight = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "insight")!);
   const passiveInvestigation = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "investigation")!);
@@ -196,7 +211,7 @@ export default memo(function HeroSheet(props: {
   const spellcastingBlockedByArmor = casterType !== "none" && armorProficiencyIssue.spellcastingBlocked;
   const spellBlockTitle = spellcastingBlockedByArmor ? `${armorPenaltyReason}: cannot cast spells.` : undefined;
   const spellAbility = heroClass.spellcastingAbility;
-  const classSpellList = spellsForClass(heroClass.name);
+  const classSpellList = spellsForClass(heroClass.id);
   const canManageSpellbook = isWizardSpellbook(heroClass.id) && classSpellList.length > 0;
   // Prepared casters (cleric/druid/paladin/artificer) have their WHOLE class
   // list available up to their accessible spell level — not a learned subset.
@@ -231,6 +246,8 @@ export default memo(function HeroSheet(props: {
   const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass.id, casterType);
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const featuresUpToLevel = heroClass.levelProgression.filter((e) => e.level <= props.character.level).flatMap((e) => e.features);
+  const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
+  const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
   const [tourDismissed, setTourDismissed] = useState(true);
@@ -239,6 +256,29 @@ export default memo(function HeroSheet(props: {
     if (isBackgroundSkill(skillId)) return; // background-granted — cannot toggle
     const cur = props.character.skillProficiencies ?? [];
     props.onUpdate({ skillProficiencies: cur.includes(skillId) ? cur.filter((s) => s !== skillId) : [...cur, skillId] });
+  };
+
+  /** Right-click cycles: proficient → expert → remove proficiency. Background skills cannot be cycled off. */
+  const cycleSkillExpertise = (skillId: string) => {
+    if (isBackgroundSkill(skillId)) {
+      // Background skill: toggle expertise only
+      if (isSkillExpert(skillId)) {
+        props.onUpdate({ skillExpertise: (props.character.skillExpertise ?? []).filter((s) => s !== skillId) });
+      } else {
+        props.onUpdate({ skillExpertise: [...(props.character.skillExpertise ?? []), skillId] });
+      }
+      return;
+    }
+    if (isSkillExpert(skillId)) {
+      // Expert → remove proficiency entirely
+      props.onUpdate({
+        skillProficiencies: (props.character.skillProficiencies ?? []).filter((s) => s !== skillId),
+        skillExpertise: (props.character.skillExpertise ?? []).filter((s) => s !== skillId),
+      });
+    } else if (isSkillProficient(skillId)) {
+      // Proficient → add expertise
+      props.onUpdate({ skillExpertise: [...(props.character.skillExpertise ?? []), skillId] });
+    }
   };
 
   useEffect(() => {
@@ -584,9 +624,12 @@ export default memo(function HeroSheet(props: {
     const available = props.character.level - (props.character.hitDiceSpent ?? 0);
     if (isPactCaster) {
       props.onUpdate({ pactSlotsUsed: 0 });
-      props.onNotify?.(`Short rest — pact slots recovered. ${available} hit dice available (roll them in the Hit Dice vital).`);
+      const parts = ["Short rest — pact slots recovered."];
+      if (available > 0) parts.push(`${available} hit dice available — spend them in Hit Dice.`);
+      else parts.push("No hit dice remaining.");
+      props.onNotify?.(parts.join(" "));
     } else if (available > 0) {
-      props.onNotify?.(`Short rest — ${available} hit dice available.`);
+      props.onNotify?.(`Short rest — ${available} hit dice available. Spend them in Hit Dice to heal.`);
     } else {
       props.onNotify?.("Short rest — no hit dice remaining.");
     }
@@ -604,6 +647,14 @@ export default memo(function HeroSheet(props: {
       ]),
     );
     spellStatusesRef.current = restedSpellStatuses;
+    const recoveredParts: string[] = [];
+    recoveredParts.push(`HP restored to ${props.character.maxHp}`);
+    if (props.character.tempHp > 0) recoveredParts.push("temp HP cleared");
+    recoveredParts.push("spell slots restored");
+    if (props.character.concentratingOn) recoveredParts.push("concentration ended");
+    if (spent > 0) recoveredParts.push(`${Math.min(recovered, spent)} hit dice recovered`);
+    const hadFreeUsed = Object.values(allStatuses).some((s) => s.freeUse && s.freeUsed);
+    if (hadFreeUsed) recoveredParts.push("per-rest spell uses restored");
     props.onUpdate({
       currentHp: props.character.maxHp,
       tempHp: 0,
@@ -613,7 +664,7 @@ export default memo(function HeroSheet(props: {
       hitDiceSpent: Math.max(0, spent - recovered),
       spellStatuses: restedSpellStatuses,
     });
-    props.onNotify?.("Long rest complete — HP and slots restored");
+    props.onNotify?.(`Long rest — ${recoveredParts.join(", ")}.`);
   };
 
   /* ── Spell preparation & casting ── */
@@ -921,7 +972,7 @@ export default memo(function HeroSheet(props: {
         <div className="cs-vitals">
           <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></button>
           <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
-          <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong>{race.speed}</strong></div>
+          <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong style={acInfo.strengthWarning ? { color: "var(--accent, var(--gold))" } : undefined}>{(() => { const base = parseInt(race.speed, 10) || 30; return acInfo.strengthWarning ? `${Math.max(0, base - 10)} ft.` : race.speed; })()}</strong></div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
           <div className="cs-vital-cell cs-vital-hp">
             <span className="cs-vital-label">Hit Points</span>
@@ -948,7 +999,7 @@ export default memo(function HeroSheet(props: {
         </div>
       );
       case "abilities": return (
-        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, mod + effChecks, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(mod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
+        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); const joaTBonus = hasJackOfAllTrades ? halfPb : 0; const totalMod = mod + effChecks + joaTBonus; return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, totalMod, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(totalMod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
       );
       case "saves": return (
         <section className="cs-block">
@@ -960,7 +1011,8 @@ export default memo(function HeroSheet(props: {
       case "skills": return (
         <section className="cs-block">
           <h3 className="cs-section-eyebrow">Skills</h3>
-          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} aria-label={`Toggle ${skill.name} proficiency${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20ForAbility(skill.name, bonus, skill.ability)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`} title={d20OptionsForAbility(skill.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
+          {hasJackOfAllTrades ? <p className="cs-rule-note">Jack of All Trades: +{halfPb} to untrained checks</p> : null}
+          <div className="cs-skills-grid">{skillsByAbility.map(({ ability: abv, skills }) => (<div className="cs-skill-group" key={abv}><span className="cs-skill-ability-tag">{abilityLabels[abv]}</span>{skills.map((skill) => { const prof = isSkillProficient(skill.id); const expert = isSkillExpert(skill.id); const bonus = skillBonus(skill); return (<div className="cs-skill-row" key={skill.id}><button type="button" className={`cs-prof-marker cs-prof-click${expert ? " cs-expert" : prof ? " cs-prof" : ""}`} onClick={() => toggleSkillProficiency(skill.id)} onContextMenu={(e) => { e.preventDefault(); cycleSkillExpertise(skill.id); }} onKeyDown={(e) => { if (e.key === "e" || e.key === "E") { e.preventDefault(); cycleSkillExpertise(skill.id); } }} aria-label={`Toggle ${skill.name} proficiency — right-click or E for expertise${prof ? ` (${skillProficiencySources(skill.id).join(", ") || "on"})` : ""}`}>{expert ? "\u2726" : prof ? "\u25CF" : "\u25CB"}</button><button type="button" className="cs-skill-btn" onClick={() => rollD20ForAbility(skill.name, bonus, skill.ability)} aria-label={`Roll ${skill.name}, ${signed(bonus)}`} title={d20OptionsForAbility(skill.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}>{skill.name}<span className="cs-skill-source-chips">{skillProficiencySources(skill.id).map((source) => (<span key={source} className={`cs-skill-source-chip ${source === "BG" ? "background" : source === "EXP" ? "expertise" : "trained"}`} title={source === "BG" ? `Granted by ${props.character.background}` : source === "EXP" ? "Expertise (2× proficiency)" : "Chosen skill proficiency"}>{source}</span>))}</span></button><span className="cs-skill-bonus">{signed(bonus)}</span></div>); })}</div>))}</div>
         </section>
       );
       case "senses": return (

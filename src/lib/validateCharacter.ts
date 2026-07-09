@@ -24,7 +24,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "raceId", "classId", "sourceIds", "settings",
   "abilities", "currentHp", "maxHp", "tempHp",
   "inventory", "spellsKnown", "customRules",
-  "skillProficiencies", "savingThrowProficiencies",
+  "skillProficiencies", "skillExpertise", "raceBonusChoices", "savingThrowProficiencies",
   "toolProficiencies", "languages", "currency",
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
@@ -81,6 +81,7 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "inventory":
       case "spellsKnown":
       case "skillProficiencies":
+      case "skillExpertise":
       case "preparedSpells":
         if (val !== undefined) assertArray(val, key);
         break;

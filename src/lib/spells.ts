@@ -27,8 +27,8 @@ export function getSpell(id: string): SpellData | undefined {
   return SPELLS_BY_ID.get(id);
 }
 
-export function spellsForClass(className: string): SpellData[] {
-  return ALL_SPELLS.filter((s) => s.classes?.includes(className));
+export function spellsForClass(classId: string): SpellData[] {
+  return ALL_SPELLS.filter((s) => s.classes?.includes(classId));
 }
 
 /* Prepared casters (Cleric, Druid, Paladin, Artificer) don't LEARN a fixed

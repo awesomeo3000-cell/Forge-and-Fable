@@ -4394,6 +4394,8 @@ button:disabled {
 
 .cs-prof-click.cs-prof { color: var(--select); }
 
+.cs-prof-click.cs-expert { color: var(--select); font-size: 0.7em; }
+
 .cs-skill-btn { border: 0; background: transparent; color: var(--parchment); font-family: var(--font-body); font-size: 0.92em; cursor: pointer; text-align: left; padding: 0; }
 
 .cs-skill-btn:hover { color: var(--parchment); text-decoration: underline; text-decoration-color: var(--rule-soft); text-underline-offset: 2px; }
@@ -7038,6 +7040,12 @@ button.dj-card {
   color: var(--accent, var(--gold));
   background: color-mix(in srgb, var(--accent, var(--gold)) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent, var(--gold)) 26%, transparent);
+}
+
+.cs-skill-source-chip.expertise {
+  color: var(--select);
+  background: color-mix(in srgb, var(--select) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--select) 36%, transparent);
 }
 
 /* Background skill readout in CreatorPanel Origin step */
