@@ -1,12 +1,20 @@
 /* ════════════════════════════════════════════════════════════════════════
-   The Level-Up Rite — a parchment advancement ceremony.
-   Imported by LevelUpModal.tsx. Uses the Printed-Tome root tokens from
-   globals.css (:root). Deliberately self-contained: the modal anchors to the
-   tome palette regardless of the host sheet's theme, so the ceremony looks
-   the same at creation (outside .cs-sheet) and in play (inside it).
+   The Level-Up Rite — an advancement ceremony.
+   Imported by LevelUpModal.tsx.
+
+   Token model — IMPORTANT: this modal must inherit the character's skin.
+   .cs-sheet (src/app/globals.css) remaps the SEMANTIC tokens so that inside
+   the sheet --ground = the paper surface and --parchment = the ink/foreground
+   (they swap roles vs the dark desk :root). By using --ground for every
+   SURFACE and --parchment for every FOREGROUND / rule here, the modal resolves
+   correctly in BOTH contexts:
+     • inside .cs-sheet → light paper surface, dark ink (the tome look)
+     • outside (.cs-sheet) → dark desk surface, parchment text (creation flow)
+   Only the forge backdrop + the iron frame are hardcoded dark — they are the
+   "desk", not part of the document.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* ── Backdrop: dark forge-table with warm ember glow ── */
+/* ── Backdrop: dark forge-table with warm ember glow (always dark) ── */
 .level-rite-backdrop {
   position: fixed;
   inset: 0;
@@ -22,7 +30,7 @@
   overflow-y: auto;
 }
 
-/* ── Modal: the parchment decree with iron framing ── */
+/* ── Modal: iron framing (always dark) ── */
 .level-rite-modal {
   position: relative;
   width: 100%;
@@ -30,15 +38,18 @@
   max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
-  /* Dark iron frame wrapping a parchment face */
-  padding: 3px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, var(--ground-2), var(--ground-3) 55%, var(--ground-2));
+  padding: 4px;
+  border-radius: 11px;
+  /* Dark iron frame */
+  background: linear-gradient(160deg, #2a2418, #100c07 55%, #2a2418);
+  /* Visible border + strong lift so the modal edge reads against the backdrop.
+     The old 1px --rule-soft outline vanished on the dark scrim. */
+  border: 1px solid #6a5c3e;
   box-shadow:
-    0 0 0 1px var(--rule-soft),
-    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(201, 162, 90, 0.22),
+    0 30px 60px rgba(0, 0, 0, 0.62),
     0 8px 20px rgba(0, 0, 0, 0.45);
-  color: var(--ground);
+  color: var(--parchment);       /* foreground ink (semantic) */
   font-family: var(--font-body);
 }
 
@@ -49,15 +60,16 @@
   flex: 1;
   min-height: 0;
   border-radius: 8px;
-  /* Parchment face */
-  background: var(--parchment);
+  /* Document SURFACE — semantic: paper inside the sheet, desk dark outside.
+     NOT --parchment (that is the FOREGROUND and would invert inside .cs-sheet). */
+  background: var(--ground);
   background-image:
     radial-gradient(circle at 12% 8%, rgba(178, 69, 47, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 88% 92%, rgba(201, 162, 90, 0.06) 0%, transparent 45%);
+    radial-gradient(circle at 88% 92%, rgba(201, 162, 90, 0.05) 0%, transparent 45%);
   overflow: hidden;
 }
 
-/* Subtle paper grain over the parchment */
+/* Subtle paper grain over the surface */
 .level-rite-inner::before {
   content: "";
   position: absolute;
@@ -66,11 +78,10 @@
   background: var(--grain);
   background-size: 140px 140px;
   opacity: 0.05;
-  mix-blend-mode: multiply;
+  mix-blend-mode: overlay;
   pointer-events: none;
 }
 
-/* Engraved double rule under the header, sits above grain */
 .level-rite-inner > * { position: relative; z-index: 1; }
 
 /* ── Close button ── */
@@ -85,20 +96,20 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--rule-soft);
+  border: 1.5px solid var(--rule);
   border-radius: 50%;
-  background: rgba(16, 12, 7, 0.06);
-  color: var(--ground-2);
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
+  color: var(--parchment-2);
   cursor: pointer;
   transition: border-color 140ms, color 140ms, background 140ms;
 }
 .level-rite-close:hover {
   border-color: var(--ember);
   color: var(--ember);
-  background: rgba(178, 69, 47, 0.08);
+  background: color-mix(in srgb, var(--ember) 14%, transparent);
 }
 .level-rite-close:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 
@@ -133,7 +144,7 @@
     conic-gradient(from 0deg, rgba(178, 69, 47, 0.06), transparent 25%, rgba(178, 69, 47, 0.06) 50%, transparent 75%, rgba(178, 69, 47, 0.06));
 }
 
-/* The glowing circular seal */
+/* The glowing circular seal — always dark metal, reads against either surface */
 .level-rite-seal {
   position: relative;
   z-index: 1;
@@ -142,11 +153,11 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 38%, var(--ground-2), var(--ground-3));
-  border: 2px solid var(--gold);
+  background: radial-gradient(circle at 50% 38%, #2a2418, #100c07);
+  border: 2px solid var(--select);
   box-shadow:
-    0 0 0 4px var(--parchment),
-    0 0 0 5px var(--rule-soft),
+    0 0 0 4px var(--ground),
+    0 0 0 5px var(--rule),
     0 0 22px rgba(201, 162, 90, 0.35),
     inset 0 0 14px rgba(0, 0, 0, 0.5);
   color: var(--parchment);
@@ -166,12 +177,12 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--parchment-2);
+  color: #b8a888;
 }
 .level-rite-seal-number {
   font-size: 26px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--select);
   text-shadow: 0 0 10px rgba(201, 162, 90, 0.5);
 }
 
@@ -182,7 +193,7 @@
   font-family: var(--font-display);
   font-size: clamp(1.5rem, 3.2vw, 2rem);
   font-weight: 700;
-  color: var(--ground);
+  color: var(--parchment);
   letter-spacing: 0.01em;
 }
 
@@ -193,7 +204,7 @@
   font-size: 0.74em;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
 }
 
 /* ── Stepper: ritual progress chain ── */
@@ -217,14 +228,12 @@
   border: 0;
   background: transparent;
   cursor: pointer;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
   font-family: var(--font-label);
 }
-.level-rite-step:focus-visible {
-  outline: none;
-}
+.level-rite-step:focus-visible { outline: none; }
 .level-rite-step:focus-visible .level-rite-step-bubble {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 .level-rite-step-label {
@@ -243,8 +252,8 @@
   height: 26px;
   border-radius: 50%;
   border: 1.5px solid var(--rule);
-  background: var(--parchment);
-  color: var(--ink-faint);
+  background: var(--ground);
+  color: var(--parchment-2);
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
@@ -252,17 +261,6 @@
 }
 
 /* Connector line between steps */
-.level-rite-step:not(:last-child) .level-rite-step-bubble::after {
-  content: "";
-  position: absolute;
-  left: calc(50% + 16px);
-  top: 50%;
-  width: 0; /* set via flex gap on container; line drawn by border below */
-  height: 0;
-}
-.level-rite-stepper {
-  gap: 0;
-}
 .level-rite-step + .level-rite-step::before {
   content: "";
   flex: 1 1 0;
@@ -270,29 +268,25 @@
   height: 1.5px;
   align-self: center;
   margin: 0 4px;
-  margin-bottom: 17px; /* align with bubble center */
+  margin-bottom: 17px;
   background: var(--rule-soft);
   order: 0;
 }
 
 /* Completed step */
 .level-rite-step.is-done .level-rite-step-bubble {
-  border-color: var(--gold);
-  background: var(--gold);
+  border-color: var(--select);
+  background: var(--select);
   color: var(--ground);
   box-shadow: 0 0 10px rgba(201, 162, 90, 0.4);
 }
-.level-rite-step.is-done .level-rite-step-label {
-  color: var(--ground-2);
-}
-.level-rite-step.is-done + .level-rite-step::before {
-  background: var(--gold);
-}
+.level-rite-step.is-done .level-rite-step-label { color: var(--parchment); }
+.level-rite-step.is-done + .level-rite-step::before { background: var(--select); }
 
 /* Current step */
 .level-rite-step.is-current .level-rite-step-bubble {
   border-color: var(--ember);
-  background: var(--parchment);
+  background: var(--ground);
   color: var(--ember);
   box-shadow: 0 0 0 3px rgba(178, 69, 47, 0.18), 0 0 14px rgba(178, 69, 47, 0.3);
 }
@@ -316,7 +310,7 @@
 }
 .level-rite-summary {
   border-left: 1px solid var(--rule-soft);
-  background: rgba(16, 12, 7, 0.035);
+  background: color-mix(in srgb, var(--parchment) 4%, transparent);
   padding: 22px 18px;
 }
 
@@ -325,13 +319,13 @@
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--ground);
+  color: var(--parchment);
   margin-bottom: 4px;
 }
 .level-rite-panel-sub {
   font-family: var(--font-body);
   font-size: 0.82rem;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
   margin-bottom: 14px;
   font-style: italic;
 }
@@ -357,34 +351,33 @@
   gap: 4px;
   width: 100%;
   padding: 12px 14px;
-  border: 1.5px solid var(--rule-soft);
+  border: 1.5px solid var(--rule);
   border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--parchment) 6%, transparent);
   text-align: left;
   cursor: pointer;
+  color: var(--parchment);
   transition: border-color 150ms, box-shadow 150ms, background 150ms;
 }
-.level-rite-card:hover {
-  border-color: var(--rule);
-}
+.level-rite-card:hover { border-color: var(--select); }
 .level-rite-card:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 .level-rite-card strong {
   font-family: var(--font-display);
   font-size: 0.95rem;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-card p {
   font-size: 0.8rem;
-  color: var(--ground-2);
+  color: var(--parchment-2);
   line-height: 1.4;
 }
 .level-rite-card.is-selected {
-  border-color: var(--gold);
-  background: rgba(201, 162, 90, 0.12);
-  box-shadow: 0 0 0 1px var(--gold), 0 0 16px rgba(201, 162, 90, 0.22);
+  border-color: var(--select);
+  background: color-mix(in srgb, var(--select) 14%, transparent);
+  box-shadow: 0 0 0 1px var(--select), 0 0 16px rgba(201, 162, 90, 0.22);
 }
 
 /* Compact option rows (spells, cantrips, expertise, feat spells) */
@@ -395,30 +388,30 @@
   gap: 10px;
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid var(--rule-soft);
+  border: 1.5px solid var(--rule);
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--parchment) 5%, transparent);
   text-align: left;
   cursor: pointer;
   transition: border-color 150ms, background 150ms;
 }
-.level-rite-option:hover { border-color: var(--rule); }
-.level-rite-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.level-rite-option:hover { border-color: var(--select); }
+.level-rite-option:focus-visible { outline: 2px solid var(--select); outline-offset: 1px; }
 .level-rite-option-name {
   font-family: var(--font-body);
   font-size: 0.88rem;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-option-detail {
   font-family: var(--font-label);
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
 }
 .level-rite-option.is-selected {
   border-color: var(--ember);
-  background: rgba(178, 69, 47, 0.10);
+  background: color-mix(in srgb, var(--ember) 12%, transparent);
   box-shadow: inset 0 0 0 1px rgba(178, 69, 47, 0.2);
 }
 .level-rite-option.is-selected .level-rite-option-name { color: var(--ember); }
@@ -439,20 +432,20 @@
 .level-rite-tag {
   display: inline-block;
   padding: 2px 8px;
-  border: 1px solid var(--rule-soft);
+  border: 1px solid var(--rule);
   border-radius: 100px;
   font-family: var(--font-label);
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-  background: rgba(16, 12, 7, 0.04);
+  color: var(--parchment-2);
+  background: color-mix(in srgb, var(--parchment) 4%, transparent);
 }
 .level-rite-tag.is-chosen {
-  border-color: var(--gold);
-  color: var(--ground);
-  background: rgba(201, 162, 90, 0.16);
+  border-color: var(--select);
+  color: var(--parchment);
+  background: color-mix(in srgb, var(--select) 16%, transparent);
 }
 
 /* Section eyebrow label (e.g. "+1 to…", "Choose 2 spells") */
@@ -471,10 +464,10 @@
 .level-rite-description {
   margin-top: 14px;
   padding: 14px 16px;
-  border: 1px solid var(--rule-soft);
-  border-left: 3px solid var(--gold);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--select);
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--parchment) 8%, transparent);
 }
 .level-rite-description-head {
   display: flex;
@@ -486,12 +479,12 @@
   font-family: var(--font-display);
   font-size: 0.98rem;
   font-weight: 700;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-description-body {
   font-size: 0.84rem;
   line-height: 1.5;
-  color: var(--ground-2);
+  color: var(--parchment-2);
 }
 
 /* ── Fork (ASI vs Feat top-level choice) ── */
@@ -520,14 +513,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  border: 1px solid var(--rule-soft);
+  border: 1px solid var(--rule);
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--parchment) 5%, transparent);
 }
 .level-rite-asi-row span {
   font-family: var(--font-body);
   font-size: 0.88rem;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-steppers { display: flex; gap: 6px; align-items: center; }
 .level-rite-stepper-btn {
@@ -538,29 +531,32 @@
   padding: 0;
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
-  background: var(--parchment);
+  background: var(--ground);
   color: var(--ember);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: background 120ms, border-color 120ms;
 }
-.level-rite-stepper-btn:hover { border-color: var(--ember); background: rgba(178, 69, 47, 0.08); }
-.level-rite-stepper-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.level-rite-stepper-btn:hover {
+  border-color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 12%, transparent);
+}
+.level-rite-stepper-btn:focus-visible { outline: 2px solid var(--select); outline-offset: 1px; }
 .level-rite-stepper-count {
   min-width: 18px;
   text-align: center;
   font-family: var(--font-display);
   font-weight: 700;
-  color: var(--ground);
+  color: var(--parchment);
 }
 
 /* HP step */
 .level-rite-hp-card {
   padding: 18px 20px;
-  border: 1px solid var(--rule-soft);
+  border: 1px solid var(--rule);
   border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--parchment) 6%, transparent);
   text-align: center;
 }
 .level-rite-hp-result {
@@ -575,36 +571,34 @@
   font-family: var(--font-body);
   font-size: 0.78rem;
   font-weight: 400;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
   margin-top: 2px;
 }
 
 /* Form controls inside the modal */
-.level-rite-modal .control-field {
-  margin-top: 8px;
-}
+.level-rite-modal .control-field { margin-top: 8px; }
 .level-rite-modal .control-field span {
   font-family: var(--font-label);
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
 }
 .level-rite-modal .control-field input,
 .level-rite-hp-select {
   border: 1px solid var(--rule);
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.3);
-  color: var(--ground);
+  background: color-mix(in srgb, var(--ground) 70%, var(--parchment));
+  color: var(--parchment);
   font-family: var(--font-body);
   padding: 6px 10px;
 }
 .level-rite-modal .control-field input:focus,
 .level-rite-hp-select:focus {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--select);
   outline-offset: 0;
-  border-color: var(--gold);
+  border-color: var(--select);
 }
 
 /* ── Rite Summary panel ── */
@@ -620,7 +614,7 @@
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-summary-list {
   display: flex;
@@ -639,35 +633,38 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
 }
 .level-rite-summary-value {
   font-family: var(--font-body);
   font-size: 0.86rem;
-  color: var(--ground);
+  color: var(--parchment);
 }
 .level-rite-summary-value.pending {
-  color: var(--ink-faint);
+  color: var(--rule);
   font-style: italic;
 }
 .level-rite-summary-empty {
   font-family: var(--font-body);
   font-size: 0.82rem;
   font-style: italic;
-  color: var(--ink-faint);
+  color: var(--parchment-2);
 }
 
-/* ── Footer: dark forge strip ── */
+/* ── Footer: dark forge strip (always dark) ── */
 .level-rite-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 20px;
-  border-top: 1px solid var(--rule-soft);
-  background: linear-gradient(180deg, var(--ground-2), var(--ground-3));
+  border-top: 1px solid #6a5c3e;
+  background: linear-gradient(180deg, #2a2418, #100c07);
 }
 
+/* Secondary button — base is tuned for the parchment/document surface
+   ("Roll the Die"). On the footer (dark forge strip) it is overridden below
+   to light text + a bright border. */
 .level-rite-button {
   display: inline-flex;
   align-items: center;
@@ -675,9 +672,9 @@
   gap: 8px;
   min-height: 42px;
   padding: 0 18px;
-  border: 1px solid var(--rule);
+  border: 1.5px solid var(--rule);
   border-radius: var(--r-sm);
-  background: transparent;
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
   color: var(--parchment);
   font-family: var(--font-label);
   font-size: 0.78rem;
@@ -688,32 +685,51 @@
   transition: border-color 150ms, color 150ms, background 150ms;
 }
 .level-rite-button:hover {
-  border-color: var(--gold);
-  color: var(--gold);
+  border-color: var(--ember);
+  color: var(--ember);
+  background: color-mix(in srgb, var(--ember) 10%, transparent);
 }
 .level-rite-button:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 
+/* Secondary button on the DARK forge strip (footer "Back"): invert to light
+   text + a bright parchment border so the outline clears 3:1 on the near-black
+   ground. */
+.level-rite-footer .level-rite-button {
+  border-color: #b8a888;
+  background: rgba(236, 224, 200, 0.06);
+  color: #ece0c8;
+}
+.level-rite-footer .level-rite-button:hover {
+  border-color: var(--select);
+  color: var(--select);
+  background: rgba(201, 162, 90, 0.14);
+}
+
+/* Primary button — a real visible outline, not an ember-on-ember blob.
+   Gold rim on an ember fill; the gold ring is the outline. */
 .level-rite-button-primary {
-  border: 1px solid var(--accent-deep);
+  border: 1.5px solid var(--select);
   background: linear-gradient(180deg, var(--ember), var(--accent-deep));
-  color: var(--parchment);
+  color: #f3e8cf;
   font-weight: 700;
   box-shadow:
-    0 0 18px rgba(178, 69, 47, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 0 0 1px rgba(201, 162, 90, 0.55),
+    0 0 18px rgba(178, 69, 47, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 .level-rite-button-primary:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ember) 85%, var(--gold)), var(--accent-deep));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ember) 80%, var(--select)), var(--accent-deep));
   box-shadow:
-    0 0 24px rgba(178, 69, 47, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 0 0 1px var(--select),
+    0 0 24px rgba(178, 69, 47, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .level-rite-button:disabled,
 .level-rite-button-primary:disabled {
-  opacity: 0.42;
+  opacity: 0.45;
   cursor: not-allowed;
   box-shadow: none;
   filter: grayscale(0.4);
@@ -721,6 +737,11 @@
 .level-rite-button-primary:disabled:hover {
   background: linear-gradient(180deg, var(--ember), var(--accent-deep));
   box-shadow: none;
+}
+.level-rite-footer .level-rite-button:disabled:hover {
+  border-color: #b8a888;
+  color: #ece0c8;
+  background: rgba(236, 224, 200, 0.06);
 }
 
 /* ── Responsive ── */
@@ -732,9 +753,7 @@
     border-radius: 0;
   }
   .level-rite-inner { border-radius: 0; }
-  .level-rite-body {
-    grid-template-columns: 1fr;
-  }
+  .level-rite-body { grid-template-columns: 1fr; }
   .level-rite-summary {
     order: 2;
     border-left: 0;
