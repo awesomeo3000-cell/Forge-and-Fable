@@ -3,11 +3,7 @@
 import {
   LogOut,
   MessageSquare,
-  Plus,
-  Sparkles,
   Swords,
-  Upload,
-  UserRound,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -46,7 +42,6 @@ import {
   signed,
   standardArray,
 } from "@/lib/utils";
-import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
@@ -62,6 +57,7 @@ import { getClassData } from "@/lib/subclasses";
 import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
 import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
 import { FONT_STACKS } from "@/lib/skins";
+import { ordinalLevel, soulsRecorded } from "@/lib/ledgerCopy";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
 import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effects";
@@ -449,7 +445,11 @@ export default function ForgeAndFableApp() {
           headers: authHeaders(),
         });
         if (!res.ok) {
-          if (!cancelled) setActiveCampaign(null);
+          // Only a definitive "you're not in this campaign" answer should
+          // deactivate; a transient 5xx must not eject the player.
+          if (!cancelled && (res.status === 404 || res.status === 403 || res.status === 401)) {
+            setActiveCampaign(null);
+          }
           return;
         }
         const data = await res.json() as CampaignSyncPayload;
@@ -1720,83 +1720,92 @@ export default function ForgeAndFableApp() {
       </div>
     ) : null}
     <main className="builder-shell">
-      <header className="builder-topbar">
-        <div className="builder-brand">
-          <div className="brand-glyph">
-            <Sparkles size={21} />
-          </div>
+      <header className="builder-topbar ledger-topbar">
+        <div className="builder-brand ledger-masthead">
           <div>
             <span>Forge & Fable</span>
-            <strong>Character Studio</strong>
+            <strong>Character Ledger</strong>
           </div>
         </div>
         <div className="builder-actions">
           {status ? <span className="system-status">{status}</span> : null}
-          <span className="account-chip">
-            <UserRound size={16} />
-            {user.name}
-          </span>
-          <button className="glass-icon" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
+          <span className="account-chip ledger-account">{user.name}</span>
+          <button className="glass-icon ink-action" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
             <Swords size={18} />
           </button>
-          <button className="glass-icon" type="button" onClick={openFeedback} title="Submit feedback">
+          <button className="glass-icon ink-action" type="button" onClick={openFeedback} title="Submit feedback">
             <MessageSquare size={18} />
           </button>
-          <button className="glass-icon" type="button" onClick={logOut} title="Log out">
+          <button className="glass-icon ink-action" type="button" onClick={logOut} title="Log out">
             <LogOut size={18} />
           </button>
         </div>
       </header>
 
       <section className="builder-layout">
-        <aside className="vault-rail">
+        <aside className="vault-rail ledger-rail">
           <div className="rail-heading">
-            <span>Vault</span>
+            <span>Roster</span>
             <button
               type="button"
-              className="glass-icon"
+              className="glass-icon ink-action-dark"
               title="Import PDF"
               onClick={() => setImportOpen(true)}
             >
-              <Upload size={18} />
+              Import
             </button>
             <button
               type="button"
-              className="glass-icon"
+              className="glass-icon ink-action-dark"
               title="New character"
               onClick={() => {
                 setCreationPromptOpen(true);
                 setCreatorOpen(false);
               }}
             >
-              <Plus size={18} />
+              New
             </button>
           </div>
+          {characters.length > 0 ? (
+            <p className="ledger-rail-count">{soulsRecorded(characters.length)}</p>
+          ) : null}
           <div className="vault-list">
             {characters.map((character) => {
               const race = ruleset.races.find((item) => item.id === character.raceId);
               const heroClass = ruleset.classes.find((item) => item.id === character.classId);
+              const recordLine = [race?.name, heroClass?.name, `${ordinalLevel(character.level)} level`]
+                .filter(Boolean)
+                .join(" · ");
               return (
                 <button
                   type="button"
-                  className={`vault-avatar ${character.id === selected?.id ? "active" : ""}`}
+                  className={`vault-avatar ledger-row ${character.id === selected?.id ? "active" : ""}`}
                   key={character.id}
+                  aria-pressed={character.id === selected?.id}
                   onClick={() => {
                     setSelectedId(character.id);
                     setCreationPromptOpen(false);
                     setCreatorOpen(false);
                   }}
                 >
-                  <span data-class={heroClass?.id ?? ""}>
-                    <ClassIconPlaceholder classId={heroClass?.id ?? ""} size={24} strokeWidth={1.7} />
+                  <span className="ledger-initial" data-class={heroClass?.id ?? ""} aria-hidden="true">
+                    {character.name.trim().charAt(0).toUpperCase() || "?"}
                   </span>
                   <strong>{character.name}</strong>
-                  <small>
-                    {race?.name} {heroClass?.name}
-                  </small>
+                  <small>{recordLine}</small>
                 </button>
               );
             })}
+            <button
+              type="button"
+              className="ledger-ghost-row"
+              onClick={() => {
+                setCreationPromptOpen(true);
+                setCreatorOpen(false);
+              }}
+            >
+              {characters.length === 0 ? "✦  Inscribe a new name in the roster…" : "✦  Inscribe a new name…"}
+            </button>
           </div>
         </aside>
 
@@ -1815,7 +1824,7 @@ export default function ForgeAndFableApp() {
               </div>
             )
           ) : showCreationPrompt ? (
-            <CharacterStartPanel onSelectBuild={beginBuild} />
+            <CharacterStartPanel onSelectBuild={beginBuild} rosterEmpty={characters.length === 0} />
           ) : showCreator && draftFinalAbilities ? (
             <CreatorPanel
               draft={draft}

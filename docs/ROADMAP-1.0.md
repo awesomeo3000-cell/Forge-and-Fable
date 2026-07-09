@@ -108,6 +108,9 @@ R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R1
 | R15 | §4.15 initiative tracker + §6.25 onboarding + §5.21 bundle | CX |
 | R16 | §3.12 conditions + §4.18 campaigns v1 | Strong |
 | R17 | §3.14 multiclassing (optional for 1.0 — cut if scope demands) | Strong |
+| R18 | Builder/vault visual overhaul — "The Ledger" → `ai-project-proposal-18.md` (owner-driven, added 2026-07-08; CX tier, 4 sub-rounds a–d, each reviewed) | CX + review |
 | — | Release gate (§7), tag 1.0 | — |
+
+**Progress note (2026-07-08):** R16 a/b/c implemented and REVIEWED — approved with fixes. The API layer passed adversarial testing as shipped; four client-side push-chain bugs (cursor seeding, wrong-character targeting, cursor overrun, panel-gated polling) were found and fixed during review, plus themed push toasts and campaign-panel theme inheritance. Full record: `CHANGES-16-review.md`. Known minors carried forward: stale initiative PUT returns 400 not 409; `playwright` still in prod dependencies; 16c shipped without its own changelog (code verified real).
 
 Rounds R10–R15 are fully executable from this document plus the QA report. R13 and R16 deserve fresh design passes before their proposals are written — whoever writes them: read the landmine list twice, and verify in the running app like every round before you.

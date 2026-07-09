@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { HeroClass } from "@/types/game";
@@ -40,7 +40,7 @@ export default memo(function ClassLearnModal(props: {
         ref={dialogRef}
         aria-labelledby="class-learn-title"
         aria-modal="true"
-        className="class-modal paper-surface"
+        className="class-modal paper-surface ledger-page"
         data-class={props.heroClass.id}
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}
@@ -49,22 +49,22 @@ export default memo(function ClassLearnModal(props: {
           <X size={18} />
         </button>
 
-        <div className="class-modal-hero">
-          <div className="class-icon-stage compact" data-class={props.heroClass.id}>
-            <ClassIconPlaceholder classId={props.heroClass.id} size={54} strokeWidth={1.45} />
-          </div>
-          <div>
-            <span>{props.heroClass.sourceBook}</span>
+        <header className="ledger-modal-head">
+          <span className="ledger-modal-seal" data-class={props.heroClass.id} aria-hidden="true">
+            <ClassIconPlaceholder classId={props.heroClass.id} size={34} strokeWidth={1.6} />
+          </span>
+          <div className="ledger-modal-title">
+            <span className="ledger-eyebrow">{props.heroClass.sourceBook}</span>
             <h3 id="class-learn-title">{props.heroClass.name}</h3>
             <p>{props.heroClass.summary}</p>
           </div>
-        </div>
+        </header>
 
         <div className="class-detail-stack">
           <details className="class-detail-card">
             <summary>
               <span>Core Traits</span>
-              <ChevronRight size={18} />
+              <span className="ledger-disclosure" aria-hidden="true">›</span>
             </summary>
             <div className="trait-grid">
               {props.heroClass.coreTraits.map((trait) => (
@@ -76,7 +76,7 @@ export default memo(function ClassLearnModal(props: {
           <details className="class-detail-card" open>
             <summary>
               <span>Level Progression</span>
-              <ChevronRight size={18} />
+              <span className="ledger-disclosure" aria-hidden="true">›</span>
             </summary>
             <div className="level-list">
               {props.heroClass.levelProgression.map((entry) => (
@@ -97,12 +97,11 @@ export default memo(function ClassLearnModal(props: {
         </div>
 
         <div className="class-modal-actions">
-          <button className="glass-button" type="button" onClick={props.onClose}>
+          <button className="ledger-button" type="button" onClick={props.onClose}>
             Back
           </button>
-          <button className="gold-button" type="button" onClick={props.onSelect}>
+          <button className="ledger-button ledger-button-primary" type="button" onClick={props.onSelect}>
             {props.selected ? "Keep class" : "Choose class"}
-            <ChevronRight size={18} />
           </button>
         </div>
       </section>

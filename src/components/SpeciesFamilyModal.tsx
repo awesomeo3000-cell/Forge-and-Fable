@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Race } from "@/types/game";
@@ -38,7 +38,7 @@ export default memo(function SpeciesFamilyModal(props: {
       <section
         aria-labelledby="species-family-title"
         aria-modal="true"
-        className="class-modal species-modal species-family-modal paper-surface"
+        className="class-modal species-modal species-family-modal paper-surface ledger-page"
         data-species={props.members[0]?.id}
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}
@@ -68,10 +68,10 @@ export default memo(function SpeciesFamilyModal(props: {
                   </span>
                   <span className="species-family-row-name">
                     {member.name}
-                    {member.id === props.selectedId ? <em>chosen</em> : null}
+                    {member.id === props.selectedId ? <em>sealed ✦</em> : null}
                   </span>
                   <small>{bonusSummary(member)}</small>
-                  <ChevronRight size={16} />
+                  <span className="ledger-disclosure" aria-hidden="true">›</span>
                 </summary>
                 <div className="level-list species-trait-list">
                   {member.traits.map((trait) => (
@@ -85,11 +85,10 @@ export default memo(function SpeciesFamilyModal(props: {
                 </div>
                 <button
                   type="button"
-                  className="gold-button species-family-pick"
+                  className="ledger-button ledger-button-primary species-family-pick"
                   onClick={() => props.onPick(member.id)}
                 >
                   {member.id === props.selectedId ? "Keep this subspecies" : "Choose this subspecies"}
-                  <ChevronRight size={18} />
                 </button>
               </details>
             ))}
@@ -97,7 +96,7 @@ export default memo(function SpeciesFamilyModal(props: {
         </div>
 
         <div className="class-modal-actions">
-          <button className="glass-button" type="button" onClick={props.onClose}>
+          <button className="ledger-button" type="button" onClick={props.onClose}>
             Back
           </button>
         </div>

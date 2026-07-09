@@ -1,18 +1,9 @@
 "use client";
 
-import { ChevronRight, Swords, Wand2, Eye, Heart } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import type { Ruleset, DraftCharacter, BuildMode } from "@/types/game";
 import { FIGHT_STYLES, STYLE_TO_CLASSES, buildQuickDraft, PREMADE_ARCHETYPES, type FightStyle } from "@/lib/quickbuild";
-import ClassIconPlaceholder from "@/components/icons/ClassIcon";
-import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
-
-const STYLE_ICONS: Record<FightStyle, typeof Swords> = {
-  weapons: Swords,
-  magic: Wand2,
-  sneaky: Eye,
-  faith: Heart,
-};
+import { classDescriptor, firstSentence } from "@/lib/ledgerCopy";
 
 export default memo(function QuickbuilderPanel(props: {
   ruleset: Ruleset;
@@ -47,40 +38,35 @@ export default memo(function QuickbuilderPanel(props: {
     onComplete(draft);
   }, [ruleset, classId, raceId, charName, onComplete]);
 
-  // Premade: show archetype grid
+  // Premade: show archetype ledger
   if (isPremade) {
     return (
-      <div className="quickbuilder-panel paper-surface dj-start dj-quickbuilder">
-        <div className="dj-document-header">
-          <span className="dj-eyebrow">Premade archetypes</span>
+      <div className="quickbuilder-panel dj-start dj-quickbuilder ledger-page">
+        <header className="ledger-page-header">
+          <span className="ledger-eyebrow">Premade archetypes</span>
           <h2>Pick a ready-made hero</h2>
-          <p>Choose an archetype, write a name, and jump straight to final review.</p>
-        </div>
-        <div className="dj-card-grid">
+          <p className="ledger-chapter-sub">Choose an archetype, write a name, and jump straight to final review.</p>
+        </header>
+        <div className="ledger-option-list">
           {PREMADE_ARCHETYPES.map((a) => {
             const cls = ruleset.classes.find((c) => c.id === a.classId);
             const race = ruleset.races.find((r) => r.id === a.raceId);
+            const chosen = classId === a.classId && raceId === a.raceId;
             return (
               <button
                 key={a.id}
                 type="button"
-                className={`dj-card dj-option-card ${classId === a.classId && raceId === a.raceId ? "active" : ""}`}
+                className={`ledger-option has-dot ${chosen ? "active" : ""}`}
                 data-class={a.classId}
                 onClick={() => { setClassId(a.classId); setRaceId(a.raceId); }}
-                aria-pressed={classId === a.classId && raceId === a.raceId}
+                aria-pressed={chosen}
               >
-                <div className="dj-card-tab" />
-                <div className="dj-card-main">
-                  {cls ? (
-                    <span className="dj-card-icon" data-class={cls.id}>
-                      <ClassIconPlaceholder classId={cls.id} size={18} strokeWidth={1.5} />
-                    </span>
-                  ) : null}
-                  <strong>{a.label}</strong>
-                </div>
-                <small>{cls?.name} / {race?.name}</small>
-                <span>{a.summary}</span>
-                {classId === a.classId && raceId === a.raceId ? <em>chosen</em> : null}
+                <span className="ledger-option-dot" aria-hidden="true" />
+                <span className="ledger-option-name">{a.label}</span>
+                <span className="ledger-option-desc">
+                  {[cls?.name, race?.name].filter(Boolean).join(" · ")} — {a.summary}
+                </span>
+                {chosen ? <em className="ledger-option-state">Chosen ✦</em> : null}
               </button>
             );
           })}
@@ -91,7 +77,7 @@ export default memo(function QuickbuilderPanel(props: {
             <input
               type="text"
               className="qb-name-input"
-              placeholder="Enter a name..."
+              placeholder="Write a name"
               value={charName}
               onChange={(e) => setCharName(e.target.value)}
               maxLength={100}
@@ -100,16 +86,15 @@ export default memo(function QuickbuilderPanel(props: {
         </div>
         <div className="creator-footer dj-footer">
           <button
-            className="gold-button"
+            className="ledger-button ledger-button-primary"
             type="button"
             disabled={!canContinue}
             onClick={handleFinish}
           >
-            Review & Finalize
-            <ChevronRight size={18} />
+            Review the record
           </button>
         </div>
-        <button className="glass-button qb-cancel" type="button" onClick={onCancel}>
+        <button className="ledger-button qb-cancel" type="button" onClick={onCancel}>
           Back to build modes
         </button>
       </div>
@@ -117,62 +102,49 @@ export default memo(function QuickbuilderPanel(props: {
   }
 
   return (
-    <div className="quickbuilder-panel paper-surface dj-start dj-quickbuilder">
-      <div className="dj-document-header">
-        <span className="dj-eyebrow">Quickbuilder</span>
+    <div className="quickbuilder-panel dj-start dj-quickbuilder ledger-page">
+      <header className="ledger-page-header">
+        <span className="ledger-eyebrow">Quickbuilder</span>
         <h2>Forge a hero in three steps</h2>
-        <p>Answer a few questions and the draft record fills itself in.</p>
-      </div>
+        <p className="ledger-chapter-sub">Answer a few questions and the draft record fills itself in.</p>
+      </header>
 
       {/* Step 0: Fight style */}
       {step === 0 ? (
-        <div className="dj-card-grid">
-          {FIGHT_STYLES.map((style) => {
-            const Icon = STYLE_ICONS[style.id];
-            return (
-              <button
-                key={style.id}
-                type="button"
-                className={`dj-card dj-option-card ${fightStyle === style.id ? "active" : ""}`}
-                onClick={() => setFightStyle(style.id)}
-                aria-pressed={fightStyle === style.id}
-              >
-                <div className="dj-card-tab" />
-                <div className="dj-card-main">
-                  <span className="dj-card-icon">
-                    <Icon size={18} />
-                  </span>
-                  <strong>{style.label}</strong>
-                  {fightStyle === style.id ? <em>chosen</em> : null}
-                </div>
-                <small>{style.summary}</small>
-              </button>
-            );
-          })}
+        <div className="ledger-option-list">
+          {FIGHT_STYLES.map((style) => (
+            <button
+              key={style.id}
+              type="button"
+              className={`ledger-option has-dot ${fightStyle === style.id ? "active" : ""}`}
+              onClick={() => setFightStyle(style.id)}
+              aria-pressed={fightStyle === style.id}
+            >
+              <span className="ledger-option-dot neutral" aria-hidden="true" />
+              <span className="ledger-option-name">{style.label}</span>
+              <span className="ledger-option-desc">{style.summary}</span>
+              {fightStyle === style.id ? <em className="ledger-option-state">Chosen ✦</em> : null}
+            </button>
+          ))}
         </div>
       ) : null}
 
       {/* Step 1: Class (vibe) */}
       {step === 1 ? (
-        <div className="dj-card-grid">
+        <div className="ledger-option-list">
           {classOptions.map((c) => (
             <button
               key={c.id}
               type="button"
-              className={`dj-card dj-option-card ${classId === c.id ? "active" : ""}`}
+              className={`ledger-option has-dot ${classId === c.id ? "active" : ""}`}
               data-class={c.id}
               onClick={() => setClassId(c.id)}
               aria-pressed={classId === c.id}
             >
-              <div className="dj-card-tab" />
-              <div className="dj-card-main">
-                <span className="dj-card-icon" data-class={c.id}>
-                  <ClassIconPlaceholder classId={c.id} size={18} strokeWidth={1.5} />
-                </span>
-                <strong>{c.name}</strong>
-                {classId === c.id ? <em>chosen</em> : null}
-              </div>
-              <small>{c.summary}</small>
+              <span className="ledger-option-dot" aria-hidden="true" />
+              <span className="ledger-option-name">{c.name}</span>
+              <span className="ledger-option-desc">{classDescriptor(c.id) || firstSentence(c.summary, 60)}</span>
+              {classId === c.id ? <em className="ledger-option-state">Chosen ✦</em> : null}
             </button>
           ))}
         </div>
@@ -181,25 +153,20 @@ export default memo(function QuickbuilderPanel(props: {
       {/* Step 2: Species + name */}
       {step === 2 ? (
         <div>
-          <div className="dj-card-grid species-grid">
+          <div className="ledger-option-list species-list">
             {ruleset.races.map((r) => (
               <button
                 key={r.id}
                 type="button"
-                className={`dj-card dj-option-card ${raceId === r.id ? "active" : ""}`}
+                className={`ledger-option has-dot ${raceId === r.id ? "active" : ""}`}
                 data-species={r.id}
                 onClick={() => setRaceId(r.id)}
                 aria-pressed={raceId === r.id}
               >
-                <div className="dj-card-tab" />
-                <div className="dj-card-main">
-                  <span className="dj-card-icon" data-species={r.id}>
-                    <SpeciesIconPlaceholder speciesId={r.id} size={18} strokeWidth={1.5} />
-                  </span>
-                  <strong>{r.name}</strong>
-                  {raceId === r.id ? <em>chosen</em> : null}
-                </div>
-                <small>{r.summary.slice(0, 90)}</small>
+                <span className="ledger-option-dot neutral" aria-hidden="true" />
+                <span className="ledger-option-name">{r.name}</span>
+                <span className="ledger-option-desc">{firstSentence(r.summary, 60)}</span>
+                {raceId === r.id ? <em className="ledger-option-state">Chosen ✦</em> : null}
               </button>
             ))}
           </div>
@@ -209,7 +176,7 @@ export default memo(function QuickbuilderPanel(props: {
               <input
                 type="text"
                 className="qb-name-input"
-                placeholder="Enter a name..."
+                placeholder="Write a name"
                 value={charName}
                 onChange={(e) => setCharName(e.target.value)}
                 maxLength={100}
@@ -221,37 +188,35 @@ export default memo(function QuickbuilderPanel(props: {
 
       <div className="creator-footer dj-footer">
         <button
-          className="glass-button"
+          className="ledger-button"
           type="button"
           disabled={step === 0}
           onClick={() => setStep(Math.max(0, step - 1))}
         >
-          Previous
+          Previous question
         </button>
         {step < 2 ? (
           <button
-            className="gold-button"
+            className="ledger-button ledger-button-primary"
             type="button"
             disabled={!canContinue}
             onClick={() => setStep(step + 1)}
           >
-            Continue
-            <ChevronRight size={18} />
+            Record the answer
           </button>
         ) : (
           <button
-            className="gold-button"
+            className="ledger-button ledger-button-primary"
             type="button"
             disabled={!canContinue}
             onClick={handleFinish}
           >
-            Review & Finalize
-            <ChevronRight size={18} />
+            Review the record
           </button>
         )}
       </div>
 
-      <button className="glass-button qb-cancel" type="button" onClick={onCancel}>
+      <button className="ledger-button qb-cancel" type="button" onClick={onCancel}>
         Back to build modes
       </button>
     </div>

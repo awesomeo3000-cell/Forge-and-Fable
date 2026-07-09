@@ -8790,3 +8790,1300 @@ button.dj-card {
   .campaign-panel *::before { transition: none !important; }
   .campaign-panel .campaign-card:hover { transform: none; }
 }
+
+/* ── R18: The Ledger ── */
+/* Append-only block (proposal 18 §0.1). Light-paper complement to the dark
+   Printed Tome root tokens — same world, daylight side. All R18 surfaces use
+   ONLY these tokens plus --class-a. */
+:root {
+  --ledger-paper:   #e9dfc8;  /* page field */
+  --ledger-tint:    #e2d5b8;  /* selected/hover row, left column of spreads */
+  --ledger-ink:     #2a2018;  /* primary text */
+  --ledger-faded:   #7a6a52;  /* descriptors, marginalia */
+  --ledger-ghost:   #a08d6c;  /* empty-state text, timestamps, footnotes */
+  --ledger-rule:    #cfc2a2;  /* row hairlines */
+  --ledger-edge:    #c9bb98;  /* page borders */
+  --ledger-seal:    #8c2f22;  /* THE accent. Selection, links, "sealed" marks */
+  --ledger-font:    var(--font-newsreader), Georgia, serif;
+}
+
+/* ── 18a: masthead ── */
+.builder-topbar.ledger-topbar {
+  background: var(--ground-2);
+  border-bottom: 1px solid var(--rule-soft);
+  backdrop-filter: none;
+  padding: 8px 16px;
+  border-radius: 0;
+}
+
+.ledger-masthead div:last-child {
+  gap: 3px;
+}
+
+.ledger-masthead span {
+  color: var(--parchment-2);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.ledger-masthead strong {
+  color: var(--parchment);
+  font-family: var(--ledger-font);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.builder-topbar .glass-icon.ink-action {
+  width: auto;
+  height: 38px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--parchment-2);
+}
+
+.builder-topbar .glass-icon.ink-action:hover {
+  color: var(--parchment);
+  background: none;
+}
+
+.account-chip.ledger-account {
+  min-height: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  color: var(--parchment-2);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ── 18a: roster rail ── */
+.vault-rail.ledger-rail {
+  isolation: isolate;
+  border: 1px solid var(--ledger-edge);
+  border-right: 1px solid var(--ledger-edge);
+  border-radius: var(--r-sm);
+  background: var(--ledger-paper);
+  color: var(--ledger-ink);
+  padding: 14px 12px;
+  font-family: var(--ledger-font);
+  box-shadow: var(--shadow-soft);
+}
+
+.vault-rail.ledger-rail::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--grain);
+  background-size: 140px 140px;
+  opacity: 0.08;
+}
+
+.vault-rail.ledger-rail > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ledger-rail .rail-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  margin-bottom: 0;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ledger-rule);
+}
+
+.ledger-rail .rail-heading span {
+  margin-right: auto;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-rail .glass-icon.ink-action-dark {
+  width: auto;
+  height: auto;
+  padding: 2px 3px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ledger-rail .glass-icon.ink-action-dark:hover {
+  color: var(--ledger-ink);
+  background: none;
+}
+
+.ledger-rail-count {
+  margin: 0;
+  padding: 7px 2px 6px;
+  color: var(--ledger-ghost);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.ledger-rail .vault-list {
+  gap: 0;
+}
+
+.vault-avatar.ledger-row {
+  grid-template-columns: 26px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 1px;
+  min-height: 0;
+  padding: 10px 8px 10px 5px;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  transition: background 140ms ease;
+}
+
+.vault-avatar.ledger-row:hover:not(.active) {
+  background: color-mix(in srgb, var(--ledger-tint) 55%, var(--ledger-paper));
+  transform: none;
+  box-shadow: none;
+}
+
+.vault-avatar.ledger-row.active {
+  border-color: var(--ledger-rule);
+  border-left-color: var(--ledger-seal);
+  background: var(--ledger-tint);
+}
+
+.vault-avatar.ledger-row span.ledger-initial {
+  grid-row: 1 / span 2;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--class-a);
+  color: var(--ledger-paper);
+  font-family: var(--ledger-font);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vault-avatar.ledger-row strong {
+  grid-column: 2;
+  color: var(--ledger-ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.vault-avatar.ledger-row small {
+  grid-column: 2;
+  color: var(--ledger-faded);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.ledger-ghost-row {
+  display: block;
+  width: 100%;
+  padding: 11px 8px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--ledger-ghost);
+  font-family: var(--ledger-font);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ledger-ghost-row:hover {
+  color: var(--ledger-faded);
+}
+
+/* ── 18b: the threshold (start panel) + shared ledger primitives ── */
+/* .ledger-page, .ledger-option, and .ledger-button are shared by 18b/18c/18d. */
+.ledger-page {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  width: 100%;
+  padding: clamp(28px, 4vw, 34px);
+  border: 1px solid var(--ledger-edge);
+  border-radius: var(--r-sm);
+  background: var(--ledger-paper);
+  color: var(--ledger-ink);
+  box-shadow: var(--shadow-soft);
+  font-family: var(--ledger-font);
+}
+
+.ledger-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--grain);
+  background-size: 140px 140px;
+  opacity: 0.08;
+}
+
+.ledger-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ledger-eyebrow {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-page-header {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ledger-ink);
+}
+
+/* Registry-masthead double rule: hairline sitting just above the heavy rule. */
+.ledger-page-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  border-top: 1px solid var(--ledger-rule);
+}
+
+.ledger-page-header h2 {
+  margin: 0;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.ledger-option-list {
+  display: block;
+}
+
+.ledger-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 13px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.ledger-option:hover:not(.active) {
+  background: color-mix(in srgb, var(--ledger-tint) 55%, var(--ledger-paper));
+  transform: none;
+  box-shadow: none;
+}
+
+.ledger-option.active {
+  background: var(--ledger-tint);
+  border-left-color: var(--ledger-seal);
+}
+
+.ledger-option-name {
+  color: var(--ledger-ink);
+  font-size: 16px;
+  font-variant: small-caps;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+}
+
+.ledger-option:hover:not(.active) .ledger-option-name::after {
+  content: "  ⟶";
+  color: var(--ledger-faded);
+}
+
+.ledger-option-desc {
+  color: var(--ledger-faded);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.ledger-option-state {
+  justify-self: end;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--ledger-seal);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-option-dot {
+  align-self: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--class-a, var(--ledger-faded));
+}
+
+.ledger-option-dot.neutral {
+  background: var(--ledger-faded);
+}
+
+.ledger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1px solid var(--ledger-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.ledger-button:hover:not(:disabled) {
+  background: var(--ledger-ink);
+  color: var(--ledger-paper);
+}
+
+.ledger-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ledger-button.ledger-button-primary {
+  background: var(--ledger-ink);
+  color: var(--ledger-paper);
+}
+
+.ledger-button.ledger-button-primary:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ledger-ink);
+}
+
+.ledger-page .dj-footer {
+  border-top: 1px solid var(--ledger-rule);
+}
+
+.ledger-footnote {
+  color: var(--ledger-ghost);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+/* Start panel: tighten the .dj-start / .start-panel inherited grid. */
+.start-panel.ledger-page {
+  gap: 0;
+}
+
+.start-panel.ledger-page .ledger-page-header {
+  margin-bottom: 8px;
+}
+
+.start-panel.ledger-page .ledger-option-list {
+  margin-top: 10px;
+}
+
+.start-panel.ledger-page .ledger-page-footer {
+  margin-top: 26px;
+}
+
+@media (max-width: 700px) {
+  .ledger-option {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ledger-option-state {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ── 18c: the commission (builder proper) ── */
+/* Re-point the dossier's paper tokens at the ledger palette so every legacy
+   dj-* rule inside the spread inherits the ledger material. No token is
+   defined in terms of itself (landmine list). */
+.paper-surface.ledger-spread {
+  --paper: var(--ledger-paper);
+  --paper-raised: var(--ledger-tint);
+  --ink: var(--ledger-ink);
+  --ink-2: var(--ledger-faded);
+  --ink-3: var(--ledger-ghost);
+  --doc-rule: var(--ledger-rule);
+  --doc-rule-soft: var(--ledger-rule);
+  --doc-accent: var(--ledger-seal);
+  --doc-accent-deep: var(--ledger-seal);
+  --doc-select: var(--ledger-seal);
+  border-color: var(--ledger-edge);
+  background: var(--ledger-paper);
+  box-shadow: var(--shadow-soft);
+  font-family: var(--ledger-font);
+}
+
+.dj-dossier.ledger-spread {
+  grid-template-columns: 210px minmax(0, 1fr);
+}
+
+/* Table of contents (left column) */
+.dj-rail.ledger-toc {
+  gap: 0;
+  padding: 24px 0 18px;
+  border-right: 1px solid var(--ledger-edge);
+  background: var(--ledger-tint);
+}
+
+.ledger-toc .dj-rail-label {
+  padding: 0 14px 10px;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-toc .dj-rail-step {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 0;
+  padding: 6px 14px 6px 12px;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font: 500 13px/2.1 var(--ledger-font);
+}
+
+.ledger-toc .dj-rail-step.complete {
+  color: var(--ledger-ink);
+}
+
+.ledger-toc .dj-rail-step.active {
+  border-left-color: var(--ledger-seal);
+  background: transparent;
+  color: var(--ledger-seal);
+}
+
+.ledger-toc-chapter {
+  white-space: nowrap;
+}
+
+.ledger-toc-decided {
+  overflow: hidden;
+  color: var(--ledger-faded);
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.ledger-toc .ledger-toc-footnote {
+  margin: auto 14px 0;
+  padding-top: 16px;
+}
+
+/* Document page (right column) */
+.ledger-spread .dj-document-header h2 {
+  font-family: var(--ledger-font);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.ledger-spread .dj-document-header p {
+  color: var(--ledger-faded);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ledger-spread .dj-document-header .dj-eyebrow,
+.ledger-spread .dj-eyebrow {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  letter-spacing: 0.14em;
+}
+
+.ledger-chapter-head {
+  display: grid;
+  gap: 3px;
+}
+
+.ledger-chapter-title {
+  margin: 0;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.ledger-chapter-sub {
+  margin: 0;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Option rows with a seal dot (classes, species, origins) */
+.ledger-option.has-dot {
+  grid-template-columns: 10px auto minmax(0, 1fr) auto auto;
+}
+
+.ledger-option .ledger-option-dot {
+  background: color-mix(in srgb, var(--class-a, var(--ledger-faded)) 75%, var(--ledger-ink));
+}
+
+.ledger-option .ledger-option-dot.neutral {
+  background: var(--ledger-faded);
+}
+
+.ledger-option .dj-card-select {
+  border-radius: 0;
+}
+
+.ledger-option-link {
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ledger-seal);
+  font: 500 12px/1.4 var(--ledger-font);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ledger-option-state.quiet {
+  color: var(--ledger-ghost);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.ledger-spread .species-list {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* The wax-seal stamp for a confirmed choice */
+.ledger-spread .dj-stamp-row.ledger-stamp {
+  padding: 10px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  background: transparent;
+}
+
+.ledger-stamp .dj-stamp-icon,
+.ledger-stamp .dj-stamp-seal {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--class-a, var(--ledger-seal));
+  color: var(--ledger-paper);
+}
+
+.ledger-stamp .dj-stamp-seal {
+  background: var(--ledger-seal);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.ledger-stamp strong {
+  color: var(--ledger-ink);
+  font-size: 17px;
+  font-variant: small-caps;
+  font-weight: 500;
+}
+
+.ledger-stamp small {
+  color: var(--ledger-faded);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ledger-stamp em {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ledger-seal);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Helper text becomes footnotes */
+.ledger-spread .dj-skill-hint {
+  color: var(--ledger-ghost);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ledger-spread .dj-skill-hint::before {
+  content: "† ";
+}
+
+/* Inputs on the ledger: transparent, hairline bottom border, seal focus */
+.ledger-spread .control-field input,
+.ledger-spread .control-field select,
+.ledger-spread .control-field textarea,
+.ledger-spread .attribute-card select,
+.ledger-spread .dj-level-pick select,
+.ledger-spread .dj-manual-stat {
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+}
+
+.ledger-spread .control-field input:focus,
+.ledger-spread .control-field select:focus,
+.ledger-spread .control-field textarea:focus,
+.ledger-spread .attribute-card select:focus,
+.ledger-spread .dj-level-pick select:focus,
+.ledger-spread .dj-manual-stat:focus {
+  border-bottom-color: var(--ledger-seal);
+  box-shadow: none;
+  outline: none;
+}
+
+.ledger-spread .dj-name-field input:focus,
+.ledger-spread .dj-qb-name .qb-name-input:focus {
+  border-bottom-color: var(--ledger-seal);
+}
+
+/* Skill/tool/language chips: selection is tint + seal left rule, never a colored border */
+.ledger-spread .dj-skill-chip {
+  border: 1px solid var(--ledger-rule);
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+}
+
+.ledger-spread .dj-skill-chip.picked {
+  border-color: var(--ledger-rule);
+  border-left-color: var(--ledger-seal);
+  background: var(--ledger-tint);
+  color: var(--ledger-ink);
+}
+
+/* Chapter V furniture */
+.ledger-spread .points-pill {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-spread .method-row button {
+  border: 1px solid transparent;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ledger-spread .method-row button.active {
+  border-bottom: 2px solid var(--ledger-seal);
+  background: var(--ledger-tint);
+  color: var(--ledger-ink);
+}
+
+.ledger-spread .attribute-card {
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-right: 1px solid var(--ledger-rule);
+  background: transparent;
+  color: var(--ledger-faded);
+}
+
+.ledger-spread .mini-stepper button {
+  border: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 15px;
+}
+
+.ledger-spread .dj-stat-strip {
+  border: 0;
+  border-top: 1px solid var(--ledger-rule);
+  border-bottom: 1px solid var(--ledger-rule);
+}
+
+/* Small ledger buttons (dice rolls inside chapters) */
+.ledger-button.small {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+/* Chapter VI: no pills on paper */
+.ledger-spread .final-loadout span {
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .dj-dossier.ledger-spread {
+    grid-template-columns: 1fr;
+  }
+
+  .dj-rail.ledger-toc {
+    flex-direction: column;
+    overflow-x: visible;
+    padding: 16px 0 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ledger-edge);
+  }
+
+  .ledger-toc .dj-rail-label {
+    display: block;
+  }
+
+  .ledger-toc .dj-rail-step {
+    border-left: 2px solid transparent;
+    border-bottom: 0;
+  }
+
+  .ledger-toc .dj-rail-step.active {
+    border-left-color: var(--ledger-seal);
+    border-bottom-color: transparent;
+  }
+
+  .ledger-toc .ledger-toc-footnote {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 700px) {
+  .ledger-option.has-dot {
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+  }
+
+  .ledger-option.has-dot .ledger-option-desc,
+  .ledger-option.has-dot .ledger-option-link {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+
+  .ledger-option.has-dot .ledger-option-state {
+    grid-column: auto;
+    justify-self: end;
+  }
+}
+
+/* ── 18d: quickbuilder + learn modals sweep ── */
+/* Standalone ledger pages (start panel, quickbuilder, modal bodies) get the
+   same paper-token re-point the spread got, so legacy dj-/modal rules inherit
+   the ledger material. */
+.ledger-page {
+  --paper: var(--ledger-paper);
+  --paper-raised: var(--ledger-tint);
+  --ink: var(--ledger-ink);
+  --ink-2: var(--ledger-faded);
+  --ink-3: var(--ledger-ghost);
+  --doc-rule: var(--ledger-rule);
+  --doc-rule-soft: var(--ledger-rule);
+  --doc-accent: var(--ledger-seal);
+  --doc-accent-deep: var(--ledger-seal);
+  --doc-select: var(--ledger-seal);
+}
+
+.ledger-page .species-list {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.ledger-page .qb-name-input {
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+}
+
+.ledger-page .qb-name-input:focus {
+  border-bottom-color: var(--ledger-seal);
+}
+
+.ledger-page .dj-qb-name label > span {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  letter-spacing: 0.14em;
+}
+
+.ledger-page .qb-cancel {
+  justify-self: start;
+}
+
+/* Learn modals as ledger pages */
+.class-modal.ledger-page {
+  width: min(920px, 100%);
+  max-height: min(860px, calc(100dvh - 40px));
+  padding: 22px clamp(18px, 3vw, 30px);
+}
+
+.class-modal.ledger-page .class-modal-hero {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ledger-rule);
+}
+
+.class-modal.ledger-page .class-modal-hero > div > span {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.class-modal.ledger-page .class-modal-hero h3 {
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+}
+
+.class-modal.ledger-page .class-modal-hero p {
+  color: var(--ledger-faded);
+  font-style: italic;
+}
+
+/* The hero icon becomes a wax-seal circle: flat class color, no gradient. */
+.class-modal.ledger-page .class-icon-stage {
+  width: 92px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--class-a, var(--ledger-seal)) 75%, var(--ledger-ink));
+  color: var(--ledger-paper);
+  box-shadow: none;
+}
+
+.class-modal.ledger-page .class-detail-card {
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+.class-modal.ledger-page .class-detail-card summary {
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+}
+
+.ledger-disclosure {
+  color: var(--ledger-seal);
+  font-size: 18px;
+  font-style: normal;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.class-detail-card[open] summary .ledger-disclosure {
+  transform: rotate(90deg);
+}
+
+.class-modal.ledger-page .species-family-row summary em {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ledger-seal);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.class-modal.ledger-page .class-modal-actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--ledger-rule);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledger-row,
+  .ledger-option,
+  .ledger-button,
+  .ledger-disclosure {
+    transition: none !important;
+  }
+}
+
+/* Kill-sweep leftovers on touched surfaces: the modal ✕ keeps its lucide icon
+   (allowed) but sheds the glass pill; the top-bar status sheds its chip. */
+.class-modal.ledger-page .glass-icon.modal-close {
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ledger-faded);
+}
+
+.class-modal.ledger-page .glass-icon.modal-close:hover {
+  color: var(--ledger-ink);
+  background: var(--ledger-tint);
+}
+
+.ledger-topbar .system-status {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--parchment-2);
+  font-family: var(--ledger-font);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── R18 fix round (owner notes): modal heads, chip highlight, origin tones,
+      method outlines, the certificate ── */
+
+/* Learn-modal masthead: seal at left, registry double-rule below the whole
+   header — the rule sits under the seal, never through it. */
+.ledger-modal-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 20px;
+  padding: 4px 54px 16px 2px;
+  border-bottom: 2px solid var(--ledger-ink);
+}
+
+.ledger-modal-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  border-top: 1px solid var(--ledger-rule);
+}
+
+.ledger-modal-seal {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--class-a, var(--ledger-seal)) 85%, var(--ledger-ink));
+  color: var(--ledger-paper);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--ledger-paper) 28%, transparent);
+}
+
+.ledger-modal-title {
+  display: grid;
+  gap: 4px;
+}
+
+.ledger-modal-title h3 {
+  margin: 0;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.ledger-modal-title p {
+  margin: 0;
+  color: var(--ledger-faded);
+  font-size: 13.5px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .ledger-modal-head {
+    grid-template-columns: 56px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .ledger-modal-seal {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* Origin tone families — muted inks per walk of life; feeds the existing
+   --class-a dot machinery, values are deliberately NOT class hues. */
+.ledger-option[data-origin-tone="lore"]   { --class-a: #5a4a72; }
+.ledger-option[data-origin-tone="shadow"] { --class-a: #4f5a66; }
+.ledger-option[data-origin-tone="wilds"]  { --class-a: #6e7d4a; }
+.ledger-option[data-origin-tone="war"]    { --class-a: #96432e; }
+.ledger-option[data-origin-tone="trade"]  { --class-a: #a5772e; }
+.ledger-option[data-origin-tone="sea"]    { --class-a: #4f7a72; }
+.ledger-option[data-origin-tone="court"]  { --class-a: #9a5a8c; }
+
+/* Skill/tool/language chips: a picked chip is pressed in wax — full fill,
+   unmistakable at a glance (owner note: "entire button should highlight"). */
+.ledger-spread .dj-skill-chip.picked {
+  border-color: var(--ledger-seal);
+  border-left-color: var(--ledger-seal);
+  background: var(--ledger-seal);
+  color: var(--ledger-paper);
+}
+
+/* Attribute methods: clean outlined tabs, chosen = ink outline + tint. */
+.ledger-spread .method-row button {
+  min-height: 40px;
+  border: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ledger-spread .method-row button:hover:not(.active) {
+  border-color: var(--ledger-faded);
+  background: transparent;
+  color: var(--ledger-ink);
+}
+
+.ledger-spread .method-row button.active {
+  border-color: var(--ledger-ink);
+  background: var(--ledger-tint);
+  box-shadow: inset 0 0 0 1px var(--ledger-ink);
+  color: var(--ledger-ink);
+}
+
+.ledger-spread .points-pill {
+  min-height: 40px;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Chapter VI: the certificate. */
+.ledger-certificate {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.ledger-cert-name {
+  margin: 0;
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.ledger-cert-line {
+  margin: 0 0 10px;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.ledger-cert-rows {
+  border-top: 2px solid var(--ledger-ink);
+}
+
+.ledger-cert-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: baseline;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--ledger-rule);
+}
+
+.ledger-cert-label {
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ledger-cert-value {
+  color: var(--ledger-ink);
+  font-family: var(--ledger-font);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.ledger-cert-value.missing {
+  color: var(--ledger-ghost);
+  font-style: italic;
+}
+
+.ledger-cert-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.ledger-cert-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--ledger-faded);
+  font-family: var(--ledger-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ledger-cert-stat b {
+  color: var(--ledger-ink);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.ledger-cert-stat i {
+  color: var(--ledger-faded);
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.ledger-cert-seal-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 18px;
+  margin-top: 14px;
+}
+
+.ledger-cert-seal {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--class-a, var(--ledger-seal)) 85%, var(--ledger-ink));
+  color: var(--ledger-paper);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--ledger-paper) 28%, transparent);
+  transform: rotate(-6deg);
+}
+
+@media (max-width: 700px) {
+  .ledger-cert-row {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+}
+
+/* The grain-overlay rule (.ledger-page > *) later in the cascade was
+   overriding .modal-close's absolute positioning, turning the close button
+   into a grid item — which shoved the modal header into a 0px row and made
+   its contents spill over the body (the "square in a circle / line through
+   the seal" mess). Restore it. */
+.ledger-page > .modal-close {
+  position: absolute;
+}

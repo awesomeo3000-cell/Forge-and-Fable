@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  ChevronRight,
-  CircleGauge,
-  Dices,
-  Gem,
-  Minus,
-  Pencil,
-  Plus,
-  Save,
-  ScrollText,
-} from "lucide-react";
 import { memo, useState } from "react";
 import type {
   AbilityKey,
@@ -39,6 +28,7 @@ import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
+import { CHAPTERS, classDescriptor, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
 import {
   CLASS_SKILL_CHOICES,
   SKILLS,
@@ -66,14 +56,8 @@ function casterLabel(heroClass: HeroClass) {
   return `${heroClass.casterType} caster`;
 }
 
-function classShortLine(heroClass: HeroClass) {
-  return [`d${heroClass.hitDie}`, casterLabel(heroClass), heroClass.primary.map((key) => abilityLabels[key]).join("/")].join(" / ");
-}
-
 function classDetailLine(heroClass: HeroClass) {
-  const parts = [`d${heroClass.hitDie} hit die`, casterLabel(heroClass)];
-  if (heroClass.subclassLevel) parts.push(`subclass at level ${heroClass.subclassLevel}`);
-  return parts.join(" / ");
+  return [`d${heroClass.hitDie} hit die`, casterLabel(heroClass)].join(" / ");
 }
 
 const FAMILY_LABELS: Record<string, { name: string; summary: string }> = {
@@ -139,7 +123,7 @@ function DossierStamp(props: {
   speciesId?: string;
 }) {
   return (
-    <div className="dj-stamp-row" data-class={props.classId} data-species={props.speciesId} data-kind={props.type}>
+    <div className="dj-stamp-row ledger-stamp" data-class={props.classId} data-species={props.speciesId} data-kind={props.type}>
       {props.type === "class" && props.classId ? (
         <span className="dj-stamp-icon" data-class={props.classId}>
           <ClassIconPlaceholder classId={props.classId} size={26} strokeWidth={1.5} />
@@ -155,7 +139,7 @@ function DossierStamp(props: {
         <strong>{props.label}</strong>
         <small>{props.detail}</small>
       </span>
-      <em>chosen</em>
+      <em>chosen ✦</em>
     </div>
   );
 }
@@ -194,7 +178,6 @@ export default memo(function CreatorPanel(props: {
   const selectedClass = props.draft.classId
     ? props.ruleset.classes.find((item) => item.id === props.draft.classId) ?? null
     : null;
-  const heroClass = selectedClass ?? props.ruleset.classes[0];
   const race = props.ruleset.races.find((item) => item.id === props.draft.raceId) ?? null;
   const [familyPickerId, setFamilyPickerId] = useState<string | null>(null);
   const speciesGroups = groupSpeciesByFamily(props.ruleset.races);
@@ -203,12 +186,6 @@ export default memo(function CreatorPanel(props: {
     : null;
   const inspectedClass = props.ruleset.classes.find((item) => item.id === inspectedClassId) ?? null;
   const inspectedSpecies = props.ruleset.races.find((item) => item.id === inspectedSpeciesId) ?? null;
-  const buildModeLabel =
-    props.buildMode === "quickbuilder"
-      ? "Quickbuilder"
-      : props.buildMode === "premade"
-        ? "Premade"
-        : "Standard";
 
   const skillChoice = props.draft.classId ? CLASS_SKILL_CHOICES[props.draft.classId] : undefined;
   const chosenSkillCount = props.draft.skillProficiencies.length;
@@ -330,6 +307,22 @@ export default memo(function CreatorPanel(props: {
       Boolean(props.draft.raceId),
   ];
 
+  // TOC marginalia: the decided value each completed chapter shows (18c pass 1).
+  const methodLabels: Record<StatMethod, string> = {
+    "point-buy": "point buy",
+    "standard-array": "standard array",
+    roll: "rolled",
+    manual: "manual",
+  };
+  const decidedValues = [
+    props.draft.name.trim(),
+    selectedClass?.name ?? "",
+    props.draft.background,
+    race ? parseSpeciesName(race.name).displayName : "",
+    methodLabels[props.statMethod] ?? "",
+    "",
+  ];
+
   const canContinue =
     props.step === 0
       ? stepComplete[0]
@@ -363,13 +356,14 @@ export default memo(function CreatorPanel(props: {
 
   return (
     <>
-      <div className="creator-panel paper-surface dj-dossier">
-        <nav className="dj-rail" aria-label="Character builder steps">
-          <span className="dj-rail-label">{buildModeLabel}</span>
+      <div className="creator-panel paper-surface dj-dossier ledger-spread">
+        <nav className="dj-rail ledger-toc" aria-label="Character builder steps">
+          <span className="dj-rail-label">The Commission</span>
           {steps.map((step, index) => {
             const active = index === props.step;
             const complete = stepComplete[index];
-            const marker = complete ? "✓" : active ? "●" : "○";
+            const chapter = CHAPTERS[index];
+            const decided = complete ? decidedValues[index] : "";
 
             return (
               <button
@@ -379,11 +373,12 @@ export default memo(function CreatorPanel(props: {
                 onClick={() => props.onStepChange(index)}
                 aria-current={active ? "step" : undefined}
               >
-                <span>{marker}</span>
-                {step}
+                <span className="ledger-toc-chapter">{`${chapter.numeral}. ${chapter.name}`}</span>
+                {decided ? <em className="ledger-toc-decided">{decided} ✓</em> : null}
               </button>
             );
           })}
+          <p className="ledger-footnote ledger-toc-footnote">Each chapter inks the record as it is decided.</p>
         </nav>
 
         <section className="dj-document">
@@ -402,9 +397,12 @@ export default memo(function CreatorPanel(props: {
           </header>
 
           <section className="dj-section" aria-labelledby="dj-section-title">
-            <span className="dj-eyebrow" id="dj-section-title">
-              {steps[props.step]}
-            </span>
+            <div className="ledger-chapter-head">
+              <h3 className="ledger-chapter-title" id="dj-section-title">
+                {`Chapter ${CHAPTERS[props.step].numeral} · ${CHAPTERS[props.step].name}`}
+              </h3>
+              <p className="ledger-chapter-sub">{CHAPTERS[props.step].subtitle}</p>
+            </div>
 
             {props.step === 0 ? (
               <div className="dj-setup">
@@ -436,6 +434,11 @@ export default memo(function CreatorPanel(props: {
                     label={selectedClass.name}
                     detail={classDetailLine(selectedClass)}
                   />
+                ) : null}
+                {selectedClass?.subclassLevel ? (
+                  <p className="ledger-footnote">
+                    {`† Subclass is chosen at ${ordinalLevel(selectedClass.subclassLevel)} level; the ledger will prompt you.`}
+                  </p>
                 ) : null}
                 {selectedClass && skillChoice ? (
                   <div className="dj-class-training" data-class={selectedClass.id}>
@@ -475,8 +478,7 @@ export default memo(function CreatorPanel(props: {
                       </small>
                       {usesRolledStartingHp ? (
                         <div className="dj-hp-roll-panel">
-                          <button type="button" className="glass-button small" onClick={rollStartingHp}>
-                            <Dices size={16} />
+                          <button type="button" className="ledger-button small" onClick={rollStartingHp}>
                             Roll {extraHpLevels}d{selectedClass.hitDie} HP
                           </button>
                           <span className={`dj-hp-roll-status${startingHpComplete ? " done" : ""}`}>
@@ -561,17 +563,16 @@ export default memo(function CreatorPanel(props: {
                     ) : null}
                   </div>
                 ) : null}
-                <div className="dj-card-grid">
+                <div className="ledger-option-list">
                   {props.ruleset.classes.map((candidate) => {
                     const selected = candidate.id === props.draft.classId;
 
                     return (
                       <div
                         key={candidate.id}
-                        className={`dj-card dj-option-card ${selected ? "active" : ""}`}
+                        className={`ledger-option has-dot ${selected ? "active" : ""}`}
                         data-class={candidate.id}
                       >
-                        <div className="dj-card-tab" />
                         <button
                           className="dj-card-select"
                           type="button"
@@ -591,22 +592,18 @@ export default memo(function CreatorPanel(props: {
                             }
                           }}
                         />
-                        <div className="dj-card-main">
-                          <span className="dj-card-icon" data-class={candidate.id}>
-                            <ClassIconPlaceholder classId={candidate.id} size={18} strokeWidth={1.5} />
-                          </span>
-                          <strong>{candidate.name}</strong>
-                          {selected ? <em>chosen</em> : null}
-                        </div>
-                        <small>{classShortLine(candidate)}</small>
+                        <span className="ledger-option-dot" aria-hidden="true" />
+                        <span className="ledger-option-name">{candidate.name}</span>
+                        <span className="ledger-option-desc">{classDescriptor(candidate.id)}</span>
                         <button
-                          className="dj-card-link"
+                          className="dj-card-link ledger-option-link"
                           type="button"
                           aria-haspopup="dialog"
                           onClick={() => setInspectedClassId(candidate.id)}
                         >
                           Preview class
                         </button>
+                        {selected ? <em className="ledger-option-state">Chosen ✦</em> : null}
                       </div>
                     );
                   })}
@@ -714,14 +711,15 @@ export default memo(function CreatorPanel(props: {
                     ) : null}
                   </>
                 ) : null}
-                <div className="dj-card-grid compact">
+                <div className="ledger-option-list">
                   {props.ruleset.backgrounds.map((background) => (
                     <button
                       type="button"
                       key={background}
-                      className={`dj-card dj-option-card dj-background-card ${
+                      className={`ledger-option has-dot ${
                         background === props.draft.background ? "active" : ""
                       }`}
+                      data-origin-tone={originTone(background)}
                       onClick={() =>
                         props.onDraftChange({
                           ...props.draft,
@@ -734,13 +732,16 @@ export default memo(function CreatorPanel(props: {
                       }
                       aria-pressed={background === props.draft.background}
                     >
-                      <div className="dj-card-tab" />
-                      <strong>{background}</strong>
-                      <small>
+                      <span className="ledger-option-dot" aria-hidden="true" />
+                      <span className="ledger-option-name">{background}</span>
+                      <span className="ledger-option-desc">
                         {background === "Custom Background"
-                          ? "Personal story / table details"
-                          : `${background} origin / campaign hook`}
-                      </small>
+                          ? "a personal story, written at the table"
+                          : `a ${background.toLowerCase()} starting story`}
+                      </span>
+                      {background === props.draft.background ? (
+                        <em className="ledger-option-state">Chosen ✦</em>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -813,7 +814,7 @@ export default memo(function CreatorPanel(props: {
                     detail={speciesDetailLine(race)}
                   />
                 ) : null}
-                <div className="dj-card-grid species-grid">
+                <div className="ledger-option-list species-list">
                   {speciesGroups.map((item) => {
                     if (item.kind === "single") {
                       const candidate = item.race;
@@ -821,7 +822,7 @@ export default memo(function CreatorPanel(props: {
                         <button
                           type="button"
                           key={candidate.id}
-                          className={`dj-card dj-option-card dj-species-card ${
+                          className={`ledger-option has-dot ${
                             candidate.id === props.draft.raceId ? "active" : ""
                           }`}
                           data-species={candidate.id}
@@ -829,45 +830,35 @@ export default memo(function CreatorPanel(props: {
                           aria-pressed={candidate.id === props.draft.raceId}
                           onClick={() => setInspectedSpeciesId(candidate.id)}
                         >
-                          <div className="dj-card-tab" />
-                          <div className="dj-card-main">
-                            <span className="dj-card-icon" data-species={candidate.id}>
-                              <SpeciesIconPlaceholder speciesId={candidate.id} size={18} strokeWidth={1.5} />
-                            </span>
-                            <strong>{candidate.name}</strong>
-                            {candidate.id === props.draft.raceId ? <em>chosen</em> : null}
-                          </div>
-                          <small>{speciesDetailLine(candidate)}</small>
+                          <span className="ledger-option-dot neutral" aria-hidden="true" />
+                          <span className="ledger-option-name">{candidate.name}</span>
+                          <span className="ledger-option-desc">{firstSentence(candidate.summary, 60)}</span>
+                          {candidate.id === props.draft.raceId ? (
+                            <em className="ledger-option-state">Chosen ✦</em>
+                          ) : null}
                         </button>
                       );
                     }
 
                     const family = FAMILY_LABELS[item.familyId] ?? { name: item.familyId, summary: "" };
-                    const iconMember = item.members[0];
                     const familyHasSelection = item.members.some((m) => m.id === props.draft.raceId);
 
                     return (
                       <button
                         type="button"
                         key={item.familyId}
-                        className={`dj-card dj-option-card dj-species-card dj-species-family ${
-                          familyHasSelection ? "active" : ""
-                        }`}
-                        data-species={iconMember.id}
+                        className={`ledger-option has-dot ${familyHasSelection ? "active" : ""}`}
                         aria-haspopup="dialog"
                         onClick={() => setFamilyPickerId(item.familyId)}
                       >
-                        <div className="dj-card-tab" />
-                        <ChevronRight size={14} className="dj-family-chevron" />
-                        <div className="dj-card-main">
-                          <span className="dj-card-icon" data-species={iconMember.id}>
-                            <SpeciesIconPlaceholder speciesId={iconMember.id} size={18} strokeWidth={1.5} />
-                          </span>
-                          <strong>{family.name}</strong>
-                          {familyHasSelection ? <em>chosen</em> : null}
-                        </div>
-                        <small>{`${item.members.length} subspecies`}</small>
-                        <small>{family.summary}</small>
+                        <span className="ledger-option-dot neutral" aria-hidden="true" />
+                        <span className="ledger-option-name">{family.name}</span>
+                        <span className="ledger-option-desc">{firstSentence(family.summary, 60)}</span>
+                        {familyHasSelection ? (
+                          <em className="ledger-option-state">Chosen ✦</em>
+                        ) : (
+                          <em className="ledger-option-state quiet">{`${item.members.length} subspecies`}</em>
+                        )}
                       </button>
                     );
                   })}
@@ -891,7 +882,6 @@ export default memo(function CreatorPanel(props: {
                     className={props.statMethod === "point-buy" ? "active" : ""}
                     onClick={() => props.onMethodChange("point-buy")}
                   >
-                    <CircleGauge size={16} />
                     Point Buy
                   </button>
                   <button
@@ -899,7 +889,6 @@ export default memo(function CreatorPanel(props: {
                     className={props.statMethod === "standard-array" ? "active" : ""}
                     onClick={() => props.onMethodChange("standard-array")}
                   >
-                    <ScrollText size={16} />
                     Array
                   </button>
                   <button
@@ -907,7 +896,6 @@ export default memo(function CreatorPanel(props: {
                     className={props.statMethod === "roll" ? "active" : ""}
                     onClick={() => props.onMethodChange("roll")}
                   >
-                    <Dices size={16} />
                     Roll
                   </button>
                   <button
@@ -915,14 +903,12 @@ export default memo(function CreatorPanel(props: {
                     className={props.statMethod === "manual" ? "active" : ""}
                     onClick={() => props.onMethodChange("manual")}
                   >
-                    <Pencil size={16} />
                     Manual
                   </button>
                   <span className="points-pill">{props.statMethod === "manual" ? "Manual" : `${props.pointRemaining} pts`}</span>
                 </div>
                 {props.statMethod === "roll" ? (
-                  <button className="glass-button small" type="button" onClick={props.onRollStats}>
-                    <Dices size={16} />
+                  <button className="ledger-button small" type="button" onClick={props.onRollStats}>
                     Roll 4d6
                   </button>
                 ) : null}
@@ -939,12 +925,12 @@ export default memo(function CreatorPanel(props: {
                         </small>
                         {props.statMethod === "point-buy" ? (
                           <div className="mini-stepper">
-                            <button type="button" onClick={() => props.onPointBuyChange(key, -1)}>
-                              <Minus size={14} />
+                            <button type="button" aria-label={`Decrease ${abilityNames[key]}`} onClick={() => props.onPointBuyChange(key, -1)}>
+                              −
                             </button>
                             <b>{props.draft.abilities[key]}</b>
-                            <button type="button" onClick={() => props.onPointBuyChange(key, 1)}>
-                              <Plus size={14} />
+                            <button type="button" aria-label={`Increase ${abilityNames[key]}`} onClick={() => props.onPointBuyChange(key, 1)}>
+                              +
                             </button>
                           </div>
                         ) : props.statMethod === "manual" ? (
@@ -992,25 +978,92 @@ export default memo(function CreatorPanel(props: {
             ) : null}
 
             {props.step === 5 ? (
-              <div className="finalize-panel dj-finalize">
-                <Gem size={34} />
-                <span className="dj-eyebrow">Seal the record</span>
-                <h3>{props.draft.name || "Unwritten hero"}</h3>
-                <p>
-                  Level {props.draft.level} {race?.name ?? "Unchosen species"} {heroClass.name}
+              <div className="ledger-certificate">
+                <span className="ledger-eyebrow">The record, read back</span>
+                <h3 className="ledger-cert-name">{props.draft.name.trim() || "Unwritten"}</h3>
+                <p className="ledger-cert-line">
+                  {ordinalLevel(props.draft.level)}-level
+                  {race ? ` ${parseSpeciesName(race.name).displayName}` : ""}
+                  {selectedClass ? ` ${selectedClass.name}` : ""}
+                  {props.draft.background ? ` · ${props.draft.background}` : ""}
+                  {props.draft.alignment ? ` · ${props.draft.alignment}` : ""}
                 </p>
-                <div className="final-loadout">
-                  <span>{props.draft.background}</span>
-                  {race ? <span>{race.name}</span> : null}
-                  {props.draft.sourceIds.map((sourceId) => {
-                    const source = sourceOptions.find((item) => item.id === sourceId);
-                    return source ? <span key={source.id}>{source.name}</span> : null;
-                  })}
+                <div className="ledger-cert-rows">
+                  <div className="ledger-cert-row">
+                    <span className="ledger-cert-label">Provenance</span>
+                    {props.draft.name.trim() ? (
+                      <span className="ledger-cert-value">
+                        {props.draft.name.trim()}, drawn from{" "}
+                        {props.draft.sourceIds
+                          .map((id) => sourceOptions.find((s) => s.id === id)?.name ?? id)
+                          .join(", ") || "no sources"}
+                      </span>
+                    ) : (
+                      <span className="ledger-cert-value missing">unwritten — return to Chapter I</span>
+                    )}
+                  </div>
+                  <div className="ledger-cert-row">
+                    <span className="ledger-cert-label">Vocation</span>
+                    {selectedClass ? (
+                      <span className="ledger-cert-value">
+                        {selectedClass.name}
+                        {props.draft.skillProficiencies.length > 0
+                          ? `; trained in ${props.draft.skillProficiencies
+                              .map((id) => SKILLS.find((sk) => sk.id === id)?.name ?? id)
+                              .join(", ")}`
+                          : ""}
+                      </span>
+                    ) : (
+                      <span className="ledger-cert-value missing">undecided — return to Chapter II</span>
+                    )}
+                  </div>
+                  <div className="ledger-cert-row">
+                    <span className="ledger-cert-label">Origin</span>
+                    {props.draft.background ? (
+                      <span className="ledger-cert-value">{props.draft.background}</span>
+                    ) : (
+                      <span className="ledger-cert-value missing">undecided — return to Chapter III</span>
+                    )}
+                  </div>
+                  <div className="ledger-cert-row">
+                    <span className="ledger-cert-label">Lineage</span>
+                    {race ? (
+                      <span className="ledger-cert-value">
+                        {parseSpeciesName(race.name).displayName} — {speciesDetailLine(race)}
+                      </span>
+                    ) : (
+                      <span className="ledger-cert-value missing">undecided — return to Chapter IV</span>
+                    )}
+                  </div>
+                  <div className="ledger-cert-row">
+                    <span className="ledger-cert-label">Attributes</span>
+                    <span className="ledger-cert-stats">
+                      {abilityKeys.map((key) => (
+                        <span className="ledger-cert-stat" key={key}>
+                          {abilityLabels[key]}
+                          <b>{props.finalAbilities[key]}</b>
+                          <i>{signed(abilityModifier(props.finalAbilities[key]))}</i>
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  {selectedClass && selectedClass.startingGear.length > 0 ? (
+                    <div className="ledger-cert-row">
+                      <span className="ledger-cert-label">Provisions</span>
+                      <span className="ledger-cert-value">{selectedClass.startingGear.join(", ")}</span>
+                    </div>
+                  ) : null}
                 </div>
-                <div className="final-loadout">
-                  {heroClass.startingGear.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
+                <div className="ledger-cert-seal-row">
+                  {selectedClass ? (
+                    <span className="ledger-cert-seal" data-class={selectedClass.id} aria-hidden="true">
+                      <ClassIconPlaceholder classId={selectedClass.id} size={30} strokeWidth={1.6} />
+                    </span>
+                  ) : null}
+                  <p className="ledger-footnote">
+                    † Scores set by {methodLabels[props.statMethod] ?? "hand"}. Pressing the seal binds this
+                    record to the roster; every entry can still be revised from the sheet.
+                  </p>
                 </div>
               </div>
             ) : null}
@@ -1018,27 +1071,26 @@ export default memo(function CreatorPanel(props: {
 
           <div className="creator-footer dj-footer">
             <button
-              className="glass-button"
+              className="ledger-button"
               type="button"
               disabled={props.step === 0}
               onClick={() => props.onStepChange(Math.max(0, props.step - 1))}
             >
-              Previous
+              Previous chapter
             </button>
             {props.step < steps.length - 1 ? (
               <button
-                className="gold-button"
+                className="ledger-button ledger-button-primary"
                 type="button"
                 disabled={!canContinue}
                 onClick={() => props.onStepChange(Math.min(steps.length - 1, props.step + 1))}
               >
-                Continue
-                <ChevronRight size={18} />
+                {CHAPTERS[props.step].action}
               </button>
             ) : (
               <>
                 <button
-                  className="gold-button"
+                  className="ledger-button ledger-button-primary"
                   type="button"
                   onClick={() => {
                     const missing: string[] = [];
@@ -1055,8 +1107,7 @@ export default memo(function CreatorPanel(props: {
                     props.onCreate();
                   }}
                 >
-                  <Save size={18} />
-                  Forge Hero
+                  {CHAPTERS[5].action}
                 </button>
                 {forgeError ? <p className="forge-error">{forgeError}</p> : null}
               </>

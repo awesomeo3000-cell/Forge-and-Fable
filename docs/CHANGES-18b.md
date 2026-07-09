@@ -1,0 +1,20 @@
+# CHANGES-18b — The threshold (start panel)
+
+**Round:** R18 "The Ledger", sub-round b (proposal: `ai-project-proposal-18.md` §3/18b)
+**Files touched:** `src/components/CharacterStartPanel.tsx` (rewritten), `src/components/ForgeAndFableApp.tsx` (one prop added at the call site), `src/app/globals.css` (append-only, `/* ── 18b ── */` under the R18 banner)
+
+## What changed
+
+1. **Component rewritten** (was 79 lines of card grid). The `dj-card-grid`/`dj-mode-card` grid, the `dj-card-tab` elements, and the `ShieldCheck`/`CircleGauge`/`Swords` lucide icons are gone from this surface. The old mode summaries ("Build step by step with full control…") are replaced by the §2 descriptors verbatim: *the full commission, chapter by chapter* / *guided choices for a faster start* / *archetypes awaiting a name* (from `BUILD_MODE_DESCRIPTORS` in `ledgerCopy.ts`).
+2. **Container** is now a single `ledger-page`: `--ledger-paper` + the standard grain overlay, `--ledger-edge` border, `--r-sm` radius, 28–34px padding. The root keeps `start-panel` and `dj-start` (load-bearing: `.studio-surface:has(.dj-start)` makes the surrounding surface transparent, and `start-panel` provides the centered full-height grid). **`paper-surface` was removed from this root** — intrinsic to the rewrite, since `ledger-page` supplies its own material and keeping both would double backgrounds/shadows; the `paper-surface` class definition itself is untouched and still used elsewhere.
+3. **Header:** eyebrow `THE LEDGER OPENS` / title `Commission a character` (24px Newsreader, weight 500) over a registry double rule (1px `--ledger-rule` hairline above a 2px `--ledger-ink` rule, done with `border-bottom` + `::after` — no extra markup). With an empty roster the eyebrow reads `THE ROSTER IS EMPTY`, driven by a new `rosterEmpty` prop passed from `ForgeAndFableApp` (`characters.length === 0`). Note: the old component hardcoded "Empty character vault" unconditionally — the proposal's "keep the conditional" assumed one existed, so the smallest honest change was adding the prop.
+4. **Build modes as ruled rows** — the shared `.ledger-option` row CSS was built here (per spec, "build the shared CSS once"): small-caps mode name (16px, `font-variant: small-caps`), italic descriptor in `--ledger-faded`, no seal dot (no class on this surface), hairline row separation only — no per-row boxes, radii, or gaps. Selected = `--ledger-tint` + 3px `--ledger-seal` left rule + right-aligned small-caps `CHOSEN ✦` in `--ledger-seal`. Unselected hover = the specced `color-mix(… 55% …)` tint plus a quiet `⟶` after the name (rows, not buttons, carry the arrow affordance). `aria-pressed` retained on every row.
+5. **Footer:** the `gold-button` was replaced on this surface by the new `.ledger-button` (rectangular, `1px solid var(--ledger-ink)`, transparent fill, small-caps `Open the commission`, hover = ink fill/paper text; an ink-filled `-primary` variant was defined here for 18c). `gold-button` CSS untouched. Disabled-until-chosen logic unchanged; the `ChevronRight` glyph is gone (no arrows in button labels).
+6. Also defined here for reuse: `.ledger-eyebrow`, `.ledger-footnote`, `.ledger-option-dot` (10px seal dot, `--class-a` with a `.neutral` `--ledger-faded` variant), and a <700px stack for option rows.
+
+## Verification — what was actually done
+
+- `npx tsc --noEmit` clean; `npm run lint` 0 errors (same one pre-existing warning as 18a, unrelated file/line).
+- Dev server hot-compiled without errors.
+- Logic-level checks: mode state is unchanged (`useState<BuildMode | null>`, button disabled until non-null, `onSelectBuild(selectedMode)` on click) — Quickbuilder/Premade routing lives in `ForgeAndFableApp.beginBuild` and was not touched. Keyboard: rows and the footer button are native `<button>`s, so Tab/Enter/Space work as before.
+- **Honest gap:** same as 18a — the browser screenshot/click-through could not be run by the implementer (permission classifier blocks reaching localhost). Pending: visual check of all three rows, keyboard selection, and both eyebrow variants (empty vs non-empty roster).

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Race } from "@/types/game";
@@ -40,7 +40,7 @@ export default memo(function SpeciesLearnModal(props: {
         ref={dialogRef}
         aria-labelledby="species-learn-title"
         aria-modal="true"
-        className="class-modal species-modal paper-surface"
+        className="class-modal species-modal paper-surface ledger-page"
         data-species={props.species.id}
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}
@@ -49,19 +49,19 @@ export default memo(function SpeciesLearnModal(props: {
           <X size={18} />
         </button>
 
-        <div className="class-modal-hero">
-          <div className="class-icon-stage compact" data-species={props.species.id}>
-            <SpeciesIconPlaceholder speciesId={props.species.id} size={54} strokeWidth={1.45} />
-          </div>
-          <div>
-            <span>
+        <header className="ledger-modal-head">
+          <span className="ledger-modal-seal" data-species={props.species.id} aria-hidden="true">
+            <SpeciesIconPlaceholder speciesId={props.species.id} size={34} strokeWidth={1.6} />
+          </span>
+          <div className="ledger-modal-title">
+            <span className="ledger-eyebrow">
               {props.species.sourceLabel ? `${props.species.sourceLabel} / ` : ""}
               {props.species.sourceBook}
             </span>
             <h3 id="species-learn-title">{props.species.name}</h3>
             <p>{props.species.summary}</p>
           </div>
-        </div>
+        </header>
 
         <div className="class-detail-stack">
           <div className="species-facts">
@@ -82,7 +82,7 @@ export default memo(function SpeciesLearnModal(props: {
           <details className="class-detail-card" open>
             <summary>
               <span>Unique Features & Traits</span>
-              <ChevronRight size={18} />
+              <span className="ledger-disclosure" aria-hidden="true">›</span>
             </summary>
             <div className="level-list species-trait-list">
               {props.species.traits.map((trait) => (
@@ -98,12 +98,11 @@ export default memo(function SpeciesLearnModal(props: {
         </div>
 
         <div className="class-modal-actions">
-          <button className="glass-button" type="button" onClick={props.onClose}>
+          <button className="ledger-button" type="button" onClick={props.onClose}>
             Back
           </button>
-          <button className="gold-button" type="button" onClick={props.onSelect}>
+          <button className="ledger-button ledger-button-primary" type="button" onClick={props.onSelect}>
             {props.selected ? "Keep species" : "Choose species"}
-            <ChevronRight size={18} />
           </button>
         </div>
       </section>

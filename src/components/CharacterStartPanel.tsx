@@ -1,79 +1,58 @@
 "use client";
 
-import { ChevronRight, CircleGauge, ShieldCheck, Swords } from "lucide-react";
 import { memo, useState } from "react";
+import { BUILD_MODE_DESCRIPTORS } from "@/lib/ledgerCopy";
 
 type BuildMode = "standard" | "quickbuilder" | "premade";
 
+const BUILD_MODES: Array<{ mode: BuildMode; label: string }> = [
+  { mode: "standard", label: "Standard" },
+  { mode: "quickbuilder", label: "Quickbuilder" },
+  { mode: "premade", label: "Premade" },
+];
+
 export default memo(function CharacterStartPanel(props: {
   onSelectBuild: (mode: BuildMode) => void;
+  rosterEmpty?: boolean;
 }) {
   const [selectedMode, setSelectedMode] = useState<BuildMode | null>(null);
-  const buildModes: Array<{
-    mode: BuildMode;
-    icon: "standard" | "quickbuilder" | "premade";
-    label: string;
-    summary: string;
-  }> = [
-    {
-      mode: "standard",
-      icon: "standard",
-      label: "Standard",
-      summary: "Build step by step with full control over identity, sources, class, and attributes.",
-    },
-    {
-      mode: "quickbuilder",
-      icon: "quickbuilder",
-      label: "Quickbuilder",
-      summary: "Start from guided choices now, with faster recommendations planned next.",
-    },
-    {
-      mode: "premade",
-      icon: "premade",
-      label: "Premade",
-      summary: "Reserve a slot for future archetypes like tank, healer, face, and spellcaster.",
-    },
-  ];
 
   return (
-    <div className="start-panel paper-surface dj-start">
-      <div className="dj-document-header">
-        <span className="dj-eyebrow">Empty character vault</span>
-        <h2>Create a new character</h2>
-        <p>Choose a record style. Name and sources come next.</p>
+    <div className="start-panel dj-start ledger-page">
+      <header className="ledger-page-header">
+        <span className="ledger-eyebrow">
+          {props.rosterEmpty ? "The roster is empty" : "The ledger opens"}
+        </span>
+        <h2>Commission a character</h2>
+      </header>
+      <div className="ledger-option-list">
+        {BUILD_MODES.map((item) => {
+          const chosen = selectedMode === item.mode;
+          return (
+            <button
+              type="button"
+              key={item.mode}
+              className={`ledger-option ${chosen ? "active" : ""}`}
+              aria-pressed={chosen}
+              onClick={() => setSelectedMode(item.mode)}
+            >
+              <span className="ledger-option-name">{item.label}</span>
+              <span className="ledger-option-desc">{BUILD_MODE_DESCRIPTORS[item.mode]}</span>
+              {chosen ? <em className="ledger-option-state">Chosen ✦</em> : null}
+            </button>
+          );
+        })}
       </div>
-      <div className="dj-card-grid dj-mode-grid">
-        {buildModes.map((item) => (
-          <button
-            type="button"
-            className={`dj-card dj-mode-card ${selectedMode === item.mode ? "active" : ""}`}
-            aria-pressed={selectedMode === item.mode}
-            key={item.mode}
-            onClick={() => setSelectedMode(item.mode)}
-          >
-            <div className="dj-card-tab" />
-            <span className="dj-mode-icon">
-              {item.icon === "standard" ? <ShieldCheck size={22} /> : null}
-              {item.icon === "quickbuilder" ? <CircleGauge size={22} /> : null}
-              {item.icon === "premade" ? <Swords size={22} /> : null}
-            </span>
-            <strong>{item.label}</strong>
-            <small>{item.summary}</small>
-            {selectedMode === item.mode ? <em>chosen</em> : null}
-          </button>
-        ))}
-      </div>
-      <div className="start-actions dj-footer">
+      <div className="start-actions dj-footer ledger-page-footer">
         <button
           type="button"
-          className="gold-button"
+          className="ledger-button"
           disabled={!selectedMode}
           onClick={() => selectedMode && props.onSelectBuild(selectedMode)}
         >
-          Continue
-          <ChevronRight size={18} />
+          Open the commission
         </button>
       </div>
     </div>
   );
-})
+});
