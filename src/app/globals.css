@@ -4514,14 +4514,16 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    "name forget"
-    "meta forget";
+    "name prepare"
+    "meta prepare";
   align-items: center;
   gap: 2px 8px;
 }
 .cs-spellbook-entry strong { grid-area: name; }
 .cs-spellbook-entry span { grid-area: meta; }
-.cs-spellbook-forget { grid-area: forget; align-self: center; }
+.cs-spellbook-prepare { grid-area: prepare; align-self: center; }
+.cs-spellbook-prepare.is-prepared { border-color: var(--doc-accent); color: var(--doc-accent); }
+.cs-spellbook-entry .cs-spellbook-cantrip { grid-area: prepare; align-self: center; }
 
 .cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 

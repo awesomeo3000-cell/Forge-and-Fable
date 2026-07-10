@@ -770,16 +770,6 @@ export default memo(function HeroSheet(props: {
     props.onUpdate({ spellsKnown: [...props.character.spellsKnown, spellId] });
     setSpellToLearn("");
   };
-  const forgetSpell = (spellId: string) => {
-    const nextStatuses = { ...spellStatusesRef.current };
-    delete nextStatuses[spellId];
-    spellStatusesRef.current = nextStatuses;
-    props.onUpdate({
-      spellsKnown: props.character.spellsKnown.filter((id) => id !== spellId),
-      preparedSpells: preparedIds.filter((id) => id !== spellId),
-      spellStatuses: nextStatuses,
-    });
-  };
   // One combined patch: slot spend + concentration must not race as two PUTs.
   const castSpell = (spell: SpellData, atLevel: number) => {
     if (spellcastingBlockedByArmor) {
@@ -1434,7 +1424,7 @@ export default memo(function HeroSheet(props: {
                     const source = status?.source?.trim();
                     return (
                       <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
-                        {_isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}
+                        {!canManageSpellbook && _isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}
                         <strong>{spell.name}</strong>
                         <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
                         {source || status?.freeUse ? (
@@ -1500,7 +1490,18 @@ export default memo(function HeroSheet(props: {
                             <div className="cs-spell-card cs-spellbook-entry" key={spell.id} onClick={() => setSpellDetail(spell)}>
                               <strong>{spell.name}</strong>
                               <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
-                              <button type="button" className="cs-glass-btn cs-spellbook-forget" onClick={(e) => { e.stopPropagation(); forgetSpell(spell.id); }} aria-label={`Forget ${spell.name}`}>Forget</button>
+                              {spell.level > 0 ? (
+                                <button
+                                  type="button"
+                                  className={`cs-glass-btn cs-spellbook-prepare${preparedIds.includes(spell.id) ? " is-prepared" : ""}`}
+                                  disabled={!preparedIds.includes(spell.id) && preparedIds.length >= prepLimit}
+                                  onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }}
+                                  aria-pressed={preparedIds.includes(spell.id)}
+                                  aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`}
+                                >
+                                  {preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"}
+                                </button>
+                              ) : <span className="cs-spellbook-cantrip">Cantrip</span>}
                             </div>
                           ))}
                         </div>
