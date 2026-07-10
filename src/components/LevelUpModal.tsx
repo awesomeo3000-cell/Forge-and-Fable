@@ -1,25 +1,28 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
-import { abilityLabels, abilityModifier, rollDie, signed } from "@/lib/utils";
+import { abilityLabels, abilityModifier, proficiencyBonus, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
 import { ALL_SPELLS, cantripsKnownAt, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
+import { ordinalLevel } from "@/lib/ledgerCopy";
+import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import "./LevelUpModal.css";
 
-/** Ritual display labels for each internal step (spec: stepper copy map). */
+/** Checklist labels. Plain mechanical nouns — the flavor lives in descriptors,
+    never in the words a player is scanning for (house voice, proposal 18 §2). */
 const STEP_LABELS: Record<LevelUpStep, string> = {
-  hp: "HP",
-  subclass: "Path",
-  expertise: "Mastery",
-  asi: "Feat",
+  hp: "Hit points",
+  subclass: "Subclass",
+  expertise: "Expertise",
+  asi: "Feat or ability",
   spells: "Spells",
-  summary: "Chronicle",
+  summary: "The seal",
 };
 
 type LevelUpStep = "hp" | "subclass" | "expertise" | "asi" | "spells" | "summary";
@@ -47,6 +50,8 @@ export default memo(function LevelUpModal({
   raceName,
   useFeatPrerequisites = true,
   hitPointType,
+  characterName,
+  gainedFeatures = [],
 }: {
   character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string };
   newLevel: number;
@@ -68,6 +73,10 @@ export default memo(function LevelUpModal({
   onCancel: () => void;
   /** Character's hit point advancement type (fixed / rolled / manual). */
   hitPointType?: CharacterSettings["hitPointType"];
+  /** For the header line: "Level 5 — Wexford, Paladin". */
+  characterName?: string;
+  /** Class features granted automatically at newLevel (from levelProgression). */
+  gainedFeatures?: { name: string; description: string }[];
 }) {
   const conMod = abilityModifier(finalAbilities.constitution);
 
@@ -365,11 +374,42 @@ export default memo(function LevelUpModal({
   const chosenCantripNames = pickedCantrips.map((id) => getSpell(id)?.name ?? id);
   const chosenSpellNames = pickedSpells.map((id) => getSpell(id)?.name ?? id);
 
+  // ── "Gained at this level" strip: what the level grants with no decision.
+  // Features come from the caller (levelProgression); prof bonus and new
+  // slot tiers are derived here. Rendered on the first step only.
+  const prevProf = proficiencyBonus(newLevel - 1);
+  const nextProf = proficiencyBonus(newLevel);
+  const prevSlots = maxSlots((casterType ?? "none") as CasterType, newLevel - 1, classId);
+  const newSlotTiers = slots
+    .map((count, i) => (count > 0 && (prevSlots[i] ?? 0) === 0 ? { level: i + 1, count } : null))
+    .filter((t): t is { level: number; count: number } => t !== null);
+  const gainedLines: string[] = [
+    ...gainedFeatures.map((f) => (f.description ? `${f.name} — ${f.description}` : f.name)),
+    ...(nextProf !== prevProf ? [`Proficiency bonus rises to ${signed(nextProf)}.`] : []),
+    ...newSlotTiers.map((t) => `New: ${t.count} level-${t.level} spell slot${t.count > 1 ? "s" : ""}.`),
+  ];
+
+  // Rail marginalia: the decided value each completed step shows, in miniature.
+  const railNote = (s: LevelUpStep): string => {
+    if (!stepComplete(s)) return "";
+    switch (s) {
+      case "hp": return `+${hpGained} hp`;
+      case "subclass": return chosenSubclassName.toLowerCase();
+      case "expertise": return pickedExpertise.length === 1
+        ? (expertiseNames[0] ?? "").toLowerCase()
+        : `${pickedExpertise.length} skills`;
+      case "asi": return pickedFeat === "asi" ? "ability points" : chosenFeatName.toLowerCase();
+      case "spells": return `${pickedCantrips.length + pickedSpells.length} learned`;
+      case "summary": return "";
+    }
+  };
+
   return (
     <div className="level-rite-backdrop" onClick={onCancel}>
       <div
         ref={dialogRef}
         className="level-rite-modal"
+        data-class={classId}
         role="dialog"
         aria-modal="true"
         aria-labelledby="level-rite-title"
@@ -378,52 +418,71 @@ export default memo(function LevelUpModal({
         <button type="button" className="level-rite-close" onClick={onCancel} aria-label="Close level up" title="Close"><X size={14} /></button>
 
         <div className="level-rite-inner">
-          {/* ── Header ── */}
+          {/* ── Header: class seal + entry line ── */}
           <header className="level-rite-header">
-            <div className="level-rite-seal" aria-hidden="true">
-              <span className="level-rite-seal-text">
-                <span className="level-rite-seal-label">Level</span>
-                <span className="level-rite-seal-number">{newLevel}</span>
-              </span>
+            <span className="level-rite-seal" aria-hidden="true">
+              <ClassIconPlaceholder classId={classId} size={22} strokeWidth={1.6} />
+            </span>
+            <div className="level-rite-header-text">
+              <span className="level-rite-eyebrow">The record grows</span>
+              <h2 id="level-rite-title" className="level-rite-title">
+                Level {newLevel}
+                <span className="level-rite-title-sub"> — {characterName ? `${characterName}, ` : ""}{className}</span>
+              </h2>
             </div>
-            <h2 id="level-rite-title" className="level-rite-title">The Chronicle Advances</h2>
-            <p className="level-rite-subtitle">{className} · Level {character.level} → {newLevel}</p>
           </header>
 
-          {/* ── Stepper ── */}
-          <nav className="level-rite-stepper" aria-label="Level up steps">
-            {steps.map((s, i) => {
-              const state = i < step ? "is-done" : i === step ? "is-current" : "";
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  className={`level-rite-step ${state}`}
-                  onClick={() => setStep(i)}
-                  aria-current={i === step ? "step" : undefined}
-                >
-                  <span className="level-rite-step-bubble">
-                    {i < step ? <Check size={13} aria-label="complete" /> : i + 1}
-                  </span>
-                  <span className="level-rite-step-label">{STEP_LABELS[s]}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* ── Body: main panel + rite summary ── */}
+          {/* ── Body: margin checklist + step content ── */}
           <div className="level-rite-body">
+            {/* The checklist is both navigation and running recap: completed
+                steps show their decided value as marginalia. */}
+            <nav className="level-rite-rail" aria-label="Level up steps">
+              <span className="level-rite-rail-label">This entry</span>
+              {steps.map((s, i) => {
+                const state = stepComplete(s) && s !== "summary" ? "is-done" : i === step ? "is-current" : "";
+                const note = railNote(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`level-rite-step ${i === step ? "is-current" : state}`}
+                    onClick={() => setStep(i)}
+                    aria-current={i === step ? "step" : undefined}
+                  >
+                    <span className="level-rite-step-label">{STEP_LABELS[s]}</span>
+                    {note ? <em className="level-rite-step-note">{note} ✓</em> : null}
+                  </button>
+                );
+              })}
+            </nav>
             <div className="level-rite-main">
+              {/* Gained automatically — shown once, on the first step. */}
+              {step === 0 && gainedLines.length > 0 ? (
+                <div className="level-rite-gained">
+                  <span className="level-rite-gained-label">Gained at {ordinalLevel(newLevel)} level</span>
+                  {gainedLines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              ) : null}
               {/* HP step */}
               {current === "hp" && (
-                <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">Vigor</h3>
-                  <p className="level-rite-panel-sub">
-                    {hitPointType === "manual"
-                      ? `Enter the hit point increase for this level (1d${hitDie} ${signed(conMod)}).`
-                      : `Roll 1d${hitDie} ${signed(conMod)} to determine your hit point increase.`}
-                  </p>
+                <div className="level-rite-hp">
+                  <div className="level-rite-hp-copy">
+                    <h3 className="level-rite-panel-title">Hit points</h3>
+                    <p className="level-rite-panel-sub">
+                      Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.
+                    </p>
+                  </div>
+
                   <div className="level-rite-hp-card">
+                    <div className="level-rite-hp-die">
+                      <span>Hit Die</span>
+                      <strong>
+                        1d{hitDie} {signed(conMod)}
+                      </strong>
+                    </div>
+
                     {hitPointType === "manual" ? (
                       <label className="control-field">
                         <span>HP Gained</span>
@@ -445,23 +504,25 @@ export default memo(function LevelUpModal({
                       <button className="level-rite-button" type="button" onClick={rollHp} disabled={hpRolling}>
                         {hpRolling ? "Rolling…" : "Roll the Die"}
                       </button>
-                    ) : (
-                      <p className="level-rite-hp-result">
-                        +{hpGained} HP
-                        <small>
-                          {hpDieRoll ?? hpGained} {signed(conMod)}
-                          {(hpDieRoll ?? hpGained) + conMod < 1 ? ", minimum 1" : ""} · max HP {character.maxHp} → {character.maxHp + hpGained}
-                        </small>
-                      </p>
-                    )}
+                    ) : null}
                   </div>
+
+                  {hpGained > 0 ? (
+                    <div className="level-rite-hp-result" aria-live="polite">
+                      <strong>+{hpGained} HP</strong>
+                      <span>
+                        Max HP {character.maxHp} → {character.maxHp + hpGained}
+                        {(hpDieRoll ?? hpGained) + conMod < 1 ? " (minimum 1)" : ""}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               )}
 
               {/* Subclass step */}
               {current === "subclass" && (
                 <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">Discipline</h3>
+                  <h3 className="level-rite-panel-title">Subclass</h3>
                   <p className="level-rite-panel-sub">the path within the vocation</p>
                   <div className="level-rite-choice-grid">
                     {subclassesForClass(classId).map((sub) => (
@@ -482,9 +543,9 @@ export default memo(function LevelUpModal({
               {/* Expertise step */}
               {current === "expertise" && (
                 <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">Mastery</h3>
+                  <h3 className="level-rite-panel-title">Expertise</h3>
                   <p className="level-rite-panel-sub">
-                    Choose {expertiseTarget} skill{expertiseTarget > 1 ? "s" : ""} to gain expertise (2× proficiency bonus).
+                    Choose {expertiseTarget} skill{expertiseTarget > 1 ? "s" : ""} — twice the proficiency bonus.
                   </p>
                   <div className="level-rite-choice-grid compact">
                     {expertiseEligible.map((s) => (
@@ -507,7 +568,7 @@ export default memo(function LevelUpModal({
               {/* Feat / ASI step — top-level fork */}
               {current === "asi" && (
                 <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">Choose Your Advancement</h3>
+                  <h3 className="level-rite-panel-title">Feat or ability</h3>
                   <p className="level-rite-panel-sub">a talent refined, or a new knack</p>
 
                   {/* Fork: ASI vs Feat */}
@@ -632,8 +693,8 @@ export default memo(function LevelUpModal({
               {/* Spells step */}
               {current === "spells" && (
                 <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">Arcana</h3>
-                  <p className="level-rite-panel-sub">new mysteries committed to memory</p>
+                  <h3 className="level-rite-panel-title">Spells</h3>
+                  <p className="level-rite-panel-sub">new spells committed to memory</p>
 
                   {hasCantrips ? (
                     <>
@@ -696,9 +757,9 @@ export default memo(function LevelUpModal({
 
               {/* Summary / Chronicle step */}
               {current === "summary" && (
-                <div className="level-rite-panel">
-                  <h3 className="level-rite-panel-title">The Chronicle</h3>
-                  <p className="level-rite-panel-sub">read it back, then press the seal</p>
+                <div className="level-rite-panel level-rite-cert">
+                  <span className="level-rite-eyebrow">The entry, read back</span>
+                  <h3 className="level-rite-cert-level">Level {newLevel}</h3>
                   <ul className="level-rite-summary-list">
                     {hasHp ? (
                       <li className="level-rite-summary-item">
@@ -757,76 +818,18 @@ export default memo(function LevelUpModal({
                       </li>
                     ) : null}
                   </ul>
-                  {allDone
-                    ? <p className="level-rite-summary-empty">Everything is sealed. Inscribe the level to finish.</p>
-                    : <p className="level-rite-summary-empty" style={{ color: "var(--ember)" }}>Some gains remain unsealed — return to complete them.</p>}
                 </div>
               )}
             </div>
-
-            {/* ── Rite Summary panel (right rail) ── */}
-            <aside className="level-rite-summary" aria-label="Rite summary">
-              <div className="level-rite-summary-head">
-                <span className="level-rite-tag">Rite Summary</span>
-              </div>
-              <ul className="level-rite-summary-list">
-                {hasHp ? (
-                  <li className="level-rite-summary-item">
-                    <span className="level-rite-summary-label">Health</span>
-                    <span className={`level-rite-summary-value${hpRolled ? "" : " pending"}`}>
-                      {hpRolled ? `${character.maxHp} → ${character.maxHp + hpGained}` : "pending"}
-                    </span>
-                  </li>
-                ) : null}
-                {hasSubclass ? (
-                  <li className="level-rite-summary-item">
-                    <span className="level-rite-summary-label">Subclass</span>
-                    <span className={`level-rite-summary-value${chosenSubclassName ? "" : " pending"}`}>
-                      {chosenSubclassName || character.subclassId || "pending"}
-                    </span>
-                  </li>
-                ) : null}
-                {hasExpertise ? (
-                  <li className="level-rite-summary-item">
-                    <span className="level-rite-summary-label">Mastery</span>
-                    <span className={`level-rite-summary-value${expertiseNames.length > 0 ? "" : " pending"}`}>
-                      {expertiseNames.length > 0 ? expertiseNames.join(", ") : `${pickedExpertise.length}/${expertiseTarget}`}
-                    </span>
-                  </li>
-                ) : null}
-                {hasAsi ? (
-                  <li className="level-rite-summary-item">
-                    <span className="level-rite-summary-label">Advancement</span>
-                    <span className={`level-rite-summary-value${pickedFeat ? "" : " pending"}`}>
-                      {pickedFeat === "asi" ? "Ability Score Improvement" : pickedFeat ? chosenFeatName : "pending"}
-                    </span>
-                  </li>
-                ) : null}
-                {hasCantrips || hasSpells ? (
-                  <li className="level-rite-summary-item">
-                    <span className="level-rite-summary-label">New Magic</span>
-                    <span className="level-rite-summary-value">
-                      {[
-                        hasCantrips ? `${pickedCantrips.length}/${cantripTarget} cantrip${cantripTarget !== 1 ? "s" : ""}` : null,
-                        hasSpells ? `${pickedSpells.length}/${spellTarget} spell${spellTarget !== 1 ? "s" : ""}` : null,
-                      ].filter(Boolean).join(" · ")}
-                    </span>
-                  </li>
-                ) : null}
-                {!hasHp && !hasSubclass && !hasExpertise && !hasAsi && !hasSpells && !hasCantrips ? (
-                  <li className="level-rite-summary-empty">No gains this level.</li>
-                ) : null}
-              </ul>
-            </aside>
           </div>
 
           {/* ── Footer ── */}
           <div className="level-rite-footer">
-            <button className="level-rite-button" type="button" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>Back</button>
+            <button className="level-rite-button" type="button" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>Previous</button>
             {step < steps.length - 1 ? (
               <button className="level-rite-button-primary" type="button" onClick={() => setStep(step + 1)} disabled={!canContinue}>Continue</button>
             ) : (
-              <button className="level-rite-button-primary" type="button" onClick={finish} disabled={!allDone}>Inscribe Level {newLevel}</button>
+              <button className="level-rite-button-primary" type="button" onClick={finish} disabled={!allDone}>Press the seal</button>
             )}
           </div>
         </div>

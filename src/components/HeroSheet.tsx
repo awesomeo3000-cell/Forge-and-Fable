@@ -1972,6 +1972,8 @@ export default memo(function HeroSheet(props: {
       {levelUpTarget != null ? (
         <LevelUpModal
           character={props.character}
+          characterName={props.character.name}
+          gainedFeatures={heroClass.levelProgression.find((e) => e.level === levelUpTarget)?.features ?? []}
           newLevel={levelUpTarget}
           finalAbilities={props.finalAbilities}
           classId={heroClass.id}

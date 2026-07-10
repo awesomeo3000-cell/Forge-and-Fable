@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HP Step Mockup — Cast the Die</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Newsreader:ital,wght@0,400;0,500;1,400&family=Archivo:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Tome palette (matches :root in globals.css) ── */
+  :root {
+    --paper:        #ece1c9;
+    --paper-raised: #e4d7bb;
+    --ink:          #241c12;
+    --ink-2:        #6b5d44;
+    --ink-3:        #8a7c60;
+    --doc-rule:     #c9b896;
+    --doc-rule-soft:#d8c9a8;
+    --doc-accent:   #a23f29;
+    --doc-accent-deep:#842f1d;
+    --doc-select:   #9c7a2f;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body:    "Newsreader", Georgia, serif;
+    --font-label:   "Archivo", system-ui, sans-serif;
+    --r-sm: 3px;
+    --r-lg: 8px;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 40px 16px;
+    font-family: var(--font-body);
+    /* forge backdrop */
+    background:
+      radial-gradient(circle at 50% 38%, rgba(178, 69, 47, 0.20) 0%, rgba(178, 69, 47, 0.06) 28%, transparent 60%),
+      rgba(12, 9, 5, 0.9);
+  }
+
+  /* ── Mini modal surface (parchment) ── */
+  .mock {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    padding: 4px;
+    border-radius: 11px;
+    background: linear-gradient(160deg, #2a2418, #100c07 55%, #2a2418);
+    border: 1px solid #6a5c3e;
+    box-shadow: 0 0 0 1px rgba(201,162,90,0.22), 0 30px 60px rgba(0,0,0,0.62);
+  }
+  .mock-inner {
+    position: relative;
+    border-radius: 8px;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .mock-inner::before {
+    content: "";
+    position: absolute; inset: 0; z-index: 0;
+    background: var(--grain);
+    background-size: 140px 140px;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .mock-inner > * { position: relative; z-index: 1; }
+
+  /* context bar so the mockup feels anchored in the real modal */
+  .ctx-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--doc-rule-soft);
+    font-family: var(--font-label);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .ctx-seal {
+    display: grid; place-items: center;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, #2a2418, #100c07);
+    border: 1.5px solid var(--doc-select);
+    color: var(--doc-select);
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 700;
+    box-shadow: 0 0 10px rgba(201,162,90,0.3);
+  }
+
+  /* ── HP step ── */
+  .hp { padding: 26px 26px 30px; }
+
+  .hp-head { margin-bottom: 18px; }
+  .hp-head h3 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .hp-head p {
+    margin-top: 4px;
+    color: var(--ink-2);
+    font-style: italic;
+    font-size: 0.92rem;
+  }
+
+  /* the tray — a recessed area where the die is cast */
+  .tray {
+    position: relative;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: center;
+    gap: 22px;
+    min-height: 180px;
+    padding: 26px 28px;
+    border: 1px solid var(--doc-rule);
+    border-radius: var(--r-lg);
+    background:
+      radial-gradient(circle at 30% 50%, rgba(36,28,18,0.06), transparent 60%),
+      linear-gradient(rgba(255,255,255,0.04), rgba(0,0,0,0.05)),
+      var(--grain);
+    background-size: auto, auto, 140px 140px;
+    box-shadow: inset 0 1px 3px rgba(36,28,18,0.12);
+  }
+
+  /* ── The die ── */
+  .die-stage {
+    display: grid;
+    place-items: center;
+    height: 130px;
+  }
+  .die {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 104px; height: 104px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+  }
+  .die-face {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 104px; height: 104px;
+    /* faceted gem/die token */
+    border-radius: 18px;
+    background:
+      linear-gradient(150deg, #3a3018 0%, #1a140c 55%, #2c2414 100%);
+    border: 1.5px solid var(--doc-select);
+    box-shadow:
+      0 0 0 1px rgba(201,162,90,0.4),
+      0 8px 18px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      inset 0 0 22px rgba(0,0,0,0.5);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .die:hover .die-face {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px rgba(201,162,90,0.6),
+      0 12px 24px rgba(0,0,0,0.45),
+      0 0 22px rgba(201,162,90,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      inset 0 0 22px rgba(0,0,0,0.5);
+  }
+  .die:focus-visible { outline: none; }
+  .die:focus-visible .die-face {
+    outline: 2px solid var(--doc-select);
+    outline-offset: 4px;
+  }
+  .die-value {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 600;
+    color: var(--paper);
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(201,162,90,0.35);
+  }
+  .die-value.notation {
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+  /* the CON mod, sitting under the die */
+  .die-mod {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 10px;
+    border-radius: 100px;
+    background: var(--paper);
+    border: 1px solid var(--doc-rule);
+    font-family: var(--font-label);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  /* rolling animation */
+  .die.is-rolling .die-face { animation: tumble 0.55s ease-in-out; }
+  .die.is-rolling .die-value { animation: flicker 0.55s steps(1) ; }
+  @keyframes tumble {
+    0%   { transform: translateY(0) rotate(0deg); }
+    30%  { transform: translateY(-14px) rotate(120deg); }
+    55%  { transform: translateY(-6px) rotate(250deg); }
+    80%  { transform: translateY(2px) rotate(330deg); }
+    100% { transform: translateY(0) rotate(360deg); }
+  }
+  @keyframes flicker {
+    0%,100% { opacity: 1; }
+    20% { opacity: 0.25; }
+    40% { opacity: 1; }
+    60% { opacity: 0.3; }
+    80% { opacity: 0.9; }
+  }
+
+  /* ── The result side ── */
+  .result { min-height: 130px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+
+  .result-prompt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-2);
+  }
+  .result-prompt .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--doc-accent);
+    box-shadow: 0 0 0 0 rgba(162,63,41,0.5);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(162,63,41,0.5); }
+    70%  { box-shadow: 0 0 0 10px rgba(162,63,41,0); }
+    100% { box-shadow: 0 0 0 0 rgba(162,63,41,0); }
+  }
+  .cast-btn {
+    align-self: flex-start;
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 20px;
+    border: 1.5px solid var(--doc-select);
+    border-radius: var(--r-sm);
+    background: linear-gradient(180deg, var(--doc-accent), var(--doc-accent-deep));
+    color: #f3e8cf;
+    font-family: var(--font-label);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(201,162,90,0.5), 0 0 18px rgba(178,69,47,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+    transition: transform 120ms ease;
+  }
+  .cast-btn:hover { transform: translateY(-1px); }
+  .cast-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+  /* the stamped seal result */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+    transition: opacity 240ms ease, transform 320ms cubic-bezier(.2,1.4,.4,1);
+  }
+  .stamp.is-revealed { opacity: 1; transform: scale(1) rotate(-4deg); }
+  .stamp-num {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: var(--doc-accent);
+    line-height: 1;
+  }
+  .stamp-mark {
+    display: grid;
+    place-items: center;
+    width: 46px; height: 46px;
+    border: 2px solid var(--doc-accent);
+    border-radius: 50%;
+    color: var(--doc-accent);
+    font-family: var(--font-label);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(162,63,41,0.06);
+  }
+
+  .marginalia {
+    opacity: 0;
+    transition: opacity 240ms ease 180ms;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--font-body);
+  }
+  .marginalia.is-revealed { opacity: 1; }
+  .marginalia .from { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--doc-rule); }
+  .marginalia .arrow { color: var(--ink-3); }
+  .marginalia .to { color: var(--ink); font-weight: 500; }
+  .marginalia small { color: var(--ink-3); font-size: 0.78rem; }
+
+  .reset {
+    position: absolute;
+    top: 14px; right: 14px;
+    border: 1px solid var(--doc-rule);
+    border-radius: 100px;
+    background: var(--paper);
+    color: var(--ink-2);
+    font-family: var(--font-label);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .reset:hover { border-color: var(--doc-accent); color: var(--doc-accent); }
+
+  /* caption under the mockup */
+  .caption {
+    margin-top: 20px;
+    text-align: center;
+    color: #b8a888;
+    font-family: var(--font-label);
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    max-width: 620px;
+  }
+
+  @media (max-width: 540px) {
+    .tray { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 16px; }
+    .result { align-items: center; }
+  }
+</style>
+</head>
+<body>
+  <div>
+    <div class="mock">
+      <div class="mock-inner">
+        <div class="ctx-bar">
+          <span class="ctx-seal">5</span>
+          <span>Ranger · Level 4 → 5</span>
+          <span style="margin-left:auto;color:var(--doc-select)">① Vigor</span>
+        </div>
+
+        <div class="hp">
+          <div class="hp-head">
+            <h3>Vigor</h3>
+            <p>Cast the die to determine how much hardier you've grown.</p>
+          </div>
+
+          <div class="tray">
+            <button class="reset" id="reset" type="button" hidden>Roll again</button>
+
+            <div class="die-stage">
+              <button class="die" id="die" type="button" aria-label="Cast the die">
+                <span class="die-face">
+                  <span class="die-value notation" id="dieValue">1d10</span>
+                </span>
+                <span class="die-mod">+2 Con</span>
+              </button>
+            </div>
+
+            <div class="result" id="result">
+              <!-- pre-roll prompt -->
+              <div class="result-prompt" id="prompt">
+                <span class="pulse-dot"></span>
+                <span>The die is ready.</span>
+              </div>
+              <button class="cast-btn" id="castBtn" type="button">Cast the Die</button>
+
+              <!-- post-roll stamp (hidden until rolled) -->
+              <div class="stamp" id="stamp">
+                <span class="stamp-num">+9 HP</span>
+                <span class="stamp-mark">sealed</span>
+              </div>
+              <div class="marginalia" id="marginalia">
+                <span>Max HP</span>
+                <span class="from">38</span>
+                <span class="arrow">→</span>
+                <span class="to">47</span>
+                <small>(rolled 7 + 2)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Mockup — click the die or "Cast the Die" to roll. Uses the tome palette + real app fonts.</p>
+  </div>
+
+<script>
+  const die = document.getElementById('die');
+  const dieValue = document.getElementById('dieValue');
+  const castBtn = document.getElementById('castBtn');
+  const prompt = document.getElementById('prompt');
+  const stamp = document.getElementById('stamp');
+  const marginalia = document.getElementById('marginalia');
+  const reset = document.getElementById('reset');
+  const HIT_DIE = 10, CON_MOD = 2, MAX_HP = 38;
+  let rolling = false, rolled = false;
+
+  function roll() {
+    if (rolling || rolled) return;
+    rolling = true;
+    castBtn.disabled = true;
+    die.classList.add('is-rolling');
+    dieValue.classList.remove('notation');
+
+    // flicker numbers during the tumble
+    const flickers = [4, 9, 2, 8, 6];
+    let i = 0;
+    const flickInt = setInterval(() => {
+      dieValue.textContent = flickers[i % flickers.length];
+      i++;
+    }, 90);
+
+    setTimeout(() => {
+      clearInterval(flickInt);
+      const face = Math.floor(Math.random() * HIT_DIE) + 1; // 1..10
+      const gained = Math.max(1, face + CON_MOD);
+      dieValue.textContent = face;
+      die.classList.remove('is-rolling');
+
+      // reveal the stamped result
+      stamp.querySelector('.stamp-num').textContent = `+${gained} HP`;
+      marginalia.querySelector('.to').textContent = MAX_HP + gained;
+      marginalia.querySelector('small').textContent = `(rolled ${face} + ${CON_MOD})`;
+      stamp.classList.add('is-revealed');
+      marginalia.classList.add('is-revealed');
+
+      prompt.style.display = 'none';
+      castBtn.style.display = 'none';
+      reset.hidden = false;
+      rolling = false;
+      rolled = true;
+    }, 550);
+  }
+
+  function resetAll() {
+    rolled = false;
+    dieValue.textContent = '1d10';
+    dieValue.classList.add('notation');
+    stamp.classList.remove('is-revealed');
+    marginalia.classList.remove('is-revealed');
+    prompt.style.display = '';
+    castBtn.style.display = '';
+    castBtn.disabled = false;
+    reset.hidden = true;
+  }
+
+  die.addEventListener('click', roll);
+  castBtn.addEventListener('click', roll);
+  reset.addEventListener('click', resetAll);
+</script>
+</body>
+</html>

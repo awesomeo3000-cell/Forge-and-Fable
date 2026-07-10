@@ -1768,6 +1768,8 @@ export default function ForgeAndFableApp() {
             skillProficiencies: draft.skillProficiencies,
             background: draft.background,
           }}
+          characterName={draft.name.trim() || undefined}
+          gainedFeatures={heroClass.levelProgression.find((e) => e.level === targetLevel)?.features ?? []}
           newLevel={targetLevel}
           finalAbilities={creationSeqFinalAbilities}
           classId={heroClass.id}
