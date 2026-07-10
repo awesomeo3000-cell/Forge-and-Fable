@@ -280,11 +280,16 @@
 
 .level-rite-panel-sub {
   margin: -6px 0 0;
+  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.5;
 }
 
 /* The HP step wraps its heading in .level-rite-hp-copy, which has no flex
    gap — the -6px pull-up above assumes .level-rite-panel's 10px gap and
-   overlaps here. Give the pair its own spacing. */
+   overlaps there. Give the pair its own spacing. */
 .level-rite-hp-copy {
   display: flex;
   flex-direction: column;
@@ -292,11 +297,6 @@
 }
 .level-rite-hp-copy .level-rite-panel-sub {
   margin: 0;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
-  font-family: var(--font-body);
-  font-size: 12.5px;
-  font-style: italic;
-  line-height: 1.5;
 }
 
 /* ── Choice lists: ruled ledger rows, never cards ── */
