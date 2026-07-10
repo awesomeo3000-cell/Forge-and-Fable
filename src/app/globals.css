@@ -4142,6 +4142,38 @@ button:disabled {
   font-size: 0.85em;
 }
 
+/* Damage type + save summary line near the top of the spell detail. */
+.cs-spell-damage-type {
+  margin: 6px 0 10px;
+  font-size: 0.92em;
+  color: var(--accent);
+  line-height: 1.5;
+}
+.cs-spell-damage-type strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Non-interactive reference text replacing the old manual damage dice buttons. */
+.cs-spell-reference-dice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 0.85em;
+  color: var(--ink-dim);
+}
+.cs-spell-reference-dice strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.cs-spell-scaling-note {
+  color: var(--accent-deep);
+}
+
 .cs-skin-btn {
   border-color: var(--accent-deep) !important;
   color: var(--accent) !important;
@@ -10648,6 +10680,24 @@ button.dj-card {
   --ui-control-border: var(--doc-rule);
   --ui-focus-ring: color-mix(in srgb, var(--doc-accent) 35%, transparent);
   color: var(--ui-text-primary);
+}
+
+/* Builder choice panels need a firmer edge than the decorative document rule
+   so their boundaries remain visible against the parchment surface. */
+.paper-surface.dj-dossier {
+  --ui-builder-border: color-mix(in srgb, var(--ink) 30%, var(--paper));
+}
+
+.paper-surface.dj-dossier :is(.dj-level-pick, .dj-skill-pick) {
+  border-color: var(--ui-builder-border);
+}
+
+.paper-surface.dj-dossier :is(.dj-level-pick select, .dj-skill-chip) {
+  border-color: color-mix(in srgb, var(--ink) 24%, var(--paper));
+}
+
+.paper-surface.dj-dossier .dj-skill-chip.picked {
+  border-color: var(--doc-accent-deep);
 }
 
 .paper-surface {

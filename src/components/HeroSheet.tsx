@@ -33,6 +33,7 @@ import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
+import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, hasSpellScaling, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, WEAPONS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
@@ -770,7 +771,11 @@ export default memo(function HeroSheet(props: {
     props.onUpdate({ spellsKnown: [...props.character.spellsKnown, spellId] });
     setSpellToLearn("");
   };
+  // ── Spell casting ─────────────────────────────────────────────────────
   // One combined patch: slot spend + concentration must not race as two PUTs.
+  // Cast now resolves spell effects for the selected level, triggers the dice
+  // animation overlay for each effect, and shows a result notification.
+  // All scaling is driven by structured data, not description text.
   const castSpell = (spell: SpellData, atLevel: number) => {
     if (spellcastingBlockedByArmor) {
       props.onNotify?.(`${armorPenaltyReason}: spellcasting is blocked.`);
@@ -779,6 +784,46 @@ export default memo(function HeroSheet(props: {
     if (props.character.concentratingOn && spell.concentration) {
       if (!window.confirm(`You are already concentrating on ${props.character.concentratingOn}. Cast ${spell.name} instead?`)) return;
     }
+
+    // Resolve spell effects at the selected cast level (from structured scaling data).
+    const resolvedEffects = resolveSpellEffects(spell, atLevel);
+
+    // Attack-roll spells: consume the slot but do NOT auto-roll damage.
+    // The player must first confirm a hit via the separate attack roll button.
+    // Only save-based spells (like Burning Hands) auto-roll damage on cast.
+    const isAttackSpell = !!spell.attack;
+
+    if (!isAttackSpell) {
+      // Roll each resolved effect through the dice animation system.
+      // Each effect gets its own animation so different damage types stay separate.
+      for (const effect of resolvedEffects) {
+        const parsed = parseSimpleDice(effect.dice);
+        const typeLabel = effect.type === "damage" ? effect.damageType : "healing";
+        const label = `${spell.name} ${typeLabel}` + (atLevel > 0 ? ` (Lv ${atLevel})` : "");
+
+        if (parsed && parsed.count > 0) {
+          props.onRoll(label, parsed.sides, parsed.count, parsed.modifier);
+        } else {
+          // Complex or unparseable expression — show as notification.
+          props.onNotify?.(`${spell.name}: ${effect.dice} ${typeLabel}`);
+        }
+      }
+    }
+
+    // Show appropriate notification based on spell type.
+    if (isAttackSpell) {
+      props.onNotify?.(
+        `${spell.name} cast at level ${atLevel > 0 ? atLevel : "cantrip"}. Make a spell attack roll.`,
+      );
+    } else if (resolvedEffects.length === 0 && spell.save) {
+      props.onNotify?.(
+        `${spell.name} cast at level ${atLevel > 0 ? atLevel : "cantrip"}. ${spell.save} vs DC ${saveDC}.`,
+      );
+    } else if (resolvedEffects.length === 0 && atLevel > 0) {
+      props.onNotify?.(`${spell.name} cast at level ${atLevel}. No immediate roll.`);
+    }
+
+    // Consume the spell slot (only after successful resolution and roll dispatch).
     const patch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {};
     if (atLevel > 0) {
       if (isPactCaster) {
@@ -1942,6 +1987,14 @@ export default memo(function HeroSheet(props: {
             <button className="cs-spell-detail-close" type="button" onClick={() => setSpellDetail(null)} aria-label="Close">&times;</button>
             <h3 className="cs-section-eyebrow">{spellDetail.name}</h3>
             <p className="cs-spell-detail-meta">{spellDetail.level === 0 ? "Cantrip" : `Level ${spellDetail.level}`} {spellDetail.school}{spellDetail.ritual ? " (ritual)" : ""}{spellDetail.concentration ? " · Concentration" : ""}</p>
+            {(spellDetail.damageEffect || spellDetail.save) ? (
+              <p className="cs-spell-damage-type">
+                {spellDetail.damageEffect ? <><strong>Damage:</strong> {spellDetail.damageEffect}</> : null}
+                {spellDetail.damageEffect && spellDetail.save ? " · " : null}
+                {spellDetail.save ? <><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</> : null}
+                {spellDetail.save && !spellDetail.attack ? " · Half on success" : null}
+              </p>
+            ) : null}
             <div className="cs-spell-detail-grid">
               <span><strong>Casting Time</strong> {spellDetail.castingTime}</span>
               <span><strong>Range</strong> {spellDetail.range || "—"}</span>
@@ -2006,9 +2059,21 @@ export default memo(function HeroSheet(props: {
                         // logic so "remaining" and the disabled state are right.
                         const used = isPactCaster ? pactUsed : (slotsUsed[lvl] ?? 0);
                         const remaining = max - used;
+                        const dicePreview = previewDiceForLevel(spellDetail, lvl);
+                        const btnLabel = dicePreview
+                          ? `Cast ${spellDetail.name} at level ${lvl}, rolling ${dicePreview}`
+                          : `Cast ${spellDetail.name} at level ${lvl}`;
                         return (
-                          <button key={lvl} className="cs-glass-btn" type="button" disabled={remaining <= 0 || spellcastingBlockedByArmor} onClick={() => castSpell(spellDetail, lvl)} title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}>
-                            Lv {lvl} ({remaining})
+                          <button
+                            key={lvl}
+                            className="cs-glass-btn"
+                            type="button"
+                            disabled={remaining <= 0 || spellcastingBlockedByArmor}
+                            onClick={() => castSpell(spellDetail, lvl)}
+                            title={spellcastingBlockedByArmor ? spellBlockTitle : remaining <= 0 ? "No slots left" : `${remaining} slot${remaining === 1 ? "" : "s"} left`}
+                            aria-label={btnLabel}
+                          >
+                            Lv {lvl}{dicePreview ? ` · ${dicePreview}` : ""}
                           </button>
                         );
                       })}
@@ -2017,14 +2082,22 @@ export default memo(function HeroSheet(props: {
                 </div>
                 {spellDetail.concentration ? <p className="cs-rule-note">Casting starts concentration{props.character.concentratingOn ? ` (ends ${props.character.concentratingOn})` : ""}</p> : null}
                 {spellDetail.level > 0 ? (() => {
-                  const dice = parseDamageDice(spellDetail.description);
-                  if (dice.length === 0) return null;
+                  // Show non-interactive scaling reference instead of manual dice buttons.
+                  // Upcasting is now handled automatically by the Cast buttons above.
+                  const baseEffects = resolveSpellEffects(spellDetail, spellDetail.level);
+                  if (baseEffects.length === 0) return null;
+                  const first = baseEffects[0];
+                  const scalingNote = getScalingNote(spellDetail);
                   return (
-                    <div className="cs-spell-damage-dice">
-                      <strong>Damage:</strong> {spellDetail.damageEffect ? `${spellDetail.damageEffect} — ` : ""}
-                      {dice.map((d, i) => (
-                        <button key={i} className="cs-glass-btn" type="button" disabled={spellcastingBlockedByArmor} title={spellBlockTitle} onClick={() => props.onRoll(`${spellDetail.name} damage`, d.sides, d.count, 0)}>{d.count}d{d.sides}</button>
-                      ))}
+                    <div className="cs-spell-reference-dice">
+                      {first.type === "damage" ? (
+                        <span><strong>Base damage:</strong> {first.dice} {first.damageType}</span>
+                      ) : first.type === "healing" ? (
+                        <span><strong>Base healing:</strong> {first.dice}</span>
+                      ) : null}
+                      {scalingNote ? (
+                        <span className="cs-spell-scaling-note"> · <strong>Higher levels:</strong> {scalingNote}</span>
+                      ) : null}
                     </div>
                   );
                 })() : null}

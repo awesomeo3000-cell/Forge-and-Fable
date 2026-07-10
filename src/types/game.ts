@@ -81,6 +81,13 @@ export type SpellData = {
   ritual: boolean; concentration: boolean;
   components: SpellComponents; material: string; source: string; description: string;
   classes: string[];
+  /** Structured upcast hint. The full scaling registry is in spellScaling.ts;
+   * this lightweight field provides a fallback for simple per-level scaling. */
+  higherLevel?: {
+    dice: string;          // e.g. "1d6" — additional dice per level above the spell's base level
+    startLevel?: number;   // defaults to spell.level (e.g. 2 means "above 1st")
+    damageType?: string;   // overrides base damageEffect when the upcast damage type differs
+  };
 };
 
 export type FeatGrantSpells = {
