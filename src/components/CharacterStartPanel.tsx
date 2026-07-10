@@ -5,10 +5,17 @@ import { BUILD_MODE_DESCRIPTORS } from "@/lib/ledgerCopy";
 
 type BuildMode = "standard" | "quickbuilder" | "premade";
 
-const BUILD_MODES: Array<{ mode: BuildMode; label: string }> = [
-  { mode: "standard", label: "Standard" },
-  { mode: "quickbuilder", label: "Quickbuilder" },
-  { mode: "premade", label: "Premade" },
+/* Art lives in public/Start/ — swap the files to change the cards, no code
+   edits needed. Every image gets the same ink-wash filter (CSS) so mixed
+   sources read as plates from one book. */
+const BUILD_MODES: Array<{ mode: BuildMode; label: string; art: string[] }> = [
+  { mode: "standard", label: "Standard", art: ["/Start/start-standard.jpg"] },
+  { mode: "quickbuilder", label: "Quickbuilder", art: ["/Start/start-quick.jpg"] },
+  {
+    mode: "premade",
+    label: "Premade",
+    art: [1, 2, 3, 4].map((n) => `/Start/start-premade-${n}.jpg`),
+  },
 ];
 
 export default memo(function CharacterStartPanel(props: {
@@ -25,20 +32,38 @@ export default memo(function CharacterStartPanel(props: {
         </span>
         <h2>Commission a character</h2>
       </header>
-      <div className="ledger-option-list">
+      <div className="threshold-grid">
         {BUILD_MODES.map((item) => {
           const chosen = selectedMode === item.mode;
           return (
             <button
               type="button"
               key={item.mode}
-              className={`ledger-option ${chosen ? "active" : ""}`}
+              className={`threshold-card${chosen ? " active" : ""}`}
               aria-pressed={chosen}
               onClick={() => setSelectedMode(item.mode)}
+              onDoubleClick={() => props.onSelectBuild(item.mode)}
             >
-              <span className="ledger-option-name">{item.label}</span>
-              <span className="ledger-option-desc">{BUILD_MODE_DESCRIPTORS[item.mode]}</span>
-              {chosen ? <em className="ledger-option-state">Chosen ✦</em> : null}
+              <span className={`threshold-art${item.art.length > 1 ? " threshold-quad" : ""}`} aria-hidden="true">
+                {item.art.map((src) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    // Missing file → hide the img; the parchment fallback
+                    // (tint + ghost ornament) underneath stays presentable.
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                ))}
+              </span>
+              <span className="threshold-scrim" aria-hidden="true" />
+              <span className="threshold-caption">
+                <span className="threshold-label">{item.label}</span>
+                <span className="threshold-desc">{BUILD_MODE_DESCRIPTORS[item.mode]}</span>
+                {chosen ? <em className="threshold-state">Chosen ✦</em> : null}
+              </span>
             </button>
           );
         })}

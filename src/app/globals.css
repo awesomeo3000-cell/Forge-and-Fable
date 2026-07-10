@@ -14,6 +14,8 @@
 
   /* Back-compat aliases — components reference these; DO NOT REMOVE */
   --ink: var(--ground);
+  --ink-2:       #16120c;
+  --ink-3:       #16120c;
   --obsidian: var(--ground-3);
   --charcoal: var(--ground-2);
   --ivory: var(--parchment);
@@ -6008,6 +6010,9 @@ button:disabled {
   background: var(--paper-raised);
   color: var(--ink-2);
 }
+.paper-surface .species-facts strong {
+  color: var(--ink);
+}
 .paper-surface .class-detail-card summary { color: var(--ink); }
 
 /* ── Paper-surface: full sweep of hardcoded dark-chrome colors ──
@@ -9353,7 +9358,7 @@ button.dj-card {
   --paper-raised: var(--ledger-tint);
   --ink: var(--ledger-ink);
   --ink-2: var(--ledger-faded);
-  --ink-3: var(--ledger-ghost);
+  --ink-3: var(--ledger-ghost, #6b5d44);
   --doc-rule: var(--ledger-rule);
   --doc-rule-soft: var(--ledger-rule);
   --doc-accent: var(--ledger-seal);
@@ -9552,7 +9557,7 @@ button.dj-card {
 }
 
 .ledger-stamp small {
-  color: var(--ledger-faded);
+  color: var(--ledger-ink);
   font-size: 12px;
   font-style: italic;
 }
@@ -9760,7 +9765,7 @@ button.dj-card {
   --paper-raised: var(--ledger-tint);
   --ink: var(--ledger-ink);
   --ink-2: var(--ledger-faded);
-  --ink-3: var(--ledger-ghost);
+  --ink-3: var(--ledger-ghost, #6b5d44);
   --doc-rule: var(--ledger-rule);
   --doc-rule-soft: var(--ledger-rule);
   --doc-accent: var(--ledger-seal);
@@ -10403,3 +10408,138 @@ button.dj-card {
   margin-top: 6px;
 }
 
+
+/* ── R20: the threshold — pictorial build-mode cards (owner sketch) ──
+   Gradient rule: a scrim over an image is FUNCTION (text legibility), same
+   category as paper grain. Gradients on flat surfaces remain banned.
+   The ink-wash filter unifies mixed-source art into one plate style. */
+.threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 900px;
+  margin: 18px auto 0;
+  width: 100%;
+}
+
+.threshold-card {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 1px solid var(--ledger-edge);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--ledger-tint) 60%, var(--ledger-paper));
+  cursor: pointer;
+  text-align: left;
+}
+
+.threshold-card:focus-visible {
+  outline: 2px solid var(--ledger-seal);
+  outline-offset: 2px;
+}
+
+.threshold-card.active {
+  border-color: var(--ledger-seal);
+  box-shadow: inset 0 0 0 1px var(--ledger-seal);
+}
+
+.threshold-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* Ghost ornament — visible only when an image is missing/hidden. */
+.threshold-art::before {
+  content: "✦";
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--ledger-ghost);
+  font-family: var(--ledger-font);
+  font-size: 40px;
+}
+
+.threshold-art img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The ink-wash: desaturate, warm, settle — one book, many sources. */
+  filter: sepia(0.28) saturate(0.78) contrast(0.96) brightness(0.94);
+  transition: filter 160ms ease;
+}
+
+.threshold-card:hover .threshold-art img {
+  filter: sepia(0.22) saturate(0.85) contrast(0.96) brightness(1);
+}
+
+.threshold-art.threshold-quad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+  background: var(--ledger-edge);
+}
+
+.threshold-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(24, 18, 13, 0.9) 0%,
+    rgba(24, 18, 13, 0.62) 20%,
+    rgba(24, 18, 13, 0) 52%
+  );
+}
+
+.threshold-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: 3px;
+  padding: 14px;
+}
+
+.threshold-label {
+  color: #ece1c9;
+  font-family: var(--ledger-font);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.threshold-desc {
+  color: rgba(236, 225, 201, 0.78);
+  font-family: var(--ledger-font);
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.threshold-state {
+  color: var(--select);
+  font-family: var(--ledger-font);
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .threshold-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .threshold-card {
+    aspect-ratio: 16 / 9;
+  }
+  /* Landscape crop on a portrait image: keep heads in frame. */
+  .threshold-art img { object-position: 50% 22%; }
+}
