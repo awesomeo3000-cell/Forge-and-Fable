@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState } from "react";
+import Image from "next/image";
 import { BUILD_MODE_DESCRIPTORS } from "@/lib/ledgerCopy";
 
 type BuildMode = "standard" | "quickbuilder" | "premade";
@@ -46,10 +47,13 @@ export default memo(function CharacterStartPanel(props: {
             >
               <span className={`threshold-art${item.art.length > 1 ? " threshold-quad" : ""}`} aria-hidden="true">
                 {item.art.map((src) => (
-                  <img
+                  <Image
                     key={src}
                     src={src}
                     alt=""
+                    width={600}
+                    height={900}
+                    sizes="(max-width: 760px) 100vw, 33vw"
                     loading="lazy"
                     draggable={false}
                     // Missing file → hide the img; the parchment fallback

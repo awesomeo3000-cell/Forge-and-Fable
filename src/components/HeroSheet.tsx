@@ -422,12 +422,17 @@ export default memo(function HeroSheet(props: {
     // Non-casters can still hold feat-granted spells (Fey/Shadow Touched) —
     // show the tab so those spells and their free-use casting are reachable.
     || (casterType === "none" && knownSpells.length > 0);
-  const visibleTabs = REF_TABS.filter((t) => {
+  const visibleTabs = useMemo(() => REF_TABS.filter((t) => {
     if (t.id === "spells") return hasSpellTab;
     if (t.id === "spellbook") return canManageSpellbook;
     return true;
-  });
+  }), [canManageSpellbook, hasSpellTab]);
   const [refTab, setRefTab] = useState<RefTab>(visibleTabs[0]?.id ?? "features");
+  useEffect(() => {
+    if (!visibleTabs.some((tab) => tab.id === refTab)) {
+      setRefTab(visibleTabs[0]?.id ?? "features");
+    }
+  }, [refTab, visibleTabs]);
   const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     let nxt = i;
     if (e.key === "ArrowRight") nxt = (i + 1) % visibleTabs.length;
@@ -547,8 +552,9 @@ export default memo(function HeroSheet(props: {
 
   /* ── Spell slots & detail ── */
   const [spellDetail, setSpellDetail] = useState<SpellData | null>(null);
-  const [preparedOnly, setPreparedOnly] = useState(false);
   const [spellSearch, setSpellSearch] = useState("");
+  const [spellbookSearch, setSpellbookSearch] = useState("");
+  const [spellbookSort, setSpellbookSort] = useState<"level" | "name">("level");
   const [spellToLearn, setSpellToLearn] = useState("");
   // Search-filtered + alphabetized spell groups for display.
   const spellSearchLower = spellSearch.trim().toLowerCase();
@@ -558,6 +564,20 @@ export default memo(function HeroSheet(props: {
       ? spells.filter((s) => s.name.toLowerCase().includes(spellSearchLower))
       : spells;
     filteredSpellsByLevel[Number(lv)] = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const spellbookSearchLower = spellbookSearch.trim().toLowerCase();
+  const spellbookSpells = props.character.spellsKnown
+    .map((id) => getSpell(id))
+    .filter((spell): spell is SpellData => !!spell);
+  const filteredSpellbookByLevel: Record<number, SpellData[]> = {};
+  for (const spell of spellbookSpells) {
+    if (spellbookSearchLower && !spell.name.toLowerCase().includes(spellbookSearchLower)) continue;
+    (filteredSpellbookByLevel[spell.level] ??= []).push(spell);
+  }
+  for (const spells of Object.values(filteredSpellbookByLevel)) {
+    spells.sort((a, b) => spellbookSort === "name"
+      ? a.name.localeCompare(b.name) || a.level - b.level
+      : a.level - b.level || a.name.localeCompare(b.name));
   }
   const [showInvForm, setShowInvForm] = useState(false);
   const [invName, setInvName] = useState("");
@@ -1353,9 +1373,7 @@ export default memo(function HeroSheet(props: {
               {casterType !== "none" && spellAbility ? (
                 <div className="cs-spellcast-head">
                   Spell save DC {saveDC} &middot; Spell attack {signed(spellAttack)}
-                  {_isPrepared ? (<> &middot; Prepared {preparedIds.length}/{prepLimit}
-                    <button type="button" className={`cs-glass-btn cs-prep-filter${preparedOnly ? " cs-edit-active" : ""}`} aria-pressed={preparedOnly} onClick={() => setPreparedOnly(!preparedOnly)}>Prepared only</button>
-                  </>) : null}
+                  {_isPrepared ? <> &middot; Prepared {preparedIds.length}/{prepLimit}</> : null}
                 </div>
               ) : null}
               {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
@@ -1401,7 +1419,9 @@ export default memo(function HeroSheet(props: {
                 const lvlNum = Number(level);
                 const max = slotMax[lvlNum - 1] ?? 0;
                 const used = isPactCaster ? (max > 0 ? pactUsed : 0) : (slotsUsed[lvlNum] ?? 0);
-                const shown = _isPrepared && preparedOnly && lvlNum > 0 ? spells.filter((s) => preparedIds.includes(s.id)) : spells;
+                const shown = canManageSpellbook && lvlNum > 0
+                  ? spells.filter((s) => preparedIds.includes(s.id))
+                  : spells;
                 if (shown.length === 0 && max === 0) return null;
                 return (<div key={level} className="cs-spell-group">
                   <span className="cs-spell-level-head">
@@ -1432,12 +1452,11 @@ export default memo(function HeroSheet(props: {
             </div>
             {/* ── Spellbook tab (wizard only) ── */}
             <div className={refTab === "spellbook" ? "" : "cs-reftab-hidden"}>
-              <div className="cs-spellbook-panel">
-                {/* Left: Library — all known spells, searchable, with Learn/Forget */}
+              <div className="cs-spellbook-panel cs-spellbook-library-only">
                 <div className="cs-spellbook-library">
                   <div className="cs-spellbook-head">
                     <span className="cs-spell-level-head">Spellbook</span>
-                    <small>{props.character.spellsKnown.length} in spellbook{_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}</small>
+                    <small>{spellbookSpells.length} in spellbook{_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}</small>
                   </div>
                   <div className="cs-spellbook-add">
                     <select
@@ -1460,12 +1479,19 @@ export default memo(function HeroSheet(props: {
                     type="text"
                     className="cs-spell-search"
                     placeholder="Search spellbook…"
-                    value={spellSearch}
-                    onChange={(e) => setSpellSearch(e.target.value)}
+                    value={spellbookSearch}
+                    onChange={(e) => setSpellbookSearch(e.target.value)}
                     aria-label="Search spellbook"
                   />
+                  <label className="cs-spellbook-sort">
+                    <span>Sort by</span>
+                    <select value={spellbookSort} onChange={(e) => setSpellbookSort(e.target.value as "level" | "name")} aria-label="Sort spellbook">
+                      <option value="level">Level</option>
+                      <option value="name">Name</option>
+                    </select>
+                  </label>
                   <div className="cs-spell-list">
-                    {Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
+                    {Object.entries(filteredSpellbookByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
                       if (spells.length === 0) return null;
                       return (
                         <div key={level} className="cs-spell-group">
@@ -1482,37 +1508,6 @@ export default memo(function HeroSheet(props: {
                     })}
                   </div>
                   {spellbookChoices.length === 0 ? <p className="cs-muted">No additional spells available at this level.</p> : null}
-                </div>
-                {/* Right: Prepared list + slot tracker */}
-                <div className="cs-spellbook-prepared">
-                  <div className="cs-spellbook-head">
-                    <span className="cs-spell-level-head">Prepared</span>
-                    {_isPrepared ? <small>{preparedIds.length} / {prepLimit} prepared</small> : null}
-                  </div>
-                  <div className="cs-spell-list">
-                    {Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
-                      const lvlNum = Number(level);
-                      const max = slotMax[lvlNum - 1] ?? 0;
-                      const used = isPactCaster ? (max > 0 ? pactUsed : 0) : (slotsUsed[lvlNum] ?? 0);
-                      const preparedSpells = spells.filter((s) => lvlNum === 0 || preparedIds.includes(s.id));
-                      if (preparedSpells.length === 0 && max === 0) return null;
-                      return (
-                        <div key={level} className="cs-spell-group">
-                          <span className="cs-spell-level-head">
-                            {level === "0" ? "Cantrips" : `Level ${level}`}
-                            {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} aria-pressed={i < used} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
-                          </span>
-                          {preparedSpells.map((spell) => (
-                            <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
-                              {spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker cs-prof`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`Unprepare ${spell.name}`} title="Prepared">●</button>) : null}
-                              <strong>{spell.name}</strong>
-                              <span>{spell.school}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
             </div>

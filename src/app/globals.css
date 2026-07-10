@@ -4491,6 +4491,18 @@ button:disabled {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.cs-spellbook-panel.cs-spellbook-library-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+.cs-spellbook-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 0.88em;
+}
+.cs-spellbook-sort span { flex: 0 0 auto; }
+.cs-spellbook-sort select { min-height: 36px; }
 .cs-spellbook-library,
 .cs-spellbook-prepared {
   display: flex;
@@ -10617,4 +10629,232 @@ button.dj-card {
   }
   /* Landscape crop on a portrait image: keep heads in frame. */
   .threshold-art img { object-position: 50% 22%; }
+}
+
+/* ── Readability foundation: paper typography and controls ──
+   One deliberate scale for the builder and character sheet. Keep the
+   decorative ledger language, but do not make live game information faint or
+   too small to scan at the table. */
+.paper-surface,
+.cs-sheet {
+  --ui-text-primary: var(--ink);
+  --ui-text-secondary: color-mix(in srgb, var(--ink) 78%, var(--paper));
+  --ui-text-muted: color-mix(in srgb, var(--ink) 64%, var(--paper));
+  --ui-placeholder: color-mix(in srgb, var(--ink) 62%, var(--paper));
+  --ui-control-bg: color-mix(in srgb, var(--paper) 84%, white 16%);
+  --ui-control-bg-hover: color-mix(in srgb, var(--paper) 70%, white 30%);
+  --ui-control-border: var(--doc-rule);
+  --ui-focus-ring: color-mix(in srgb, var(--doc-accent) 35%, transparent);
+  color: var(--ui-text-primary);
+}
+
+.paper-surface {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.cs-sheet {
+  font-size: calc(16px * var(--sheet-scale, 1));
+  line-height: 1.45;
+}
+
+.paper-surface :is(p, li, td, dd),
+.cs-sheet :is(p, li, td, dd) {
+  color: var(--ui-text-secondary);
+  line-height: 1.45;
+}
+
+.paper-surface :is(small, .muted),
+.cs-sheet :is(.cs-muted, .cs-item-more, .cs-inv-meta, .cs-ac-src) {
+  color: var(--ui-text-muted);
+}
+
+/* Shared active controls. Disabled treatment appears only on actual disabled
+   controls — custom item/effect fields remain clearly usable. */
+.paper-surface :is(input, select, textarea),
+.cs-sheet :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: 4px;
+  background: var(--ui-control-bg);
+  color: var(--ui-text-primary);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.paper-surface textarea,
+.cs-sheet textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.paper-surface :is(input, textarea)::placeholder,
+.cs-sheet :is(input, textarea)::placeholder {
+  color: var(--ui-placeholder);
+  opacity: 1;
+}
+
+.paper-surface :is(input, select, textarea, button):focus-visible,
+.cs-sheet :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid var(--ui-focus-ring);
+  outline-offset: 2px;
+}
+
+.paper-surface :is(input, select, textarea):disabled,
+.cs-sheet :is(input, select, textarea):disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  background: color-mix(in srgb, var(--paper) 76%, var(--ink) 24%);
+}
+
+/* Sheet navigation and labels: compact, but never incidental. */
+.cs-section-title,
+.cs-section-eyebrow,
+.cs-spell-level-head,
+.cs-skill-ability-tag,
+.cs-item-catalog-head,
+.cs-bg-label,
+.cs-console-label,
+.cs-equip-field,
+.cs-vital-label,
+.cs-prof-cat,
+.cs-reftab,
+.cs-action-table th,
+.cs-inv-meta,
+.cs-item-result span,
+.cs-spell-status-badges span,
+.cs-equipped-chip,
+.cs-ac-src {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.cs-section-title,
+.cs-section-eyebrow,
+.cs-spell-level-head,
+.cs-skill-ability-tag,
+.cs-item-catalog-head,
+.cs-bg-label,
+.cs-console-label,
+.cs-equip-field,
+.cs-vital-label {
+  color: var(--ui-text-secondary);
+}
+
+/* Primary values stay visually dominant at a glance. */
+.cs-vital-cell strong,
+.cs-vital-rollable strong,
+.cs-vital-hp-row strong {
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--ui-text-primary);
+}
+
+.cs-ability-mod { font-size: 28px; line-height: 1.1; color: var(--ui-text-primary); }
+.cs-ability-label { font-size: 12px; line-height: 1.25; color: var(--ui-text-secondary); }
+.cs-ability-score { font-size: 14px; line-height: 1.25; color: var(--ui-text-secondary); }
+.cs-vital-hp-max { font-size: 14px; color: var(--ui-text-secondary); }
+.cs-hp-temp,
+.cs-vital-death-row,
+.cs-death-reset { font-size: 12px; line-height: 1.25; }
+
+/* Tables, skills, lists, descriptions, and equipment all share the readable
+   body scale instead of each section choosing a smaller private scale. */
+.cs-save-name,
+.cs-skill-btn,
+.cs-sense-row,
+.cs-action-table,
+.cs-spell-card span,
+.cs-spell-card p,
+.cs-item-result p,
+.cs-inv-row span,
+.cs-inv-details,
+.cs-bg-field p,
+.cs-feature-card p,
+.cs-rule-note,
+.cs-hd-rest-info,
+.cs-conc-banner,
+.cs-spellbook-head small,
+.cs-known-spell-chip,
+.cs-spell-detail-meta,
+.cs-spell-detail-grid,
+.cs-spell-status-panel label {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.cs-save-bonus,
+.cs-skill-bonus,
+.cs-action-table td:nth-child(2) {
+  font-size: 16px;
+  color: var(--ui-text-primary);
+}
+
+.cs-action-table td,
+.cs-inv-row strong,
+.cs-item-result strong,
+.cs-feature-card strong,
+.cs-spell-card strong {
+  font-size: 15px;
+  color: var(--ui-text-primary);
+}
+
+.cs-item-catalog-controls :is(input, select),
+.cs-equip-field select,
+.cs-spell-search,
+.cs-spellbook-add select,
+.cs-console-input,
+.roll-formula-input input,
+.cs-inv-form :is(input, select),
+.cs-effect-nums :is(input, select),
+.cs-effect-extra :is(input, select) {
+  min-height: 40px;
+  padding: 8px 10px;
+  border-color: var(--ui-control-border);
+  background: var(--ui-control-bg);
+  color: var(--ui-text-primary);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.cs-item-result,
+.cs-inv-row,
+.cs-feature-card,
+.cs-spell-card,
+.cs-item-catalog,
+.cs-spellbook-manager,
+.cs-hd-rest-panel {
+  border-color: var(--ui-control-border);
+}
+
+.cs-glass-btn,
+.cs-retire-btn,
+.cs-reftab,
+.cs-weapon-chip,
+.cs-inv-actions .cs-glass-btn,
+.cs-item-result .cs-glass-btn {
+  min-height: 32px;
+  color: var(--ui-text-primary);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.cs-glass-btn:hover,
+.cs-retire-btn:hover,
+.cs-weapon-chip:hover {
+  background: var(--ui-control-bg-hover);
+  color: var(--ui-text-primary);
+}
+
+/* The ledger's printed headings can stay compact, but no live label or
+   description falls beneath the shared 12px floor. */
+.ledger-spread :is(.ledger-toc .dj-rail-label, .ledger-toc-decided,
+  .ledger-spread .dj-document-header p, .ledger-spread .dj-skill-hint,
+  .ledger-cert-label, .ledger-cert-stat, .ledger-cert-stat i,
+  .ledger-stamp em, .ledger-spread .points-pill, .ledger-spread .method-row button,
+  .ledger-button.small, .threshold-state) {
+  font-size: 12px;
+  line-height: 1.3;
 }

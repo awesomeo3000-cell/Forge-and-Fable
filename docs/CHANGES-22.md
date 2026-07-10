@@ -35,3 +35,29 @@ button unchanged.
   server, click "+ New character" — expect three art cards with a unified
   sepia wash, captions on the scrim, seal-red border + `CHOSEN ✦` on click,
   double-click opens directly, and the footer button enables on selection.
+
+## Readability follow-up
+
+- Added shared paper tokens for primary, secondary, muted, placeholder,
+  control, and focus colors.
+- Set readable base sizes: 15px builder body text, 16px sheet body text,
+  12px minimum live labels/metadata, and 24px+ primary values.
+- Standardized body, description, control, and compact-label line heights.
+- Unified active paper inputs, selects, and textareas at 40px minimum height
+  with 15px text and strong ink contrast.
+- Limited faded styling to truly disabled fields, including custom item and
+  effect forms.
+- Rescaled skills, saves, action tables, spell cards, equipment, and inventory.
+- Replaced the start-panel raw images with Next Image so zero-warning lint
+  remains enforceable.
+
+### Follow-up verification
+
+- `npm test` — 74 tests passed.
+- `npm run typecheck` — passed.
+- `npm run lint:ci` — passed with zero warnings.
+- `npm run build` — production build passed.
+- Production browser check — verified the full sheet, inventory catalog,
+  custom item form, and a 390px viewport. Active custom item fields computed
+  to 15px, 40px minimum height, dark text, paper background, and no disabled
+  state. The mobile layout had no horizontal overflow.
