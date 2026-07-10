@@ -80,13 +80,23 @@ Railway automatically exposes the volume path as `RAILWAY_VOLUME_MOUNT_PATH`, an
 FORGE_VAULT_DIR=/data
 ```
 
+Do not set `FORGE_VAULT_DIR` to a relative `data` path on Railway. That overrides the mounted-volume variable and can place the database on ephemeral application storage. The checked-in `railway.json` intentionally leaves this variable unset.
+
 The database will live at `/data/forge.db` with possible `-wal` and `-shm` sidecars.
 
 ## Vault Migration and Backups
 
 On first boot after this update, Forge & Fable migrates `forge-vault.json` into SQLite if the database has no users yet. After a successful migration, the old JSON file is renamed to `forge-vault.migrated-<timestamp>.json`.
 
-For backups, stop the app and copy `forge.db` plus any `forge.db-wal` and `forge.db-shm` files from the persistent volume. For hot backups while the app is running, use SQLite's `.backup` command from the host shell.
+Create a consistent SQLite backup with:
+
+```bash
+npm run db:backup
+```
+
+The command writes timestamped databases under `<vault-dir>/backups/` and retains the newest seven. It uses SQLite `VACUUM INTO`, so the resulting file is self-contained even when WAL mode is active.
+
+To restore, stop the app, preserve the current `forge.db` and its `-wal`/`-shm` sidecars, copy the chosen backup to `forge.db`, remove stale sidecars, and restart. Confirm `/api/health` returns `ok: true` before allowing edits.
 
 Existing browser sessions may need to log in again after this deployment because authentication now uses an httpOnly `ff_session` cookie instead of a JWT stored in localStorage.
 
@@ -96,8 +106,12 @@ The session cookie uses `SameSite=Lax`, which helps protect normal cross-site fo
 
 ```bash
 npm run lint
+npm test
+npm run typecheck
 npm run build
 ```
+
+Both deployment descriptors use `/api/health`, which verifies that SQLite opens, accepts a write lock, and is at the expected migration level.
 
 ## Sharing With Friends
 

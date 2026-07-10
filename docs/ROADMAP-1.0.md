@@ -1,7 +1,7 @@
 # Forge & Fable — Road to 1.0
 
-**Status date:** 2026-07-08 (reviewed through R12 — see `CHANGES-10-12-review.md`). Build clean.
-**Progress:** R10–R13 done & reviewed (§2.1/.3/.4/.5/.7, §3.10/.11, §5.19/.20 closed; §3.13 skipped by user decision; §2.6 open). **The vault write race is fixed (SQLite, transactional updates) — the corresponding landmine below is historical for the JSON era.** Next per sequencing: R14 (P2/P3 + a11y + empty states) or R15; the hosting gate is OPEN — deployment is now viable per DEPLOYMENT.md (note the HTTPS/Secure-cookie requirement).
+**Status date:** 2026-07-10. Foundation hardening through R21 is implemented locally; see `CHANGES-20.md` and `CHANGES-21.md`.
+**Progress:** HP correctness, revisioned/serialized character writes, shared derived HP/passive rules, ordered SQLite migrations, health checks, and rotating backups are implemented. The next safe work is UX polish or a separately reviewed rules batch.
 **Audience:** whichever AI (or human) picks up a round. Assume no memory of prior sessions — this document plus the repo IS the memory.
 **Companion documents:** `docs/QA-REPORT-2026-07-04.md` (the 43-issue audit; P0s fixed, P1–P3 open), `docs/CHANGES-*.md` (what every prior round did and how it was verified), `docs/ai-project-proposal-*.md` (the proposal format that works).
 
@@ -22,9 +22,9 @@ The process that produced everything below, refined over nine rounds:
 - Never define a CSS variable in terms of itself (`--x: var(--x), fallback`) — silent document-wide invalidation. This shipped once and broke the entire font system.
 - `globals.css` (~6k lines) is append-ordered layers. New rules go at the END. Legacy builder classes hardcode dark-theme colors (`#fff4da`, `rgba(5,6,7,…)` gradients); on paper surfaces they render as grey mush — use fresh class names or scoped overrides.
 - Positional selectors (`.cs-sheet-col:nth-child(n)`) exist — inserting sibling elements into structures you don't own breaks widths (bit us with column dividers).
-- The vault (`data/forge-vault.json`) is read-modify-write with **no locking** — concurrent PUTs lose updates. Combine related changes into ONE `onUpdate` patch (see `castSpell`). This is also why the SQLite migration (§5) exists.
+- Character writes are revisioned and serialized per character. Every PUT must include the latest revision through `If-Match`; stale writes return `409` with the current server character for rebase.
 - Dice roll callbacks fire ~4s after click (animation). Any button triggering a roll-with-callback needs an in-flight guard (see `hitDiceRolling` ref) or rapid clicks corrupt state.
-- Registration is non-atomic: the user is written to the vault before token signing; a signing failure still consumes the email.
+- Registration rolls back the inserted user if token signing fails.
 - Every new persisted `Character` field needs: the type, `ALLOWED_PATCH_FIELDS`, a validation case in `validateCharacter.ts` (bounded numbers, capped strings, whitelisted enums — copy the `effects` case), and — if user-visible content — a client-side guard too.
 - Sheet section ids added to `SheetSectionId`/`SECTION_TITLES`/`DEFAULT_LAYOUT`/`MOBILE_ORDER` auto-migrate into saved layouts via `mergeWithDefaults`. Never special-case a section.
 - Class/species colors: `[data-class]`/`[data-species]` set `--class-a`. Dark chrome uses the raw hue, paper mixes ~75% toward ink, nothing glows on paper. Selection state is ALWAYS the app accent, never the class hue.
@@ -35,7 +35,7 @@ The process that produced everything below, refined over nine rounds:
 
 ## 1. What exists and works (verified at some point; spot-check before building on top)
 
-- **Auth & API:** JWT (30d) + bcrypt, localStorage tokens, login throttling, 401→logout handling, JWT_SECRET enforced in production, full input validation on character create/update.
+- **Auth & API:** JWT (30d) in an httpOnly cookie + bcrypt, login/register throttling, invite-code option, 401→logout handling, JWT_SECRET enforced in production, bounded character validation, and revisioned updates.
 - **Builder ("dossier"):** 6-step wizard with margin-rail navigation, index-card pickers with class-color tabs, class skill-proficiency selection (PHB counts/lists, gated), background skill grants, class/species preview modals, Quickbuilder (3 questions) and 6 premade archetypes, level-at-creation choices.
 - **Sheet:** paper-document design; drag/drop/hide/collapse sections + draggable column widths; per-character skins (presets, custom colors with contrast warnings, hex inputs, user-saved presets, share codes, text-size slider, background image URLs, printer preset + print CSS); equipment (SRD armor/weapons + item catalog with proficiency info, AC from armor/shield/unarmored defense); attacks from equipped weapons with damage buttons; spell preparation/casting/upcasting/concentration; pact-slot tracking; rests with hit dice; death saves; inspiration toggle; XP-less level-up wizard (HP/subclass/feat incl. half-feat ability choice + feat-granted spells/free-use tracking); level-down unwind; effects & conditions engine (flat bonuses + d20 dice riders + senses) with AC breakdown popover.
 - **Dice:** movable/resizable roll drawer, ad-hoc pools (d4–d100), session history, advantage/disadvantage with kept-die highlighting, nat-20/nat-1 detection, all sheet rolls logged.
@@ -48,8 +48,8 @@ The process that produced everything below, refined over nine rounds:
 2. **[DS] QA P2/P3 sweep (32 issues)** — batch by area (a11y, UI polish, data nits). Two proposal docs. Low individual risk; the volume is the work.
 3. **[CX] Round 7 pages — never implemented.** `docs/ai-project-proposal-7-pages.md` is written and still accurate (verify `SheetSectionId` hasn't drifted). Custom pages with text/image-URL blocks.
 4. **[DS] Unwired settings toggles.** `usePrerequisites`, `useFeatPrerequisites` (feat prereqs ARE now enforced — wire the toggle or remove it), `useMulticlassPrerequisites`, `encumbranceType`, `ignoreCoinWeight`, `showLevelScaledSpells`, `modifiersTop`, `advancementType`, `hitPointType` (fixed vs manual — level-up always rolls). Each either gets behavior or gets removed from the UI. One task per toggle with the decision pre-made in the proposal.
-5. **[DS] Non-atomic registration** — sign the token before writing the vault, or roll back on failure.
-6. **[CX] Passive-skill nuance** — passives currently include `effChecks` (Guidance inflates Passive Perception). Decide: exclude riders/checks from passives (RAW-ish) behind one derived function.
+5. **[Closed R13] Non-atomic registration** — registration now rolls back if token signing fails.
+6. **[Closed R21] Passive-skill nuance** — passive checks use the shared derived-stat function and exclude roll-only riders.
 7. **[DS] Dead code/CSS prune** — retired `.paper-surface` overrides for removed markup, orphaned `class-art-*` rules, `public/class-art/*.jfif` (portraits removed long ago), `dice-panel` CSS. Mechanical with a verification pass.
 
 ## 3. Rules-engine completion (feature work, mostly [CX])
@@ -71,10 +71,10 @@ The process that produced everything below, refined over nine rounds:
 
 ## 5. Infrastructure (gate for hosting + campaigns)
 
-19. **SQLite migration** — replace the JSON vault (lost-update race, no backups, single-machine). Keep the vaultStore function signatures so routes don't change; migrate `data/forge-vault.json` on first boot; keep the JSON path as dev fallback if cheap. [Strongest agent + mandatory review.]
-20. **Auth hardening for hosting** — httpOnly cookie sessions (kills the localStorage-XSS class), register rate-limit + invite code, password minimum 10. Pairs with QA P1 security items. [CX with tight spec.]
+19. **[Closed R13/R21] SQLite migration** — SQLite, ordered migrations, character revisions, health checks, and rotating backups are implemented.
+20. **[Closed R13] Auth hardening for hosting** — httpOnly cookie sessions, throttling, optional invite code, and stronger password minimum are implemented.
 21. **Bundle diet** — spells/subclasses/feats JSON (~900KB) ships client-side while the tiny ruleset is fetched dynamically; invert (serve big data from API routes with caching, or code-split). Measure first. [CX]
-22. **Backups** — nightly vault/db file copy with rotation; a one-line restore doc. [DS]
+22. **[Partial R21] Backups** — `npm run db:backup` creates and rotates consistent copies; host scheduling remains deployment-specific.
 
 ## 6. Polish backlog
 

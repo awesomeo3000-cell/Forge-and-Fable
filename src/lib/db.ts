@@ -21,7 +21,7 @@ declare global {
   var __forgeDbSchemaRevision: number | undefined;
 }
 
-const SCHEMA_REVISION = 2;
+const SCHEMA_REVISION = 3;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -67,6 +67,7 @@ function createSchema(db: DatabaseSync) {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       data TEXT NOT NULL,
+      revision INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -129,7 +130,47 @@ function createSchema(db: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_events_campaign_time ON campaign_events(campaign_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      applied_at TEXT NOT NULL
+    );
   `);
+}
+
+function tableHasColumn(db: DatabaseSync, table: string, column: string) {
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  return rows.some((row) => row.name === column);
+}
+
+function recordMigration(db: DatabaseSync, version: number, name: string) {
+  db.prepare("INSERT OR IGNORE INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)")
+    .run(version, name, new Date().toISOString());
+}
+
+/**
+ * Apply ordered, idempotent schema migrations. Existing installations created
+ * before migration tracking are adopted in place and receive the same records.
+ */
+function migrateSchema(db: DatabaseSync) {
+  createSchema(db);
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    recordMigration(db, 1, "users, characters, and feedback");
+    recordMigration(db, 2, "campaign collaboration tables");
+
+    if (!tableHasColumn(db, "characters", "revision")) {
+      db.exec("ALTER TABLE characters ADD COLUMN revision INTEGER NOT NULL DEFAULT 0");
+    }
+    recordMigration(db, 3, "optimistic character revision");
+    db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 function migrateLegacyVault(db: DatabaseSync) {
@@ -191,7 +232,7 @@ function migrateLegacyVault(db: DatabaseSync) {
 function openDb() {
   mkdirSync(getDataDir(), { recursive: true });
   const db = new DatabaseSync(getDbFile());
-  createSchema(db);
+  migrateSchema(db);
   migrateLegacyVault(db);
   return db;
 }
@@ -199,8 +240,33 @@ function openDb() {
 export function getDb() {
   globalThis.__forgeDb ??= openDb();
   if (globalThis.__forgeDbSchemaRevision !== SCHEMA_REVISION) {
-    createSchema(globalThis.__forgeDb);
+    migrateSchema(globalThis.__forgeDb);
     globalThis.__forgeDbSchemaRevision = SCHEMA_REVISION;
   }
   return globalThis.__forgeDb;
+}
+
+export function closeDb() {
+  globalThis.__forgeDb?.close();
+  globalThis.__forgeDb = undefined;
+  globalThis.__forgeDbSchemaRevision = undefined;
+}
+
+export function checkDatabaseHealth() {
+  const db = getDb();
+  db.prepare("SELECT 1 AS ok").get();
+  const migration = db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get() as { version: number | null };
+  let transactionStarted = false;
+  try {
+    db.exec("BEGIN IMMEDIATE");
+    transactionStarted = true;
+    db.exec("ROLLBACK");
+    transactionStarted = false;
+  } catch (error) {
+    if (transactionStarted) {
+      try { db.exec("ROLLBACK"); } catch { /* original health failure wins */ }
+    }
+    throw error;
+  }
+  return { writable: true, schemaVersion: migration.version ?? 0 };
 }

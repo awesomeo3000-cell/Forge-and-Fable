@@ -4,6 +4,15 @@ const jsonHeaders: Record<string, string> = {
   "Content-Type": "application/json",
 };
 
+export class CharacterApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "CharacterApiError";
+    this.status = status;
+  }
+}
+
 export async function fetchCharacters() {
   const response = await fetch("/api/characters", {
     headers: jsonHeaders,
@@ -18,21 +27,25 @@ export async function fetchCharacters() {
   return data;
 }
 
-export async function updateCharacter(characterId: string, patch: Record<string, unknown>) {
+export async function updateCharacter(characterId: string, patch: Record<string, unknown>, revision: number) {
   const response = await fetch(`/api/characters/${encodeURIComponent(characterId)}`, {
     method: "PUT",
-    headers: jsonHeaders,
+    headers: { ...jsonHeaders, "If-Match": String(revision) },
     credentials: "include",
     body: JSON.stringify(patch),
   });
 
   const data = (await response.json()) as { character?: Character; error?: string };
 
-  if (!response.ok || !data.character) {
-    throw new Error(data.error || "Unable to update character.");
+  if (response.status === 409 && data.character) {
+    return { conflict: true as const, character: data.character };
   }
 
-  return data.character;
+  if (!response.ok || !data.character) {
+    throw new CharacterApiError(data.error || "Unable to update character.", response.status);
+  }
+
+  return { conflict: false as const, character: data.character };
 }
 
 export async function createCharacter(payload: Record<string, unknown>) {

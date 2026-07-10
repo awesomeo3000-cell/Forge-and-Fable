@@ -7,7 +7,7 @@ import {
   Swords,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import type {
   AbilityKey,
@@ -16,6 +16,7 @@ import type {
   AuthMode,
   BuildMode,
   Character,
+  CharacterPatch,
   CharacterEffect,
   CharacterSnapshot,
   CustomRule,
@@ -64,9 +65,12 @@ import { FONT_STACKS } from "@/lib/skins";
 import { ordinalLevel } from "@/lib/ledgerCopy";
 import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
+import { applyCreationHpBonuses } from "@/lib/derivedStats";
 import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effects";
 import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
+import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
+import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
 
 function authHeaders(): Record<string, string> {
   return {
@@ -181,6 +185,42 @@ export default function ForgeAndFableApp() {
   const [spellsReady, setSpellsReady] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const saveCoordinatorRef = useRef<CharacterSaveCoordinator | null>(null);
+  if (!saveCoordinatorRef.current) {
+    saveCoordinatorRef.current = new CharacterSaveCoordinator({
+      send: updateCharacterApi,
+      onSaved: (characterId, serverCharacter) => {
+        setCharacters((current) => current.map((character) =>
+          character.id === characterId
+            ? { ...character, revision: serverCharacter.revision }
+            : character,
+        ));
+        setSaveStatus("saved");
+        window.setTimeout(() => {
+          setSaveStatus((current) => current === "saved" ? "idle" : current);
+        }, 1800);
+      },
+      onRebase: (characterId, serverCharacter, optimisticPatch) => {
+        setCharacters((current) => current.map((character) =>
+          character.id === characterId
+            ? { ...serverCharacter, ...optimisticPatch, revision: serverCharacter.revision }
+            : character,
+        ));
+      },
+      onError: (_characterId, error) => {
+        if (error instanceof CharacterApiError && error.status === 401) {
+          logOut();
+          setStatus("Session expired — please log in again.");
+        } else {
+          setStatus(error instanceof Error ? error.message : "Connection lost — changes not saved.");
+        }
+        setSaveStatus("error");
+        window.setTimeout(() => {
+          setSaveStatus((current) => current === "error" ? "idle" : current);
+        }, 3200);
+      },
+    });
+  }
   const sessionSnapshotCreated = useRef(false);
   const campaignCursorRef = useRef<Record<string, string>>({});
   const campaignSyncFailRef = useRef<number>(0);
@@ -327,7 +367,7 @@ export default function ForgeAndFableApp() {
    * open. Returns the created_at of the last event fully handled — the sync
    * loop must not advance its cursor past an unhandled condition event.
    */
-  function processCampaignEvents(events: CampaignEvent[], members: CampaignSyncPayload["members"]): string | null {
+  const processCampaignEvents = useEffectEvent((events: CampaignEvent[], members: CampaignSyncPayload["members"]): string | null => {
     if (events.length === 0) return null;
     const myMembership = members?.find((member) => member.userId === user?.id);
     const myCharacter = myMembership?.characterId
@@ -388,7 +428,7 @@ export default function ForgeAndFableApp() {
       void updateCharacterById(myCharacter.id, { effects: nextEffects });
     }
     return lastHandled;
-  }
+  });
 
   const effectDrivenMode = effectiveAdvantageMode(selected?.effects);
   const rollMode = manualRollMode ?? effectDrivenMode;
@@ -609,6 +649,7 @@ export default function ForgeAndFableApp() {
 
   function logOut() {
     void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    saveCoordinatorRef.current?.reset();
     setUser(null);
     setCharacters([]);
     setSelectedId("");
@@ -855,8 +896,21 @@ export default function ForgeAndFableApp() {
     }
 
     try {
+      const basePayload = characterPayload(draft, ruleset);
+      const racedAbilities = applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
+      const creationHp = applyCreationHpBonuses({
+        maxHp: basePayload.maxHp,
+        currentHp: basePayload.currentHp,
+        hpGains: basePayload.hpRolls ?? [],
+        level: draft.level,
+        baseConstitution: racedAbilities.constitution,
+        choices: choices?.asiChoices,
+      });
       const payload = {
-        ...characterPayload(draft, ruleset),
+        ...basePayload,
+        maxHp: creationHp.maxHp,
+        currentHp: creationHp.currentHp,
+        hpRolls: creationHp.hpGains,
         ...(choices
           ? {
               asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
@@ -947,77 +1001,20 @@ export default function ForgeAndFableApp() {
     await updateCharacterById(selected.id, mergedPatch);
   }
 
-  async function updateCharacterById(characterId: string, patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) {
+  function updateCharacterById(characterId: string, patch: CharacterPatch) {
     if (!user) {
       return;
     }
 
     setSaveStatus("saving");
 
-    // Snapshot pre-patch state for potential revert
-    let prePatchChar: Character | undefined;
+    const revision = characters.find((character) => character.id === characterId)?.revision ?? 0;
     setCharacters((current) => {
-      prePatchChar = current.find((c) => c.id === characterId);
-      // Optimistic: apply patch immediately
       return current.map((c) =>
         c.id === characterId ? { ...c, ...patch } as Character : c,
       );
     });
-
-    try {
-      const response = await fetch(`/api/characters/${characterId}`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify(patch),
-      });
-      const data = (await response.json()) as { character?: Character; error?: string };
-
-      if (response.status === 401) {
-        logOut();
-        setStatus("Session expired — please log in again.");
-        setSaveStatus("error");
-        window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
-        // Revert optimistic update
-        if (prePatchChar) {
-          setCharacters((current) =>
-            current.map((c) => (c.id === characterId ? prePatchChar! : c)),
-          );
-        }
-        return;
-      }
-
-      if (!response.ok || !data.character) {
-        setStatus(data.error ?? "Update failed.");
-        setSaveStatus("error");
-        window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
-        // Revert optimistic update on failure
-        if (prePatchChar) {
-          setCharacters((current) =>
-            current.map((c) => (c.id === characterId ? prePatchChar! : c)),
-          );
-        }
-        return;
-      }
-
-      // Replace optimistic with server response
-      setCharacters((current) =>
-        current.map((character) =>
-          character.id === data.character!.id ? data.character! : character,
-        ),
-      );
-      setSaveStatus("saved");
-      window.setTimeout(() => { setSaveStatus((current) => current === "saved" ? "idle" : current); }, 1800);
-    } catch {
-      setStatus("Connection lost — changes not saved.");
-      setSaveStatus("error");
-      window.setTimeout(() => { setSaveStatus((current) => current === "error" ? "idle" : current); }, 3200);
-      // Revert optimistic update on network failure
-      if (prePatchChar) {
-        setCharacters((current) =>
-          current.map((c) => (c.id === characterId ? prePatchChar! : c)),
-        );
-      }
-    }
+    saveCoordinatorRef.current!.enqueue(characterId, patch, revision);
   }
 
   async function deleteSelected() {
@@ -1374,14 +1371,14 @@ export default function ForgeAndFableApp() {
   /** Roll a mixed pool (e.g. 2d6 + 1d20 + mod) as one flight of dice and one
       history entry. Used by the roll drawer's ad-hoc pool builder. */
   function pushPool(
-    groups: { sides: number; count: number }[],
+    groups: { sides: number; count: number; keepHighest?: number }[],
     modifier: number,
     label: string,
     onResult?: (outcome: RollOutcome) => void,
   ) {
     const cleaned = groups.filter((g) => g.count > 0);
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
-    const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20);
+    const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20) && !cleaned.some((g) => g.keepHighest);
     const d20Total = cleaned.reduce((s, g) => s + (g.sides === 20 ? g.count : 0), 0);
     const extraDice = useD20Mode ? d20Total : 0; // one extra die per d20 for adv/dis pair
     if (totalCount === 0 || totalCount + extraDice > 40) return;
@@ -1481,16 +1478,17 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const rolledDice: { sides: number; value: number }[] = [];
+    const rolledDice: { sides: number; value: number; groupIndex: number; dropped: boolean }[] = [];
     const newDice: RollingDie[] = [];
     let index = 0;
 
-    for (const group of cleaned) {
+    for (const [groupIndex, group] of cleaned.entries()) {
+      const groupStart = rolledDice.length;
       for (let i = 0; i < group.count; i++) {
         const dieIndex = index++;
         const fromLeft = Math.random() > 0.5;
         const result = rollDie(group.sides);
-        rolledDice[dieIndex] = { sides: group.sides, value: result };
+        rolledDice[dieIndex] = { sides: group.sides, value: result, groupIndex, dropped: false };
         newDice.push({
           id: `${crypto.randomUUID()}-${dieIndex}`,
           sides: group.sides,
@@ -1504,16 +1502,34 @@ export default function ForgeAndFableApp() {
           delayMs: dieIndex * 180,
         });
       }
+      if (group.keepHighest && group.keepHighest < group.count) {
+        const ranked = rolledDice
+          .slice(groupStart)
+          .map((die, offset) => ({ die, offset }))
+          .sort((a, b) => b.die.value - a.die.value);
+        const keptOffsets = new Set(ranked.slice(0, group.keepHighest).map((entry) => entry.offset));
+        rolledDice.slice(groupStart).forEach((die, offset) => {
+          if (!keptOffsets.has(offset)) {
+            die.dropped = true;
+            newDice[groupStart + offset].dropped = true;
+          }
+        });
+      }
     }
-    const total = rolledDice.reduce((sum, die) => sum + die.value, modifier);
+    const total = rolledDice.reduce((sum, die) => sum + (die.dropped ? 0 : die.value), modifier);
     const detail = cleaned
-      .map((g) => `${g.count}d${g.sides} [${rolledDice.filter((die) => die.sides === g.sides).map((die) => die.value).join(", ")}]`)
+      .map((g, groupIndex) => {
+        const values = rolledDice
+          .filter((die) => die.groupIndex === groupIndex)
+          .map((die) => die.dropped ? `~~${die.value}~~` : String(die.value));
+        return `${g.count}d${g.sides}${g.keepHighest ? `kh${g.keepHighest}` : ""} [${values.join(", ")}]`;
+      })
       .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
     const detailWithTotal = rollDetailWithTotal(detail, total);
     newDice.forEach((die) => {
-      die.resultSummary = rollResultSummary(total);
-      die.resultDetail = detailWithTotal;
-      die.lingerMs = NORMAL_ROLL_LINGER_MS;
+      die.resultSummary = die.dropped ? "Dropped" : rollResultSummary(total);
+      die.resultDetail = die.dropped ? String(die.result) : detailWithTotal;
+      die.lingerMs = die.dropped ? DROPPED_D20_LINGER_MS : NORMAL_ROLL_LINGER_MS;
     });
     setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
     recordHistory(label, detail, total);

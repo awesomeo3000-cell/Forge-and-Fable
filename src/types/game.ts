@@ -316,6 +316,8 @@ export type SheetLayout = {
 export type Character = {
   id: string;
   userId: string;
+  /** Server-managed optimistic concurrency token. Never included in update patches. */
+  revision?: number;
   name: string;
   level: number;
   alignment: string;
@@ -370,6 +372,8 @@ export type CharacterSnapshot = {
   character: Character;
   createdAt: string;
 };
+
+export type CharacterPatch = Partial<Omit<Character, "id" | "userId" | "createdAt" | "revision">>;
 
 export type DeathSaves = {
   successes: number;

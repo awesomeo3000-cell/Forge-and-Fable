@@ -4,7 +4,7 @@ import { GripHorizontal, Trash2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
-import { parseDiceFormula, rollFormula } from "@/lib/utils";
+import { parseDiceFormula } from "@/lib/utils";
 import { FONT_STACKS } from "@/lib/skins";
 import type { CharacterTheme, RollMode } from "@/types/game";
 import type { InitiativeCombatant, InitiativeState } from "@/types/campaign";
@@ -166,7 +166,7 @@ export default memo(function RollDrawer(props: {
   campaignIsDm?: boolean;
   onRollModeChange: (mode: RollMode) => void;
   onRollPool: (
-    groups: { sides: number; count: number }[],
+    groups: { sides: number; count: number; keepHighest?: number }[],
     modifier: number,
     label: string,
     onResult?: (outcome: RollPoolOutcome) => void,
@@ -341,13 +341,7 @@ export default memo(function RollDrawer(props: {
       return;
     }
     setFormulaError("");
-    const result = rollFormula(parsed);
-    if (result.error) {
-      setFormulaError(result.error);
-      return;
-    }
-    // Convert parsed groups to the format expected by onRollPool
-    const poolGroups = parsed.groups.map((g) => ({ sides: g.sides, count: g.count }));
+    const poolGroups = parsed.groups.map((g) => ({ sides: g.sides, count: g.count, keepHighest: g.keepHighest }));
     // For keep-highest, we roll the full count but note it in the label
     const keepLabels = parsed.groups
       .filter((g) => g.keepHighest)
@@ -355,17 +349,7 @@ export default memo(function RollDrawer(props: {
     const label = keepLabels.length > 0
       ? `${formulaInput.trim()} (${keepLabels.join(", ")})`
       : formulaInput.trim();
-    props.onRollPool(poolGroups, parsed.modifier, label, (outcome) => {
-      // Override total with our keep-highest calculation
-      // We pass keep-highest info through so the dice overlay can handle it if supported
-    });
-    // For keep-highest formulas, we need to roll ourselves and notify
-    if (parsed.groups.some((g) => g.keepHighest)) {
-      const { total } = rollFormula(parsed);
-      // Use the total from our keep-highest calculation for the notification/label
-      // The dice overlay will show all dice; the history should use our correct total
-      // We roll through onRollPool but the keep-highest total is computed locally
-    }
+    props.onRollPool(poolGroups, parsed.modifier, label);
     setFormulaInput("");
   };
 

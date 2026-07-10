@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteCharacter, getCharacter, updateCharacter } from "@/lib/vaultStore";
+import { CharacterConflictError, deleteCharacter, getCharacter, updateCharacter } from "@/lib/vaultStore";
 import { authenticateRequest, AuthError } from "@/lib/auth";
 import { validateCharacterInput, ALLOWED_PATCH_FIELDS } from "@/lib/validateCharacter";
 
@@ -33,6 +33,26 @@ function handleAuthError(error: unknown) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
   return null;
+}
+
+function expectedRevision(request: Request) {
+  const raw = request.headers.get("if-match")?.trim().replace(/^W\//, "").replace(/^"|"$/g, "");
+  if (!raw) {
+    throw new RevisionHeaderError("This update requires the character revision from the latest load.", 428);
+  }
+  const revision = Number(raw);
+  if (!Number.isSafeInteger(revision) || revision < 0) {
+    throw new RevisionHeaderError("If-Match must contain a non-negative character revision.", 400);
+  }
+  return revision;
+}
+
+class RevisionHeaderError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
 }
 
 export async function GET(
@@ -71,12 +91,21 @@ export async function PUT(
     const raw = await request.json();
     const patch = sanitizePatch(raw);
     validateCharacterInput(patch, true);
-    const character = await updateCharacter(userId, id, patch);
+    const character = await updateCharacter(userId, id, patch, expectedRevision(request));
 
     return NextResponse.json({ character });
   } catch (error) {
     const authResponse = handleAuthError(error);
     if (authResponse) return authResponse;
+    if (error instanceof CharacterConflictError) {
+      return NextResponse.json(
+        { error: error.message, character: error.current },
+        { status: 409 },
+      );
+    }
+    if (error instanceof RevisionHeaderError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not update character." },
       { status: 400 },

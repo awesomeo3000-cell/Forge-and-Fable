@@ -46,9 +46,11 @@ Thumbs.db
 *.swo
 .pnpm-debug.log*
 dev-server.log
+dev-server.err.log
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # local prototype data
 /data/

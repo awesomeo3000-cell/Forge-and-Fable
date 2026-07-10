@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { getDb } from "@/lib/db";
+import { validateCharacterInput } from "@/lib/validateCharacter";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -17,8 +18,20 @@ type UserRow = {
 };
 
 type JsonRow = {
+  id?: string;
   data: string;
+  revision?: number;
 };
+
+export class CharacterConflictError extends Error {
+  current: Character;
+
+  constructor(current: Character) {
+    super("Character changed in another save. Refresh and retry.");
+    this.name = "CharacterConflictError";
+    this.current = current;
+  }
+}
 
 function publicUser(user: StoredUser): PublicUser {
   return {
@@ -60,7 +73,37 @@ function isUniqueConstraintError(error: unknown) {
 }
 
 function parseCharacter(row: JsonRow): Character {
-  return JSON.parse(row.data) as Character;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(row.data);
+  } catch (error) {
+    throw new Error(`Stored character ${row.id ?? "unknown"} contains invalid JSON: ${error instanceof Error ? error.message : "parse failed"}`);
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`Stored character ${row.id ?? "unknown"} is not a JSON object.`);
+  }
+  const character = parsed as Character;
+  if (
+    typeof character.id !== "string" ||
+    typeof character.userId !== "string" ||
+    typeof character.createdAt !== "string" ||
+    (row.id && character.id !== row.id)
+  ) {
+    throw new Error(`Stored character ${row.id ?? "unknown"} has invalid identity metadata.`);
+  }
+  const mutable = { ...character } as Record<string, unknown>;
+  delete mutable.id;
+  delete mutable.userId;
+  delete mutable.createdAt;
+  delete mutable.revision;
+  validateCharacterInput(mutable, false);
+  return { ...character, revision: row.revision ?? character.revision ?? 0 };
+}
+
+function serializedCharacter(character: Character) {
+  const stored = { ...character };
+  delete stored.revision;
+  return JSON.stringify(stored);
 }
 
 function parseFeedback(row: JsonRow): FeedbackEntry {
@@ -136,7 +179,7 @@ export async function loginUser(input: {
 
 export async function listCharacters(userId: string): Promise<Character[]> {
   const rows = getDb()
-    .prepare("SELECT data FROM characters WHERE user_id = ? ORDER BY created_at DESC")
+    .prepare("SELECT id, data, revision FROM characters WHERE user_id = ? ORDER BY created_at DESC")
     .all(userId) as JsonRow[];
   return rows.map(parseCharacter);
 }
@@ -151,6 +194,7 @@ export async function createCharacter(
     ...input,
     id: crypto.randomUUID(),
     userId,
+    revision: 0,
     createdAt,
   };
 
@@ -161,7 +205,7 @@ export async function createCharacter(
       throw new Error("Vault session not found.");
     }
     db.prepare("INSERT INTO characters (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
-      .run(character.id, userId, JSON.stringify(character), createdAt, createdAt);
+      .run(character.id, userId, serializedCharacter(character), createdAt, createdAt);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
@@ -173,7 +217,7 @@ export async function createCharacter(
 
 export async function getCharacter(userId: string, id: string): Promise<Character | null> {
   const row = getDb()
-    .prepare("SELECT data FROM characters WHERE user_id = ? AND id = ?")
+    .prepare("SELECT id, data, revision FROM characters WHERE user_id = ? AND id = ?")
     .get(userId, id) as JsonRow | undefined;
   return row ? parseCharacter(row) : null;
 }
@@ -182,11 +226,12 @@ export async function updateCharacter(
   userId: string,
   id: string,
   patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>,
+  expectedRevision: number,
 ): Promise<Character> {
   const db = getDb();
   db.exec("BEGIN IMMEDIATE");
   try {
-    const row = db.prepare("SELECT data FROM characters WHERE user_id = ? AND id = ?")
+    const row = db.prepare("SELECT id, data, revision FROM characters WHERE user_id = ? AND id = ?")
       .get(userId, id) as JsonRow | undefined;
 
     if (!row) {
@@ -194,16 +239,28 @@ export async function updateCharacter(
     }
 
     const current = parseCharacter(row);
+    if ((current.revision ?? 0) !== expectedRevision) {
+      throw new CharacterConflictError(current);
+    }
+
+    const nextRevision = expectedRevision + 1;
     const updated: Character = {
       ...current,
       ...patch,
       id: current.id,
       userId: current.userId,
+      revision: nextRevision,
       createdAt: current.createdAt,
     };
 
-    db.prepare("UPDATE characters SET data = ?, updated_at = ? WHERE user_id = ? AND id = ?")
-      .run(JSON.stringify(updated), new Date().toISOString(), userId, id);
+    const result = db.prepare("UPDATE characters SET data = ?, revision = ?, updated_at = ? WHERE user_id = ? AND id = ? AND revision = ?")
+      .run(serializedCharacter(updated), nextRevision, new Date().toISOString(), userId, id, expectedRevision);
+    if (result.changes === 0) {
+      const latest = db.prepare("SELECT id, data, revision FROM characters WHERE user_id = ? AND id = ?")
+        .get(userId, id) as JsonRow | undefined;
+      if (!latest) throw new Error("Character not found.");
+      throw new CharacterConflictError(parseCharacter(latest));
+    }
     db.exec("COMMIT");
     return updated;
   } catch (error) {

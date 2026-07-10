@@ -12,6 +12,7 @@ import { useFocusTrap } from "@/lib/useFocusTrap";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 import { fixedHpGain, rolledHpGain } from "@/lib/hitPoints";
 import { ordinalLevel } from "@/lib/ledgerCopy";
+import { finalAbilityAfterChoices, levelUpHpGain } from "@/lib/derivedStats";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import "./LevelUpModal.css";
 
@@ -316,12 +317,41 @@ export default memo(function LevelUpModal({
     .filter((s): s is NonNullable<typeof s> => s != null && s.level > 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const choicesWithSelection = () => {
+    const choices = [...(character.asiChoices ?? [])];
+    if (!hasAsi) return choices;
+    if (pickedFeat === "asi" && Object.keys(asiIncreases).length > 0) {
+      choices.push({ type: "asi", level: newLevel, increases: asiIncreases });
+    } else if (pickedFeat) {
+      const featChoice: ASIChoice = { type: "feat", level: newLevel, featId: pickedFeat };
+      if (featAbilityChoice) featChoice.abilityChoice = featAbilityChoice;
+      choices.push(featChoice);
+    }
+    return choices;
+  };
+
+  const nextAsiChoices = choicesWithSelection();
+  const nextConstitution = finalAbilityAfterChoices(
+    finalAbilities.constitution,
+    "constitution",
+    character.asiChoices,
+    nextAsiChoices,
+  );
+  const finalHpGained = levelUpHpGain({
+    baseGain: hpGained,
+    newLevel,
+    currentConstitution: finalAbilities.constitution,
+    nextConstitution,
+    currentChoices: character.asiChoices,
+    nextChoices: nextAsiChoices,
+  });
+
   const finish = () => {
     const data: Record<string, unknown> = { level: newLevel };
     if (hasHp && hpRolled) {
-      data.maxHp = character.maxHp + hpGained;
-      data.currentHp = character.currentHp + hpGained;
-      data.hpRolls = [...(character.hpRolls ?? []), hpGained];
+      data.maxHp = character.maxHp + finalHpGained;
+      data.currentHp = character.currentHp + finalHpGained;
+      data.hpRolls = [...(character.hpRolls ?? []), finalHpGained];
     }
     if (hasSubclass && pickedSubclass) {
       data.subclassId = pickedSubclass;
@@ -330,17 +360,7 @@ export default memo(function LevelUpModal({
       data.skillExpertise = [...(character.skillExpertise ?? []), ...pickedExpertise];
     }
     if (hasAsi) {
-      const choices = [...(character.asiChoices ?? [])];
-      if (pickedFeat === "asi") {
-        if (Object.keys(asiIncreases).length > 0) {
-          choices.push({ type: "asi" as const, level: newLevel, increases: asiIncreases });
-        }
-      } else if (pickedFeat) {
-        const featChoice: ASIChoice = { type: "feat", level: newLevel, featId: pickedFeat };
-        if (featAbilityChoice) featChoice.abilityChoice = featAbilityChoice;
-        choices.push(featChoice);
-      }
-      if (choices.length > (character.asiChoices ?? []).length) data.asiChoices = choices;
+      if (nextAsiChoices.length > (character.asiChoices ?? []).length) data.asiChoices = nextAsiChoices;
     }
     if ((hasSpells && pickedSpells.length > 0) || (hasCantrips && pickedCantrips.length > 0)) {
       let updated = [...character.spellsKnown, ...pickedCantrips, ...pickedSpells];
@@ -398,7 +418,7 @@ export default memo(function LevelUpModal({
   const railNote = (s: LevelUpStep): string => {
     if (!stepComplete(s)) return "";
     switch (s) {
-      case "hp": return `+${hpGained} hp`;
+      case "hp": return `+${finalHpGained} hp`;
       case "subclass": return chosenSubclassName.toLowerCase();
       case "expertise": return pickedExpertise.length === 1
         ? (expertiseNames[0] ?? "").toLowerCase()
@@ -477,7 +497,7 @@ export default memo(function LevelUpModal({
                     <h3 className="level-rite-panel-title">Hit points</h3>
                     <p className="level-rite-panel-sub">
                       {hitPointType === "fixed"
-                        ? `Your hit point maximum increases by a fixed +${hpGained}.`
+                        ? `Your hit point maximum increases by +${finalHpGained}.`
                         : hitPointType === "manual"
                           ? `Enter your hit point increase (1d${hitDie} ${signed(conMod)}).`
                           : `Roll 1d${hitDie} ${signed(conMod)} to determine your hit point increase.`}
@@ -494,7 +514,7 @@ export default memo(function LevelUpModal({
 
                     {hitPointType === "fixed" ? (
                       <span className="level-rite-hp-fixed-label">
-                        +{hpGained} HP (fixed)
+                        +{finalHpGained} HP (fixed)
                       </span>
                     ) : hitPointType === "manual" ? (
                       <label className="control-field">
@@ -521,11 +541,11 @@ export default memo(function LevelUpModal({
                     ) : null}
                   </div>
 
-                  {hpGained > 0 ? (
+                  {finalHpGained > 0 ? (
                     <div className="level-rite-hp-result" aria-live="polite">
-                      <strong>+{hpGained} HP</strong>
+                      <strong>+{finalHpGained} HP</strong>
                       <span>
-                        Max HP {character.maxHp} → {character.maxHp + hpGained}
+                        Max HP {character.maxHp} → {character.maxHp + finalHpGained}
                         {(hpDieRoll ?? hpGained) + conMod < 1 ? " (minimum 1)" : ""}
                       </span>
                     </div>
@@ -779,7 +799,7 @@ export default memo(function LevelUpModal({
                       <li className="level-rite-summary-item">
                         <span className="level-rite-summary-label">Health</span>
                         <span className={`level-rite-summary-value${hpRolled ? "" : " pending"}`}>
-                          {hpRolled ? `${character.maxHp} → ${character.maxHp + hpGained} Max HP (+${hpGained})` : "not yet rolled"}
+                          {hpRolled ? `${character.maxHp} → ${character.maxHp + finalHpGained} Max HP (+${finalHpGained})` : "not yet rolled"}
                         </span>
                       </li>
                     ) : null}

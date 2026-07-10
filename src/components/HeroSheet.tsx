@@ -38,6 +38,7 @@ import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, g
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
 import { revertHpLevel } from "@/lib/hitPoints";
+import { passiveSkillScore } from "@/lib/derivedStats";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import LevelUpModal from "@/components/LevelUpModal";
@@ -200,16 +201,20 @@ export default memo(function HeroSheet(props: {
     return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT + effChecks;
   };
   const skillBonusForPassive = (s: SkillDef) => {
-    const mod = abilityModifier(props.finalAbilities[s.ability]);
     const prof = isSkillProficient(s.id);
     const expert = isSkillExpert(s.id);
-    const joaT = hasJackOfAllTrades && !prof ? halfPb : 0;
-    return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT;
+    return passiveSkillScore({
+      abilityScore: props.finalAbilities[s.ability],
+      proficiencyBonus: pb,
+      proficient: prof,
+      expertise: expert,
+      jackOfAllTrades: hasJackOfAllTrades && !prof,
+    });
   };
 
-  const passiveInsight = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "insight")!);
-  const passiveInvestigation = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "investigation")!);
-  const passivePerception = 10 + skillBonusForPassive(SKILLS.find((s) => s.id === "perception")!);
+  const passiveInsight = skillBonusForPassive(SKILLS.find((s) => s.id === "insight")!);
+  const passiveInvestigation = skillBonusForPassive(SKILLS.find((s) => s.id === "investigation")!);
+  const passivePerception = skillBonusForPassive(SKILLS.find((s) => s.id === "perception")!);
 
   const hpPercent = Math.max(0, Math.min(100, (props.character.currentHp / props.character.maxHp) * 100));
   const casterType = heroClass.casterType ?? "none";
