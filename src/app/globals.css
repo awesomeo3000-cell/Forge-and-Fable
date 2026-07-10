@@ -61,7 +61,7 @@
   --paper-raised: #e4d7bb;
   --ink:          #241c12;
   --ink-2:        #6b5d44;
-  --ink-3:        #8a7c60;
+  --ink-3:        #5e503a;
   --doc-rule:     #c9b896;
   --doc-rule-soft:#d8c9a8;
   --doc-accent:   #a23f29;
@@ -3326,6 +3326,7 @@ button:disabled {
   position: relative;
   isolation: isolate;
   font-size: clamp(16px, 0.45vw + 12px, 20px);
+  color: var(--ink);
 
   font-family: var(--font-body);
 
@@ -3983,13 +3984,17 @@ button:disabled {
 
 .cs-spellcast-head {
   font-family: var(--font-label);
-  font-size: 0.7em;
+  font-size: 0.72em;
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding-bottom: 8px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--rule-soft);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ── Slot pips ── */
@@ -4463,7 +4468,50 @@ button:disabled {
 
 .cs-spell-group { display: grid; gap: 6px; }
 
-.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Spell search input */
+.cs-spell-search {
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--ground-3);
+  color: var(--parchment);
+  margin-bottom: 8px;
+  width: 100%;
+}
+.cs-spell-search:focus {
+  outline: 2px solid var(--select);
+  border-color: var(--select);
+}
+
+/* Wizard spellbook two-panel layout */
+.cs-spellbook-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cs-spellbook-library,
+.cs-spellbook-prepared {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.cs-spellbook-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name forget"
+    "meta forget";
+  align-items: center;
+  gap: 2px 8px;
+}
+.cs-spellbook-entry strong { grid-area: name; }
+.cs-spellbook-entry span { grid-area: meta; }
+.cs-spellbook-forget { grid-area: forget; align-self: center; }
+
+.cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 .cs-feature-group {
   display: grid;
@@ -4483,7 +4531,7 @@ button:disabled {
 
 .cs-spell-card strong { font-size: 1.05em; color: var(--parchment); }
 
-.cs-spell-card span { font-size: 0.88em; color: var(--ink-faint); }
+.cs-spell-card span { font-size: 0.82em; color: var(--parchment-2); }
 
 .cs-spell-status-badges {
   display: flex;
@@ -4736,7 +4784,7 @@ button:disabled {
 
 /* ── Misc ── */
 
-.cs-muted { font-family: var(--font-body); font-size: 0.9em; color: var(--ink-faint); font-style: italic; }
+.cs-muted { font-family: var(--font-body); font-size: 0.82em; color: var(--ink-2); font-style: italic; }
 
 /* Auto-compact: section bodies that contain only a placeholder shrink to one row */
 .cs-section-body:has(.cs-muted:only-child) {
@@ -6826,6 +6874,25 @@ button.dj-card {
 .cs-effect-extra { display: grid; grid-template-columns: 1fr 2fr; gap: 5px; }
 .cs-effect-form-actions { display: flex; gap: 6px; }
 
+/* Custom item form — mirrors the effect form pattern */
+.cs-inv-form { margin-top: 8px; display: flex; flex-direction: column; gap: 7px; }
+.cs-inv-form input,
+.cs-inv-form select {
+  font-family: var(--font-body);
+  font-size: 0.85em;
+  padding: 6px 10px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: var(--ground-3);
+  color: var(--parchment);
+}
+.cs-inv-form input:focus,
+.cs-inv-form select:focus {
+  outline: 2px solid var(--select);
+  border-color: var(--select);
+}
+.cs-inv-form-actions { display: flex; gap: 6px; }
+
 /* AC breakdown overlay */
 .cs-ac-breakdown { max-width: 320px; }
 .cs-ac-breakdown-list { display: flex; flex-direction: column; margin-top: 8px; }
@@ -6949,6 +7016,14 @@ button.dj-card {
   .dj-class-training {
     grid-template-columns: 1fr;
   }
+  .cs-spellbook-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .cs-effect-nums { grid-template-columns: repeat(2, 1fr); }
+  .cs-effect-extra { grid-template-columns: 1fr; }
 }
 
 /* ── Roll drawer: advantage / disadvantage (Round: adv-dis) ── */
@@ -9152,7 +9227,7 @@ button.dj-card {
 .ledger-eyebrow {
   color: var(--ledger-faded);
   font-family: var(--ledger-font);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -9180,7 +9255,7 @@ button.dj-card {
   margin: 0;
   color: var(--ledger-ink);
   font-family: var(--ledger-font);
-  font-size: 24px;
+  font-size: 34px;
   font-weight: 500;
   letter-spacing: 0;
   line-height: 1.15;

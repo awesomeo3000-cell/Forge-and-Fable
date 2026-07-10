@@ -65,7 +65,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-type RefTab = "features" | "traits" | "spells" | "inventory";
+type RefTab = "features" | "traits" | "spells" | "spellbook" | "inventory";
 type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
 type RollOutcome = { rolls: number[]; modifier: number; total: number };
 type RollD20Options = { forcedMode?: RollMode };
@@ -74,6 +74,7 @@ const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "features", label: "Features" },
   { id: "traits", label: "Traits" },
   { id: "spells", label: "Spells" },
+  { id: "spellbook", label: "Spellbook" },
   { id: "inventory", label: "Inventory" },
 ];
 const TOUR_STORAGE_KEY = "forge-and-fable-tour-dismissed";
@@ -421,7 +422,11 @@ export default memo(function HeroSheet(props: {
     // Non-casters can still hold feat-granted spells (Fey/Shadow Touched) —
     // show the tab so those spells and their free-use casting are reachable.
     || (casterType === "none" && knownSpells.length > 0);
-  const visibleTabs = REF_TABS.filter((t) => t.id !== "spells" || hasSpellTab);
+  const visibleTabs = REF_TABS.filter((t) => {
+    if (t.id === "spells") return hasSpellTab;
+    if (t.id === "spellbook") return canManageSpellbook;
+    return true;
+  });
   const [refTab, setRefTab] = useState<RefTab>(visibleTabs[0]?.id ?? "features");
   const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     let nxt = i;
@@ -543,7 +548,17 @@ export default memo(function HeroSheet(props: {
   /* ── Spell slots & detail ── */
   const [spellDetail, setSpellDetail] = useState<SpellData | null>(null);
   const [preparedOnly, setPreparedOnly] = useState(false);
+  const [spellSearch, setSpellSearch] = useState("");
   const [spellToLearn, setSpellToLearn] = useState("");
+  // Search-filtered + alphabetized spell groups for display.
+  const spellSearchLower = spellSearch.trim().toLowerCase();
+  const filteredSpellsByLevel: Record<number, SpellData[]> = {};
+  for (const [lv, spells] of Object.entries(spellsByLevel)) {
+    const filtered = spellSearchLower
+      ? spells.filter((s) => s.name.toLowerCase().includes(spellSearchLower))
+      : spells;
+    filteredSpellsByLevel[Number(lv)] = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }
   const [showInvForm, setShowInvForm] = useState(false);
   const [invName, setInvName] = useState("");
   const [invRarity, setInvRarity] = useState("Common");
@@ -1349,47 +1364,7 @@ export default memo(function HeroSheet(props: {
                   <button type="button" className="cs-glass-btn" onClick={() => props.onUpdate({ concentratingOn: null })}>End</button>
                 </div>
               ) : null}
-              {canManageSpellbook ? (
-                <div className="cs-spellbook-manager">
-                  <div className="cs-spellbook-head">
-                    <span className="cs-spell-level-head">Spellbook</span>
-                    <small>
-                      {props.character.spellsKnown.length} in spellbook
-                      {_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}
-                    </small>
-                  </div>
-                  <div className="cs-spellbook-add">
-                    <select
-                      value={spellToLearn}
-                      onChange={(event) => setSpellToLearn(event.target.value)}
-                      aria-label="Choose a spell to learn"
-                    >
-                      <option value="">Choose a spell</option>
-                      {spellbookChoices.map((spell) => (
-                        <option key={spell.id} value={spell.id}>
-                          {spell.level === 0 ? "Cantrip" : `Level ${spell.level}`} - {spell.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button className="cs-glass-btn" type="button" disabled={!spellToLearn} onClick={() => learnSpell(spellToLearn)}>
-                      Add to Spellbook
-                    </button>
-                  </div>
-                  {knownSpells.length > 0 ? (
-                    <div className="cs-spellbook-known">
-                      {knownSpells.map((spell) => (
-                        <button key={spell.id} type="button" className="cs-known-spell-chip" onClick={() => forgetSpell(spell.id)}>
-                          {spell.name}
-                          <span>Forget</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  {spellbookChoices.length === 0 ? (
-                    <p className="cs-muted">No additional spells available at this level.</p>
-                  ) : null}
-                </div>
-              ) : isKnownCasterNotWizard ? (
+              {isKnownCasterNotWizard ? (
                 <div className="cs-spellbook-manager">
                   <div className="cs-spellbook-head">
                     <span className="cs-spell-level-head">Spells Known</span>
@@ -1412,7 +1387,17 @@ export default memo(function HeroSheet(props: {
                   )}
                 </div>
               ) : null}
-              <div className="cs-spell-list">{Object.entries(spellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
+              {knownSpells.length > 3 ? (
+                <input
+                  type="text"
+                  className="cs-spell-search"
+                  placeholder="Search spells…"
+                  value={spellSearch}
+                  onChange={(e) => setSpellSearch(e.target.value)}
+                  aria-label="Search spells"
+                />
+              ) : null}
+              <div className="cs-spell-list">{Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
                 const lvlNum = Number(level);
                 const max = slotMax[lvlNum - 1] ?? 0;
                 const used = isPactCaster ? (max > 0 ? pactUsed : 0) : (slotsUsed[lvlNum] ?? 0);
@@ -1444,6 +1429,92 @@ export default memo(function HeroSheet(props: {
                   })}
                 </div>);
               })}</div>
+            </div>
+            {/* ── Spellbook tab (wizard only) ── */}
+            <div className={refTab === "spellbook" ? "" : "cs-reftab-hidden"}>
+              <div className="cs-spellbook-panel">
+                {/* Left: Library — all known spells, searchable, with Learn/Forget */}
+                <div className="cs-spellbook-library">
+                  <div className="cs-spellbook-head">
+                    <span className="cs-spell-level-head">Spellbook</span>
+                    <small>{props.character.spellsKnown.length} in spellbook{_maxSpellLvl > 0 ? ` / spells up to level ${_maxSpellLvl}` : ""}</small>
+                  </div>
+                  <div className="cs-spellbook-add">
+                    <select
+                      value={spellToLearn}
+                      onChange={(event) => setSpellToLearn(event.target.value)}
+                      aria-label="Choose a spell to learn"
+                    >
+                      <option value="">Choose a spell</option>
+                      {spellbookChoices.map((spell) => (
+                        <option key={spell.id} value={spell.id}>
+                          {spell.level === 0 ? "Cantrip" : `Level ${spell.level}`} - {spell.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="cs-glass-btn" type="button" disabled={!spellToLearn} onClick={() => learnSpell(spellToLearn)}>
+                      Add
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    className="cs-spell-search"
+                    placeholder="Search spellbook…"
+                    value={spellSearch}
+                    onChange={(e) => setSpellSearch(e.target.value)}
+                    aria-label="Search spellbook"
+                  />
+                  <div className="cs-spell-list">
+                    {Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
+                      if (spells.length === 0) return null;
+                      return (
+                        <div key={level} className="cs-spell-group">
+                          <span className="cs-spell-level-head">{level === "0" ? "Cantrips" : `Level ${level}`}</span>
+                          {spells.map((spell) => (
+                            <div className="cs-spell-card cs-spellbook-entry" key={spell.id} onClick={() => setSpellDetail(spell)}>
+                              <strong>{spell.name}</strong>
+                              <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
+                              <button type="button" className="cs-glass-btn cs-spellbook-forget" onClick={(e) => { e.stopPropagation(); forgetSpell(spell.id); }} aria-label={`Forget ${spell.name}`}>Forget</button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {spellbookChoices.length === 0 ? <p className="cs-muted">No additional spells available at this level.</p> : null}
+                </div>
+                {/* Right: Prepared list + slot tracker */}
+                <div className="cs-spellbook-prepared">
+                  <div className="cs-spellbook-head">
+                    <span className="cs-spell-level-head">Prepared</span>
+                    {_isPrepared ? <small>{preparedIds.length} / {prepLimit} prepared</small> : null}
+                  </div>
+                  <div className="cs-spell-list">
+                    {Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
+                      const lvlNum = Number(level);
+                      const max = slotMax[lvlNum - 1] ?? 0;
+                      const used = isPactCaster ? (max > 0 ? pactUsed : 0) : (slotsUsed[lvlNum] ?? 0);
+                      const preparedSpells = spells.filter((s) => lvlNum === 0 || preparedIds.includes(s.id));
+                      if (preparedSpells.length === 0 && max === 0) return null;
+                      return (
+                        <div key={level} className="cs-spell-group">
+                          <span className="cs-spell-level-head">
+                            {level === "0" ? "Cantrips" : `Level ${level}`}
+                            {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} aria-pressed={i < used} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
+                          </span>
+                          {preparedSpells.map((spell) => (
+                            <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
+                              {spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker cs-prof`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`Unprepare ${spell.name}`} title="Prepared">●</button>) : null}
+                              <strong>{spell.name}</strong>
+                              <span>{spell.school}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
               <div className="cs-currency-panel">
