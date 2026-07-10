@@ -986,6 +986,32 @@ button:disabled {
   -webkit-mask: var(--species-icon-url) center / contain no-repeat;
 }
 
+.species-symbol-image {
+  flex: 0 0 auto;
+  background: var(--species-icon-url) center / contain no-repeat;
+  filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--ink) 18%, transparent));
+}
+
+/* Full-color ancestry art already contains its own circular seal. Let it fill
+   the host instead of placing a second, mismatched color behind it. */
+.choice-avatar:has(.species-symbol-image),
+.species-signal > span:has(.species-symbol-image),
+.ledger-stamp-icon:has(.species-symbol-image),
+.ledger-modal-seal:has(.species-symbol-image) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.choice-avatar:has(.species-symbol-image) .species-symbol-image,
+.species-signal > span:has(.species-symbol-image) .species-symbol-image,
+.ledger-stamp-icon:has(.species-symbol-image) .species-symbol-image,
+.ledger-modal-seal:has(.species-symbol-image) .species-symbol-image {
+  width: 100% !important;
+  height: 100% !important;
+  filter: none;
+}
+
 .species-symbol-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

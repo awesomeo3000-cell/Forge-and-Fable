@@ -56,6 +56,36 @@ const RACE_ICON_PATHS: Record<string, string> = {
   "yuan-ti-pureblood": "/race-icons/yuan-ti.svg",
 };
 
+const RACE_ART_PATHS: Record<string, string> = {
+  "aasimar": "/race-icons/ancestry/aasimar_icon.png",
+  "variant-aasimar": "/race-icons/ancestry/aasimar_icon.png",
+  "dragonborn": "/race-icons/ancestry/dragonborn_icon.png",
+  "dragonborn-legacy": "/race-icons/ancestry/dragonborn_icon.png",
+  "dwarf": "/race-icons/ancestry/dwarf_icon.png",
+  "hill-dwarf-legacy": "/race-icons/ancestry/dwarf_icon.png",
+  "mountain-dwarf-legacy": "/race-icons/ancestry/dwarf_icon.png",
+  "elf": "/race-icons/ancestry/elf_icon.png",
+  "wood-elf-legacy": "/race-icons/ancestry/elf_icon.png",
+  "high-elf": "/race-icons/ancestry/elf_icon.png",
+  "high-elf-legacy": "/race-icons/ancestry/elf_icon.png",
+  "gnome": "/race-icons/ancestry/gnome_icon.png",
+  "forest-gnome": "/race-icons/ancestry/gnome_icon.png",
+  "forest-gnome-legacy": "/race-icons/ancestry/gnome_icon.png",
+  "rock-gnome": "/race-icons/ancestry/gnome_icon.png",
+  "rock-gnome-legacy": "/race-icons/ancestry/gnome_icon.png",
+  "halfling": "/race-icons/ancestry/halfling_icon.png",
+  "lightfoot-halfling-legacy": "/race-icons/ancestry/halfling_icon.png",
+  "stout-halfling-legacy": "/race-icons/ancestry/halfling_icon.png",
+  "half-elf": "/race-icons/ancestry/half_elf_icon.png",
+  "half-elf-legacy": "/race-icons/ancestry/half_elf_icon.png",
+  "half-orc": "/race-icons/ancestry/half_orc_icon.png",
+  "half-orc-legacy": "/race-icons/ancestry/half_orc_icon.png",
+  "human": "/race-icons/ancestry/human_icon.png",
+  "human-legacy": "/race-icons/ancestry/human_icon.png",
+  "tiefling": "/race-icons/ancestry/tiefling_icon.png",
+  "tiefling-legacy": "/race-icons/ancestry/tiefling_icon.png",
+};
+
 type IconMaskStyle = CSSProperties & {
   "--species-icon-url": string;
 };
@@ -66,7 +96,24 @@ function SpeciesIconPlaceholder(props: {
   strokeWidth?: number;
 }) {
   const id = props.speciesId.toLowerCase();
+  const artPath = RACE_ART_PATHS[id];
   const iconPath = RACE_ICON_PATHS[id];
+
+  if (artPath) {
+    const style: IconMaskStyle = {
+      "--species-icon-url": `url("${artPath}")`,
+      height: props.size,
+      width: props.size,
+    };
+
+    return (
+      <span
+        aria-hidden="true"
+        className="species-symbol species-symbol-image"
+        style={style}
+      />
+    );
+  }
 
   if (iconPath) {
     const style: IconMaskStyle = {
