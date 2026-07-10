@@ -1,6 +1,7 @@
 import type { AbilityKey, AbilityScores, Character, CharacterEffect, CharacterSettings, Currency, CustomRule, InventoryItem, Ruleset } from "@/types/game";
 import { DEFAULT_STARTING_HP } from "@/lib/constants";
 import { BACKGROUND_TOOL_GRANTS, CLASS_TOOL_GRANTS } from "@/lib/srd";
+import { buildStartingHp } from "@/lib/hitPoints";
 
 export const abilityKeys: AbilityKey[] = [
   "strength",
@@ -204,35 +205,6 @@ export function defaultAssignments(): Record<AbilityKey, number> {
   };
 }
 
-function startingHp(
-  level: number,
-  hitDie: number,
-  constitutionModifier: number,
-  hitPointType: CharacterSettings["hitPointType"],
-  startingHpRolls: number[],
-) {
-  const safeLevel = Math.max(1, Math.min(20, Math.trunc(level)));
-  const firstLevelHp = Math.max(1, hitDie + constitutionModifier);
-  const fixedLevelHp = Math.max(1, Math.floor(hitDie / 2) + 1 + constitutionModifier);
-  const extraLevels = safeLevel - 1;
-
-  if (hitPointType === "rolled" && startingHpRolls.length >= extraLevels) {
-    const hpRolls = startingHpRolls
-      .slice(0, extraLevels)
-      .map((roll) => Math.max(1, Math.trunc(roll) + constitutionModifier));
-
-    return {
-      maxHp: firstLevelHp + hpRolls.reduce((sum, gain) => sum + gain, 0),
-      hpRolls,
-    };
-  }
-
-  return {
-    maxHp: firstLevelHp + extraLevels * fixedLevelHp,
-    hpRolls: [] as number[],
-  };
-}
-
 export function characterPayload(
   draft: {
     name: string;
@@ -271,7 +243,7 @@ export function characterPayload(
     ...(draft.toolProficiencies ?? []),
   ]);
   const conScore = draft.abilities.constitution + (race.bonuses.constitution ?? 0);
-  const { maxHp, hpRolls } = startingHp(
+  const { maxHp, hpGains } = buildStartingHp(
     draft.level,
     heroClass.hitDie,
     abilityModifier(conScore),
@@ -299,7 +271,7 @@ export function characterPayload(
     toolProficiencies: [...grantedTools],
     languages: draft.languages ?? [],
     currency: draft.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
-    hpRolls: hpRolls.length > 0 ? hpRolls : undefined,
+    hpRolls: hpGains,
     ...(effects.length > 0 ? { effects } : {}),
   };
 }

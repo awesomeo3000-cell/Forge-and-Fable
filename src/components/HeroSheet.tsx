@@ -37,6 +37,7 @@ import { ARMORS, WEAPONS, carryCapacity, computeArmorClass, getArmorProficiencyI
 import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
+import { revertHpLevel } from "@/lib/hitPoints";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import LevelUpModal from "@/components/LevelUpModal";
@@ -790,16 +791,27 @@ export default memo(function HeroSheet(props: {
     const newLevel = level - 1;
     if (!window.confirm(`Revert to level ${newLevel}? This undoes the HP, feat, and subclass gains from the removed level.`)) return;
 
-    const patch: Record<string, unknown> = { level: newLevel };
+    const conMod = abilityModifier(props.finalAbilities.constitution);
+    const hpResult = revertHpLevel(
+      props.character.maxHp,
+      props.character.currentHp,
+      props.character.hpRolls ?? [],
+      props.character.settings.hitPointType,
+      heroClass.hitDie,
+      conMod,
+    );
 
-    // Remove last HP roll
-    const hpRolls = props.character.hpRolls ?? [];
-    if (hpRolls.length > 0) {
-      const lastHp = hpRolls[hpRolls.length - 1];
-      patch.hpRolls = hpRolls.slice(0, -1);
-      patch.maxHp = Math.max(1, props.character.maxHp - lastHp);
-      patch.currentHp = Math.max(1, props.character.currentHp - lastHp);
+    if (!hpResult.safe) {
+      props.onNotify?.(hpResult.reason);
+      return;
     }
+
+    const patch: Record<string, unknown> = {
+      level: newLevel,
+      maxHp: hpResult.newMaxHp,
+      currentHp: hpResult.newCurrentHp,
+      hpRolls: hpResult.newHpGains,
+    };
 
     // Remove ASI/feat choices from the level being removed
     const asiChoices = props.character.asiChoices ?? [];
@@ -809,8 +821,6 @@ export default memo(function HeroSheet(props: {
     }
 
     // Clear subclass if gained at a level now above newLevel
-    // Use "" not undefined — JSON.stringify drops undefined keys, so the
-    // server would never see the field and keep the old value.
     const subclassLevel = heroClass.subclassLevel ?? 3;
     if (props.character.subclassId && subclassLevel > newLevel) {
       patch.subclassId = "";

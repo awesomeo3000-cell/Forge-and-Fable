@@ -434,6 +434,17 @@
   font-style: italic;
 }
 
+.level-rite-hp-fixed-label {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--parchment);
+  padding: 8px 14px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--parchment) 6%, transparent);
+}
+
 .level-rite-hp-select {
   padding: 6px 8px;
   border: 0;

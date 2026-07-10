@@ -67,6 +67,11 @@ as inconsistent — because they were. Fixed:
   documented scale: 10 · 11 · 12 · 12.5 · 14 · 18 · 24 · 26 · 34. The scale
   and face rules are documented at the top of `LevelUpModal.css`.
 
+- Spacing nit (owner): the HP step's title/subtitle overlapped — the
+  subtitle's -6px pull-up assumes `.level-rite-panel`'s flex gap, but the HP
+  step wraps its heading in `.level-rite-hp-copy`, which had none. That
+  wrapper now stacks with its own 5px gap and zeroes the pull-up locally.
+
 ## Verification
 - `npm run build` clean; `npm run lint` 0 errors (3 pre-existing warnings in
   ForgeAndFableApp/RollDrawer, untouched by this round).

@@ -10,6 +10,7 @@ import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
+import { fixedHpGain, rolledHpGain } from "@/lib/hitPoints";
 import { ordinalLevel } from "@/lib/ledgerCopy";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import "./LevelUpModal.css";
@@ -141,11 +142,15 @@ export default memo(function LevelUpModal({
   // accept without touching the input, so seed both the gain and the
   // "confirmed" flag. Otherwise finish()'s `hasHp && hpRolled` guard would
   // silently skip the HP update when the default was accepted as-is.
-  const manualDefault = Math.max(1, Math.floor(hitDie / 2) + 1 + conMod);
-  const [hpRolled, setHpRolled] = useState(hitPointType === "manual");
+  // Fixed mode: seed immediately — no roll, no manual input needed.
+  const fixedGain = fixedHpGain(hitDie, conMod);
+  const manualDefault = fixedGain;
+  const [hpRolled, setHpRolled] = useState(hitPointType === "manual" || hitPointType === "fixed");
   const [hpRolling, setHpRolling] = useState(false);
   const [hpDieRoll, setHpDieRoll] = useState<number | null>(null);
-  const [hpGained, setHpGained] = useState(hitPointType === "manual" ? manualDefault : 0);
+  const [hpGained, setHpGained] = useState(
+    hitPointType === "manual" ? manualDefault : hitPointType === "fixed" ? fixedGain : 0,
+  );
   const [manualHp, setManualHp] = useState(manualDefault);
   const [pickedSubclass, setPickedSubclass] = useState("");
   const [pickedFeat, setPickedFeat] = useState("");
@@ -247,9 +252,9 @@ export default memo(function LevelUpModal({
   const rollHp = () => {
     if (hpRolling || hpRolled) return;
 
-    const applyResult = (roll: number, total: number) => {
+    const applyResult = (roll: number) => {
       if (!mounted.current) return;
-      const gained = Math.max(1, total);
+      const gained = rolledHpGain(roll, conMod);
       setHpDieRoll(roll);
       setHpGained(gained);
       setHpRolled(true);
@@ -262,13 +267,13 @@ export default memo(function LevelUpModal({
         label: `${className} Hit Points`,
         sides: hitDie,
         modifier: conMod,
-        onResult: ({ roll, total }) => applyResult(roll, total),
+        onResult: ({ roll }) => applyResult(roll),
       });
       return;
     }
 
     const roll = rollDie(hitDie);
-    applyResult(roll, roll + conMod);
+    applyResult(roll);
   };
 
   const applyAsi = (ability: AbilityKey) => {
@@ -471,7 +476,11 @@ export default memo(function LevelUpModal({
                   <div className="level-rite-hp-copy">
                     <h3 className="level-rite-panel-title">Hit points</h3>
                     <p className="level-rite-panel-sub">
-                      Roll 1d{hitDie} {signed(conMod)} to determine your hit point increase.
+                      {hitPointType === "fixed"
+                        ? `Your hit point maximum increases by a fixed +${hpGained}.`
+                        : hitPointType === "manual"
+                          ? `Enter your hit point increase (1d${hitDie} ${signed(conMod)}).`
+                          : `Roll 1d${hitDie} ${signed(conMod)} to determine your hit point increase.`}
                     </p>
                   </div>
 
@@ -483,16 +492,21 @@ export default memo(function LevelUpModal({
                       </strong>
                     </div>
 
-                    {hitPointType === "manual" ? (
+                    {hitPointType === "fixed" ? (
+                      <span className="level-rite-hp-fixed-label">
+                        +{hpGained} HP (fixed)
+                      </span>
+                    ) : hitPointType === "manual" ? (
                       <label className="control-field">
                         <span>HP Gained</span>
                         <input
                           type="number"
                           min={1}
-                          max={hitDie + conMod}
+                          max={Math.max(1, hitDie + conMod)}
                           value={manualHp}
                           onChange={(e) => {
-                            const v = Math.max(1, Math.min(hitDie + conMod, parseInt(e.target.value) || 1));
+                            const maxVal = Math.max(1, hitDie + conMod);
+                            const v = Math.max(1, Math.min(maxVal, parseInt(e.target.value) || 1));
                             setManualHp(v);
                             setHpGained(v);
                             setHpRolled(true);

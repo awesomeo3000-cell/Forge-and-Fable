@@ -22,6 +22,7 @@ import {
   sourceOptions,
   standardArray,
 } from "@/lib/utils";
+import { firstLevelHp, fixedHpGain, rolledHpGain } from "@/lib/hitPoints";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
 import SourceSettingsPanel from "@/components/SourceSettingsPanel";
@@ -199,19 +200,19 @@ export default memo(function CreatorPanel(props: {
   const extraHpLevels = Math.max(0, props.draft.level - 1);
   const startingHpRolls = props.draft.startingHpRolls.slice(0, extraHpLevels);
   const constitutionModifier = abilityModifier(props.finalAbilities.constitution);
-  const firstLevelHp = selectedClass ? Math.max(1, selectedClass.hitDie + constitutionModifier) : 1;
-  const fixedLevelHp = selectedClass ? Math.max(1, Math.floor(selectedClass.hitDie / 2) + 1 + constitutionModifier) : 1;
-  const rolledHpGains = startingHpRolls.map((roll) => Math.max(1, Math.trunc(roll) + constitutionModifier));
+  const firstLevelHP = selectedClass ? firstLevelHp(selectedClass.hitDie, constitutionModifier) : 1;
+  const fixedLevelHP = selectedClass ? fixedHpGain(selectedClass.hitDie, constitutionModifier) : 1;
+  const rolledHpGains = startingHpRolls.map((roll) => rolledHpGain(roll, constitutionModifier));
   const usesRolledStartingHp =
     props.draft.settings.hitPointType === "rolled" && Boolean(selectedClass) && extraHpLevels > 0;
   const startingHpComplete = !usesRolledStartingHp || startingHpRolls.length === extraHpLevels;
   const startingHpPreview =
-    firstLevelHp +
+    firstLevelHP +
     (usesRolledStartingHp
       ? rolledHpGains.reduce((sum, gain) => sum + gain, 0)
-      : extraHpLevels * fixedLevelHp);
+      : extraHpLevels * fixedLevelHP);
   const startingHpDisplay =
-    usesRolledStartingHp && !startingHpComplete ? `${firstLevelHp} + pending rolls` : `${startingHpPreview}`;
+    usesRolledStartingHp && !startingHpComplete ? `${firstLevelHP} + pending rolls` : `${startingHpPreview}`;
   const hpMethodLabel = props.draft.settings.hitPointType === "rolled" ? "rolled" : "fixed";
   const classStepComplete = Boolean(props.draft.classId) && skillsComplete && startingHpComplete;
 
@@ -474,7 +475,7 @@ export default memo(function CreatorPanel(props: {
                         {startingHpDisplay}
                       </small>
                       <small>
-                        Level 1: {firstLevelHp} HP. Later levels use {hpMethodLabel} d{selectedClass.hitDie}
+                        Level 1: {firstLevelHP} HP. Later levels use {hpMethodLabel} d{selectedClass.hitDie}
                         {constitutionModifier !== 0 ? ` ${signed(constitutionModifier)}` : ""}.
                       </small>
                       {usesRolledStartingHp ? (
