@@ -9,6 +9,7 @@ import { computeArmorClass } from "@/lib/equipment";
 import { effectTotal } from "@/lib/effects";
 import { computeFeatBonuses } from "@/lib/featBonuses";
 import { maxSlots } from "@/lib/spellSlots";
+import { approximateHealth } from "@/lib/encounterGenerator";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 import { applyRaceBonuses, abilityModifier } from "@/lib/utils";
 import { ruleset } from "@/lib/ruleset";
@@ -232,6 +233,8 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
 
   // -- flags ---------------------------------------------------------------
   const hidden = raw.hidden === true ? true : undefined;
+  const visibility = ["hidden", "name-only", "name-and-conditions", "approximate-health", "exact-hp", "full-public"].includes(String(raw.visibility))
+    ? raw.visibility as CampaignCombatant["visibility"] : undefined;
   const defeated = raw.defeated === true ? true : undefined;
 
   // -- text fields ---------------------------------------------------------
@@ -261,6 +264,7 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
     ...(tempHp !== undefined ? { tempHp } : {}),
     ...(ac !== undefined ? { ac } : {}),
     ...(hidden ? { hidden: true } : {}),
+    ...(visibility ? { visibility } : {}),
     ...(defeated ? { defeated: true } : {}),
     ...(concentratingOn ? { concentratingOn } : {}),
     ...(conditions.length ? { conditions } : {}),
@@ -304,12 +308,18 @@ function visibleInitiative(initiative: ReturnType<typeof getInitiativeRow>, isDm
   if (isDm) return initiative;
   const currentId = initiative.data.combatants[initiative.data.turnIndex]?.id;
   const combatants = initiative.data.combatants
-    .filter((combatant) => !combatant.hidden)
+    .filter((combatant) => !combatant.hidden && combatant.visibility !== "hidden")
     .map((combatant) => {
       // Stat blocks carry saves/resistances/immunities — DM secrets of the
       // same privacy class as the private note, even on VISIBLE combatants.
-      const { privateNote, conditions, statBlock, ...rest } = combatant;
-      void privateNote; void conditions; void statBlock;
+      const { privateNote, conditions, statBlock, currentHp, maxHp, tempHp, ac, ...rest } = combatant;
+      void privateNote; void statBlock; void tempHp;
+      const visibility = combatant.visibility ?? "name-only";
+      if (visibility === "full-public") return { ...combatant, privateNote: undefined } as CampaignCombatant;
+      if (visibility === "exact-hp") return { ...rest, currentHp, maxHp } as CampaignCombatant;
+      if (visibility === "approximate-health") return { ...rest, healthLabel: approximateHealth(currentHp ?? 0, maxHp ?? 1) } as CampaignCombatant;
+      if (visibility === "name-and-conditions") return { ...rest, conditions } as CampaignCombatant;
+      void conditions; void currentHp; void maxHp; void ac;
       return rest as CampaignCombatant;
     });
   return {

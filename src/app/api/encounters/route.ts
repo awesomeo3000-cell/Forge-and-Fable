@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { createEncounter,listEncounters } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";
+export async function GET(request:Request){try{const userId=await authenticateRequest(request),campaignId=new URL(request.url).searchParams.get("campaignId")??undefined;return NextResponse.json({encounters:listEncounters(userId,campaignId)});}catch(error){return dmToolsError(error,"Could not list encounters.");}}
+export async function POST(request:Request){try{const userId=await authenticateRequest(request),body=await request.json() as {campaignId?:string;encounter?:unknown};return NextResponse.json({encounter:createEncounter(userId,body.encounter??body,body.campaignId)},{status:201});}catch(error){return dmToolsError(error,"Could not create encounter.");}}

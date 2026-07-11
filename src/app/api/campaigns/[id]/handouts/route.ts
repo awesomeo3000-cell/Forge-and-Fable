@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { createHandout,listHandouts } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";type C={params:Promise<{id:string}>};
+export async function GET(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({handouts:listHandouts(id,userId)});}catch(error){return dmToolsError(error,"Could not list handouts.");}}
+export async function POST(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({handout:createHandout(id,userId,await request.json())},{status:201});}catch(error){return dmToolsError(error,"Could not create handout.");}}

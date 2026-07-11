@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { archiveCreature,getCreature,updateCreature } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";type C={params:Promise<{id:string}>};
+export async function GET(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({creature:getCreature(userId,id)});}catch(error){return dmToolsError(error,"Could not load creature.");}}
+export async function PATCH(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({creature:updateCreature(userId,id,await request.json())});}catch(error){return dmToolsError(error,"Could not update creature.");}}
+export async function DELETE(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;archiveCreature(userId,id);return NextResponse.json({ok:true});}catch(error){return dmToolsError(error,"Could not archive creature.");}}

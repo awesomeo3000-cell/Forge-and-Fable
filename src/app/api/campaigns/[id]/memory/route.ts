@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { getPlayerMemory } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";type C={params:Promise<{id:string}>};export async function GET(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json(getPlayerMemory(id,userId));}catch(error){return dmToolsError(error,"Could not load campaign memory.");}}

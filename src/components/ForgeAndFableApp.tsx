@@ -431,9 +431,9 @@ export default function ForgeAndFableApp() {
       } else if (event.type === "handout") {
         const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
         const url = typeof payload.url === "string" ? payload.url.trim() : "";
-        if (url && !processedCampaignEventsRef.current.has(event.id)) {
+        if (!processedCampaignEventsRef.current.has(event.id)) {
           pushToast("announce", `The DM shared a handout: ‹${title}›.`);
-          setCampaignHandout({ title, url });
+          if (url) setCampaignHandout({ title, url });
         }
       }
 
@@ -1763,7 +1763,6 @@ export default function ForgeAndFableApp() {
     <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} />
     <RollDrawer
       history={rollHistory}
-      theme={selected?.theme ?? null}
       rollMode={rollMode}
       rollModeIsFromEffect={rollModeIsFromEffect}
       activeCharacterName={selected?.name}
@@ -1890,7 +1889,6 @@ export default function ForgeAndFableApp() {
       campaign={campaignSync}
       events={campaignEvents}
       currentUserId={user.id}
-      theme={selected?.theme ?? null}
       onOpen={() => setCampaignOpen(true)}
       onToast={(title, body) => pushToast("announce", title, body)}
     /> : null}

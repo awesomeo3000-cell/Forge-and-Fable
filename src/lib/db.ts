@@ -21,7 +21,7 @@ declare global {
   var __forgeDbSchemaRevision: number | undefined;
 }
 
-const SCHEMA_REVISION = 4;
+const SCHEMA_REVISION = 5;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -151,6 +151,98 @@ function createSchema(db: DatabaseSync) {
       version INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS creature_library (
+      id TEXT PRIMARY KEY,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      data TEXT NOT NULL,
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_used_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_creatures_owner_updated ON creature_library(owner_user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creature_library(campaign_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS saved_encounters (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL,
+      origin TEXT NOT NULL,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_used_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_encounters_campaign_updated ON saved_encounters(campaign_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_encounters_owner_updated ON saved_encounters(owner_user_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_handouts (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      data TEXT NOT NULL,
+      shared INTEGER NOT NULL DEFAULT 0,
+      first_shared_at TEXT,
+      last_shared_at TEXT,
+      share_count INTEGER NOT NULL DEFAULT 0,
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_handouts_campaign_updated ON campaign_handouts(campaign_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_journal_entries (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      entry_type TEXT NOT NULL,
+      visibility TEXT NOT NULL,
+      status TEXT NOT NULL,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_journal_campaign_updated ON campaign_journal_entries(campaign_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_sessions (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      session_number INTEGER,
+      title TEXT,
+      started_at TEXT NOT NULL,
+      ended_at TEXT,
+      status TEXT NOT NULL,
+      dm_notes TEXT,
+      summary_json TEXT,
+      published_journal_entry_id TEXT REFERENCES campaign_journal_entries(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_sessions_campaign_started ON campaign_sessions(campaign_id, started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS session_pins (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL REFERENCES campaign_sessions(id) ON DELETE CASCADE,
+      event_id TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_session_pins_session ON session_pins(session_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS encounter_runs (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      encounter_id TEXT REFERENCES saved_encounters(id) ON DELETE SET NULL,
+      session_id TEXT REFERENCES campaign_sessions(id) ON DELETE SET NULL,
+      status TEXT NOT NULL,
+      snapshot_json TEXT NOT NULL,
+      live_json TEXT NOT NULL,
+      started_at TEXT NOT NULL,
+      ended_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_runs_campaign_started ON encounter_runs(campaign_id, started_at DESC);
+
     CREATE INDEX IF NOT EXISTS idx_events_campaign_time ON campaign_events(campaign_id, created_at);
 
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -188,6 +280,7 @@ function migrateSchema(db: DatabaseSync) {
     }
     recordMigration(db, 3, "optimistic character revision");
     recordMigration(db, 4, "campaign audio tracks and now-playing state");
+    recordMigration(db, 5, "pre-session DM tools, campaign memory, and session lifecycle");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

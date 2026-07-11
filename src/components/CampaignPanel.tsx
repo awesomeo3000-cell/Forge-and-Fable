@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
+import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
@@ -468,6 +469,7 @@ export default memo(function CampaignPanel({
 
             {detail ? (
               <>
+                {!isDm ? <CampaignMemoryPanel campaignId={detail.campaign.id}/> : null}
                 <div className="campaign-party-strip">
                   {detail.members.map((member) => (
                     <div key={member.userId} className="campaign-party-card">

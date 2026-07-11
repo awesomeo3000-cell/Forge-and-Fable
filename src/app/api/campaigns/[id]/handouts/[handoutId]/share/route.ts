@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { shareHandout } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";type C={params:Promise<{id:string;handoutId:string}>};export async function POST(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,handoutId}=await params;return NextResponse.json({handout:shareHandout(id,userId,handoutId)});}catch(error){return dmToolsError(error,"Could not share handout.");}}

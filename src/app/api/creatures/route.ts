@@ -1,0 +1,7 @@
+import { NextResponse } from "next/server";
+import { authenticateRequest } from "@/lib/auth";
+import { createCreature, listCreatures } from "@/lib/dmToolsStore";
+import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs"; export const dynamic="force-dynamic";
+export async function GET(request:Request){try{const userId=await authenticateRequest(request),url=new URL(request.url);const num=(key:string)=>{const value=url.searchParams.get(key);return value===null?undefined:Number(value)};return NextResponse.json(listCreatures(userId,{search:url.searchParams.get("search")??undefined,campaignId:url.searchParams.get("campaignId")??undefined,custom:url.searchParams.get("only")==="custom",builtIn:url.searchParams.get("only")==="built-in",type:url.searchParams.get("type")??undefined,environment:url.searchParams.get("environment")??undefined,source:url.searchParams.get("source")??undefined,tag:url.searchParams.get("tag")??undefined,minCr:num("minCr"),maxCr:num("maxCr"),sort:url.searchParams.get("sort")??undefined,limit:num("limit"),offset:num("offset")}));}catch(error){return dmToolsError(error,"Could not list creatures.");}}
+export async function POST(request:Request){try{const userId=await authenticateRequest(request),body=await request.json() as {campaignId?:string;creature?:unknown};const creature=createCreature(userId,body.creature??body,body.campaignId);return NextResponse.json({creature},{status:201});}catch(error){return dmToolsError(error,"Could not create creature.");}}

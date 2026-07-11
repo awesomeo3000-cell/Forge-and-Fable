@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { archiveHandout,updateHandout } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";type C={params:Promise<{id:string;handoutId:string}>};
+export async function PATCH(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,handoutId}=await params;return NextResponse.json({handout:updateHandout(id,userId,handoutId,await request.json())});}catch(error){return dmToolsError(error,"Could not update handout.");}}
+export async function DELETE(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,handoutId}=await params;archiveHandout(id,userId,handoutId);return NextResponse.json({ok:true});}catch(error){return dmToolsError(error,"Could not archive handout.");}}

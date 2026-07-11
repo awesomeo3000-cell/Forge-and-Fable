@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { publishSessionSummary,saveSessionSummary } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";type C={params:Promise<{id:string;sessionId:string}>};
+export async function PUT(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,sessionId}=await params;return NextResponse.json({summary:saveSessionSummary(id,userId,sessionId,await request.json())});}catch(error){return dmToolsError(error,"Could not save summary.");}}
+export async function POST(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,sessionId}=await params;return NextResponse.json({entry:publishSessionSummary(id,userId,sessionId)});}catch(error){return dmToolsError(error,"Could not publish summary.");}}

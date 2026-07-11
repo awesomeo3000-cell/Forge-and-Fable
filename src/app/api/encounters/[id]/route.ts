@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { deleteEncounter,getEncounter,updateEncounter } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";type C={params:Promise<{id:string}>};
+export async function GET(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({encounter:getEncounter(userId,id)});}catch(error){return dmToolsError(error,"Could not load encounter.");}}
+export async function PATCH(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({encounter:updateEncounter(userId,id,await request.json())});}catch(error){return dmToolsError(error,"Could not update encounter.");}}
+export async function DELETE(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;deleteEncounter(userId,id);return NextResponse.json({ok:true});}catch(error){return dmToolsError(error,"Could not delete encounter.");}}

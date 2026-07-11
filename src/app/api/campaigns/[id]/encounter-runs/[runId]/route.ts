@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { updateEncounterRun } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";type C={params:Promise<{id:string;runId:string}>};export async function PATCH(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id,runId}=await params;return NextResponse.json(updateEncounterRun(id,userId,runId,await request.json()));}catch(error){return dmToolsError(error,"Could not update encounter run.");}}

@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { startEncounter } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";type C={params:Promise<{id:string}>};export async function POST(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({run:startEncounter(userId,id)},{status:201});}catch(error){return dmToolsError(error,"Could not start encounter.");}}

@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { listSessions,startSession } from "@/lib/dmToolsStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export const dynamic="force-dynamic";type C={params:Promise<{id:string}>};
+export async function GET(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params;return NextResponse.json({sessions:listSessions(id,userId)});}catch(error){return dmToolsError(error,"Could not list sessions.");}}
+export async function POST(request:Request,{params}:C){try{const userId=await authenticateRequest(request),{id}=await params,body=await request.json().catch(()=>({}));return NextResponse.json({session:startSession(id,userId,body)},{status:201});}catch(error){return dmToolsError(error,"Could not start session.");}}

@@ -27,6 +27,8 @@ export type CampaignCombatant = {
   ac?: number;
 
   hidden?: boolean;
+  visibility?: "hidden" | "name-only" | "name-and-conditions" | "approximate-health" | "exact-hp" | "full-public";
+  healthLabel?: "Unhurt" | "Wounded" | "Bloodied" | "Near death" | "Defeated";
   defeated?: boolean;
   concentratingOn?: string;
 
@@ -62,7 +64,8 @@ export type CampaignEventType =
   | "rest-short"
   | "rest-long"
   | "audio-cue"
-  | "handout";
+  | "handout"
+  | "campaign-audit";
 
 export type CampaignEventPayload =
   | ({ type?: never } & Partial<CharacterEffect>)
