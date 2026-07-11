@@ -97,3 +97,23 @@ This is a **broad MVP, not full completion of every advanced proposal detail**.
 No checkpoint commit was created: the worktree already contained owner changes,
 and combining them into an agent-authored commit would make provenance and
 rollback less reliable.
+
+## Follow-up: formatting normalization (reviewer, 2026-07-11)
+
+The round shipped functional but written in an aggressively minified style
+(one 600-char line in `dmToolsStore.ts`, ~400-char JSX lines in
+`DMPrepPanel.tsx`) — a maintainability hazard for a project handed between
+sessions. Reformatted mechanically with Prettier, tuned to the house style
+observed in clean files (`printWidth 120`, `arrowParens always`,
+`trailingComma all`, double quotes, semicolons):
+
+- `src/lib/dmToolsStore.ts`: 177 → 1263 lines.
+- `src/components/DMPrepPanel.tsx`: 61 → 1332 lines.
+- Only remaining >160-char lines are inline SQL string literals, which
+  Prettier correctly leaves whole.
+
+**Zero logic change** — formatting only, proven by the unchanged suite:
+`npm test` 129/129, `npm run typecheck`, `npm run lint:ci` (0 warnings), and
+`npm run build` all green after. Prettier was NOT added as a project
+dependency; it was invoked one-off via `npx`. Next: the UX design pass on
+`DMPrepPanel` (ledger material + three-face type system).
