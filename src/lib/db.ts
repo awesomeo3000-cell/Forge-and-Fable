@@ -21,7 +21,7 @@ declare global {
   var __forgeDbSchemaRevision: number | undefined;
 }
 
-const SCHEMA_REVISION = 5;
+const SCHEMA_REVISION = 6;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -281,6 +281,30 @@ function migrateSchema(db: DatabaseSync) {
     recordMigration(db, 3, "optimistic character revision");
     recordMigration(db, 4, "campaign audio tracks and now-playing state");
     recordMigration(db, 5, "pre-session DM tools, campaign memory, and session lifecycle");
+    // Rounds before revision 6 did not enforce one character per campaign.
+    // Preserve the newest enrollment and detach older memberships before the
+    // unique index is created. The character and campaign membership remain;
+    // only the stale character assignment is cleared.
+    db.exec(`
+      UPDATE campaign_members AS stale
+      SET character_id = NULL
+      WHERE stale.character_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM campaign_members AS newer
+          WHERE newer.character_id = stale.character_id
+            AND (
+              newer.joined_at > stale.joined_at
+              OR (newer.joined_at = stale.joined_at AND newer.rowid > stale.rowid)
+            )
+        );
+    `);
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_campaign_members_character_unique
+        ON campaign_members(character_id)
+        WHERE character_id IS NOT NULL;
+    `);
+    recordMigration(db, 6, "one campaign enrollment per character; preserve newest enrollment");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

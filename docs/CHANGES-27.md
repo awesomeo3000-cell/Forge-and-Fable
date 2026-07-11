@@ -1,6 +1,6 @@
 # CHANGES-27 — DM-first onboarding and campaign-scoped roles
 
-Implemented from `docs/ai-project-proposal-dm-first-onboarding-campaign-roles.md`.
+Implemented from the DM-first onboarding and campaign-scoped roles implementation plan.
 
 ## What changed
 
@@ -62,7 +62,7 @@ Implemented from `docs/ai-project-proposal-dm-first-onboarding-campaign-roles.md
 ## Verification
 - `npm run lint` — 0 errors, 0 warnings
 - `npm run build` — clean
-- `npm test` — 140/140 tests passed
+- `npm test` — 144/144 tests passed
 - TypeScript: `npx tsc --noEmit` — clean
 
 ## Key design decisions
@@ -79,3 +79,28 @@ Implemented from `docs/ai-project-proposal-dm-first-onboarding-campaign-roles.md
 | `src/components/CampaignPanel.tsx` | Campaign grouping, join flow Create button, onCreateCharacter prop |
 | `src/components/ForgeAndFableApp.tsx` | Onboarding wiring, Run Campaign handler, onCreateCharacter callback |
 | `src/app/globals.css` | Campaign group headings, onboarding panel CSS |
+
+## Review follow-up
+
+- **Schema revision 6:** added a partial unique index on
+  `campaign_members(character_id)` for non-null character IDs. The existing
+  preflight check remains for a friendly campaign-name error, while the index
+  is the final protection against concurrent joins enrolling one character in
+  multiple campaigns. Legacy duplicate assignments are repaired during the
+  migration by retaining the newest enrollment and clearing only the stale
+  membership's character assignment.
+- **Onboarding destinations:** Join now opens directly in the join form, and
+  My Ledger opens the campaign list. Stale active-campaign state is cleared for
+  both paths.
+- **Builder entry:** Create a Character now opens the existing build-mode
+  commission page, preserving the Standard, Quickbuilder, and Premade choices
+  before entering any individual builder flow.
+- **Loading behavior:** character loading is tracked explicitly so first-run
+  onboarding does not flash before the vault request resolves. Campaign launch
+  displays an opening state until the first campaign sync arrives.
+- **Regression coverage:** campaign roles, character metadata, sequential
+  enrollment rejection, and database-level enrollment uniqueness are now tested.
+
+The focused review follow-up was verified with 144 passing tests plus clean
+lint, typecheck,
+and production-build gates after implementation.

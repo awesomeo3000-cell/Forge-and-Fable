@@ -169,6 +169,8 @@ export default function ForgeAndFableApp() {
   }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [campaignInitialView, setCampaignInitialView] = useState<"list" | "join" | null>(null);
+  const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
     () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null,
   );
@@ -311,7 +313,6 @@ export default function ForgeAndFableApp() {
     }
 
     let mounted = true;
-
     fetch("/api/characters", {
       headers: authHeaders(),
     })
@@ -332,15 +333,21 @@ export default function ForgeAndFableApp() {
         if (!data || !mounted) return;
         setCharacters(data.characters);
         setSelectedId((current) => current || data.characters[0]?.id || "");
+        setCharactersLoadedForUser(user.id);
       })
       .catch((error: Error) => {
-        if (mounted) setStatus(error.message);
-      });
+        if (mounted) {
+          setStatus(error.message);
+          setCharactersLoadedForUser(user.id);
+        }
+      })
 
     return () => {
       mounted = false;
     };
   }, [user]);
+
+  const charactersLoading = Boolean(user && charactersLoadedForUser !== user.id);
 
   const selected = useMemo(
     () => characters.find((character) => character.id === selectedId) ?? characters[0] ?? null,
@@ -491,7 +498,7 @@ export default function ForgeAndFableApp() {
   // Onboarding panel replaces forced character creation when the roster is empty
   // and the user hasn't explicitly chosen a path yet.
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const showOnboarding = Boolean(user && characters.length === 0 && !creatorOpen && !creationPromptOpen && !onboardingDismissed);
+  const showOnboarding = Boolean(user && !charactersLoading && characters.length === 0 && !creatorOpen && !creationPromptOpen && !onboardingDismissed);
   const showCreator = creatorOpen;
   const selectedFinalAbilities = useMemo(() => {
     if (!selected || !ruleset) {
@@ -556,6 +563,8 @@ export default function ForgeAndFableApp() {
           // deactivate; a transient 5xx must not eject the player.
           if (!cancelled && (res.status === 404 || res.status === 403 || res.status === 401)) {
             setActiveCampaign(null);
+            setCampaignOpen(false);
+            setCampaignInitialView(null);
           }
           return;
         }
@@ -688,6 +697,7 @@ export default function ForgeAndFableApp() {
       }
 
       setUser(data.user);
+      setCharactersLoadedForUser(null);
       window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
       setAuthInviteCode("");
       setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
@@ -700,6 +710,7 @@ export default function ForgeAndFableApp() {
     void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     saveCoordinatorRef.current?.reset();
     setUser(null);
+    setCharactersLoadedForUser(null);
     setCharacters([]);
     setSelectedId("");
     setCreationPromptOpen(false);
@@ -1930,7 +1941,7 @@ export default function ForgeAndFableApp() {
       />
     ) : null}
     {campaignOpen ? (
-      campaignSync?.campaign.dmUserId === user.id ? <DMTablePanel
+      campaignSync ? (campaignSync.campaign.dmUserId === user.id ? <DMTablePanel
         campaign={campaignSync}
         events={campaignEvents}
         theme={selected?.theme ?? null}
@@ -1942,6 +1953,7 @@ export default function ForgeAndFableApp() {
         characters={characters}
         currentUserId={user.id}
         activeCampaignId={activeCampaignId}
+        initialView={campaignInitialView ?? undefined}
         campaignSync={campaignSync}
         campaignEvents={campaignEvents}
         resolvedEventIds={resolvedCampaignEvents}
@@ -1952,9 +1964,15 @@ export default function ForgeAndFableApp() {
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => setCampaignOpen(false)}
+        onClose={() => { setCampaignOpen(false); setCampaignInitialView(null); }}
         theme={selected?.theme ?? null}
-      />
+      />) : (
+        <div className="modal-scrim" role="status" aria-live="polite">
+          <section className="campaign-panel campaign-loading-panel" aria-label="Loading campaign">
+            <p className="cs-muted">Opening campaign...</p>
+          </section>
+        </div>
+      )
     ) : null}
     {campaignSync && campaignSync.campaign.dmUserId !== user.id ? <CampaignTableStrip
       campaign={campaignSync}
@@ -2092,12 +2110,16 @@ export default function ForgeAndFableApp() {
                 <p className="cs-muted">Loading...</p>
               </div>
             )
+          ) : charactersLoading && !creatorOpen && !creationPromptOpen ? (
+            <div className="paper-surface dj-start" style={{ display: "grid", placeItems: "center", padding: 48 }}>
+              <p className="cs-muted">Loading your ledger...</p>
+            </div>
           ) : showOnboarding ? (
             <OnboardingPanel
               theme={selected?.theme ?? null}
               onStartBuilding={() => {
                 setOnboardingDismissed(true);
-                beginBuild("standard");
+                setCreationPromptOpen(true);
               }}
               onRunCampaign={async (name) => {
                 try {
@@ -2112,6 +2134,7 @@ export default function ForgeAndFableApp() {
                     return false;
                   }
                   setOnboardingDismissed(true);
+                  setCampaignInitialView(null);
                   setActiveCampaign(data.campaign.id);
                   setCampaignOpen(true);
                   setStatus("Campaign created");
@@ -2123,9 +2146,16 @@ export default function ForgeAndFableApp() {
               }}
               onJoinCampaign={() => {
                 setOnboardingDismissed(true);
+                setActiveCampaign(null);
+                setCampaignInitialView("join");
                 setCampaignOpen(true);
               }}
-              onGoToLedger={() => setOnboardingDismissed(true)}
+              onGoToLedger={() => {
+                setOnboardingDismissed(true);
+                setActiveCampaign(null);
+                setCampaignInitialView("list");
+                setCampaignOpen(true);
+              }}
             />
           ) : showCreationPrompt ? (
             <CharacterStartPanel onSelectBuild={beginBuild} rosterEmpty={characters.length === 0} />

@@ -504,11 +504,30 @@ export function joinCampaign(userId: string, code: string, characterId: string):
     throw new Error(`This character is already enrolled in "${existingEnrollment.campaign_name}". Duplicate the character or choose another one.`);
   }
 
-  db.prepare(`
-    INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(campaign_id, user_id) DO UPDATE SET character_id = excluded.character_id, joined_at = excluded.joined_at
-  `).run(campaign.id, userId, characterId, nowIso());
+  try {
+    db.prepare(`
+      INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(campaign_id, user_id) DO UPDATE SET character_id = excluded.character_id, joined_at = excluded.joined_at
+    `).run(campaign.id, userId, characterId, nowIso());
+  } catch (error) {
+    // The partial unique index is the final authority for concurrent joins.
+    // Convert its low-level conflict into the same actionable message as the
+    // friendly preflight check above.
+    if (error instanceof Error && /unique|constraint/i.test(error.message)) {
+      const conflictingCampaign = db.prepare(`
+        SELECT c.name AS campaign_name
+        FROM campaign_members cm
+        JOIN campaigns c ON c.id = cm.campaign_id
+        WHERE cm.character_id = ? AND cm.campaign_id != ?
+        LIMIT 1
+      `).get(characterId, campaign.id) as { campaign_name: string } | undefined;
+      if (conflictingCampaign) {
+        throw new Error(`This character is already enrolled in "${conflictingCampaign.campaign_name}". Duplicate the character or choose another one.`);
+      }
+    }
+    throw error;
+  }
 
   return campaign;
 }

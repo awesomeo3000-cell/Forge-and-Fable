@@ -12,12 +12,13 @@ import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 
-type PanelView = "list" | "create" | "join" | "detail";
+export type CampaignPanelView = "list" | "create" | "join" | "detail";
 
 type Props = {
   characters: Character[];
   currentUserId?: string;
   activeCampaignId: string | null;
+  initialView?: CampaignPanelView;
   campaignSync: CampaignSyncPayload | null;
   campaignEvents: CampaignEvent[];
   resolvedEventIds: Set<string>;
@@ -71,6 +72,7 @@ export default memo(function CampaignPanel({
   characters,
   currentUserId,
   activeCampaignId,
+  initialView,
   campaignSync,
   campaignEvents,
   resolvedEventIds,
@@ -84,7 +86,7 @@ export default memo(function CampaignPanel({
   onClose,
   theme,
 }: Props) {
-  const [view, setView] = useState<PanelView>(activeCampaignId ? "detail" : "list");
+  const [view, setView] = useState<CampaignPanelView>(activeCampaignId ? "detail" : initialView ?? "list");
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(activeCampaignId);
   const [busy, setBusy] = useState(false);
@@ -149,7 +151,8 @@ export default memo(function CampaignPanel({
   useEffect(() => {
     setActiveId(activeCampaignId);
     if (activeCampaignId) setView("detail");
-  }, [activeCampaignId]);
+    else if (initialView) setView(initialView);
+  }, [activeCampaignId, initialView]);
 
   useEffect(() => {
     void loadCampaigns();
