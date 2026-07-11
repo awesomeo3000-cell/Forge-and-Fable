@@ -6,7 +6,7 @@ import { Bell, Check, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, 
 import { FONT_STACKS } from "@/lib/skins";
 import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
-import { summarizeRollRequest } from "@/lib/rollRequest";
+import { summarizeRollRequest, describeRollRequest } from "@/lib/rollRequest";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
@@ -508,13 +508,24 @@ export default memo(function CampaignPanel({
                         Clear all
                       </button>
                     </div>
-                    {visibleEvents.map((event) => (
-                      <div key={event.id} className="campaign-event-card">
-                        <strong>{eventTitle(event)}</strong>
+                    {visibleEvents.map((event) => {
+                      const isRollRequest = event.type === "roll-request";
+                      const desc = isRollRequest ? describeRollRequest(eventPayload(event)) : null;
+                      return (
+                      <div key={event.id} className={`campaign-event-card${isRollRequest ? " campaign-notification" : ""}`}>
+                        {isRollRequest && desc ? (
+                          <>
+                            <span className="campaign-notification-title">{desc.title}</span>
+                            {desc.prompt ? <span className="campaign-notification-prompt">{desc.prompt}</span> : null}
+                            <span className="campaign-notification-meta">{desc.meta}</span>
+                          </>
+                        ) : (
+                          <strong>{eventTitle(event)}</strong>
+                        )}
                         <small>{new Date(event.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
                         <div className="campaign-event-actions">
-                          {event.type === "roll-request" ? (
-                            <button className="dj-btn dj-btn-primary" type="button" onClick={() => onRespondRollRequest(event)}>Roll</button>
+                          {isRollRequest ? (
+                            <button className="dj-btn dj-btn-primary" type="button" onClick={() => onRespondRollRequest(event)}>{desc?.buttonLabel ?? "Roll"}</button>
                           ) : null}
                           {event.type === "rest-short" || event.type === "rest-long" ? (
                             <button className="dj-btn dj-btn-primary" type="button" onClick={() => onAcceptRest(event.type, event.id)}>Apply</button>
@@ -522,7 +533,7 @@ export default memo(function CampaignPanel({
                           <button className="glass-button" type="button" onClick={() => onResolveEvent(event.id)}>Dismiss</button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : null}
 

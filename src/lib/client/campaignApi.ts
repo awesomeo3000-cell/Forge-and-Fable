@@ -96,20 +96,26 @@ export async function submitCampaignInitiativeRoll(
   return payload.initiative;
 }
 
-/** Fire-and-forget roll sharing */
-export function postCampaignRoll(
+/** Posts a roll to the campaign feed and returns the server-created roll row for immediate local merge. */
+export async function postCampaignRoll(
   campaignId: string,
   label: string,
   detail: string,
   total: number,
   characterName: string,
 ) {
-  fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/rolls`, {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/rolls`, {
     method: "POST",
     headers: jsonHeaders,
     credentials: "include",
     body: JSON.stringify({ label, detail, total, characterName }),
-  }).catch(() => { /* fire-and-forget */ });
+  });
+  const data = await response.json().catch(() => ({})) as {
+    roll?: CampaignSyncPayload["rolls"][number];
+    error?: string;
+  };
+  if (!response.ok || !data.roll) throw new Error(data.error ?? "Roll could not be shared.");
+  return data.roll;
 }
 
 export async function listCampaignTracks(campaignId: string) {

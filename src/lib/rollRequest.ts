@@ -58,6 +58,37 @@ export function summarizeRollRequest(payload: RollRequestPayload): string {
   return parts.join(" · ");
 }
 
+/** Structured description for the player's notification card. */
+export type RollRequestDescription = {
+  title: string;        // e.g. "PERCEPTION CHECK"
+  prompt?: string;       // DM's optional free-text
+  meta: string;          // e.g. "DC 15 · Advantage"
+  buttonLabel: string;   // e.g. "Roll with advantage"
+};
+
+export function describeRollRequest(payload: RollRequestPayload): RollRequestDescription {
+  const descriptor = rollRequestDescriptor(payload);
+  const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : undefined;
+  const mode = rollRequestMode(payload);
+  const dc = typeof payload.dc === "number" && Number.isFinite(payload.dc) ? payload.dc : undefined;
+
+  const metaParts: string[] = [];
+  if (dc !== undefined) metaParts.push(`DC ${dc}`);
+  if (mode !== "normal") metaParts.push(mode.charAt(0).toUpperCase() + mode.slice(1));
+  else metaParts.push("Normal roll");
+
+  let buttonLabel = "Roll";
+  if (mode === "advantage") buttonLabel = "Roll with advantage";
+  else if (mode === "disadvantage") buttonLabel = "Roll with disadvantage";
+
+  return {
+    title: descriptor.toUpperCase(),
+    prompt,
+    meta: metaParts.join(" · "),
+    buttonLabel,
+  };
+}
+
 /**
  * 5e RAW: advantage and disadvantage from any number of sources cancel to a
  * normal roll. Combine the DM's requested mode with the character's

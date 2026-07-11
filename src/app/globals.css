@@ -11855,3 +11855,43 @@ button.dj-card {
   white-space: nowrap;
 }
 .dm-inline-check input { min-height: 0; accent-color: var(--doc-accent, #c9a25a); }
+
+/* ── Campaign notification card readability ── */
+.campaign-panel .campaign-event-card strong,
+.campaign-panel .campaign-event-card .campaign-notification-title {
+  color: var(--ink);
+}
+.campaign-notification-title {
+  display: block;
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.campaign-notification-prompt {
+  display: block;
+  color: var(--cp-text-2, var(--ink-2));
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.campaign-notification-meta {
+  display: block;
+  color: var(--cp-text-3, var(--ink-3));
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Campaign button sizing consistency ── */
+.campaign-event-actions > button {
+  min-height: 36px;
+  min-width: 72px;
+}
+.campaign-form-actions > button {
+  min-height: 38px;
+  min-width: 88px;
+}

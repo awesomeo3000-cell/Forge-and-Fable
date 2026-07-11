@@ -251,10 +251,25 @@ export default function ForgeAndFableApp() {
       ...prev,
     ].slice(0, 100));
 
-    // Roll sharing: fire-and-forget POST to active campaign
+    // Share roll to campaign feed and merge immediately so it appears
+    // in the Record/feed without waiting for the next sync poll.
     const campaignId = activeCampaignId;
     if (campaignId && selected?.name) {
-      postCampaignRoll(campaignId, label, detail, total, selected.name);
+      postCampaignRoll(campaignId, label, detail, total, selected.name)
+        .then((roll) => {
+          setCampaignSync((current) => {
+            if (!current || current.campaign.id !== campaignId) return current;
+            const rollById = new Map(current.rolls.map((r) => [r.id, r]));
+            rollById.set(roll.id, roll);
+            const merged = Array.from(rollById.values())
+              .sort((a, b) => a.created_at.localeCompare(b.created_at))
+              .slice(-200);
+            return { ...current, rolls: merged };
+          });
+        })
+        .catch(() => {
+          setStatus("Roll completed locally but could not be shared.");
+        });
     }
   };
 
@@ -1249,11 +1264,35 @@ export default function ForgeAndFableApp() {
     }
   }
 
+  function getEnrolledCharacter(): { character: Character; abilities: Record<AbilityKey, number>; initiative: number } | null {
+    if (!campaignSync || !user || !ruleset) return null;
+    const membership = campaignSync.members.find((m) => m.userId === user.id);
+    if (!membership?.characterId) return null;
+    const character = characters.find((c) => c.id === membership.characterId);
+    if (!character) return null;
+    const raced = applyRaceBonuses(character.abilities, character.raceId, ruleset);
+    const featInfo = computeFeatBonuses(character.asiChoices);
+    const abilities: Record<string, number> = {};
+    for (const key of Object.keys(raced) as AbilityKey[]) {
+      abilities[key] = raced[key] + (featInfo.abilityIncreases?.[key] ?? 0);
+    }
+    const featInitiative = featInfo.initiativeBonus ?? 0;
+    const effectInitiative = effectTotal(character.effects ?? [], "initiative");
+    const customInitiative = (character.customRules ?? [])
+      .filter((rule) => rule.type === "initiative")
+      .reduce((sum, rule) => sum + rule.value, 0);
+    const initiative = abilityModifier(abilities.dexterity) + featInitiative + effectInitiative + customInitiative;
+    return { character, abilities: abilities as Record<AbilityKey, number>, initiative };
+  }
+
   function handleCampaignRollRequest(event: CampaignEvent) {
-    if (!selected || !selectedFinalAbilities) {
-      setStatus("Pick a character before answering the roll request.");
+    const enrolled = getEnrolledCharacter();
+    if (!enrolled) {
+      setStatus(enrolled === null && !campaignSync?.members.find((m) => m.userId === user?.id)?.characterId
+        ? "No character enrolled in this campaign." : "Campaign character unavailable.");
       return;
     }
+    const { character: campaignChar, abilities, initiative: enrolledInitiative } = enrolled;
     const payload = parseCampaignPayload(event);
     // The roll always names itself from its mechanics ("Perception check"),
     // with the DM's optional prompt as a lead-in.
@@ -1272,43 +1311,41 @@ export default function ForgeAndFableApp() {
     // The DM's requested advantage combines with the character's own effect
     // mode under the 5e cancel rule.
     const requestedMode = rollRequestMode(payload);
-    const forcedMode = combineRollModes(requestedMode, effectiveAdvantageMode(selected.effects));
-    const pb = proficiencyBonusFor(selected.level);
+    const forcedMode = combineRollModes(requestedMode, effectiveAdvantageMode(campaignChar.effects));
+    const pb = proficiencyBonusFor(campaignChar.level);
     let modifier = 0;
     let label = prompt;
 
     if (kind === "initiative") {
-      modifier = selectedInitiative ?? 0;
+      modifier = enrolledInitiative;
       label = dc ? `${prompt} (DC ${dc})` : prompt;
     } else if (isSkillRequest && typeof key === "string") {
       const skill = SKILLS.find((item) => item.id === key);
       if (skill) {
         const proficiencies = new Set([
-          ...(selected.skillProficiencies ?? []),
-          ...(BACKGROUND_SKILLS[selected.background] ?? []),
+          ...(campaignChar.skillProficiencies ?? []),
+          ...(BACKGROUND_SKILLS[campaignChar.background] ?? []),
         ]);
-        // Same proficiency tiers as passiveSkillScore: expertise doubles,
-        // proficiency applies once, bard's Jack of All Trades halves.
-        const expertise = selected.skillExpertise?.includes(skill.id) ?? false;
-        const jackOfAllTrades = selected.classId === "bard" && selected.level >= 2 && !proficiencies.has(skill.id);
+        const expertise = campaignChar.skillExpertise?.includes(skill.id) ?? false;
+        const jackOfAllTrades = campaignChar.classId === "bard" && campaignChar.level >= 2 && !proficiencies.has(skill.id);
         modifier =
-          abilityModifier(selectedFinalAbilities[skill.ability]) +
+          abilityModifier(abilities[skill.ability]) +
           (expertise ? pb * 2 : proficiencies.has(skill.id) ? pb : jackOfAllTrades ? Math.floor(pb / 2) : 0);
         label = dc ? `${prompt} (DC ${dc})` : prompt;
       }
     } else if ((kind === "check" || kind === "save") && isAbilityKey(key)) {
-      modifier = abilityModifier(selectedFinalAbilities[key]);
+      modifier = abilityModifier(abilities[key]);
       if (kind === "save") {
         const hasSave =
-          selected.savingThrowProficiencies?.includes(key) ||
-          SAVE_PROFICIENCIES[selected.classId]?.abilities.includes(key);
+          campaignChar.savingThrowProficiencies?.includes(key) ||
+          SAVE_PROFICIENCIES[campaignChar.classId]?.abilities.includes(key);
         if (hasSave) modifier += pb;
       }
       label = dc ? `${prompt} (DC ${dc})` : prompt;
     }
 
     const modeNote = forcedMode !== "normal" ? ` (${forcedMode})` : "";
-    pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(selected.effects)], modifier, `${label}${modeNote}`, (outcome) => {
+    pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(campaignChar.effects)], modifier, `${label}${modeNote}`, (outcome) => {
       if (dc) {
         setStatus(`${prompt}: ${outcome.total} ${outcome.total >= dc ? "passes" : "fails"} DC ${dc}`);
       } else {
