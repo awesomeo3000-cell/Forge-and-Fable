@@ -25,12 +25,11 @@ Implemented from the DM-first onboarding and campaign-scoped roles implementatio
 
 **`src/components/OnboardingPanel.tsx` (NEW)**
 - Replaces the forced `CharacterStartPanel` when the user's vault is empty.
-- Four-choice screen:
+- Two-choice screen:
   1. **Create a Character** — opens the Standard builder
-  2. **Run a Campaign** — reveals a name input; creates a campaign with no character and routes directly to the DM Table
-  3. **Join a Campaign** — opens the CampaignPanel in list view
-  4. **Go to My Ledger** — dismisses onboarding, shows the empty vault + campaign list
-- Callbacks: `onStartBuilding`, `onRunCampaign(name) => Promise<boolean>`, `onJoinCampaign`, `onGoToLedger`
+  2. **Create a Campaign** — reveals a name input; creates a campaign with no character and routes directly to the DM Table
+- Campaign joining is intentionally not offered from onboarding; it belongs to the character-sheet campaign workflow.
+- Callbacks: `onStartBuilding`, `onRunCampaign(name) => Promise<boolean>`
 - Themed from the active character's skin (paper/ink/accent CSS variables).
 
 **`src/components/ForgeAndFableApp.tsx`**
@@ -94,7 +93,9 @@ Implemented from the DM-first onboarding and campaign-scoped roles implementatio
   both paths.
 - **Builder entry:** Create a Character now opens the existing build-mode
   commission page, preserving the Standard, Quickbuilder, and Premade choices
-  before entering any individual builder flow.
+  before entering any individual builder flow. The onboarding choice and
+  every builder stage now include a back path: builder flow → build modes →
+  onboarding choices.
 - **Loading behavior:** character loading is tracked explicitly so first-run
   onboarding does not flash before the vault request resolves. Campaign launch
   displays an opening state until the first campaign sync arrives.

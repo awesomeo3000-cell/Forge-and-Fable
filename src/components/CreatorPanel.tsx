@@ -170,6 +170,7 @@ export default memo(function CreatorPanel(props: {
     constitutionModifier: number;
     onResult: (rolls: number[]) => void;
   }) => void;
+  onBackToBuildModes?: () => void;
   onCreate: () => void;
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
@@ -1105,6 +1106,15 @@ export default memo(function CreatorPanel(props: {
           </section>
 
           <div className="creator-footer dj-footer">
+            {props.onBackToBuildModes ? (
+              <button
+                className="ledger-button"
+                type="button"
+                onClick={props.onBackToBuildModes}
+              >
+                Back to build modes
+              </button>
+            ) : null}
             <button
               className="ledger-button"
               type="button"

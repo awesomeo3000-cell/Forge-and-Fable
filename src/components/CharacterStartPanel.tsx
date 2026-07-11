@@ -21,6 +21,7 @@ const BUILD_MODES: Array<{ mode: BuildMode; label: string; art: string[] }> = [
 
 export default memo(function CharacterStartPanel(props: {
   onSelectBuild: (mode: BuildMode) => void;
+  onBack?: () => void;
   rosterEmpty?: boolean;
 }) {
   const [selectedMode, setSelectedMode] = useState<BuildMode | null>(null);
@@ -73,6 +74,11 @@ export default memo(function CharacterStartPanel(props: {
         })}
       </div>
       <div className="start-actions dj-footer ledger-page-footer">
+        {props.onBack ? (
+          <button type="button" className="ledger-button" onClick={props.onBack}>
+            Back
+          </button>
+        ) : null}
         <button
           type="button"
           className="ledger-button"

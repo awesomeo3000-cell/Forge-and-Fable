@@ -169,7 +169,6 @@ export default function ForgeAndFableApp() {
   }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
-  const [campaignInitialView, setCampaignInitialView] = useState<"list" | "join" | null>(null);
   const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
     () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null,
@@ -564,7 +563,6 @@ export default function ForgeAndFableApp() {
           if (!cancelled && (res.status === 404 || res.status === 403 || res.status === 401)) {
             setActiveCampaign(null);
             setCampaignOpen(false);
-            setCampaignInitialView(null);
           }
           return;
         }
@@ -1953,7 +1951,6 @@ export default function ForgeAndFableApp() {
         characters={characters}
         currentUserId={user.id}
         activeCampaignId={activeCampaignId}
-        initialView={campaignInitialView ?? undefined}
         campaignSync={campaignSync}
         campaignEvents={campaignEvents}
         resolvedEventIds={resolvedCampaignEvents}
@@ -1964,13 +1961,12 @@ export default function ForgeAndFableApp() {
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => { setCampaignOpen(false); setCampaignInitialView(null); }}
+        onClose={() => setCampaignOpen(false)}
         theme={selected?.theme ?? null}
       />) : !activeCampaignId ? <CampaignPanel
         characters={characters}
         currentUserId={user.id}
         activeCampaignId={null}
-        initialView={campaignInitialView ?? "list"}
         campaignSync={null}
         campaignEvents={campaignEvents}
         resolvedEventIds={resolvedCampaignEvents}
@@ -1981,12 +1977,12 @@ export default function ForgeAndFableApp() {
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => { setCampaignOpen(false); setCampaignInitialView(null); }}
+        onClose={() => setCampaignOpen(false)}
         theme={selected?.theme ?? null}
       /> : (
-        <div className="modal-scrim" role="presentation" onMouseDown={() => { setCampaignOpen(false); setActiveCampaign(null); setCampaignInitialView(null); }}>
+        <div className="modal-scrim" role="presentation" onMouseDown={() => { setCampaignOpen(false); setActiveCampaign(null); }}>
           <section className="campaign-panel campaign-loading-panel" aria-label="Loading campaign" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="glass-icon modal-close" type="button" aria-label="Close campaign loading" onClick={() => { setCampaignOpen(false); setActiveCampaign(null); setCampaignInitialView(null); }}>×</button>
+            <button className="glass-icon modal-close" type="button" aria-label="Close campaign loading" onClick={() => { setCampaignOpen(false); setActiveCampaign(null); }}>×</button>
             <p className="cs-muted">Opening campaign...</p>
           </section>
         </div>
@@ -2152,7 +2148,6 @@ export default function ForgeAndFableApp() {
                     return false;
                   }
                   setOnboardingDismissed(true);
-                  setCampaignInitialView(null);
                   setActiveCampaign(data.campaign.id);
                   setCampaignOpen(true);
                   setStatus("Campaign created");
@@ -2162,21 +2157,16 @@ export default function ForgeAndFableApp() {
                   return false;
                 }
               }}
-              onJoinCampaign={() => {
-                setOnboardingDismissed(true);
-                setActiveCampaign(null);
-                setCampaignInitialView("join");
-                setCampaignOpen(true);
-              }}
-              onGoToLedger={() => {
-                setOnboardingDismissed(true);
-                setActiveCampaign(null);
-                setCampaignInitialView("list");
-                setCampaignOpen(true);
-              }}
             />
           ) : showCreationPrompt ? (
-            <CharacterStartPanel onSelectBuild={beginBuild} rosterEmpty={characters.length === 0} />
+            <CharacterStartPanel
+              onSelectBuild={beginBuild}
+              onBack={characters.length === 0 ? () => {
+                setCreationPromptOpen(false);
+                setOnboardingDismissed(false);
+              } : undefined}
+              rosterEmpty={characters.length === 0}
+            />
           ) : showCreator && draftFinalAbilities ? (
             <CreatorPanel
               draft={draft}
@@ -2197,6 +2187,11 @@ export default function ForgeAndFableApp() {
               onAssignmentChange={setAssignment}
               onRollStats={rollStatBlock}
               onRollStartingHp={rollStartingHp}
+              onBackToBuildModes={() => {
+                setCreatorOpen(false);
+                setCreationPromptOpen(true);
+                setBuildMode("standard");
+              }}
               onCreate={createHero}
             />
           ) : selected && selectedFinalAbilities ? (
