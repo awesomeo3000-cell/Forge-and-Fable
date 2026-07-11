@@ -48,6 +48,7 @@ import {
 import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
+import OnboardingPanel from "@/components/OnboardingPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
 import CampaignPanel from "@/components/CampaignPanel";
@@ -487,6 +488,10 @@ export default function ForgeAndFableApp() {
   }, [selected?.theme]);
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
+  // Onboarding panel replaces forced character creation when the roster is empty
+  // and the user hasn't explicitly chosen a path yet.
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const showOnboarding = Boolean(user && characters.length === 0 && !creatorOpen && !creationPromptOpen && !onboardingDismissed);
   const showCreator = creatorOpen;
   const selectedFinalAbilities = useMemo(() => {
     if (!selected || !ruleset) {
@@ -1946,6 +1951,7 @@ export default function ForgeAndFableApp() {
         onAcceptRest={applyCampaignRest}
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
+        onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
         onClose={() => setCampaignOpen(false)}
         theme={selected?.theme ?? null}
       />
@@ -2086,6 +2092,41 @@ export default function ForgeAndFableApp() {
                 <p className="cs-muted">Loading...</p>
               </div>
             )
+          ) : showOnboarding ? (
+            <OnboardingPanel
+              theme={selected?.theme ?? null}
+              onStartBuilding={() => {
+                setOnboardingDismissed(true);
+                beginBuild("standard");
+              }}
+              onRunCampaign={async (name) => {
+                try {
+                  const res = await fetch("/api/campaigns", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name }),
+                  });
+                  const data = await res.json() as { campaign?: { id: string }; error?: string };
+                  if (!res.ok || !data.campaign) {
+                    setStatus(data.error ?? "Campaign could not be created.");
+                    return false;
+                  }
+                  setOnboardingDismissed(true);
+                  setActiveCampaign(data.campaign.id);
+                  setCampaignOpen(true);
+                  setStatus("Campaign created");
+                  return true;
+                } catch {
+                  setStatus("Campaign could not be created.");
+                  return false;
+                }
+              }}
+              onJoinCampaign={() => {
+                setOnboardingDismissed(true);
+                setCampaignOpen(true);
+              }}
+              onGoToLedger={() => setOnboardingDismissed(true)}
+            />
           ) : showCreationPrompt ? (
             <CharacterStartPanel onSelectBuild={beginBuild} rosterEmpty={characters.length === 0} />
           ) : showCreator && draftFinalAbilities ? (

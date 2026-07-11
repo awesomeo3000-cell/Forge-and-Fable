@@ -82,6 +82,9 @@ export type CampaignSummary = {
   dmUserId: string;
   createdAt: string;
   memberCount: number;
+  myRole: "dm" | "player";
+  myCharacterId: string | null;
+  myCharacterName: string | null;
 };
 
 export class CampaignConflictError extends Error {
@@ -490,6 +493,17 @@ export function joinCampaign(userId: string, code: string, characterId: string):
   const charRow = db.prepare("SELECT id FROM characters WHERE id = ? AND user_id = ?").get(characterId, userId) as { id: string } | undefined;
   if (!charRow) throw new Error("Character not found or does not belong to you.");
 
+  // Character eligibility: one character may only be enrolled in one campaign at a time.
+  const existingEnrollment = db.prepare(`
+    SELECT cm.campaign_id, c.name AS campaign_name
+    FROM campaign_members cm
+    JOIN campaigns c ON c.id = cm.campaign_id
+    WHERE cm.character_id = ? AND cm.campaign_id != ?
+  `).get(characterId, campaign.id) as { campaign_id: string; campaign_name: string } | undefined;
+  if (existingEnrollment) {
+    throw new Error(`This character is already enrolled in "${existingEnrollment.campaign_name}". Duplicate the character or choose another one.`);
+  }
+
   db.prepare(`
     INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at)
     VALUES (?, ?, ?, ?)
@@ -501,20 +515,36 @@ export function joinCampaign(userId: string, code: string, characterId: string):
 
 export function listCampaigns(userId: string): CampaignSummary[] {
   const rows = getDb().prepare(`
-    SELECT c.*, (SELECT COUNT(*) FROM campaign_members WHERE campaign_id = c.id) AS member_count
+    SELECT c.*,
+      (SELECT COUNT(*) FROM campaign_members WHERE campaign_id = c.id) AS member_count,
+      cm.character_id AS my_character_id,
+      ch.data AS character_data
     FROM campaigns c
     INNER JOIN campaign_members cm ON cm.campaign_id = c.id AND cm.user_id = ?
+    LEFT JOIN characters ch ON ch.id = cm.character_id AND ch.user_id = ?
     ORDER BY c.created_at DESC
-  `).all(userId) as Array<CampaignRow & { member_count: number }>;
+  `).all(userId, userId) as Array<CampaignRow & { member_count: number; my_character_id: string | null; character_data: string | null }>;
 
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    code: row.code,
-    dmUserId: row.dm_user_id,
-    createdAt: row.created_at,
-    memberCount: row.member_count,
-  }));
+  return rows.map((row) => {
+    let myCharacterName: string | null = null;
+    if (row.my_character_id && row.character_data) {
+      try {
+        const parsed = JSON.parse(row.character_data) as { name?: string };
+        myCharacterName = parsed.name ?? null;
+      } catch { /* character data may be malformed */ }
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      dmUserId: row.dm_user_id,
+      createdAt: row.created_at,
+      memberCount: row.member_count,
+      myRole: row.dm_user_id === userId ? "dm" as const : "player" as const,
+      myCharacterId: row.my_character_id,
+      myCharacterName,
+    };
+  });
 }
 
 // -- Detail / Sync ----------------------------------------------------------

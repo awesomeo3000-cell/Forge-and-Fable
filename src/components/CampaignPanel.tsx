@@ -27,6 +27,7 @@ type Props = {
   onAcceptRest: (type: CampaignEvent["type"], eventId?: string) => void;
   onResolveEvent: (eventId: string) => void;
   onOpenSheet?: (character: Character) => void;
+  onCreateCharacter?: () => void;
   onClose: () => void;
   theme?: CharacterTheme | null;
 };
@@ -79,6 +80,7 @@ export default memo(function CampaignPanel({
   onAcceptRest,
   onResolveEvent,
   onOpenSheet,
+  onCreateCharacter,
   onClose,
   theme,
 }: Props) {
@@ -360,15 +362,42 @@ export default memo(function CampaignPanel({
               <p className="cs-muted campaign-empty">No campaigns yet. Create one or join with a code.</p>
             ) : (
               <div className="campaign-list">
-                {campaigns.map((campaign) => (
-                  <button key={campaign.id} type="button" className="campaign-card" onClick={() => handleSelect(campaign.id)}>
-                    <div className="campaign-card-main">
-                      <strong>{campaign.name}</strong>
-                      <small>{campaign.memberCount} member{campaign.memberCount === 1 ? "" : "s"}</small>
-                    </div>
-                    <span className="campaign-code-badge">Code: {campaign.code}</span>
-                  </button>
-                ))}
+                {(() => {
+                  const running = campaigns.filter((c) => c.myRole === "dm");
+                  const playing = campaigns.filter((c) => c.myRole === "player");
+                  return (
+                    <>
+                      {running.length > 0 ? (
+                        <div className="campaign-group">
+                          <h4 className="campaign-group-heading">CAMPAIGNS I RUN</h4>
+                          {running.map((campaign) => (
+                            <button key={campaign.id} type="button" className="campaign-card" onClick={() => handleSelect(campaign.id)}>
+                              <div className="campaign-card-main">
+                                <strong>{campaign.name}</strong>
+                                <small>DM · {campaign.memberCount} member{campaign.memberCount === 1 ? "" : "s"}</small>
+                              </div>
+                              <span className="campaign-code-badge">Code: {campaign.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      {playing.length > 0 ? (
+                        <div className="campaign-group">
+                          <h4 className="campaign-group-heading">CAMPAIGNS I PLAY IN</h4>
+                          {playing.map((campaign) => (
+                            <button key={campaign.id} type="button" className="campaign-card" onClick={() => handleSelect(campaign.id)}>
+                              <div className="campaign-card-main">
+                                <strong>{campaign.name}</strong>
+                                <small>{campaign.myCharacterName ? `Playing as ${campaign.myCharacterName}` : "Player"} · {campaign.memberCount} member{campaign.memberCount === 1 ? "" : "s"}</small>
+                              </div>
+                              <span className="campaign-code-badge">Code: {campaign.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -418,7 +447,16 @@ export default memo(function CampaignPanel({
                     <option key={character.id} value={character.id}>{character.name} (Level {character.level} {character.classId})</option>
                   ))}
                 </select>
-                {characters.length === 0 ? <p className="cs-muted" style={{ fontSize: "0.8rem", marginTop: 4 }}>You have no characters yet. Create one first from the Vault.</p> : null}
+                {characters.length === 0 ? (
+                  <div className="campaign-no-characters">
+                    <p className="cs-muted">You need a character to join this campaign.</p>
+                    {onCreateCharacter ? (
+                      <button type="button" className="dj-btn dj-btn-primary" onClick={onCreateCharacter}>
+                        <Plus size={14} /> Create a Character
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </label>
               <div className="campaign-form-actions">
                 <button className="glass-button" type="button" onClick={() => setView("list")}>Cancel</button>
