@@ -21,7 +21,7 @@ declare global {
   var __forgeDbSchemaRevision: number | undefined;
 }
 
-const SCHEMA_REVISION = 3;
+const SCHEMA_REVISION = 4;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -129,6 +129,28 @@ function createSchema(db: DatabaseSync) {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS campaign_tracks (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('music', 'cue')),
+      sort INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_campaign_tracks_sort ON campaign_tracks(campaign_id, sort, created_at);
+
+    CREATE TABLE IF NOT EXISTS campaign_audio (
+      campaign_id TEXT PRIMARY KEY REFERENCES campaigns(id) ON DELETE CASCADE,
+      track_id TEXT REFERENCES campaign_tracks(id) ON DELETE SET NULL,
+      url TEXT,
+      title TEXT,
+      loop INTEGER NOT NULL DEFAULT 1,
+      started_at TEXT,
+      version INTEGER NOT NULL DEFAULT 0
+    );
+
     CREATE INDEX IF NOT EXISTS idx_events_campaign_time ON campaign_events(campaign_id, created_at);
 
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -165,6 +187,7 @@ function migrateSchema(db: DatabaseSync) {
       db.exec("ALTER TABLE characters ADD COLUMN revision INTEGER NOT NULL DEFAULT 0");
     }
     recordMigration(db, 3, "optimistic character revision");
+    recordMigration(db, 4, "campaign audio tracks and now-playing state");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

@@ -18,6 +18,8 @@ const EVENT_TYPES: CampaignEventType[] = [
   "roll-request",
   "rest-short",
   "rest-long",
+  "audio-cue",
+  "handout",
 ];
 
 function assertString(value: unknown, label: string, max: number) {
@@ -96,6 +98,13 @@ function sanitizePayload(type: CampaignEventType, payload: unknown) {
     return out;
   }
   if (type === "rest-short" || type === "rest-long") return {};
+  if (type === "audio-cue" || type === "handout") {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Payload must be an object.");
+    const input = payload as Record<string, unknown>;
+    const url = assertString(input.url, "URL", 500);
+    if (!/^https?:\/\//i.test(url)) throw new Error("URL must use http or https.");
+    return { url, title: assertString(input.title, "Title", 60) };
+  }
   throw new Error("Unsupported event type.");
 }
 

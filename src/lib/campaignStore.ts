@@ -8,11 +8,12 @@ import { getDb } from "@/lib/db";
 import { computeArmorClass } from "@/lib/equipment";
 import { effectTotal } from "@/lib/effects";
 import { computeFeatBonuses } from "@/lib/featBonuses";
+import { maxSlots } from "@/lib/spellSlots";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 import { applyRaceBonuses, abilityModifier } from "@/lib/utils";
 import { ruleset } from "@/lib/ruleset";
 import type { Character } from "@/types/game";
-import type { CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
+import type { CampaignAudioState, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 
 // -- Types -----------------------------------------------------------------
 
@@ -40,6 +41,26 @@ export type CampaignRollRow = {
   detail: string;
   total: number;
   created_at: string;
+};
+
+type CampaignTrackRow = {
+  id: string;
+  campaign_id: string;
+  title: string;
+  url: string;
+  kind: "music" | "cue";
+  sort: number;
+  created_at: string;
+};
+
+type CampaignAudioRow = {
+  campaign_id: string;
+  track_id: string | null;
+  url: string | null;
+  title: string | null;
+  loop: number;
+  started_at: string | null;
+  version: number;
 };
 
 export type CampaignDetail = {
@@ -72,6 +93,7 @@ export class CampaignConflictError extends Error {
 const MAX_ROLLS_PER_CAMPAIGN = 200;
 const MAX_EVENTS_PER_CAMPAIGN = 200;
 const EMPTY_INITIATIVE: InitiativeState = { combatants: [], turnIndex: 0, round: 1 };
+const EMPTY_AUDIO: CampaignAudioState = { trackId: null, url: null, title: null, loop: true, startedAt: null, version: 0 };
 
 // -- Helpers ----------------------------------------------------------------
 
@@ -136,11 +158,48 @@ function clampInitiativeState(raw: InitiativeState): InitiativeState {
         name: item.name.slice(0, 80),
         initiative: Math.max(-99, Math.min(99, Math.trunc(item.initiative))),
         ...(item.isPlayer ? { isPlayer: true } : {}),
+        ...(item.hidden === true ? { hidden: true } : {}),
+        ...(item.hp && typeof item.hp.current === "number" && typeof item.hp.max === "number"
+          ? { hp: { current: Math.max(0, Math.min(9999, Math.trunc(item.hp.current))), max: Math.max(1, Math.min(9999, Math.trunc(item.hp.max))) } }
+          : {}),
+        ...(typeof item.ac === "number" ? { ac: Math.max(0, Math.min(99, Math.trunc(item.ac))) } : {}),
+        ...(typeof item.note === "string" && item.note.trim() ? { note: item.note.trim().slice(0, 120) } : {}),
       }))
     : [];
   const round = Math.max(1, Math.min(999, Math.trunc(raw.round || 1)));
   const turnIndex = combatants.length === 0 ? 0 : Math.max(0, Math.min(combatants.length - 1, Math.trunc(raw.turnIndex || 0)));
   return { combatants, turnIndex, round };
+}
+
+function getCampaignAudio(campaignId: string): CampaignAudioState {
+  const row = getDb().prepare("SELECT * FROM campaign_audio WHERE campaign_id = ?").get(campaignId) as CampaignAudioRow | undefined;
+  if (!row) return EMPTY_AUDIO;
+  return {
+    trackId: row.track_id,
+    url: row.url,
+    title: row.title,
+    loop: Boolean(row.loop),
+    startedAt: row.started_at,
+    version: row.version,
+  };
+}
+
+function toTrack(row: CampaignTrackRow): CampaignTrack {
+  return { id: row.id, campaignId: row.campaign_id, title: row.title, url: row.url, kind: row.kind, sort: row.sort, createdAt: row.created_at };
+}
+
+function visibleInitiative(initiative: ReturnType<typeof getInitiativeRow>, isDm: boolean) {
+  if (isDm) return initiative;
+  const currentId = initiative.data.combatants[initiative.data.turnIndex]?.id;
+  const combatants = initiative.data.combatants.filter((combatant) => !combatant.hidden);
+  return {
+    ...initiative,
+    data: {
+      ...initiative.data,
+      combatants,
+      turnIndex: Math.max(0, combatants.findIndex((combatant) => combatant.id === currentId)),
+    },
+  };
 }
 
 function sortCombatants(combatants: InitiativeState["combatants"]) {
@@ -178,6 +237,8 @@ function calculateMemberSummary(
       maxHp: null,
       ac: null,
       passivePerception: null,
+      conditions: [],
+      spellSlots: [],
       ...(isDm ? { characterJson: null } : {}),
     };
   }
@@ -197,6 +258,21 @@ function calculateMemberSummary(
   const passivePerception = perception
     ? 10 + abilityModifier(raced[perception.ability]) + (hasPerception ? 2 + Math.floor((characterJson.level - 1) / 4) : 0)
     : null;
+  const conditions = (characterJson.effects ?? [])
+    .filter((effect) => effect.active && (effect.source === "DM" || effect.advantageMode))
+    .map((effect) => effect.label.slice(0, 32))
+    .slice(0, 8);
+  const casterType = ruleset.classes.find((item) => item.id === characterJson.classId)?.casterType ?? "none";
+  const slots = maxSlots(casterType, characterJson.level, characterJson.classId);
+  const spellSlots = slots
+    .map((max, index) => ({
+      level: index + 1,
+      max,
+      remaining: Math.max(0, max - (casterType === "pact"
+        ? (characterJson.pactSlotsUsed ?? 0)
+        : (characterJson.spellSlotsUsed?.[index + 1] ?? 0))),
+    }))
+    .filter((slot) => slot.max > 0);
 
   return {
     userId,
@@ -209,6 +285,8 @@ function calculateMemberSummary(
     maxHp: characterJson.maxHp,
     ac,
     passivePerception,
+    conditions,
+    spellSlots,
     ...(isDm || userId === viewerUserId ? { characterJson } : {}),
   };
 }
@@ -264,6 +342,8 @@ export function createCampaign(userId: string, name: string): CampaignRow {
       .run(id, userId, createdAt);
     db.prepare("INSERT INTO campaign_initiative (campaign_id, data, version, updated_at) VALUES (?, ?, 0, ?)")
       .run(id, JSON.stringify(EMPTY_INITIATIVE), createdAt);
+    db.prepare("INSERT INTO campaign_audio (campaign_id, loop, version) VALUES (?, 1, 0)")
+      .run(id);
     db.exec("COMMIT");
     return { id, name: trimmedName, code, dm_user_id: userId, created_at: createdAt };
   } catch (e) {
@@ -359,9 +439,74 @@ export function syncCampaign(campaignId: string, userId: string, since?: string)
     },
     events,
     rolls,
-    initiative: getInitiativeRow(campaignId),
+    initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),
     members: listMembers(campaignId, isDm, userId),
+    audio: getCampaignAudio(campaignId),
   };
+}
+
+// -- Soundboard -------------------------------------------------------------
+
+export function listCampaignTracks(campaignId: string, userId: string): CampaignTrack[] {
+  requireMembership(campaignId, userId);
+  return (getDb().prepare("SELECT * FROM campaign_tracks WHERE campaign_id = ? ORDER BY sort ASC, created_at ASC")
+    .all(campaignId) as CampaignTrackRow[]).map(toTrack);
+}
+
+export function addCampaignTrack(campaignId: string, userId: string, input: Omit<CampaignTrack, "id" | "campaignId" | "sort" | "createdAt">): CampaignTrack {
+  requireDm(campaignId, userId);
+  const db = getDb();
+  const row = db.prepare("SELECT COALESCE(MAX(sort), -1) AS max_sort FROM campaign_tracks WHERE campaign_id = ?").get(campaignId) as { max_sort: number };
+  const id = randomUUID();
+  const createdAt = nowIso();
+  db.prepare("INSERT INTO campaign_tracks (id, campaign_id, title, url, kind, sort, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    .run(id, campaignId, input.title, input.url, input.kind, row.max_sort + 1, createdAt);
+  return { id, campaignId, title: input.title, url: input.url, kind: input.kind, sort: row.max_sort + 1, createdAt };
+}
+
+export function deleteCampaignTrack(campaignId: string, userId: string, trackId: string) {
+  requireDm(campaignId, userId);
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const audio = getCampaignAudio(campaignId);
+    if (audio.trackId === trackId) {
+      db.prepare("UPDATE campaign_audio SET track_id = NULL, url = NULL, title = NULL, started_at = NULL, version = version + 1 WHERE campaign_id = ?").run(campaignId);
+    }
+    db.prepare("DELETE FROM campaign_tracks WHERE campaign_id = ? AND id = ?").run(campaignId, trackId);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function updateCampaignAudio(campaignId: string, userId: string, trackId: string | null, version: number): CampaignAudioState {
+  requireDm(campaignId, userId);
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const current = getCampaignAudio(campaignId);
+    if (current.version !== version) throw new CampaignConflictError("Audio changed. Refetch and try again.");
+    let track: CampaignTrackRow | undefined;
+    if (trackId) {
+      track = db.prepare("SELECT * FROM campaign_tracks WHERE campaign_id = ? AND id = ? AND kind = 'music'").get(campaignId, trackId) as CampaignTrackRow | undefined;
+      if (!track) throw new Error("Music track not found.");
+    }
+    const nextVersion = version + 1;
+    const startedAt = track ? nowIso() : null;
+    db.prepare(`
+      INSERT INTO campaign_audio (campaign_id, track_id, url, title, loop, started_at, version)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO UPDATE SET track_id = excluded.track_id, url = excluded.url, title = excluded.title,
+        loop = excluded.loop, started_at = excluded.started_at, version = excluded.version
+    `).run(campaignId, track?.id ?? null, track?.url ?? null, track?.title ?? null, track ? 1 : 0, startedAt, nextVersion);
+    db.exec("COMMIT");
+    return { trackId: track?.id ?? null, url: track?.url ?? null, title: track?.title ?? null, loop: Boolean(track), startedAt, version: nextVersion };
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 // -- Rolls / Events ---------------------------------------------------------

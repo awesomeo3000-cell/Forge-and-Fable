@@ -51,6 +51,8 @@ import CharacterStartPanel from "@/components/CharacterStartPanel";
 import CreatorPanel from "@/components/CreatorPanel";
 import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
 import CampaignPanel from "@/components/CampaignPanel";
+import DMTablePanel from "@/components/DMTablePanel";
+import CampaignTableStrip from "@/components/CampaignTableStrip";
 import CharacterImportModal from "@/components/CharacterImportModal";
 import QuickbuilderPanel from "@/components/QuickbuilderPanel";
 import HeroSheet from "@/components/HeroSheet";
@@ -171,6 +173,7 @@ export default function ForgeAndFableApp() {
   const [campaignSync, setCampaignSync] = useState<CampaignSyncPayload | null>(null);
   const [campaignEvents, setCampaignEvents] = useState<CampaignEvent[]>([]);
   const [resolvedCampaignEvents, setResolvedCampaignEvents] = useState<Set<string>>(() => new Set());
+  const [campaignHandout, setCampaignHandout] = useState<{ title: string; url: string } | null>(null);
   const [readOnlyViewChar, setReadOnlyViewChar] = useState<Character | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState("");
@@ -417,6 +420,13 @@ export default function ForgeAndFableApp() {
         const message = typeof payload.message === "string" ? payload.message.trim() : "";
         if (message && !processedCampaignEventsRef.current.has(event.id)) {
           pushToast("announce", message);
+        }
+      } else if (event.type === "handout") {
+        const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
+        const url = typeof payload.url === "string" ? payload.url.trim() : "";
+        if (url && !processedCampaignEventsRef.current.has(event.id)) {
+          pushToast("announce", `The DM shared a handout: ‹${title}›.`);
+          setCampaignHandout({ title, url });
         }
       }
 
@@ -1834,7 +1844,15 @@ export default function ForgeAndFableApp() {
       />
     ) : null}
     {campaignOpen ? (
-      <CampaignPanel
+      campaignSync?.campaign.dmUserId === user.id ? <DMTablePanel
+        campaign={campaignSync}
+        events={campaignEvents}
+        theme={selected?.theme ?? null}
+        onClose={() => setCampaignOpen(false)}
+        onOpenSheet={(character) => setReadOnlyViewChar(character)}
+        onPostEvent={postCampaignEvent}
+        onInitiativeUpdate={updateCampaignInitiative}
+      /> : <CampaignPanel
         characters={characters}
         currentUserId={user.id}
         activeCampaignId={activeCampaignId}
@@ -1850,6 +1868,24 @@ export default function ForgeAndFableApp() {
         onClose={() => setCampaignOpen(false)}
         theme={selected?.theme ?? null}
       />
+    ) : null}
+    {campaignSync && campaignSync.campaign.dmUserId !== user.id ? <CampaignTableStrip
+      campaign={campaignSync}
+      events={campaignEvents}
+      currentUserId={user.id}
+      onOpen={() => setCampaignOpen(true)}
+      onToast={(title, body) => pushToast("announce", title, body)}
+    /> : null}
+    {campaignHandout ? (
+      <div className="modal-scrim" role="presentation" onMouseDown={() => setCampaignHandout(null)}>
+        <figure className="campaign-handout" onMouseDown={(event) => event.stopPropagation()}>
+          <button type="button" className="glass-icon modal-close" onClick={() => setCampaignHandout(null)} aria-label="Close handout"><X size={18}/></button>
+          {/* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={campaignHandout.url} alt={campaignHandout.title}/>
+          <figcaption>{campaignHandout.title}</figcaption>
+        </figure>
+      </div>
     ) : null}
     {readOnlyViewChar ? (
       <div className="modal-scrim" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>

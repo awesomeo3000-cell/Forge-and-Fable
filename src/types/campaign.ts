@@ -5,6 +5,10 @@ export type InitiativeCombatant = {
   name: string;
   initiative: number;
   isPlayer?: boolean;
+  hidden?: boolean;
+  hp?: { current: number; max: number };
+  ac?: number;
+  note?: string;
 };
 
 export type InitiativeState = {
@@ -19,7 +23,9 @@ export type CampaignEventType =
   | "announce"
   | "roll-request"
   | "rest-short"
-  | "rest-long";
+  | "rest-long"
+  | "audio-cue"
+  | "handout";
 
 export type CampaignEventPayload =
   | ({ type?: never } & Partial<CharacterEffect>)
@@ -30,7 +36,8 @@ export type CampaignEventPayload =
       kind: "initiative" | "save" | "check" | "skill";
       key: AbilityKey | string;
       dc?: number;
-    };
+    }
+  | { url: string; title: string };
 
 export type CampaignEvent = {
   id: string;
@@ -53,7 +60,28 @@ export type CampaignMemberSummary = {
   maxHp: number | null;
   ac: number | null;
   passivePerception: number | null;
+  conditions: string[];
+  spellSlots: Array<{ level: number; remaining: number; max: number }>;
   characterJson?: Character | null;
+};
+
+export type CampaignTrack = {
+  id: string;
+  campaignId: string;
+  title: string;
+  url: string;
+  kind: "music" | "cue";
+  sort: number;
+  createdAt: string;
+};
+
+export type CampaignAudioState = {
+  trackId: string | null;
+  url: string | null;
+  title: string | null;
+  loop: boolean;
+  startedAt: string | null;
+  version: number;
 };
 
 export type CampaignSyncPayload = {
@@ -80,4 +108,5 @@ export type CampaignSyncPayload = {
     updatedAt: string | null;
   };
   members: CampaignMemberSummary[];
+  audio: CampaignAudioState;
 };

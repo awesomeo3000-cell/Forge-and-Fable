@@ -96,7 +96,11 @@ export default memo(function CampaignPanel({
   const [rollDc, setRollDc] = useState("");
   const [conditionLabel, setConditionLabel] = useState("Poisoned");
   const [conditionTarget, setConditionTarget] = useState("");
-  const triggerRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const detail = activeId && campaignSync?.campaign.id === activeId ? campaignSync : null;
   const isDm = Boolean(detail && currentUserId && detail.campaign.dmUserId === currentUserId);
@@ -126,19 +130,16 @@ export default memo(function CampaignPanel({
   }, []);
 
   useEffect(() => {
-    triggerRef.current = document.activeElement as HTMLElement | null;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
-        queueMicrotask(() => triggerRef.current?.focus());
+        onCloseRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
-      queueMicrotask(() => triggerRef.current?.focus());
     };
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     setActiveId(activeCampaignId);

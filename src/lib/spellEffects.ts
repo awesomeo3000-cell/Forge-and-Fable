@@ -1,9 +1,7 @@
 import type { SpellData } from "@/types/game";
 import type {
-  SpellEffect,
   SpellDamageEffect,
   SpellHealingEffect,
-  SpellScaling,
   ParsedDice,
   DiceRollResult,
   ResolvedSpellRoll,

@@ -1,4 +1,4 @@
-import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
+import type { CampaignAudioState, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 
 const jsonHeaders: Record<string, string> = {
   "Content-Type": "application/json",
@@ -110,4 +110,40 @@ export function postCampaignRoll(
     credentials: "include",
     body: JSON.stringify({ label, detail, total, characterName }),
   }).catch(() => { /* fire-and-forget */ });
+}
+
+export async function listCampaignTracks(campaignId: string) {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/tracks`, { credentials: "include" });
+  const payload = await response.json().catch(() => ({})) as { tracks?: CampaignTrack[]; error?: string };
+  if (!response.ok) throw new Error(payload.error ?? "Could not load tracks.");
+  return payload.tracks ?? [];
+}
+
+export async function addCampaignTrack(campaignId: string, track: Pick<CampaignTrack, "title" | "url" | "kind">) {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/tracks`, {
+    method: "POST", headers: jsonHeaders, credentials: "include", body: JSON.stringify(track),
+  });
+  const payload = await response.json().catch(() => ({})) as { track?: CampaignTrack; error?: string };
+  if (!response.ok || !payload.track) throw new Error(payload.error ?? "Could not add track.");
+  return payload.track;
+}
+
+export async function deleteCampaignTrack(campaignId: string, trackId: string) {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/tracks?trackId=${encodeURIComponent(trackId)}`, {
+    method: "DELETE", headers: jsonHeaders, credentials: "include",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(payload.error ?? "Could not delete track.");
+  }
+}
+
+export async function updateCampaignAudio(campaignId: string, trackId: string | null, version: number) {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/audio`, {
+    method: "PUT", headers: jsonHeaders, credentials: "include", body: JSON.stringify({ trackId, version }),
+  });
+  const payload = await response.json().catch(() => ({})) as { audio?: CampaignAudioState; error?: string };
+  if (response.status === 409) return { conflict: true as const };
+  if (!response.ok || !payload.audio) throw new Error(payload.error ?? "Could not update table audio.");
+  return { conflict: false as const, audio: payload.audio };
 }

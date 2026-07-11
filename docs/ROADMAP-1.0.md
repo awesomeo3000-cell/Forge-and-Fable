@@ -109,7 +109,9 @@ R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R1
 | R16 | §3.12 conditions + §4.18 campaigns v1 | Strong |
 | R17 | §3.14 multiclassing (optional for 1.0 — cut if scope demands) | Strong |
 | R18 | Builder/vault visual overhaul — "The Ledger" → `ai-project-proposal-18.md` (owner-driven, added 2026-07-08; CX tier, 4 sub-rounds a–d, each reviewed) | CX + review |
+| R23 | R21 verification gate + 409 alignment → `ai-project-proposal-23-r21-review.md` (2026-07-10; completes §7's concurrency test) | CX + review |
 | — | Release gate (§7), tag 1.0 | — |
+| R24 | POST-1.0 flagship: Campaigns v2 "The Table" → `ai-project-proposal-24-campaigns-v2.md` (DM screen, party strip, **soundboard/audio push**, monsters + hidden initiative, unified log, handouts, player table strip; 5 sub-rounds a–e) | CX + review |
 
 **Progress note (2026-07-10):** Everything through R18 is done and reviewed, plus post-roadmap rounds: 17b/17c (spell-workflow + level-up rules accuracy — cantrips, artificer slots, wizard swap, expertise), CHANGES-19 (level-up modal "The Entry" redesign), CHANGES-20 (HP correctness + vitest suite + CI — 74+ tests, `npm test`), CHANGES-21 (foundation hardening: character revisions w/ If-Match/409/428 + client save coordinator, retroactive CON/Tough HP, schema migrations, `/api/health`, `db:backup`, Railway/Render fixes; **its verification section is UNRECORDED — needs a review round**), CHANGES-22 (pictorial build-mode threshold). `playwright` moved to devDependencies. Remaining before the §7 gate: R21 review + two-browser concurrency test; R17 multiclassing stays optional.
 
