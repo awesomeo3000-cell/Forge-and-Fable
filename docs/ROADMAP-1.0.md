@@ -64,10 +64,10 @@ The process that produced everything below, refined over nine rounds:
 
 ## 4. Play features
 
-15. **Initiative tracker** — DM-less party order list (even local-only: add combatants, sort, advance turns) as a drawer tab or section. [CX]
+15. **[Closed R16/R24] Initiative tracker** — shared, versioned initiative with DM-owned combatants (HP/AC/note/hidden), turn advancement, and player-side initiative-roll autopopulate. Delivered as part of the campaign Table rather than a standalone drawer tab.
 16. **Short-rest spell recovery nuances** — wizard Arcane Recovery, warlock already done. [DS with exact rules in spec.]
 17. **Roll history export/clear + longer retention** (currently 30, session-only). [DS]
-18. **Campaigns/party play** — the login screen has promised it forever: party codes, shared roll feed, DM view of member sheets. Requires §5 first. Design doc before any proposal; polling beats websockets for v1. [Architecture: strongest agent; surfaces: CX.]
+18. **[Closed R16/R24] Campaigns/party play** — party codes, shared roll feed, DM view of member sheets, DM push events (roll requests, rests, conditions, handouts, audio), full-screen DM "Table" surface, player table strip, soundboard. R16 built the push architecture; R24 delivered The Table.
 
 ## 5. Infrastructure (gate for hosting + campaigns)
 
@@ -115,6 +115,6 @@ R14 → `ai-project-proposal-14.md` · R15 → `ai-project-proposal-15.md` · R1
 
 **Progress note (2026-07-10):** Everything through R18 is done and reviewed, plus post-roadmap rounds: 17b/17c (spell-workflow + level-up rules accuracy — cantrips, artificer slots, wizard swap, expertise), CHANGES-19 (level-up modal "The Entry" redesign), CHANGES-20 (HP correctness + vitest suite + CI — 74+ tests, `npm test`), CHANGES-21 (foundation hardening: character revisions w/ If-Match/409/428 + client save coordinator, retroactive CON/Tough HP, schema migrations, `/api/health`, `db:backup`, Railway/Render fixes; **its verification section is UNRECORDED — needs a review round**), CHANGES-22 (pictorial build-mode threshold). `playwright` moved to devDependencies. Remaining before the §7 gate: R21 review + two-browser concurrency test; R17 multiclassing stays optional.
 
-**Progress note (2026-07-08):** R16 a/b/c implemented and REVIEWED — approved with fixes. The API layer passed adversarial testing as shipped; four client-side push-chain bugs (cursor seeding, wrong-character targeting, cursor overrun, panel-gated polling) were found and fixed during review, plus themed push toasts and campaign-panel theme inheritance. Full record: `CHANGES-16-review.md`. Known minors carried forward: stale initiative PUT returns 400 not 409; `playwright` still in prod dependencies; 16c shipped without its own changelog (code verified real).
+**Progress note (2026-07-08):** R16 a/b/c implemented and REVIEWED — approved with fixes. The API layer passed adversarial testing as shipped; four client-side push-chain bugs (cursor seeding, wrong-character targeting, cursor overrun, panel-gated polling) were found and fixed during review, plus themed push toasts and campaign-panel theme inheritance. Full record: `CHANGES-16-review.md`. Known minors carried forward: stale initiative PUT returns 400 not 409; `playwright` moved to devDependencies (R21+). The missing `CHANGES-16c.md` was created retroactively on 2026-07-10 (code was verified real at review time).
 
 Rounds R10–R15 are fully executable from this document plus the QA report. R13 and R16 deserve fresh design passes before their proposals are written — whoever writes them: read the landmine list twice, and verify in the running app like every round before you.
