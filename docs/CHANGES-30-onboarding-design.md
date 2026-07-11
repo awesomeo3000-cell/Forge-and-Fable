@@ -33,6 +33,21 @@ Fixed:
   720p), 72px seals, 19px titles. It reads as a full parchment page with two
   substantial choices, not a small card in a box.
 
+## Follow-up: pictorial cards (owner request)
+The two choices now use the builder's threshold-card treatment — full-bleed
+ink-washed art + bottom scrim + caption. Two named files drop into
+`public/Start/`:
+- `onboard-character.jpg` — an outline/silhouette of a hero.
+- `onboard-campaign.jpg` — two hands working puppeteer control bars (the DM).
+Graceful two-state design (`OnboardingPanel`): each card starts in a
+seal-icon fallback (centered dark-ink caption on parchment) and flips to
+art-mode on image load (seal hidden, art+scrim at full opacity, caption
+anchored bottom-left in paper-light ink). Verified both states by computed
+style: fallback seal `display:grid` + ink `rgb(42,32,24)` centered; art-mode
+seal `display:none`, scrim/art opacity 1, name `rgb(236,225,201)`, content
+`align-content:end`. Cards ~374px tall. Ships polished with zero art;
+lights up when the files land.
+
 ## Verification
 - `npm run build` clean; `npm test` 144/144; `npm run typecheck` clean;
   `npm run lint:ci` 0 warnings.

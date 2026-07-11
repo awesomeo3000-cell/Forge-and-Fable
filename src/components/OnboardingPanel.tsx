@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useState } from "react";
-import { Loader2, Plus, Swords } from "lucide-react";
+import { Loader2, Swords, UserPlus } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
 import type { CharacterTheme } from "@/types/game";
 
@@ -10,6 +10,27 @@ type Props = {
   onStartBuilding: () => void;
   onRunCampaign: (name: string) => Promise<boolean>;
 };
+
+/* Art lives in public/Start/ — drop the files to light the cards; until then
+   each card shows its seal-icon fallback. Same ink-wash as the builder cards. */
+const CHOICES = [
+  {
+    key: "character" as const,
+    art: "/Start/onboard-character.jpg",
+    Icon: UserPlus,
+    name: "Create a character",
+    desc: "Build a hero now — join a campaign whenever one calls.",
+    go: "Begin the commission ⟶",
+  },
+  {
+    key: "campaign" as const,
+    art: "/Start/onboard-campaign.jpg",
+    Icon: Swords,
+    name: "Run a campaign",
+    desc: "Open a table and prepare as DM. No character required.",
+    go: "Take the DM’s chair ⟶",
+  },
+];
 
 export default memo(function OnboardingPanel({
   theme,
@@ -20,6 +41,8 @@ export default memo(function OnboardingPanel({
   const [campaignName, setCampaignName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Cards start in the seal-fallback state; each flips to full art on load.
+  const [loadedArt, setLoadedArt] = useState<Set<string>>(new Set());
 
   const handleRunCampaign = async () => {
     const name = campaignName.trim();
@@ -58,18 +81,36 @@ export default memo(function OnboardingPanel({
 
       {mode === "choose" ? (
         <div className="onboarding-choices">
-          <button type="button" className="onboarding-choice" onClick={onStartBuilding}>
-            <span className="onboarding-choice-seal" aria-hidden="true"><Plus size={24} strokeWidth={1.6} /></span>
-            <span className="onboarding-choice-name">Create a character</span>
-            <span className="onboarding-choice-desc">Build a hero now — join a campaign whenever one calls.</span>
-            <span className="onboarding-choice-go">Begin the commission ⟶</span>
-          </button>
-          <button type="button" className="onboarding-choice" onClick={() => setMode("run-campaign")}>
-            <span className="onboarding-choice-seal" aria-hidden="true"><Swords size={24} strokeWidth={1.6} /></span>
-            <span className="onboarding-choice-name">Run a campaign</span>
-            <span className="onboarding-choice-desc">Open a table and prepare as DM. No character required.</span>
-            <span className="onboarding-choice-go">Take the DM&apos;s chair ⟶</span>
-          </button>
+          {CHOICES.map(({ key, art, Icon, name, desc, go }) => {
+            const hasArt = loadedArt.has(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`onboard-card${hasArt ? " has-art" : ""}`}
+                onClick={key === "character" ? onStartBuilding : () => setMode("run-campaign")}
+              >
+                <span className="onboard-card-art" aria-hidden="true">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={art}
+                    alt=""
+                    loading="lazy"
+                    draggable={false}
+                    onLoad={() => setLoadedArt((s) => new Set(s).add(key))}
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                </span>
+                <span className="onboard-card-scrim" aria-hidden="true" />
+                <span className="onboard-card-seal" aria-hidden="true"><Icon size={26} strokeWidth={1.6} /></span>
+                <span className="onboard-card-caption">
+                  <span className="onboard-card-name">{name}</span>
+                  <span className="onboard-card-desc">{desc}</span>
+                  <span className="onboard-card-go">{go}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="onboarding-form">
