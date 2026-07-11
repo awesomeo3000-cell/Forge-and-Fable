@@ -18,6 +18,21 @@ boxed inputs, generic muted grays. Brought into the ledger world.
   paper page, seal circles, hairline input, two-weight type, seal-red accent,
   responsive 2→1 column at 640px.
 
+## Follow-up: "small box in a big brown box"
+The paper card was shrink-wrapped and floating high on the dark studio surface,
+which still showed its `--desk` brown background + border behind it (because
+`onboarding-panel` lacked the `dj-start` class the transparency rule keyed on).
+Fixed:
+- Added `.onboarding-panel` to `studio-surface:has(...)` → surface goes
+  transparent/borderless behind it (verified: surface bg + border both
+  `rgba(0,0,0,0)`), same as the character-start and builder pages.
+- The panel now fills the surface (`min-height: calc(100dvh - 102px)`) and
+  centers its content vertically — no dark void below (verified: panel 618px
+  of 618 available, `justify-content: center`).
+- Cards given real presence: `min-height` up to 340px (measured 302px at
+  720p), 72px seals, 19px titles. It reads as a full parchment page with two
+  substantial choices, not a small card in a box.
+
 ## Verification
 - `npm run build` clean; `npm test` 144/144; `npm run typecheck` clean;
   `npm run lint:ci` 0 warnings.

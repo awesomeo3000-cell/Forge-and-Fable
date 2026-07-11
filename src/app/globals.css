@@ -704,7 +704,8 @@ button:disabled {
 }
 
 .studio-surface:has(.dj-dossier),
-.studio-surface:has(.dj-start) {
+.studio-surface:has(.dj-start),
+.studio-surface:has(.onboarding-panel) {
   border-color: transparent;
   background: transparent;
   padding-bottom: 0;
@@ -11869,30 +11870,34 @@ button.dj-card {
 }
 
 /* ── First-run onboarding: the ledger opens ── */
+/* A full-height paper page (like the character-start screen), not a small
+   card floating on the dark desk — content is centered in the surface. */
 .onboarding-panel {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 26px;
-  max-width: 780px;
-  margin: 0 auto;
-  padding: clamp(28px, 4vw, 40px);
+  gap: clamp(28px, 5vh, 52px);
+  min-height: calc(100dvh - 102px);
+  padding: clamp(28px, 5vw, 56px);
   text-align: center;
 }
-.onboarding-masthead { width: 100%; }
+.onboarding-masthead { width: min(760px, 100%); }
 .onboarding-masthead h2 { margin: 0; }
 
 .onboarding-choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  width: 100%;
+  gap: clamp(16px, 2.5vw, 28px);
+  width: min(760px, 100%);
 }
 .onboarding-choice {
   display: grid;
   justify-items: center;
-  gap: 8px;
-  padding: 30px 22px 22px;
+  align-content: center;
+  gap: 10px;
+  min-height: clamp(240px, 42vh, 340px);
+  padding: 32px 26px;
   border: 1px solid var(--ledger-edge, #c9bb98);
   border-radius: var(--r-sm, 3px);
   background: color-mix(in srgb, var(--ledger-tint, #e2d5b8) 55%, var(--ledger-paper, #e9dfc8));
@@ -11910,9 +11915,9 @@ button.dj-card {
 .onboarding-choice-seal {
   display: grid;
   place-items: center;
-  width: 60px;
-  height: 60px;
-  margin-bottom: 4px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--ledger-seal, #8c2f22) 88%, #14100a);
   color: var(--ledger-paper, #e9dfc8);
@@ -11923,7 +11928,7 @@ button.dj-card {
 .onboarding-choice-name {
   color: var(--ledger-ink, #2a2018);
   font-family: var(--ledger-font, var(--font-body));
-  font-size: 17px;
+  font-size: 19px;
   font-variant: small-caps;
   font-weight: 600;
   letter-spacing: 0.04em;
