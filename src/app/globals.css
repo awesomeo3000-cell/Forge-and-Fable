@@ -12111,3 +12111,156 @@ button.dj-card {
   min-height: 38px;
   min-width: 88px;
 }
+
+/* ── R31: login as a ledger frontispiece ──
+   The card becomes a parchment title-page floating on the atmospheric world
+   backdrop; the hero copy stays light on the dark scene. Scoped to
+   .login-card.ledger-card so shared .control-field / .mode-switch are untouched
+   elsewhere. */
+
+/* Hero side: seal glyph + measured display type on the dark backdrop */
+.entry-screen .brand-line { color: var(--parchment); font-weight: 500; letter-spacing: 0.16em; }
+.entry-screen .brand-seal {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 85%, #14100a);
+  color: var(--parchment);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--parchment) 26%, transparent);
+  transform: rotate(-6deg);
+}
+.entry-copy h1 { font-weight: 500; }
+
+/* The parchment frontispiece */
+.login-card.ledger-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 16px;
+  padding: clamp(26px, 3vw, 36px);
+  border: 1px solid var(--ledger-edge, #c9bb98);
+  border-radius: var(--r-sm, 3px);
+  background: var(--ledger-paper, #e9dfc8);
+  color: var(--ledger-ink, #2a2018);
+  box-shadow: var(--shadow-soft, 0 18px 48px rgba(0, 0, 0, 0.45));
+  backdrop-filter: none;
+  font-family: var(--ledger-font, var(--font-body));
+}
+.login-card.ledger-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--grain);
+  background-size: 140px 140px;
+  opacity: 0.05;
+}
+.login-card.ledger-card > * { position: relative; z-index: 1; }
+
+/* Heading with registry double rule */
+.login-card.ledger-card .login-heading {
+  position: relative;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ledger-ink, #2a2018);
+}
+.login-card.ledger-card .login-heading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  border-top: 1px solid color-mix(in srgb, var(--ledger-ink, #2a2018) 26%, var(--ledger-paper, #e9dfc8));
+}
+.login-card.ledger-card .login-heading h2 {
+  margin: 0;
+  color: var(--ledger-ink, #2a2018);
+  font-family: var(--font-display, var(--ledger-font));
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-shadow: none;
+}
+
+/* Login/Register as ledger tabs */
+.login-card.ledger-card .mode-switch {
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule, #cfc2a2);
+  border-radius: 0;
+  background: transparent;
+}
+.login-card.ledger-card .mode-switch button {
+  min-height: 38px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-faded, #7a6a52);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.login-card.ledger-card .mode-switch button:hover { color: var(--ledger-ink, #2a2018); }
+.login-card.ledger-card .mode-switch button.active {
+  margin-bottom: -1px;
+  border-bottom-color: var(--ledger-seal, #8c2f22);
+  background: transparent;
+  color: var(--ledger-seal, #8c2f22);
+}
+
+/* Fields: small-caps labels, hairline-bottom inputs, seal focus */
+.login-card.ledger-card .control-field { gap: 5px; }
+.login-card.ledger-card .control-field span {
+  color: var(--ledger-faded, #7a6a52);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.login-card.ledger-card .control-field input {
+  min-height: 42px;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-rule, #cfc2a2);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ledger-ink, #2a2018);
+  font-family: var(--ledger-font, var(--font-body));
+  font-size: 17px;
+}
+.login-card.ledger-card .control-field input::placeholder { color: color-mix(in srgb, var(--ledger-ink, #2a2018) 40%, var(--ledger-paper, #e9dfc8)); }
+.login-card.ledger-card .control-field input:focus {
+  border-bottom-color: var(--ledger-seal, #8c2f22);
+  box-shadow: none;
+}
+
+.login-card.ledger-card .auth-status {
+  min-height: 20px;
+  color: var(--ledger-seal, #8c2f22);
+  font-family: var(--ledger-font, var(--font-body));
+  font-size: 13px;
+  font-style: italic;
+}
+.login-card.ledger-card .login-submit {
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* The legacy .login-heading span rule (gold, weight 760) outranks
+   .ledger-eyebrow; restore the eyebrow inside the ledger card. */
+.login-card.ledger-card .login-heading span {
+  color: var(--ledger-faded, #7a6a52);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
