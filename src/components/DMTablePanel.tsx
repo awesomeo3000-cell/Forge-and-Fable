@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
+import { Check, Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import DMPrepPanel from "@/components/DMPrepPanel";
@@ -9,6 +9,7 @@ import { D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effect
 import { abilityKeys, abilityNames } from "@/lib/utils";
 import { SKILLS } from "@/lib/srd";
 import { reminderMatches, type ReminderContext } from "@/lib/encounterGenerator";
+import { summarizeRollRequest } from "@/lib/rollRequest";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import type { CampaignHandout, CampaignSession, EncounterRun } from "@/types/dmTools";
@@ -42,7 +43,7 @@ function eventLine(event: CampaignEvent) {
   if (event.type === "condition-remove") return `Condition removed: ${payload.label ?? "Effect"}.`;
   if (event.type === "handout") return `Handout shared: ${payload.title ?? "Untitled"}.`;
   if (event.type === "audio-cue") return `Cue played: ${payload.title ?? "Untitled"}.`;
-  if (event.type === "roll-request") return `Roll requested: ${payload.prompt ?? "Check"}.`;
+  if (event.type === "roll-request") return `Roll requested: ${summarizeRollRequest(payload)}.`;
   if (event.type === "campaign-audit") return `${String(payload.action ?? "Campaign update").replaceAll("-", " ")}: ${payload.name ?? payload.title ?? ""}`.trim();
   return "Table event.";
 }
@@ -60,7 +61,10 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [checkScope, setCheckScope] = useState<"ability" | "skill">("ability");
   const [rollKey, setRollKey] = useState("dexterity");
   const [rollDc, setRollDc] = useState("");
+  const [rollAdvantage, setRollAdvantage] = useState<"normal" | "advantage" | "disadvantage">("normal");
+  const [rollRevealDc, setRollRevealDc] = useState(false);
   const [rollTarget, setRollTarget] = useState("all");
+  const [codeCopied, setCodeCopied] = useState(false);
   const [conditionTarget, setConditionTarget] = useState("");
   const [conditionLabel, setConditionLabel] = useState(CONDITION_PRESETS[0]?.label ?? "Poisoned");
   const [conditionIsCustom, setConditionIsCustom] = useState(false);
@@ -184,15 +188,20 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   };
 
   const requestRoll = async () => {
+    // The prompt is optional — the roll auto-describes from kind + key.
     const prompt = rollRequest.trim();
-    if (!prompt) return;
     const keyType = rollKind === "check" && checkScope === "skill" ? "skill" : "ability";
-    const payload: Record<string, unknown> = { prompt, kind: rollKind, keyType, key: rollKind === "initiative" ? "dexterity" : rollKey };
-    if (rollKind !== "initiative") {
-      const dc = Number(rollDc);
-      if (rollDc.trim() && Number.isFinite(dc)) payload.dc = dc;
+    const payload: Record<string, unknown> = { kind: rollKind, keyType, key: rollKind === "initiative" ? "dexterity" : rollKey };
+    if (prompt) payload.prompt = prompt;
+    if (rollAdvantage !== "normal") payload.advantage = rollAdvantage;
+    // A hidden DC is never sent to the player — omitting it keeps the number
+    // off the player's client entirely; the DM eyeballs the result.
+    const dc = Number(rollDc);
+    if (rollKind !== "initiative" && rollRevealDc && rollDc.trim() && Number.isFinite(dc)) payload.dc = dc;
+    if (await onPostEvent("roll-request", payload, rollTarget === "all" ? null : rollTarget)) {
+      setRollRequest("");
+      setRollAdvantage("normal");
     }
-    if (await onPostEvent("roll-request", payload, rollTarget === "all" ? null : rollTarget)) setRollRequest("");
   };
 
   const applyCondition = async (type: "condition-apply" | "condition-remove") => {
@@ -245,7 +254,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
 
   return (
     <section className="dm-table" style={theme ? ({ "--paper": theme.paper, "--ink": theme.ink, "--doc-accent": theme.accent } as React.CSSProperties) : undefined}>
-      <header className="dm-table-head"><div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}</span><h2>{campaign.campaign.name}</h2></div><div><button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Prepare</button><button type="button" className="dm-table-code" onClick={() => navigator.clipboard.writeText(campaign.campaign.code).catch(() => {})}>Code {campaign.campaign.code} <Copy size={13} /></button><button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button></div></header>
+      <header className="dm-table-head"><div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}</span><h2>{campaign.campaign.name}</h2></div><div><button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Prepare</button><button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button><button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button></div></header>
       {error ? <p className="dm-table-error">{error}</p> : null}
       {activeEncounter ? <section className="dm-live-encounter">
         <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
@@ -346,8 +355,16 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                   {abilityKeys.map((key) => <option key={key} value={key}>{abilityNames[key]}{rollKind === "save" ? " save" : ""}</option>)}
                 </select>
               ) : null}
+              <select aria-label="Advantage" value={rollAdvantage} onChange={(event) => setRollAdvantage(event.target.value as typeof rollAdvantage)}>
+                <option value="normal">Straight roll</option>
+                <option value="advantage">Advantage</option>
+                <option value="disadvantage">Disadvantage</option>
+              </select>
               {rollKind !== "initiative" ? <input placeholder="DC" type="number" value={rollDc} onChange={(event) => setRollDc(event.target.value)} /> : null}
-              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void requestRoll().then(() => setActiveCommand(null))} disabled={!rollRequest.trim()}>Request roll</button>
+              {rollKind !== "initiative" && rollDc.trim() ? (
+                <label className="dm-inline-check"><input type="checkbox" checked={rollRevealDc} onChange={(event) => setRollRevealDc(event.target.checked)} /> Show DC to players</label>
+              ) : null}
+              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void requestRoll().then(() => setActiveCommand(null))}>Request roll</button>
             </div>
           ) : null}
           {activeCommand === "condition" ? (

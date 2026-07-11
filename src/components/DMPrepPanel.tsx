@@ -327,37 +327,40 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
       <section className="dm-prep" role="dialog" aria-modal="true" aria-label="DM preparation tools">
         <header>
           <div>
-            <span>CAMPAIGN WORKSHOP</span>
+            <span>Campaign workshop</span>
             <h2>Prepare the session</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close preparation tools">
             <X />
           </button>
         </header>
-        <nav aria-label="Preparation sections">
-          {(
-            [
-              ["creatures", "Creatures", Library],
-              ["encounters", "Encounters", Swords],
-              ["generator", "Generator", Dices],
-              ["handouts", "Handouts", Send],
-              ["journal", "Journal", BookOpen],
-              ["sessions", "Sessions", Play],
-            ] as const
-          ).map(([id, label, Icon]) => (
-            <button key={id} type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
-              <Icon size={15} />
-              {label}
-            </button>
-          ))}
-        </nav>
-        {status ? (
-          <p className="dm-prep-status" role="status">
-            {status}
-          </p>
-        ) : null}
-        <main>
-          {tab === "creatures" ? (
+        <div className="dm-prep-body">
+          <nav className="dm-prep-rail" aria-label="Preparation sections">
+            <span className="dm-prep-rail-label">Sections</span>
+            {(
+              [
+                ["creatures", "Creatures", Library],
+                ["encounters", "Encounters", Swords],
+                ["generator", "Generator", Dices],
+                ["handouts", "Handouts", Send],
+                ["journal", "Journal", BookOpen],
+                ["sessions", "Sessions", Play],
+              ] as const
+            ).map(([id, label, Icon]) => (
+              <button key={id} type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+                <Icon size={15} />
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="dm-prep-content">
+            {status ? (
+              <p className="dm-prep-status" role="status">
+                {status}
+              </p>
+            ) : null}
+            <main>
+              {tab === "creatures" ? (
             <div className="dm-prep-split">
               <section>
                 <div className="dm-prep-toolbar">
@@ -1325,7 +1328,9 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
               ) : null}
             </section>
           ) : null}
-        </main>
+            </main>
+          </div>
+        </div>
       </section>
     </div>
   );

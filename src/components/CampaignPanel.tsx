@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
+import { Bell, Check, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
 import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
@@ -97,6 +97,7 @@ export default memo(function CampaignPanel({
   const [rollDc, setRollDc] = useState("");
   const [conditionLabel, setConditionLabel] = useState("Poisoned");
   const [conditionTarget, setConditionTarget] = useState("");
+  const [copiedCode, setCopiedCode] = useState("");
   const onCloseRef = useRef(onClose);
 
   useEffect(() => {
@@ -250,7 +251,12 @@ export default memo(function CampaignPanel({
   };
 
   const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code).catch(() => {});
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        setCopiedCode(code);
+        window.setTimeout(() => setCopiedCode((current) => (current === code ? "" : current)), 1600);
+      })
+      .catch(() => setError("Could not copy the code — copy it by hand."));
   };
 
   const sendAnnouncement = async () => {
@@ -345,8 +351,8 @@ export default memo(function CampaignPanel({
               <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setNewName(""); setCreatedCode(""); setError(""); setView("create"); }}>
                 <Plus size={16} /> New Campaign
               </button>
-              <button className="glass-button" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
-                <Users size={16} /> Join
+              <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
+                <Users size={16} /> Join a Campaign
               </button>
             </div>
             {campaigns.length === 0 ? (
@@ -375,7 +381,7 @@ export default memo(function CampaignPanel({
                 <p>Share this code with your players.</p>
                 <div className="campaign-code-display">
                   <strong>{createdCode}</strong>
-                  <button className="glass-button" type="button" onClick={() => copyCode(createdCode)}><Copy size={14} /> Copy</button>
+                  <button className={`glass-button${copiedCode === createdCode ? " is-copied" : ""}`} type="button" onClick={() => copyCode(createdCode)}>{copiedCode === createdCode ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}</button>
                 </div>
                 <button className="dj-btn dj-btn-primary" type="button" onClick={() => setView("detail")}>Open Campaign</button>
               </div>
@@ -429,8 +435,8 @@ export default memo(function CampaignPanel({
               <div>
                 <strong>{detail?.campaign.name ?? "Loading campaign..."}</strong>
                 {detail ? (
-                  <button className="campaign-code-badge campaign-code-button" type="button" onClick={() => copyCode(detail.campaign.code)}>
-                    Code: {detail.campaign.code} <Copy size={12} />
+                  <button className={`campaign-code-badge campaign-code-button${copiedCode === detail.campaign.code ? " is-copied" : ""}`} type="button" onClick={() => copyCode(detail.campaign.code)}>
+                    {copiedCode === detail.campaign.code ? <>Copied to clipboard <Check size={12} /></> : <>Code: {detail.campaign.code} <Copy size={12} /></>}
                   </button>
                 ) : null}
               </div>

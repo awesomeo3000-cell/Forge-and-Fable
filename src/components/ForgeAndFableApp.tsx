@@ -69,6 +69,7 @@ import { POINT_BUY_BUDGET, SPLASH_DURATION_MS } from "@/lib/constants";
 import { computeFeatBonuses } from "@/lib/featBonuses";
 import { applyCreationHpBonuses } from "@/lib/derivedStats";
 import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effects";
+import { combineRollModes, rollRequestDescriptor, rollRequestMode, summarizeRollRequest } from "@/lib/rollRequest";
 import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
 import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
@@ -423,10 +424,10 @@ export default function ForgeAndFableApp() {
         }
       } else if (event.type === "roll-request") {
         // The Roll button lives in the campaign panel; surface the ask so a
-        // player on their sheet knows to open it.
-        const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "a roll";
+        // player on their sheet knows to open it — with the full description
+        // (what, advantage, revealed DC).
         if (!processedCampaignEventsRef.current.has(event.id)) {
-          pushToast("turn", "The DM asks for a roll", prompt);
+          pushToast("turn", "The DM asks for a roll", summarizeRollRequest(payload));
         }
       } else if (event.type === "handout") {
         const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
@@ -1243,14 +1244,24 @@ export default function ForgeAndFableApp() {
       return;
     }
     const payload = parseCampaignPayload(event);
-    const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "Requested roll";
+    // The roll always names itself from its mechanics ("Perception check"),
+    // with the DM's optional prompt as a lead-in.
+    const descriptor = rollRequestDescriptor(payload);
+    const promptText = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "";
+    const prompt = promptText ? `${promptText} — ${descriptor}` : descriptor;
     const kind = typeof payload.kind === "string" ? payload.kind : "check";
     // keyType arrives from the DM form's check → ability|skill fork; legacy
     // events expressed skills as kind "skill" directly.
     const keyType = typeof payload.keyType === "string" ? payload.keyType : kind === "skill" ? "skill" : "ability";
     const isSkillRequest = keyType === "skill" || kind === "skill";
     const key = payload.key;
+    // DC is only present when the DM chose to reveal it; a hidden DC never
+    // reaches this client.
     const dc = typeof payload.dc === "number" && Number.isFinite(payload.dc) ? payload.dc : undefined;
+    // The DM's requested advantage combines with the character's own effect
+    // mode under the 5e cancel rule.
+    const requestedMode = rollRequestMode(payload);
+    const forcedMode = combineRollModes(requestedMode, effectiveAdvantageMode(selected.effects));
     const pb = proficiencyBonusFor(selected.level);
     let modifier = 0;
     let label = prompt;
@@ -1285,12 +1296,15 @@ export default function ForgeAndFableApp() {
       label = dc ? `${prompt} (DC ${dc})` : prompt;
     }
 
-    pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(selected.effects)], modifier, label, (outcome) => {
+    const modeNote = forcedMode !== "normal" ? ` (${forcedMode})` : "";
+    pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(selected.effects)], modifier, `${label}${modeNote}`, (outcome) => {
       if (dc) {
         setStatus(`${prompt}: ${outcome.total} ${outcome.total >= dc ? "passes" : "fails"} DC ${dc}`);
+      } else {
+        setStatus(`${prompt}: rolled ${outcome.total}`);
       }
       resolveCampaignEvent(event.id);
-    });
+    }, forcedMode);
   }
 
   function applyCampaignRest(type: CampaignEvent["type"], eventId?: string) {
@@ -1402,16 +1416,19 @@ export default function ForgeAndFableApp() {
     modifier: number,
     label: string,
     onResult?: (outcome: RollOutcome) => void,
+    forcedMode?: RollMode,
   ) {
+    // A forced mode (e.g. a DM roll request) overrides the drawer/effect mode.
+    const activeMode = forcedMode ?? rollMode;
     const cleaned = groups.filter((g) => g.count > 0);
     const totalCount = cleaned.reduce((s, g) => s + g.count, 0);
-    const useD20Mode = rollMode !== "normal" && cleaned.some((g) => g.sides === 20) && !cleaned.some((g) => g.keepHighest);
+    const useD20Mode = activeMode !== "normal" && cleaned.some((g) => g.sides === 20) && !cleaned.some((g) => g.keepHighest);
     const d20Total = cleaned.reduce((s, g) => s + (g.sides === 20 ? g.count : 0), 0);
     const extraDice = useD20Mode ? d20Total : 0; // one extra die per d20 for adv/dis pair
     if (totalCount === 0 || totalCount + extraDice > 40) return;
 
     if (useD20Mode) {
-      const mode = rollMode === "advantage" ? "advantage" : "disadvantage";
+      const mode = activeMode === "advantage" ? "advantage" : "disadvantage";
       const rolledDice: { sides: number; value: number }[] = [];
       const newDice: RollingDie[] = [];
       let index = 0;
