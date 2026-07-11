@@ -6666,6 +6666,15 @@ button.dj-card {
   border-bottom-color: var(--doc-accent);
 }
 
+/* These inputs live on the light ledger page; the base .qb-name-input
+   placeholder is a dark-theme light-parchment color that vanishes on
+   parchment. Override with a legible faded ink. */
+.dj-name-field input::placeholder,
+.dj-qb-name .qb-name-input::placeholder {
+  color: color-mix(in srgb, var(--ink, #2a2018) 42%, var(--paper, #e9dfc8));
+  opacity: 1;
+}
+
 .dj-settings-panel .settings-panel,
 .dj-notes-grid {
   display: grid;
