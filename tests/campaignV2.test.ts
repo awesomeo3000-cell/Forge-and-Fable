@@ -26,11 +26,24 @@ describe("campaign v2 store", () => {
     const campaign = createCampaign("dm", "Review Table");
     joinCampaign("player", campaign.code, player.id);
     updateCampaignInitiative(campaign.id, "dm", { round: 1, turnIndex: 0, combatants: [
-      { id: "monster:secret", name: "Secret monster", initiative: 18, hidden: true, hp: { current: 12, max: 12 }, ac: 14 },
-      { id: "monster:open", name: "Open monster", initiative: 11 },
+      { id: "monster:secret", name: "Secret monster", initiative: 18, kind: "enemy", hidden: true, currentHp: 12, maxHp: 12, ac: 14, privateNote: "the DM's secret", conditions: [{ id: "c1", label: "Enraged" }] },
+      { id: "monster:open", name: "Open monster", initiative: 11, kind: "enemy" },
     ] }, 0);
     expect(syncCampaign(campaign.id, "player").initiative.data.combatants.map((item) => item.id)).toEqual(["monster:open"]);
     expect(syncCampaign(campaign.id, "dm").initiative.data.combatants).toHaveLength(2);
+
+    // DM sees private data
+    const dmCombatants = syncCampaign(campaign.id, "dm").initiative.data.combatants;
+    const secret = dmCombatants.find((c) => c.id === "monster:secret" as unknown)!;
+    expect(secret.privateNote).toBe("the DM's secret");
+    expect(secret.conditions).toHaveLength(1);
+
+    // Player should NOT see privateNote or conditions (stripped in visibleInitiative);
+    // the hidden combatant is already filtered, so check the open one has no private data leakage.
+    const playerCombatants = syncCampaign(campaign.id, "player").initiative.data.combatants;
+    const open = playerCombatants.find((c) => c.id === "monster:open" as unknown)!;
+    expect(open.privateNote).toBeUndefined();
+    expect(open.conditions).toBeUndefined();
 
     const track = addCampaignTrack(campaign.id, "dm", { title: "Tavern", url: "https://example.test/tavern.mp3", kind: "music" });
     const audio = updateCampaignAudio(campaign.id, "dm", track.id, 0);

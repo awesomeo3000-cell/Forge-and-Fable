@@ -305,7 +305,11 @@ function visibleInitiative(initiative: ReturnType<typeof getInitiativeRow>, isDm
   const currentId = initiative.data.combatants[initiative.data.turnIndex]?.id;
   const combatants = initiative.data.combatants
     .filter((combatant) => !combatant.hidden)
-    .map(({ privateNote: _p, conditions: _c, ...rest }) => rest as CampaignCombatant);
+    .map((combatant) => {
+      const { privateNote, conditions, ...rest } = combatant;
+      void privateNote; void conditions;
+      return rest as CampaignCombatant;
+    });
   return {
     ...initiative,
     data: {

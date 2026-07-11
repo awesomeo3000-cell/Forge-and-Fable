@@ -123,12 +123,15 @@ function loadInitiative(): InitiativeState {
         typeof item.name === "string" &&
         typeof item.initiative === "number",
       )
-      .map((item) => ({
-        id: item.id,
-        name: item.name.slice(0, 80),
-        initiative: Math.max(-99, Math.min(99, Math.trunc(item.initiative))),
-        ...(item.isPlayer ? { isPlayer: true } : {}),
-      }));
+      .map((item) => {
+        const isPC = item.kind === "player" || (item as Record<string, unknown>).isPlayer === true;
+        return {
+          id: item.id,
+          name: item.name.slice(0, 80),
+          initiative: Math.max(-99, Math.min(99, Math.trunc(item.initiative))),
+          kind: isPC ? "player" as const : "enemy" as const,
+        };
+      })
     return clampTurnIndex({
       combatants,
       turnIndex: typeof parsed.turnIndex === "number" ? parsed.turnIndex : 0,
@@ -389,7 +392,7 @@ export default memo(function RollDrawer(props: {
           id: crypto.randomUUID(),
           name: cleanName,
           initiative: Math.max(-99, Math.min(99, Math.trunc(initiative))),
-          ...(isPlayer ? { isPlayer: true } : {}),
+          kind: isPlayer ? "player" as const : "enemy" as const,
         },
       ];
       const sortedNext = sortCombatants(combatants);
@@ -663,7 +666,7 @@ export default memo(function RollDrawer(props: {
                     <div key={combatant.id} className={`initiative-row${combatant.id === currentCombatantId ? " active" : ""}`}>
                       <span>
                         <strong>{combatant.name}</strong>
-                        {combatant.isPlayer ? <em>PC</em> : null}
+                        {combatant.kind === "player" ? <em>PC</em> : null}
                       </span>
                       <b>{combatant.initiative}</b>
                       {canManageInitiative ? (
