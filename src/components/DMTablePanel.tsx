@@ -3,11 +3,15 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
+import { EFFECT_PRESETS } from "@/lib/effects";
 import { FONT_STACKS } from "@/lib/skins";
 import { abilityKeys, abilityNames } from "@/lib/utils";
 import { SKILLS } from "@/lib/srd";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
+
+/** Condition presets that a DM can apply. Matches the player-facing CampaignPanel dropdown. */
+const CONDITION_PRESETS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
 
 type Props = {
   campaign: CampaignSyncPayload;
@@ -54,7 +58,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [rollDc, setRollDc] = useState("");
   const [rollTarget, setRollTarget] = useState("all");
   const [conditionTarget, setConditionTarget] = useState("");
-  const [conditionLabel, setConditionLabel] = useState("");
+  const [conditionLabel, setConditionLabel] = useState(CONDITION_PRESETS[0]?.label ?? "Poisoned");
   const [handoutTitle, setHandoutTitle] = useState("");
   const [handoutUrl, setHandoutUrl] = useState("");
   const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" as CampaignCombatant["kind"] });
@@ -152,7 +156,25 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
 
   const applyCondition = async (type: "condition-apply" | "condition-remove") => {
     if (!conditionTarget || !conditionLabel.trim()) return;
-    if (await onPostEvent(type, { label: conditionLabel.trim() }, conditionTarget)) setConditionLabel("");
+    const payload: Record<string, unknown> = { label: conditionLabel.trim() };
+    // For apply, include the preset's mechanical fields so the condition
+    // actually has teeth (advantage/disadvantage, exhaustion stack, etc.).
+    if (type === "condition-apply") {
+      const preset = CONDITION_PRESETS.find((p) => p.label === conditionLabel);
+      if (preset) {
+        if (preset.advantageMode) payload.advantageMode = preset.advantageMode;
+        if (preset.stack) payload.stack = preset.stack;
+        if (preset.d20Dice) payload.d20Dice = preset.d20Dice;
+        for (const key of ["ac", "attack", "damage", "saves", "checks", "initiative"] as const) {
+          if (preset[key] !== undefined) payload[key] = preset[key];
+        }
+        if (preset.sense) payload.sense = preset.sense;
+      }
+    }
+    if (await onPostEvent(type, payload, conditionTarget)) {
+      setConditionLabel("");
+      setActiveCommand(null);
+    }
   };
 
   const tableThemeVars = theme ? ({
@@ -284,8 +306,10 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           ) : null}
           {activeCommand === "condition" ? (
             <div className="dm-inline-form">
-              <select value={conditionTarget} onChange={(event) => setConditionTarget(event.target.value)}><option value="">Condition target</option>{campaign.members.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
-              <input placeholder="Condition" value={conditionLabel} onChange={(event) => setConditionLabel(event.target.value)} />
+              <select value={conditionTarget} onChange={(event) => setConditionTarget(event.target.value)}><option value="">Target player</option>{players.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
+              <select aria-label="Condition" value={conditionLabel} onChange={(event) => setConditionLabel(event.target.value)}>
+                {CONDITION_PRESETS.map((preset) => <option key={preset.label} value={preset.label}>{preset.label}</option>)}
+              </select>
               <button type="button" className="dm-btn dm-btn-primary" onClick={() => void applyCondition("condition-apply")} disabled={!conditionTarget || !conditionLabel.trim()}>Apply</button>
               <button type="button" className="dm-btn" onClick={() => void applyCondition("condition-remove")} disabled={!conditionTarget || !conditionLabel.trim()}>Remove</button>
             </div>

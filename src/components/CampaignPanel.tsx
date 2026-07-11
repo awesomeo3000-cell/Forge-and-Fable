@@ -275,7 +275,20 @@ export default memo(function CampaignPanel({
   const sendCondition = async (type: "condition-apply" | "condition-remove") => {
     const label = conditionLabel.trim();
     if (!label || !conditionTarget) return;
-    await onPostEvent(type, { label }, conditionTarget);
+    const payload: Record<string, unknown> = { label };
+    if (type === "condition-apply") {
+      const preset = CONDITION_OPTIONS.find((p) => p.label === label);
+      if (preset) {
+        if (preset.advantageMode) payload.advantageMode = preset.advantageMode;
+        if (preset.stack) payload.stack = preset.stack;
+        if (preset.d20Dice) payload.d20Dice = preset.d20Dice;
+        for (const key of ["ac", "attack", "damage", "saves", "checks", "initiative"] as const) {
+          if (preset[key] !== undefined) payload[key] = preset[key];
+        }
+        if (preset.sense) payload.sense = preset.sense;
+      }
+    }
+    await onPostEvent(type, payload, conditionTarget);
   };
 
   return createPortal(
