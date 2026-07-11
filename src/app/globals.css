@@ -11114,6 +11114,102 @@ button.dj-card {
 }
 .dm-inline-form input[type="checkbox"] { flex: 0; min-height: 0; accent-color: var(--doc-accent, #c9a25a); }
 
+/* Custom condition sub-form (mirrors HeroSheet's cs-effect-form for the DM's desk). */
+.dm-custom-condition-form {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.dm-custom-condition-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dm-custom-condition-row select,
+.dm-custom-condition-row input {
+  flex: 1 1 100px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 22%, transparent);
+  background: transparent;
+  color: var(--paper, #e9dfc8);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+}
+.dm-custom-condition-row select:focus,
+.dm-custom-condition-row input:focus {
+  outline: none;
+  border-bottom-color: var(--doc-accent, #c9a25a);
+}
+.dm-custom-condition-nums {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  gap: 6px;
+}
+.dm-custom-condition-nums label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 60%, transparent);
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dm-custom-condition-nums label input {
+  flex: 1;
+  min-width: 0;
+  min-height: 28px;
+  padding: 3px 5px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 22%, transparent);
+  background: transparent;
+  color: var(--paper, #e9dfc8);
+  font-family: var(--font-body);
+  font-size: 12px;
+  text-align: center;
+}
+.dm-custom-condition-nums label input:focus {
+  outline: none;
+  border-bottom-color: var(--doc-accent, #c9a25a);
+}
+.dm-custom-condition-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dm-custom-condition-extra label {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.dm-custom-condition-extra label span {
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 60%, transparent);
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dm-custom-condition-extra label input {
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 22%, transparent);
+  background: transparent;
+  color: var(--paper, #e9dfc8);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+}
+.dm-custom-condition-extra label input:focus {
+  outline: none;
+  border-bottom-color: var(--doc-accent, #c9a25a);
+}
+
 /* ── The Record: the register ── */
 .dm-record { display: flex; flex-direction: column; min-height: 0; }
 .dm-record > h3 { margin-bottom: 10px; }

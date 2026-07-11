@@ -3,7 +3,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
-import { EFFECT_PRESETS } from "@/lib/effects";
+import { D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
 import { FONT_STACKS } from "@/lib/skins";
 import { abilityKeys, abilityNames } from "@/lib/utils";
 import { SKILLS } from "@/lib/srd";
@@ -60,7 +60,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [conditionTarget, setConditionTarget] = useState("");
   const [conditionLabel, setConditionLabel] = useState(CONDITION_PRESETS[0]?.label ?? "Poisoned");
   const [conditionIsCustom, setConditionIsCustom] = useState(false);
-  const [customCondition, setCustomCondition] = useState({ label: "", advantageMode: "none" as "none" | "advantage" | "disadvantage", stack: "" });
+  const [customCondition, setCustomCondition] = useState<Record<string, string>>({});
   const [handoutTitle, setHandoutTitle] = useState("");
   const [handoutUrl, setHandoutUrl] = useState("");
   const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" as CampaignCombatant["kind"] });
@@ -157,21 +157,30 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   };
 
   const applyCondition = async (type: "condition-apply" | "condition-remove") => {
-    const label = conditionIsCustom ? customCondition.label.trim() : conditionLabel.trim();
+    const label = conditionIsCustom ? (customCondition.label ?? "").trim() : conditionLabel.trim();
     if (!conditionTarget || !label) return;
 
     const payload: Record<string, unknown> = { label };
 
     if (type === "condition-apply") {
       if (conditionIsCustom) {
-        // Custom condition — send the fields the DM filled in.
-        if (customCondition.advantageMode !== "none") {
-          payload.advantageMode = customCondition.advantageMode;
+        // Custom condition — send every field the DM filled in (mirrors HeroSheet's addCustomEffect).
+        const advMode = (customCondition.advantageMode ?? "none").trim();
+        if (advMode === "advantage" || advMode === "disadvantage") {
+          payload.advantageMode = advMode;
         }
         const stack = Number(customCondition.stack);
-        if (Number.isFinite(stack) && stack >= 1 && stack <= 6) {
-          payload.stack = stack;
+        if (Number.isFinite(stack) && stack >= 1 && stack <= 6) payload.stack = stack;
+        for (const field of EFFECT_NUMERIC_FIELDS) {
+          const raw = (customCondition[field.key] ?? "").trim();
+          if (raw === "") continue;
+          const n = Math.max(-20, Math.min(20, parseInt(raw, 10)));
+          if (Number.isFinite(n) && n !== 0) payload[field.key] = n;
         }
+        const dice = (customCondition.d20Dice ?? "").trim();
+        if (dice && D20_DICE_RE.test(dice)) payload.d20Dice = dice;
+        const sense = (customCondition.sense ?? "").trim();
+        if (sense) payload.sense = sense.slice(0, 48);
       } else {
         // Preset condition — include the preset's mechanical fields.
         const preset = CONDITION_PRESETS.find((p) => p.label === label);
@@ -190,7 +199,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (await onPostEvent(type, payload, conditionTarget)) {
       setConditionLabel(CONDITION_PRESETS[0]?.label ?? "Poisoned");
       setConditionIsCustom(false);
-      setCustomCondition({ label: "", advantageMode: "none", stack: "" });
+      setCustomCondition({});
       setActiveCommand(null);
     }
   };
@@ -326,30 +335,41 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <div className="dm-inline-form">
               <select value={conditionTarget} onChange={(event) => setConditionTarget(event.target.value)}><option value="">Target player</option>{players.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
               {conditionIsCustom ? (
-                <input placeholder="Condition name" value={customCondition.label} onChange={(event) => setCustomCondition({ ...customCondition, label: event.target.value })} />
+                <input placeholder="Condition name" aria-label="Condition name" value={customCondition.label ?? ""} onChange={(event) => setCustomCondition({ ...customCondition, label: event.target.value })} maxLength={48} />
               ) : (
                 <select aria-label="Condition" value={conditionLabel} onChange={(event) => {
                   const value = event.target.value;
-                  if (value === "__custom__") { setConditionIsCustom(true); setCustomCondition({ label: "", advantageMode: "none", stack: "" }); }
+                  if (value === "__custom__") { setConditionIsCustom(true); setCustomCondition({}); }
                   else setConditionLabel(value);
                 }}>
                   {CONDITION_PRESETS.map((preset) => <option key={preset.label} value={preset.label}>{preset.label}</option>)}
                   <option value="__custom__">Custom…</option>
                 </select>
               )}
-              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void applyCondition("condition-apply")} disabled={!conditionTarget || (conditionIsCustom ? !customCondition.label.trim() : !conditionLabel.trim())}>Apply</button>
-              <button type="button" className="dm-btn" onClick={() => void applyCondition("condition-remove")} disabled={!conditionTarget || (conditionIsCustom ? !customCondition.label.trim() : !conditionLabel.trim())}>Remove</button>
-              {conditionIsCustom && (
-                <span className="dm-custom-condition-opts">
-                  <select aria-label="Advantage mode" value={customCondition.advantageMode} onChange={(event) => setCustomCondition({ ...customCondition, advantageMode: event.target.value as typeof customCondition.advantageMode })}>
-                    <option value="none">Normal</option>
-                    <option value="advantage">Advantage</option>
-                    <option value="disadvantage">Disadvantage</option>
-                  </select>
-                  <input aria-label="Exhaustion level" type="number" min="1" max="6" placeholder="Stack 1-6" value={customCondition.stack} onChange={(event) => setCustomCondition({ ...customCondition, stack: event.target.value })} />
-                  <button type="button" className="dm-btn" onClick={() => { setConditionIsCustom(false); setCustomCondition({ label: "", advantageMode: "none", stack: "" }); }}>↩ Presets</button>
-                </span>
-              )}
+              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void applyCondition("condition-apply")} disabled={!conditionTarget || (conditionIsCustom ? !(customCondition.label ?? "").trim() : !conditionLabel.trim())}>Apply</button>
+              <button type="button" className="dm-btn" onClick={() => void applyCondition("condition-remove")} disabled={!conditionTarget || (conditionIsCustom ? !(customCondition.label ?? "").trim() : !conditionLabel.trim())}>Remove</button>
+              {conditionIsCustom ? (
+                <div className="dm-custom-condition-form">
+                  <div className="dm-custom-condition-row">
+                    <select aria-label="Advantage mode" value={customCondition.advantageMode ?? "none"} onChange={(event) => setCustomCondition({ ...customCondition, advantageMode: event.target.value })}>
+                      <option value="none">Normal</option>
+                      <option value="advantage">Advantage</option>
+                      <option value="disadvantage">Disadvantage</option>
+                    </select>
+                    <input aria-label="Exhaustion level" type="number" min="1" max="6" placeholder="Stack 1-6" value={customCondition.stack ?? ""} onChange={(event) => setCustomCondition({ ...customCondition, stack: event.target.value })} />
+                    <button type="button" className="dm-btn" onClick={() => { setConditionIsCustom(false); setCustomCondition({}); }}>↩ Presets</button>
+                  </div>
+                  <div className="dm-custom-condition-nums">
+                    {EFFECT_NUMERIC_FIELDS.map((field) => (
+                      <label key={field.key}><span>{field.label}</span><input type="number" min={-20} max={20} value={customCondition[field.key] ?? ""} onChange={(event) => setCustomCondition({ ...customCondition, [field.key]: event.target.value })} /></label>
+                    ))}
+                  </div>
+                  <div className="dm-custom-condition-extra">
+                    <label><span>d20 dice</span><input placeholder="1d4" value={customCondition.d20Dice ?? ""} onChange={(event) => setCustomCondition({ ...customCondition, d20Dice: event.target.value })} maxLength={6} /></label>
+                    <label><span>Sense</span><input placeholder="Darkvision 60 ft." value={customCondition.sense ?? ""} onChange={(event) => setCustomCondition({ ...customCondition, sense: event.target.value })} maxLength={48} /></label>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
           {activeCommand === "handout" ? (
