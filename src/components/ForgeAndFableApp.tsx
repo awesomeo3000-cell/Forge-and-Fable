@@ -542,7 +542,18 @@ export default function ForgeAndFableApp() {
         const data = await res.json() as CampaignSyncPayload;
         if (cancelled) return;
         campaignSyncFailRef.current = 0;
-        setCampaignSync(data);
+        // Accumulate rolls by id across syncs — the server returns a delta
+        // (created_at > since), but the Record and Roll Feed need the full
+        // list so rolls don't vanish as the cursor advances.
+        setCampaignSync((current) => {
+          if (!current || current.campaign.id !== data.campaign.id) return data;
+          const rollById = new Map(current.rolls.map((r) => [r.id, r]));
+          for (const roll of data.rolls) rollById.set(roll.id, roll);
+          const merged = Array.from(rollById.values())
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .slice(-200);
+          return { ...data, rolls: merged };
+        });
         rememberCampaignEvents(data.events);
         const lastHandled = processCampaignEvents(data.events, data.members);
 

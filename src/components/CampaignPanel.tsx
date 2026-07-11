@@ -6,6 +6,7 @@ import { Bell, Check, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, 
 import { FONT_STACKS } from "@/lib/skins";
 import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
+import { summarizeRollRequest } from "@/lib/rollRequest";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
@@ -56,7 +57,7 @@ function eventPayload(event: CampaignEvent): Record<string, unknown> {
 
 function eventTitle(event: CampaignEvent) {
   const payload = eventPayload(event);
-  if (event.type === "roll-request") return typeof payload.prompt === "string" ? payload.prompt : "Roll requested";
+  if (event.type === "roll-request") return summarizeRollRequest(payload);
   if (event.type === "rest-short") return "Short rest called";
   if (event.type === "rest-long") return "Long rest called";
   if (event.type === "announce") return typeof payload.message === "string" ? payload.message : "Campaign announcement";
