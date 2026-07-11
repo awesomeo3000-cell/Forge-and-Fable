@@ -27,7 +27,7 @@ describe("campaign v2 store", () => {
     joinCampaign("player", campaign.code, player.id);
     updateCampaignInitiative(campaign.id, "dm", { round: 1, turnIndex: 0, combatants: [
       { id: "monster:secret", name: "Secret monster", initiative: 18, kind: "enemy", hidden: true, currentHp: 12, maxHp: 12, ac: 14, privateNote: "the DM's secret", conditions: [{ id: "c1", label: "Enraged" }] },
-      { id: "monster:open", name: "Open monster", initiative: 11, kind: "enemy" },
+      { id: "monster:open", name: "Open monster", initiative: 11, kind: "enemy", statBlock: { resistances: "fire" } },
     ] }, 0);
     expect(syncCampaign(campaign.id, "player").initiative.data.combatants.map((item) => item.id)).toEqual(["monster:open"]);
     expect(syncCampaign(campaign.id, "dm").initiative.data.combatants).toHaveLength(2);
@@ -44,6 +44,11 @@ describe("campaign v2 store", () => {
     const open = playerCombatants.find((c) => c.id === "monster:open" as unknown)!;
     expect(open.privateNote).toBeUndefined();
     expect(open.conditions).toBeUndefined();
+    // Regression guard: CHANGES-25 claimed statBlock was stripped for players,
+    // but visibleInitiative originally leaked it (resistances/immunities are
+    // DM secrets even on VISIBLE combatants).
+    expect(open.statBlock).toBeUndefined();
+    expect(syncCampaign(campaign.id, "dm").initiative.data.combatants.find((c) => c.id === ("monster:open" as unknown))!.statBlock).toMatchObject({ resistances: "fire" });
 
     const track = addCampaignTrack(campaign.id, "dm", { title: "Tavern", url: "https://example.test/tavern.mp3", kind: "music" });
     const audio = updateCampaignAudio(campaign.id, "dm", track.id, 0);

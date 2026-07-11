@@ -306,8 +306,10 @@ function visibleInitiative(initiative: ReturnType<typeof getInitiativeRow>, isDm
   const combatants = initiative.data.combatants
     .filter((combatant) => !combatant.hidden)
     .map((combatant) => {
-      const { privateNote, conditions, ...rest } = combatant;
-      void privateNote; void conditions;
+      // Stat blocks carry saves/resistances/immunities — DM secrets of the
+      // same privacy class as the private note, even on VISIBLE combatants.
+      const { privateNote, conditions, statBlock, ...rest } = combatant;
+      void privateNote; void conditions; void statBlock;
       return rest as CampaignCombatant;
     });
   return {
