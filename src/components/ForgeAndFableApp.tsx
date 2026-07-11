@@ -421,6 +421,13 @@ export default function ForgeAndFableApp() {
         if (message && !processedCampaignEventsRef.current.has(event.id)) {
           pushToast("announce", message);
         }
+      } else if (event.type === "roll-request") {
+        // The Roll button lives in the campaign panel; surface the ask so a
+        // player on their sheet knows to open it.
+        const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "a roll";
+        if (!processedCampaignEventsRef.current.has(event.id)) {
+          pushToast("turn", "The DM asks for a roll", prompt);
+        }
       } else if (event.type === "handout") {
         const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
         const url = typeof payload.url === "string" ? payload.url.trim() : "";
@@ -1238,6 +1245,10 @@ export default function ForgeAndFableApp() {
     const payload = parseCampaignPayload(event);
     const prompt = typeof payload.prompt === "string" && payload.prompt.trim() ? payload.prompt.trim() : "Requested roll";
     const kind = typeof payload.kind === "string" ? payload.kind : "check";
+    // keyType arrives from the DM form's check → ability|skill fork; legacy
+    // events expressed skills as kind "skill" directly.
+    const keyType = typeof payload.keyType === "string" ? payload.keyType : kind === "skill" ? "skill" : "ability";
+    const isSkillRequest = keyType === "skill" || kind === "skill";
     const key = payload.key;
     const dc = typeof payload.dc === "number" && Number.isFinite(payload.dc) ? payload.dc : undefined;
     const pb = proficiencyBonusFor(selected.level);
@@ -1247,6 +1258,22 @@ export default function ForgeAndFableApp() {
     if (kind === "initiative") {
       modifier = selectedInitiative ?? 0;
       label = dc ? `${prompt} (DC ${dc})` : prompt;
+    } else if (isSkillRequest && typeof key === "string") {
+      const skill = SKILLS.find((item) => item.id === key);
+      if (skill) {
+        const proficiencies = new Set([
+          ...(selected.skillProficiencies ?? []),
+          ...(BACKGROUND_SKILLS[selected.background] ?? []),
+        ]);
+        // Same proficiency tiers as passiveSkillScore: expertise doubles,
+        // proficiency applies once, bard's Jack of All Trades halves.
+        const expertise = selected.skillExpertise?.includes(skill.id) ?? false;
+        const jackOfAllTrades = selected.classId === "bard" && selected.level >= 2 && !proficiencies.has(skill.id);
+        modifier =
+          abilityModifier(selectedFinalAbilities[skill.ability]) +
+          (expertise ? pb * 2 : proficiencies.has(skill.id) ? pb : jackOfAllTrades ? Math.floor(pb / 2) : 0);
+        label = dc ? `${prompt} (DC ${dc})` : prompt;
+      }
     } else if ((kind === "check" || kind === "save") && isAbilityKey(key)) {
       modifier = abilityModifier(selectedFinalAbilities[key]);
       if (kind === "save") {
@@ -1256,16 +1283,6 @@ export default function ForgeAndFableApp() {
         if (hasSave) modifier += pb;
       }
       label = dc ? `${prompt} (DC ${dc})` : prompt;
-    } else if (kind === "skill" && typeof key === "string") {
-      const skill = SKILLS.find((item) => item.id === key);
-      if (skill) {
-        const proficiencies = new Set([
-          ...(selected.skillProficiencies ?? []),
-          ...(BACKGROUND_SKILLS[selected.background] ?? []),
-        ]);
-        modifier = abilityModifier(selectedFinalAbilities[skill.ability]) + (proficiencies.has(skill.id) ? pb : 0);
-        label = dc ? `${prompt} (DC ${dc})` : prompt;
-      }
     }
 
     pushPool([{ sides: 20, count: 1 }, ...activeD20Riders(selected.effects)], modifier, label, (outcome) => {

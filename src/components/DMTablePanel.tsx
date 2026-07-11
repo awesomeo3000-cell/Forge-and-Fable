@@ -4,6 +4,8 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { FONT_STACKS } from "@/lib/skins";
+import { abilityKeys, abilityNames } from "@/lib/utils";
+import { SKILLS } from "@/lib/srd";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 
@@ -44,7 +46,10 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [trackKind, setTrackKind] = useState<"music" | "cue">("music");
   const [announcement, setAnnouncement] = useState("");
   const [rollRequest, setRollRequest] = useState("");
-  const [rollKind, setRollKind] = useState<"initiative" | "save" | "check" | "skill">("check");
+  // Roll requests: Check forks into ability vs skill (each with its own
+  // list); Save is always an ability saving throw; Initiative needs no key.
+  const [rollKind, setRollKind] = useState<"initiative" | "save" | "check">("check");
+  const [checkScope, setCheckScope] = useState<"ability" | "skill">("ability");
   const [rollKey, setRollKey] = useState("dexterity");
   const [rollDc, setRollDc] = useState("");
   const [rollTarget, setRollTarget] = useState("all");
@@ -136,7 +141,8 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const requestRoll = async () => {
     const prompt = rollRequest.trim();
     if (!prompt) return;
-    const payload: Record<string, unknown> = { prompt, kind: rollKind, key: rollKind === "initiative" ? "dexterity" : rollKey.trim() || "dexterity" };
+    const keyType = rollKind === "check" && checkScope === "skill" ? "skill" : "ability";
+    const payload: Record<string, unknown> = { prompt, kind: rollKind, keyType, key: rollKind === "initiative" ? "dexterity" : rollKey };
     if (rollKind !== "initiative") {
       const dc = Number(rollDc);
       if (rollDc.trim() && Number.isFinite(dc)) payload.dc = dc;
@@ -255,9 +261,24 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           {activeCommand === "roll" ? (
             <div className="dm-inline-form">
               <input placeholder="Ask for a roll" value={rollRequest} onChange={(event) => setRollRequest(event.target.value)} />
-              <select value={rollKind} onChange={(event) => setRollKind(event.target.value as typeof rollKind)}><option value="check">Check</option><option value="save">Save</option><option value="skill">Skill</option><option value="initiative">Initiative</option></select>
+              <select aria-label="Roll type" value={rollKind} onChange={(event) => { const kind = event.target.value as typeof rollKind; setRollKind(kind); setCheckScope("ability"); setRollKey("dexterity"); }}><option value="check">Check</option><option value="save">Save</option><option value="initiative">Initiative</option></select>
               <select aria-label="Roll target" value={rollTarget} onChange={(event) => setRollTarget(event.target.value)}><option value="all">All players</option>{players.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
-              {rollKind !== "initiative" ? <><input placeholder="Ability or skill" value={rollKey} onChange={(event) => setRollKey(event.target.value)} /><input placeholder="DC" type="number" value={rollDc} onChange={(event) => setRollDc(event.target.value)} /></> : null}
+              {rollKind === "check" ? (
+                <select aria-label="Check type" value={checkScope} onChange={(event) => { const scope = event.target.value as typeof checkScope; setCheckScope(scope); setRollKey(scope === "skill" ? "perception" : "dexterity"); }}>
+                  <option value="ability">Ability</option>
+                  <option value="skill">Skill</option>
+                </select>
+              ) : null}
+              {rollKind === "check" && checkScope === "skill" ? (
+                <select aria-label="Skill" value={rollKey} onChange={(event) => setRollKey(event.target.value)}>
+                  {SKILLS.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}
+                </select>
+              ) : rollKind !== "initiative" ? (
+                <select aria-label={rollKind === "save" ? "Saving throw ability" : "Ability"} value={rollKey} onChange={(event) => setRollKey(event.target.value)}>
+                  {abilityKeys.map((key) => <option key={key} value={key}>{abilityNames[key]}{rollKind === "save" ? " save" : ""}</option>)}
+                </select>
+              ) : null}
+              {rollKind !== "initiative" ? <input placeholder="DC" type="number" value={rollDc} onChange={(event) => setRollDc(event.target.value)} /> : null}
               <button type="button" className="dm-btn dm-btn-primary" onClick={() => void requestRoll().then(() => setActiveCommand(null))} disabled={!rollRequest.trim()}>Request roll</button>
             </div>
           ) : null}

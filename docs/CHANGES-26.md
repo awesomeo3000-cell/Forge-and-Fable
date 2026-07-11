@@ -34,6 +34,23 @@ the strongest multi-round stretch this project has had.
 3. Music start/stop isn't logged in The Record (their own documented limit) —
    one event emission if the table wants it.
 
+## Follow-up: roll-request flow rework (owner-requested)
+- **DM form** (`DMTablePanel`): roll types are now Check / Save / Initiative
+  ("Skill" removed as a top-level kind). Choosing Check forks into an
+  Ability-or-Skill selector, each with its proper dropdown (six abilities /
+  the full skill list); Save is a dropdown of the six saving throws; the
+  free-text "Ability or skill" input is gone. Payload gains
+  `keyType: "ability" | "skill"`.
+- **Player side** (`handleCampaignRollRequest`): honors `keyType` (legacy
+  `kind: "skill"` events still resolve), and the skill modifier now applies
+  the full proficiency tiers — expertise doubles, proficiency once, bard's
+  Jack of All Trades halves — matching `passiveSkillScore`'s rules. Saves
+  and ability checks were already auto-modified; initiative unchanged.
+- **Discoverability**: an incoming roll request now raises a toast ("The DM
+  asks for a roll — ‹prompt›") so a player on their sheet knows to open the
+  campaign panel, where the Roll button applies everything automatically.
+- Build clean, 122/122 tests, lint clean.
+
 ## Remaining before/after 1.0 (state of the world)
 - **R23 gate still unrun** (`CHANGES-23` does not exist): revision-conflict,
   migration-adoption, backup/restore verification + the initiative 400→409
