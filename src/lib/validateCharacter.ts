@@ -1,3 +1,5 @@
+import { assertSnapshotCharacter } from "@/lib/characterSnapshots";
+
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
 function assertString(val: unknown, name: string, maxLen?: number): asserts val is string {
@@ -295,6 +297,7 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
             assertString(s.id, "snapshots[].id", 64);
             assertString(s.label, "snapshots[].label", 120);
             assertString(s.createdAt, "snapshots[].createdAt", 40);
+            assertSnapshotCharacter(s.character);
           }
         }
         break;

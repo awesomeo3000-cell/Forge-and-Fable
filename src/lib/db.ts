@@ -19,9 +19,10 @@ type LegacyVaultJson = {
 declare global {
   var __forgeDb: DatabaseSync | undefined;
   var __forgeDbSchemaRevision: number | undefined;
+  var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 6;
+const SCHEMA_REVISION = 7;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -82,6 +83,13 @@ function createSchema(db: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
+
+    CREATE TABLE IF NOT EXISTS auth_attempts (
+      attempt_key TEXT PRIMARY KEY,
+      count INTEGER NOT NULL,
+      first_attempt_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_auth_attempts_time ON auth_attempts(first_attempt_at);
 
     CREATE TABLE IF NOT EXISTS campaigns (
       id TEXT PRIMARY KEY,
@@ -305,6 +313,7 @@ function migrateSchema(db: DatabaseSync) {
         WHERE character_id IS NOT NULL;
     `);
     recordMigration(db, 6, "one campaign enrollment per character; preserve newest enrollment");
+    recordMigration(db, 7, "persistent login and registration throttling");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {
@@ -390,18 +399,24 @@ export function closeDb() {
   globalThis.__forgeDb?.close();
   globalThis.__forgeDb = undefined;
   globalThis.__forgeDbSchemaRevision = undefined;
+  globalThis.__forgeDbLastWriteHealthAt = undefined;
 }
 
 export function checkDatabaseHealth() {
   const db = getDb();
   db.prepare("SELECT 1 AS ok").get();
   const migration = db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get() as { version: number | null };
+  const now = Date.now();
+  if (globalThis.__forgeDbLastWriteHealthAt && now - globalThis.__forgeDbLastWriteHealthAt < 60_000) {
+    return { writable: true, schemaVersion: migration.version ?? 0 };
+  }
   let transactionStarted = false;
   try {
     db.exec("BEGIN IMMEDIATE");
     transactionStarted = true;
     db.exec("ROLLBACK");
     transactionStarted = false;
+    globalThis.__forgeDbLastWriteHealthAt = now;
   } catch (error) {
     if (transactionStarted) {
       try { db.exec("ROLLBACK"); } catch { /* original health failure wins */ }

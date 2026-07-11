@@ -50,6 +50,7 @@ export default memo(function LevelUpModal({
   onConfirm,
   onCancel,
   raceName,
+  proficiencies = [],
   useFeatPrerequisites = true,
   hitPointType,
   characterName,
@@ -65,6 +66,7 @@ export default memo(function LevelUpModal({
   subclassLevel?: number;
   casterType?: string;
   raceName?: string;
+  proficiencies?: string[];
   /** From CharacterSettings.useFeatPrerequisites — when false, every feat is offered regardless of prereqs. */
   useFeatPrerequisites?: boolean;
   /** When true, omit the HP step — used at character creation, where the
@@ -231,6 +233,8 @@ export default memo(function LevelUpModal({
       .map((c) => (c as { featId: string }).featId),
     level: newLevel,
     abilities: finalAbilities,
+    proficiencies,
+    background: character.background,
     enforcePrereqs: useFeatPrerequisites,
   });
 

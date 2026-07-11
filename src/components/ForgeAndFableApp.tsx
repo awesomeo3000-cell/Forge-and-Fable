@@ -7,6 +7,7 @@ import {
   Swords,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import type {
@@ -49,19 +50,12 @@ import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import OnboardingPanel from "@/components/OnboardingPanel";
-import CreatorPanel from "@/components/CreatorPanel";
-import FeedbackModal, { type FeedbackInput } from "@/components/FeedbackModal";
-import CampaignPanel from "@/components/CampaignPanel";
-import DMTablePanel from "@/components/DMTablePanel";
+import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
-import CharacterImportModal from "@/components/CharacterImportModal";
-import QuickbuilderPanel from "@/components/QuickbuilderPanel";
-import HeroSheet from "@/components/HeroSheet";
-import LevelUpModal from "@/components/LevelUpModal";
 import { cantripsKnownAt, learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
-import DiceRollOverlay, { type RollingDie } from "@/components/DiceRollOverlay";
-import RollDrawer, { type RollHistoryEntry } from "@/components/RollDrawer";
+import type { RollingDie } from "@/components/DiceRollOverlay";
+import type { RollHistoryEntry } from "@/components/RollDrawer";
 import { SaveStatusBadge, type SaveStatus } from "@/components/SaveStatusBadge";
 import { postCampaignEvent as postCampaignEventApi, updateCampaignInitiative as updateCampaignInitiativeApi, submitCampaignInitiativeRoll as submitCampaignInitiativeRollApi, postCampaignRoll } from "@/lib/client/campaignApi";
 import { FONT_STACKS } from "@/lib/skins";
@@ -75,6 +69,19 @@ import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
 import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
+import { patchFromSnapshot } from "@/lib/characterSnapshots";
+import { encodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
+
+const CreatorPanel = dynamic(() => import("@/components/CreatorPanel"), { ssr: false });
+const FeedbackModal = dynamic(() => import("@/components/FeedbackModal"), { ssr: false });
+const CampaignPanel = dynamic(() => import("@/components/CampaignPanel"), { ssr: false });
+const DMTablePanel = dynamic(() => import("@/components/DMTablePanel"), { ssr: false });
+const CharacterImportModal = dynamic(() => import("@/components/CharacterImportModal"), { ssr: false });
+const QuickbuilderPanel = dynamic(() => import("@/components/QuickbuilderPanel"), { ssr: false });
+const HeroSheet = dynamic(() => import("@/components/HeroSheet"), { ssr: false });
+const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
+const DiceRollOverlay = dynamic(() => import("@/components/DiceRollOverlay"), { ssr: false });
+const RollDrawer = dynamic(() => import("@/components/RollDrawer"), { ssr: false });
 
 function authHeaders(): Record<string, string> {
   return {
@@ -228,7 +235,7 @@ export default function ForgeAndFableApp() {
     });
   }
   const sessionSnapshotCreated = useRef(false);
-  const campaignCursorRef = useRef<Record<string, string>>({});
+  const campaignCursorRef = useRef<Record<string, CampaignCursorState>>({});
   const campaignSyncFailRef = useRef<number>(0);
   const processedCampaignEventsRef = useRef<Set<string>>(new Set());
   const lastTurnCombatantRef = useRef<string | null>(null);
@@ -393,7 +400,7 @@ export default function ForgeAndFableApp() {
    * open. Returns the created_at of the last event fully handled — the sync
    * loop must not advance its cursor past an unhandled condition event.
    */
-  const processCampaignEvents = useEffectEvent((events: CampaignEvent[], members: CampaignSyncPayload["members"]): string | null => {
+  const processCampaignEvents = useEffectEvent((events: CampaignEvent[], members: CampaignSyncPayload["members"]): CampaignEvent | null => {
     if (events.length === 0) return null;
     const myMembership = members?.find((member) => member.userId === user?.id);
     const myCharacter = myMembership?.characterId
@@ -401,7 +408,7 @@ export default function ForgeAndFableApp() {
       : null;
     let nextEffects = myCharacter?.effects ?? [];
     let changedEffects = false;
-    let lastHandled: string | null = null;
+    let lastHandled: CampaignEvent | null = null;
 
     for (const event of events) {
       const payload = parseCampaignPayload(event);
@@ -461,7 +468,7 @@ export default function ForgeAndFableApp() {
       }
 
       processedCampaignEventsRef.current.add(event.id);
-      lastHandled = event.created_at;
+      lastHandled = event;
     }
 
     if (changedEffects && myCharacter) {
@@ -546,13 +553,17 @@ export default function ForgeAndFableApp() {
     // their sheet, not only while the campaign panel is open. Cadence is
     // faster with the panel open; hidden tabs pause below.
     let cancelled = false;
+    let inFlight = false;
 
     const sync = async () => {
-      if (document.visibilityState === "hidden") return;
-      const since = campaignCursorRef.current[activeCampaignId];
-      const url = since
-        ? `/api/campaigns/${activeCampaignId}/sync?since=${encodeURIComponent(since)}`
-        : `/api/campaigns/${activeCampaignId}/sync`;
+      if (document.visibilityState === "hidden" || inFlight) return;
+      inFlight = true;
+      const cursors = campaignCursorRef.current[activeCampaignId];
+      const search = new URLSearchParams();
+      if (cursors?.events) search.set("eventCursor", cursors.events);
+      if (cursors?.rolls) search.set("rollCursor", cursors.rolls);
+      const query = search.toString();
+      const url = `/api/campaigns/${activeCampaignId}/sync${query ? `?${query}` : ""}`;
       try {
         const res = await fetch(url, {
           headers: authHeaders(),
@@ -597,20 +608,19 @@ export default function ForgeAndFableApp() {
         // is refetched next tick (application is idempotent, so replays are
         // harmless). Roll timestamps may only advance the cursor when every
         // event in this batch was handled.
-        const allEventsHandled = data.events.length === 0 || lastHandled === data.events[data.events.length - 1]?.created_at;
-        const candidates = [
-          ...(lastHandled ? [lastHandled] : []),
-          ...(allEventsHandled ? data.rolls.map((roll) => roll.created_at) : []),
-        ].filter(Boolean);
-        if (candidates.length > 0) {
-          campaignCursorRef.current[activeCampaignId] = candidates.sort().at(-1)!;
-        }
+        const nextCursors = { ...(campaignCursorRef.current[activeCampaignId] ?? {}) };
+        if (lastHandled) nextCursors.events = encodeCampaignCursor(lastHandled);
+        const lastRoll = data.rolls.at(-1);
+        if (lastRoll) nextCursors.rolls = encodeCampaignCursor(lastRoll);
+        campaignCursorRef.current[activeCampaignId] = nextCursors;
       } catch {
         // Track consecutive sync failures to surface sustained outages.
         campaignSyncFailRef.current = (campaignSyncFailRef.current ?? 0) + 1;
         if (campaignSyncFailRef.current >= 3) {
           setStatus("Campaign sync interrupted — check your connection.");
         }
+      } finally {
+        inFlight = false;
       }
     };
 
@@ -625,7 +635,7 @@ export default function ForgeAndFableApp() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [activeCampaignId, selected, user, campaignOpen]);
+  }, [activeCampaignId, user, campaignOpen]);
 
   // Auto-snapshot on session load (once per session)
   useEffect(() => {
@@ -1143,10 +1153,8 @@ export default function ForgeAndFableApp() {
   function restoreSnapshot(snapshot: CharacterSnapshot) {
     if (!selected) return;
     if (!window.confirm(`Restore snapshot "${snapshot.label}"? Current unsaved changes will be lost.`)) return;
-    const restored = JSON.parse(JSON.stringify(snapshot.character)) as Character;
-    // Preserve snapshots
-    restored.snapshots = selected.snapshots;
-    updateCharacterById(selected.id, restored as Partial<Omit<Character, "id" | "userId" | "createdAt">>);
+    const patch = patchFromSnapshot(snapshot, selected.snapshots ?? []);
+    updateCharacterById(selected.id, patch);
     setSnapshotsOpen(false);
   }
 
@@ -1900,6 +1908,7 @@ export default function ForgeAndFableApp() {
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
           raceName={raceName}
+          proficiencies={heroClass.proficiencies}
           useFeatPrerequisites={draft.settings.useFeatPrerequisites}
           hitPointType={draft.settings.hitPointType}
           skipHp

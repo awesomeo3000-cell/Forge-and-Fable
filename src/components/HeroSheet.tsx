@@ -18,6 +18,7 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
@@ -42,11 +43,12 @@ import { revertHpLevel } from "@/lib/hitPoints";
 import { passiveSkillScore } from "@/lib/derivedStats";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
-import LevelUpModal from "@/components/LevelUpModal";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
+
+const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 
 import {
   DndContext,
@@ -2138,6 +2140,7 @@ export default memo(function HeroSheet(props: {
           subclassLevel={getClassData(heroClass.id)?.subclassLevel}
           casterType={heroClass.casterType}
           raceName={race.name}
+          proficiencies={heroClass.proficiencies}
           useFeatPrerequisites={props.character.settings.useFeatPrerequisites}
           hitPointType={props.character.settings.hitPointType}
           onHpRoll={({ label, sides, modifier, onResult }) => {

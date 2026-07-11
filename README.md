@@ -30,13 +30,13 @@ http://127.0.0.1:3000
 
 ## Local Data
 
-Vault users and characters are stored in:
+Vault users, characters, campaigns, and feedback are stored in SQLite at:
 
 ```text
-data/forge-vault.json
+data/forge.db
 ```
 
-Passwords are hashed with `bcryptjs`. This is a local prototype data layer, so it does not require a separate database service.
+Passwords are hashed with `bcryptjs`. SQLite runs locally with WAL mode, so the app does not require a separate database service for a single-instance deployment.
 The `data/` folder is intentionally ignored by Git so local users, characters, and test accounts are not published.
 
 Set `FORGE_VAULT_DIR` to change this location, for example `/var/data` on Render or `/data` on Railway.

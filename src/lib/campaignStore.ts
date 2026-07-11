@@ -15,6 +15,7 @@ import { applyRaceBonuses, abilityModifier } from "@/lib/utils";
 import { ruleset } from "@/lib/ruleset";
 import type { Character } from "@/types/game";
 import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
+import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 
 // -- Types -----------------------------------------------------------------
 
@@ -589,25 +590,27 @@ export function getCampaignDetail(campaignId: string, userId: string): CampaignD
   };
 }
 
-export function syncCampaign(campaignId: string, userId: string, since?: string): CampaignSyncPayload {
+export function syncCampaign(campaignId: string, userId: string, cursors: CampaignCursorState | string = {}): CampaignSyncPayload {
   const campaign = getCampaignOrThrow(campaignId);
   requireMembership(campaignId, userId);
-  const sinceValue = since && !Number.isNaN(Date.parse(since)) ? since : "0000-01-01T00:00:00.000Z";
+  const cursorState = typeof cursors === "string" ? { events: cursors, rolls: cursors } : cursors;
+  const eventCursor = decodeCampaignCursor(cursorState.events);
+  const rollCursor = decodeCampaignCursor(cursorState.rolls);
   const isDm = campaign.dm_user_id === userId;
   const events = getDb().prepare(`
     SELECT * FROM campaign_events
     WHERE campaign_id = ?
-      AND created_at > ?
+      AND (created_at > ? OR (created_at = ? AND id > ?))
       AND (target_user_id IS NULL OR target_user_id = ?)
-    ORDER BY created_at ASC
+    ORDER BY created_at ASC, id ASC
     LIMIT 200
-  `).all(campaignId, sinceValue, userId) as CampaignEvent[];
+  `).all(campaignId, eventCursor.createdAt, eventCursor.createdAt, eventCursor.id, userId) as CampaignEvent[];
   const rolls = getDb().prepare(`
     SELECT * FROM campaign_rolls
-    WHERE campaign_id = ? AND created_at > ?
-    ORDER BY created_at ASC
+    WHERE campaign_id = ? AND (created_at > ? OR (created_at = ? AND id > ?))
+    ORDER BY created_at ASC, id ASC
     LIMIT 200
-  `).all(campaignId, sinceValue) as CampaignRollRow[];
+  `).all(campaignId, rollCursor.createdAt, rollCursor.createdAt, rollCursor.id) as CampaignRollRow[];
 
   return {
     campaign: {

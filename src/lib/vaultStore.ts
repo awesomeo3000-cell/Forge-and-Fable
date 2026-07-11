@@ -23,6 +23,8 @@ type JsonRow = {
   revision?: number;
 };
 
+const DUMMY_PASSWORD_HASH = "$2b$10$.655b7GH.p0t6b3Br.o4ru23EaHryLhUOy5yWDiq1wsWPPRiz7Bne";
+
 export class CharacterConflictError extends Error {
   current: Character;
 
@@ -170,7 +172,8 @@ export async function loginUser(input: {
     .get(email) as UserRow | undefined;
 
   const user = row ? storedUserFromRow(row) : null;
-  if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
+  const passwordMatches = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+  if (!user || !passwordMatches) {
     throw new Error("The email or password does not match a vault.");
   }
 
@@ -286,10 +289,10 @@ export async function deleteCharacter(userId: string, id: string): Promise<void>
   }
 }
 
-export async function listFeedback(): Promise<FeedbackEntry[]> {
+export async function listFeedback(userId: string): Promise<FeedbackEntry[]> {
   const rows = getDb()
-    .prepare("SELECT data FROM feedback ORDER BY created_at DESC")
-    .all() as JsonRow[];
+    .prepare("SELECT data FROM feedback WHERE user_id = ? ORDER BY created_at DESC")
+    .all(userId) as JsonRow[];
   return rows.map(parseFeedback);
 }
 

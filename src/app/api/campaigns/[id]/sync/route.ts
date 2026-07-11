@@ -1,5 +1,5 @@
 /**
- * GET /api/campaigns/[id]/sync?since=<ISO>
+ * GET /api/campaigns/[id]/sync?eventCursor=<ISO|ID>&rollCursor=<ISO|ID>
  */
 
 import { NextResponse } from "next/server";
@@ -16,8 +16,12 @@ export async function GET(
   try {
     const userId = await authenticateRequest(request);
     const { id } = await params;
-    const since = new URL(request.url).searchParams.get("since") ?? undefined;
-    return NextResponse.json(syncCampaign(id, userId, since));
+    const search = new URL(request.url).searchParams;
+    const legacySince = search.get("since") ?? undefined;
+    return NextResponse.json(syncCampaign(id, userId, {
+      events: search.get("eventCursor") ?? legacySince,
+      rolls: search.get("rollCursor") ?? legacySince,
+    }));
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

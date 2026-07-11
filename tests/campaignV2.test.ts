@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
-import { addCampaignTrack, CampaignConflictError, createCampaign, joinCampaign, syncCampaign, updateCampaignAudio, updateCampaignInitiative } from "@/lib/campaignStore";
+import { addCampaignTrack, CampaignConflictError, createCampaign, joinCampaign, postCampaignEvent, postRoll, syncCampaign, updateCampaignAudio, updateCampaignInitiative } from "@/lib/campaignStore";
+import { encodeCampaignCursor } from "@/lib/campaignCursor";
 import { createCharacter } from "@/lib/vaultStore";
 import { characterInput } from "./fixtures/character";
 
@@ -60,5 +61,26 @@ describe("campaign v2 store", () => {
     const audio = updateCampaignAudio(campaign.id, "dm", track.id, 0);
     expect(audio).toMatchObject({ trackId: track.id, title: "Tavern", loop: true, version: 1 });
     expect(() => updateCampaignAudio(campaign.id, "dm", null, 0)).toThrow(CampaignConflictError);
+  });
+
+  it("advances event and roll cursors independently across identical timestamps", () => {
+    const campaign = createCampaign("dm", "Cursor Table");
+    const eventA = postCampaignEvent(campaign.id, "dm", "announce", { message: "A" });
+    const eventB = postCampaignEvent(campaign.id, "dm", "announce", { message: "B" });
+    const rollA = postRoll(campaign.id, "dm", "DM", "Check", "1d20", 10);
+    const sharedTime = "2026-07-11T12:00:00.000Z";
+    const db = getDb();
+    db.prepare("UPDATE campaign_events SET created_at = ? WHERE id IN (?, ?)").run(sharedTime, eventA.id, eventB.id);
+    db.prepare("UPDATE campaign_rolls SET created_at = ? WHERE id = ?").run(sharedTime, rollA.id);
+
+    const first = syncCampaign(campaign.id, "dm");
+    const sortedEvents = [...first.events].sort((a, b) => a.id.localeCompare(b.id));
+    const afterFirstEvent = syncCampaign(campaign.id, "dm", { events: encodeCampaignCursor(sortedEvents[0]) });
+    expect(afterFirstEvent.events.map((event) => event.id)).toEqual([sortedEvents[1].id]);
+    expect(afterFirstEvent.rolls).toHaveLength(1);
+
+    const afterRollOnly = syncCampaign(campaign.id, "dm", { rolls: encodeCampaignCursor(first.rolls[0]) });
+    expect(afterRollOnly.events).toHaveLength(2);
+    expect(afterRollOnly.rolls).toHaveLength(0);
   });
 });

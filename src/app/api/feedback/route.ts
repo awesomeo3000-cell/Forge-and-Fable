@@ -63,8 +63,8 @@ function handleAuthError(error: unknown) {
 
 export async function GET(request: Request) {
   try {
-    await authenticateRequest(request);
-    const feedback = await listFeedback();
+    const userId = await authenticateRequest(request);
+    const feedback = await listFeedback(userId);
     return NextResponse.json({ feedback: feedback.slice(0, 75) });
   } catch (error) {
     const authResponse = handleAuthError(error);
