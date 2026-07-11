@@ -5,7 +5,7 @@ import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { FONT_STACKS } from "@/lib/skins";
 import type { Character, CharacterTheme } from "@/types/game";
-import type { CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeCombatant, InitiativeState } from "@/types/campaign";
+import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 
 type Props = {
   campaign: CampaignSyncPayload;
@@ -52,7 +52,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [conditionLabel, setConditionLabel] = useState("");
   const [handoutTitle, setHandoutTitle] = useState("");
   const [handoutUrl, setHandoutUrl] = useState("");
-  const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false });
+  const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" as CampaignCombatant["kind"] });
   const [recordFilter, setRecordFilter] = useState<"all" | "rolls" | "table">("all");
   // One command form open at a time — the row is the toolkit, not a wall of
   // stacked forms (proposal 24c).
@@ -86,7 +86,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     ...events.map((event) => ({ id: event.id, kind: "table" as const, at: event.created_at, text: eventLine(event) })),
   ].filter((entry) => recordFilter === "all" || entry.kind === recordFilter).sort((a, b) => b.at.localeCompare(a.at)), [campaign.rolls, events, recordFilter]);
 
-  const replaceInitiative = (combatants: InitiativeCombatant[], turnIndex = campaign.initiative.data.turnIndex) => onInitiativeUpdate({
+  const replaceInitiative = (combatants: CampaignCombatant[], turnIndex = campaign.initiative.data.turnIndex) => onInitiativeUpdate({
     ...campaign.initiative.data,
     combatants,
     turnIndex: Math.max(0, Math.min(Math.max(0, combatants.length - 1), turnIndex)),
@@ -98,15 +98,24 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (!name || !Number.isFinite(initiative)) return;
     const hpMax = Number(combatant.hp);
     const ac = Number(combatant.ac);
-    const next: InitiativeCombatant = { id: crypto.randomUUID(), name, initiative: Math.trunc(initiative), hidden: combatant.hidden };
-    if (Number.isFinite(hpMax) && hpMax > 0) next.hp = { current: hpMax, max: hpMax };
+    const next: CampaignCombatant = {
+      id: crypto.randomUUID(),
+      name,
+      initiative: Math.trunc(initiative),
+      kind: combatant.kind as CampaignCombatant["kind"] || "enemy",
+      hidden: combatant.hidden,
+    };
+    if (Number.isFinite(hpMax) && hpMax > 0) {
+      next.currentHp = hpMax;
+      next.maxHp = hpMax;
+    }
     if (Number.isFinite(ac) && ac >= 0) next.ac = Math.trunc(ac);
-    if (combatant.note.trim()) next.note = combatant.note.trim();
+    if (combatant.note.trim()) next.privateNote = combatant.note.trim();
     void replaceInitiative([...campaign.initiative.data.combatants, next]);
-    setCombatant({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false });
+    setCombatant({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" });
   };
 
-  const updateCombatant = (id: string, patch: Partial<InitiativeCombatant>) => {
+  const updateCombatant = (id: string, patch: Partial<CampaignCombatant>) => {
     void replaceInitiative(campaign.initiative.data.combatants.map((item) => item.id === id ? { ...item, ...patch } : item));
   };
 
@@ -180,8 +189,18 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <button type="button" className="dm-btn dm-btn-primary" onClick={nextTurn} disabled={sortedCombatants.length === 0}>Next turn</button>
           </div>
           <div className="dm-initiative">
-            {sortedCombatants.map((item) => (
-              <div key={item.id} className={`dm-combatant${item.hidden ? " is-hidden" : ""}${item.id === currentTurnId ? " is-current" : ""}`}>
+            {sortedCombatants.map((item) => {
+              const isPlayer = item.kind === "player";
+              const playerMember = isPlayer && item.memberUserId
+                ? campaign.members.find((m) => m.userId === item.memberUserId)
+                : null;
+              // Player HP/AC come from member summary (live character data); NPCs use encounter state.
+              const displayHp = isPlayer && playerMember
+                ? { current: playerMember.currentHp ?? 0, max: playerMember.maxHp ?? 0 }
+                : item.currentHp !== undefined ? { current: item.currentHp, max: item.maxHp ?? item.currentHp } : null;
+              const displayAc = isPlayer && playerMember ? playerMember.ac : item.ac;
+              return (
+              <div key={item.id} className={`dm-combatant${item.hidden ? " is-hidden" : ""}${item.id === currentTurnId ? " is-current" : ""}${item.defeated ? " is-defeated" : ""}`} data-kind={item.kind}>
                 <button
                   type="button"
                   className="dm-init-chip"
@@ -191,15 +210,21 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                   {item.hidden ? "??" : item.initiative}
                 </button>
                 <span className="dm-combatant-name">
+                  <strong className="dm-kind-chip" data-kind={item.kind}>{item.kind === "enemy" ? "⚔" : item.kind === "ally" ? "✦" : item.kind === "player" ? "●" : "○"}</strong>
                   <strong>{item.name}</strong>
-                  {item.hidden ? <em>hidden</em> : null}
-                  {item.note ? <small>{item.note}</small> : null}
+                  {item.hidden ? <em className="dm-hidden-label">HIDDEN</em> : null}
+                  {item.defeated ? <em className="dm-defeated-label">DEFEATED</em> : null}
+                  {item.privateNote ? <small>{item.privateNote}</small> : null}
+                  {item.concentratingOn ? <small className="dm-concentrating">{item.concentratingOn}</small> : null}
+                  {item.conditions && item.conditions.length ? <span className="dm-condition-chips">{item.conditions.map((c) => <em key={c.id}>{c.label}{c.stack ? ` ${c.stack}` : ""}</em>)}</span> : null}
                 </span>
-                {item.hp ? <span className="dm-combatant-hp">HP <input aria-label={`${item.name} HP`} type="number" value={item.hp.current} onChange={(event) => updateCombatant(item.id, { hp: { ...item.hp!, current: Math.max(0, Number(event.target.value) || 0) } })} />/{item.hp.max}</span> : null}
-                {item.ac !== undefined ? <small className="dm-combatant-ac">AC {item.ac}</small> : null}
+                {displayHp ? <span className="dm-combatant-hp">HP <input aria-label={`${item.name} HP`} type="number" value={displayHp.current} onChange={(event) => {
+                  if (!isPlayer) updateCombatant(item.id, { currentHp: Math.max(0, Number(event.target.value) || 0) });
+                }} disabled={isPlayer} />/{displayHp.max}</span> : null}
+                {displayAc !== undefined ? <small className="dm-combatant-ac">AC {displayAc}</small> : null}
                 <button type="button" className="dm-icon-btn" aria-label={`Remove ${item.name}`} onClick={() => void replaceInitiative(campaign.initiative.data.combatants.filter((row) => row.id !== item.id))}><Trash2 size={13} /></button>
               </div>
-            ))}
+            )})}
             {sortedCombatants.length === 0 ? <p className="dm-empty">No combatants yet — add one below, or let the party roll in.</p> : null}
           </div>
 
@@ -255,6 +280,9 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <div className="dm-inline-form">
               <input placeholder="Combatant" value={combatant.name} onChange={(event) => setCombatant({ ...combatant, name: event.target.value })} />
               <input placeholder="Init" type="number" value={combatant.initiative} onChange={(event) => setCombatant({ ...combatant, initiative: event.target.value })} />
+              <select aria-label="Kind" value={combatant.kind} onChange={(event) => setCombatant({ ...combatant, kind: event.target.value as CampaignCombatant["kind"] })}>
+                <option value="enemy">Enemy</option><option value="ally">Ally</option><option value="neutral">Neutral</option>
+              </select>
               <input placeholder="HP" type="number" value={combatant.hp} onChange={(event) => setCombatant({ ...combatant, hp: event.target.value })} />
               <input placeholder="AC" type="number" value={combatant.ac} onChange={(event) => setCombatant({ ...combatant, ac: event.target.value })} />
               <input placeholder="Private note" value={combatant.note} onChange={(event) => setCombatant({ ...combatant, note: event.target.value })} />

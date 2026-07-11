@@ -13,7 +13,7 @@ import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 import { applyRaceBonuses, abilityModifier } from "@/lib/utils";
 import { ruleset } from "@/lib/ruleset";
 import type { Character } from "@/types/game";
-import type { CampaignAudioState, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
+import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 
 // -- Types -----------------------------------------------------------------
 
@@ -144,28 +144,140 @@ function pruneTable(table: "campaign_rolls" | "campaign_events", campaignId: str
   `).run(campaignId, campaignId, limit);
 }
 
+const VALID_KINDS = new Set(["player", "ally", "enemy", "neutral"]);
+
+function clampConditions(raw: unknown): CampaignCombatantCondition[] {
+  if (!Array.isArray(raw)) return [];
+  const clamped: CampaignCombatantCondition[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const c = item as Record<string, unknown>;
+    if (typeof c.id !== "string" || typeof c.label !== "string" || !c.label.trim()) continue;
+    const entry: CampaignCombatantCondition = {
+      id: c.id.slice(0, 80),
+      label: c.label.trim().slice(0, 48),
+    };
+    if (c.advantageMode === "advantage" || c.advantageMode === "disadvantage") {
+      entry.advantageMode = c.advantageMode;
+    }
+    if (typeof c.stack === "number" && Number.isInteger(c.stack) && c.stack >= 1 && c.stack <= 6) {
+      entry.stack = c.stack;
+    }
+    clamped.push(entry);
+    if (clamped.length >= 20) break;
+  }
+  return clamped;
+}
+
+function clampStatBlock(raw: unknown): CampaignCombatant["statBlock"] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const input = raw as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const key of ["speed", "saves", "senses", "resistances", "immunities", "vulnerabilities"]) {
+    if (typeof input[key] === "string" && input[key].trim()) {
+      out[key] = (input[key] as string).trim().slice(0, 120);
+    }
+  }
+  return Object.keys(out).length > 0 ? out as CampaignCombatant["statBlock"] : undefined;
+}
+
+function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null {
+  if (!raw ||
+      typeof raw.id !== "string" ||
+      typeof raw.name !== "string" ||
+      typeof raw.initiative !== "number") {
+    return null;
+  }
+
+  // -- kind ---------------------------------------------------------------
+  let kind: CampaignCombatant["kind"] = "enemy";
+  if (typeof raw.kind === "string" && VALID_KINDS.has(raw.kind)) {
+    kind = raw.kind as CampaignCombatant["kind"];
+  } else if (raw.isPlayer === true) {
+    // backward compat: old combatants with isPlayer: true
+    kind = "player";
+  }
+
+  // -- references ---------------------------------------------------------
+  const memberUserId = typeof raw.memberUserId === "string" && raw.memberUserId.trim()
+    ? raw.memberUserId.trim().slice(0, 80) : undefined;
+  const characterId = typeof raw.characterId === "string" && raw.characterId.trim()
+    ? raw.characterId.trim().slice(0, 80) : undefined;
+
+  // -- HP / AC (flat, with backward compat for old nested hp) --------------
+  let currentHp: number | undefined;
+  let maxHp: number | undefined;
+  let tempHp: number | undefined;
+
+  if (raw.hp && typeof raw.hp === "object" && !Array.isArray(raw.hp)) {
+    // old format: hp: { current, max }
+    const old = raw.hp as Record<string, unknown>;
+    if (typeof old.current === "number") currentHp = Math.max(0, Math.min(9999, Math.trunc(old.current)));
+    if (typeof old.max === "number") maxHp = Math.max(1, Math.min(9999, Math.trunc(old.max)));
+  }
+  // new format takes precedence
+  if (typeof raw.currentHp === "number" && Number.isFinite(raw.currentHp)) {
+    currentHp = Math.max(0, Math.min(9999, Math.trunc(raw.currentHp)));
+  }
+  if (typeof raw.maxHp === "number" && Number.isFinite(raw.maxHp)) {
+    maxHp = Math.max(1, Math.min(9999, Math.trunc(raw.maxHp)));
+  }
+  if (typeof raw.tempHp === "number" && Number.isFinite(raw.tempHp)) {
+    tempHp = Math.max(0, Math.min(9999, Math.trunc(raw.tempHp)));
+  }
+
+  // -- AC -----------------------------------------------------------------
+  const ac = typeof raw.ac === "number" && Number.isFinite(raw.ac)
+    ? Math.max(0, Math.min(99, Math.trunc(raw.ac))) : undefined;
+
+  // -- flags ---------------------------------------------------------------
+  const hidden = raw.hidden === true ? true : undefined;
+  const defeated = raw.defeated === true ? true : undefined;
+
+  // -- text fields ---------------------------------------------------------
+  const concentratingOn = typeof raw.concentratingOn === "string" && raw.concentratingOn.trim()
+    ? raw.concentratingOn.trim().slice(0, 80) : undefined;
+
+  // privateNote: prefer new field, fall back to old `note`
+  const rawNote = typeof raw.privateNote === "string" ? raw.privateNote : raw.note;
+  const privateNote = typeof rawNote === "string" && rawNote.trim()
+    ? rawNote.trim().slice(0, 200) : undefined;
+
+  // -- conditions ----------------------------------------------------------
+  const conditions = clampConditions(raw.conditions);
+
+  // -- stat block ----------------------------------------------------------
+  const statBlock = clampStatBlock(raw.statBlock);
+
+  return {
+    id: raw.id.slice(0, 80),
+    name: raw.name.slice(0, 80),
+    initiative: Math.max(-99, Math.min(99, Math.trunc(raw.initiative))),
+    kind,
+    ...(memberUserId ? { memberUserId } : {}),
+    ...(characterId ? { characterId } : {}),
+    ...(currentHp !== undefined ? { currentHp } : {}),
+    ...(maxHp !== undefined ? { maxHp } : {}),
+    ...(tempHp !== undefined ? { tempHp } : {}),
+    ...(ac !== undefined ? { ac } : {}),
+    ...(hidden ? { hidden: true } : {}),
+    ...(defeated ? { defeated: true } : {}),
+    ...(concentratingOn ? { concentratingOn } : {}),
+    ...(conditions.length ? { conditions } : {}),
+    ...(privateNote ? { privateNote } : {}),
+    ...(statBlock ? { statBlock } : {}),
+  };
+}
+
 function clampInitiativeState(raw: InitiativeState): InitiativeState {
-  const combatants = Array.isArray(raw.combatants)
-    ? raw.combatants
-      .filter((item) =>
-        item &&
-        typeof item.id === "string" &&
-        typeof item.name === "string" &&
-        typeof item.initiative === "number",
-      )
-      .map((item) => ({
-        id: item.id.slice(0, 80),
-        name: item.name.slice(0, 80),
-        initiative: Math.max(-99, Math.min(99, Math.trunc(item.initiative))),
-        ...(item.isPlayer ? { isPlayer: true } : {}),
-        ...(item.hidden === true ? { hidden: true } : {}),
-        ...(item.hp && typeof item.hp.current === "number" && typeof item.hp.max === "number"
-          ? { hp: { current: Math.max(0, Math.min(9999, Math.trunc(item.hp.current))), max: Math.max(1, Math.min(9999, Math.trunc(item.hp.max))) } }
-          : {}),
-        ...(typeof item.ac === "number" ? { ac: Math.max(0, Math.min(99, Math.trunc(item.ac))) } : {}),
-        ...(typeof item.note === "string" && item.note.trim() ? { note: item.note.trim().slice(0, 120) } : {}),
-      }))
-    : [];
+  const combatants: CampaignCombatant[] = [];
+  if (Array.isArray(raw.combatants)) {
+    for (const item of raw.combatants) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const clamped = clampCombatant(item as Record<string, unknown>);
+      if (clamped) combatants.push(clamped);
+    }
+  }
   const round = Math.max(1, Math.min(999, Math.trunc(raw.round || 1)));
   const turnIndex = combatants.length === 0 ? 0 : Math.max(0, Math.min(combatants.length - 1, Math.trunc(raw.turnIndex || 0)));
   return { combatants, turnIndex, round };
@@ -191,7 +303,9 @@ function toTrack(row: CampaignTrackRow): CampaignTrack {
 function visibleInitiative(initiative: ReturnType<typeof getInitiativeRow>, isDm: boolean) {
   if (isDm) return initiative;
   const currentId = initiative.data.combatants[initiative.data.turnIndex]?.id;
-  const combatants = initiative.data.combatants.filter((combatant) => !combatant.hidden);
+  const combatants = initiative.data.combatants
+    .filter((combatant) => !combatant.hidden)
+    .map(({ privateNote: _p, conditions: _c, ...rest }) => rest as CampaignCombatant);
   return {
     ...initiative,
     data: {
@@ -601,7 +715,7 @@ export function updateCampaignInitiative(campaignId: string, userId: string, dat
 }
 
 export function rollCampaignInitiative(campaignId: string, userId: string, characterName: string, initiative: number) {
-  requireMembership(campaignId, userId);
+  const membership = requireMembership(campaignId, userId);
   const db = getDb();
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -612,7 +726,9 @@ export function rollCampaignInitiative(campaignId: string, userId: string, chara
       id: playerId,
       name: characterName.trim().slice(0, 80),
       initiative: Math.max(-99, Math.min(99, Math.trunc(initiative))),
-      isPlayer: true,
+      kind: "player",
+      memberUserId: userId,
+      ...(membership.character_id ? { characterId: membership.character_id } : {}),
     });
     const sortedCurrent = sortCombatants(current.data.combatants);
     const currentId = sortedCurrent[current.data.turnIndex]?.id;

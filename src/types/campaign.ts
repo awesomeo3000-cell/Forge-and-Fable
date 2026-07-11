@@ -1,18 +1,55 @@
 import type { AbilityKey, Character, CharacterEffect } from "@/types/game";
 
-export type InitiativeCombatant = {
+/** Per-combatant condition marker (DM-editable on NPCs; display-only — not the full effects engine). */
+export type CampaignCombatantCondition = {
+  id: string;
+  label: string;
+  advantageMode?: "advantage" | "disadvantage";
+  /** Exhaustion level, 1-6. */
+  stack?: number;
+};
+
+/** A single entry in the shared initiative order. Replaces the older InitiativeCombatant. */
+export type CampaignCombatant = {
   id: string;
   name: string;
   initiative: number;
-  isPlayer?: boolean;
-  hidden?: boolean;
-  hp?: { current: number; max: number };
+  kind: "player" | "ally" | "enemy" | "neutral";
+
+  /** Player linkage — HP/AC/conditions are derived from the member summary at sync time. */
+  memberUserId?: string;
+  characterId?: string;
+
+  /** NPC/enemy state lives in the encounter (DM-editable, persists on refresh). */
+  currentHp?: number;
+  maxHp?: number;
+  tempHp?: number;
   ac?: number;
-  note?: string;
+
+  hidden?: boolean;
+  defeated?: boolean;
+  concentratingOn?: string;
+
+  /** NPC conditions (DM-managed — display only, no mechanical effect on the owning client). */
+  conditions?: CampaignCombatantCondition[];
+  /** DM-only note (replaces the old `note` field). */
+  privateNote?: string;
+
+  statBlock?: {
+    speed?: string;
+    saves?: string;
+    senses?: string;
+    resistances?: string;
+    immunities?: string;
+    vulnerabilities?: string;
+  };
 };
 
+/** @deprecated Use CampaignCombatant instead. */
+export type InitiativeCombatant = CampaignCombatant;
+
 export type InitiativeState = {
-  combatants: InitiativeCombatant[];
+  combatants: CampaignCombatant[];
   turnIndex: number;
   round: number;
 };
