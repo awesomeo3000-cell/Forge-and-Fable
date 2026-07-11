@@ -1966,9 +1966,27 @@ export default function ForgeAndFableApp() {
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
         onClose={() => { setCampaignOpen(false); setCampaignInitialView(null); }}
         theme={selected?.theme ?? null}
-      />) : (
-        <div className="modal-scrim" role="status" aria-live="polite">
-          <section className="campaign-panel campaign-loading-panel" aria-label="Loading campaign">
+      />) : !activeCampaignId ? <CampaignPanel
+        characters={characters}
+        currentUserId={user.id}
+        activeCampaignId={null}
+        initialView={campaignInitialView ?? "list"}
+        campaignSync={null}
+        campaignEvents={campaignEvents}
+        resolvedEventIds={resolvedCampaignEvents}
+        onActiveCampaignChange={setActiveCampaign}
+        onPostEvent={postCampaignEvent}
+        onRespondRollRequest={handleCampaignRollRequest}
+        onAcceptRest={applyCampaignRest}
+        onResolveEvent={resolveCampaignEvent}
+        onOpenSheet={(character) => setReadOnlyViewChar(character)}
+        onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
+        onClose={() => { setCampaignOpen(false); setCampaignInitialView(null); }}
+        theme={selected?.theme ?? null}
+      /> : (
+        <div className="modal-scrim" role="presentation" onMouseDown={() => { setCampaignOpen(false); setActiveCampaign(null); setCampaignInitialView(null); }}>
+          <section className="campaign-panel campaign-loading-panel" aria-label="Loading campaign" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="glass-icon modal-close" type="button" aria-label="Close campaign loading" onClick={() => { setCampaignOpen(false); setActiveCampaign(null); setCampaignInitialView(null); }}>×</button>
             <p className="cs-muted">Opening campaign...</p>
           </section>
         </div>
