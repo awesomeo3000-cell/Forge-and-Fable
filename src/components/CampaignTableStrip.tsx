@@ -2,6 +2,8 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { FONT_STACKS } from "@/lib/skins";
+import type { CharacterTheme } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAACAgICAgICAgIA=";
@@ -11,6 +13,7 @@ type Props = {
   events: CampaignEvent[];
   /** For the "your turn" highlight — player combatants are keyed `player:<userId>`. */
   currentUserId?: string;
+  theme?: CharacterTheme | null;
   onOpen: () => void;
   onToast: (title: string, body?: string) => void;
 };
@@ -19,7 +22,7 @@ function payload(event: CampaignEvent) {
   try { const value = JSON.parse(event.payload); return value && typeof value === "object" ? value as Record<string, unknown> : {}; } catch { return {}; }
 }
 
-export default memo(function CampaignTableStrip({ campaign, events, currentUserId, onOpen, onToast }: Props) {
+export default memo(function CampaignTableStrip({ campaign, events, currentUserId, theme, onOpen, onToast }: Props) {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const cueRef = useRef<HTMLAudioElement | null>(null);
   const processedCuesRef = useRef(new Set<string>());
@@ -89,5 +92,13 @@ export default memo(function CampaignTableStrip({ campaign, events, currentUserI
   if (dismissed) return null;
   const announcement = lastAnnouncement ? payload(lastAnnouncement).message : null;
   const isMyTurn = Boolean(current && currentUserId && current.id === `player:${currentUserId}`);
-  return <aside className={`campaign-table-strip${isMyTurn ? " is-your-turn" : ""}`}><audio ref={musicRef}/><audio ref={cueRef}/><span>THE TABLE · Round {campaign.initiative.data.round}{current ? ` · ${isMyTurn ? "YOUR TURN" : current.name}` : ""}</span>{typeof announcement === "string" ? <em>{announcement.slice(0, 90)}</em> : null}<div>{armed ? <><button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute table audio" : "Mute table audio"}>{muted ? <VolumeX size={15}/> : <Volume2 size={15}/>}</button><input aria-label="Table audio volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => { const next = Number(event.target.value); setVolume(next); window.localStorage.setItem("forge-and-fable-table-volume", String(next)); }}/></> : <button type="button" onClick={armAudio}>Join table audio</button>}<button type="button" onClick={onOpen}>Open campaign</button><button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss table strip">×</button></div></aside>;
+  const stripThemeVars = theme ? ({
+    "--paper": theme.paper,
+    "--ink": theme.ink,
+    "--ink-2": `color-mix(in srgb, ${theme.ink} 65%, ${theme.paper})`,
+    "--doc-accent": theme.accent,
+    "--font-body": FONT_STACKS[theme.fontKey],
+    "--sheet-scale": `${theme.fontScale ?? 1}`,
+  } as React.CSSProperties) : undefined;
+  return <aside className={`campaign-table-strip${isMyTurn ? " is-your-turn" : ""}`} style={stripThemeVars}><audio ref={musicRef}/><audio ref={cueRef}/><span>THE TABLE · Round {campaign.initiative.data.round}{current ? ` · ${isMyTurn ? "YOUR TURN" : current.name}` : ""}</span>{typeof announcement === "string" ? <em>{announcement.slice(0, 90)}</em> : null}<div>{armed ? <><button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute table audio" : "Mute table audio"}>{muted ? <VolumeX size={15}/> : <Volume2 size={15}/>}</button><input aria-label="Table audio volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => { const next = Number(event.target.value); setVolume(next); window.localStorage.setItem("forge-and-fable-table-volume", String(next)); }}/></> : <button type="button" onClick={armAudio}>Join table audio</button>}<button type="button" onClick={onOpen}>Open campaign</button><button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss table strip">×</button></div></aside>;
 });

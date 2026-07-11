@@ -10755,6 +10755,10 @@ button.dj-card {
   background: var(--ground-2, #1f1a12);
   color: color-mix(in srgb, var(--paper, #e9dfc8) 88%, transparent);
   font-family: var(--font-body);
+  font-size: calc(1em * var(--sheet-scale, 1));
+  --skin-bg-pattern: var(--grain);
+  --skin-bg-size: 140px 140px;
+  --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.1);
 }
 .dm-table::before {
   content: "";
@@ -10763,11 +10767,25 @@ button.dj-card {
   z-index: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: var(--grain);
-  background-size: 140px 140px;
-  opacity: 0.05;
+  background-image: var(--skin-bg-pattern);
+  background-size: var(--skin-bg-size);
+  background-position: center;
+  background-repeat: repeat;
+  opacity: var(--skin-bg-opacity);
 }
 .dm-table > * { position: relative; z-index: 1; }
+
+/* The desk is intentionally dark, while the character's chosen material
+   pattern still travels with it (the same contract used by the sheet). */
+.dm-table[data-bg="plain"] { --skin-bg-pattern: none; --skin-bg-opacity: 0; }
+.dm-table[data-bg="parchment"] { --skin-bg-pattern: var(--grain); --skin-bg-size: 140px 140px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.18); }
+.dm-table[data-bg="linen"] { --skin-bg-pattern: linear-gradient(90deg, color-mix(in srgb, var(--paper) 16%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--paper) 10%, transparent) 1px, transparent 1px); --skin-bg-size: 9px 9px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.65); }
+.dm-table[data-bg="stars"] { --skin-bg-pattern: radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--doc-accent) 62%, transparent) 0 1.5px, transparent 2.5px), radial-gradient(circle at 35% 44%, color-mix(in srgb, var(--paper) 34%, transparent) 0 1px, transparent 2px), radial-gradient(circle at 62% 24%, color-mix(in srgb, var(--doc-accent) 54%, transparent) 0 1.25px, transparent 2.25px); --skin-bg-size: 112px 88px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.9); }
+.dm-table[data-bg="sparkle"] { --skin-bg-pattern: radial-gradient(circle at 22% 30%, color-mix(in srgb, var(--doc-accent) 68%, transparent) 0 1.5px, transparent 2.5px), radial-gradient(circle at 70% 24%, color-mix(in srgb, var(--doc-accent) 30%, transparent) 0 1px, transparent 7px), linear-gradient(135deg, transparent 0 46%, color-mix(in srgb, var(--doc-accent) 22%, transparent) 47% 49%, transparent 50% 100%); --skin-bg-size: 86px 86px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.95); }
+.dm-table[data-bg="forest"] { --skin-bg-pattern: radial-gradient(ellipse at 32% 28%, color-mix(in srgb, var(--doc-accent) 32%, transparent) 0 7px, transparent 8px), radial-gradient(ellipse at 70% 74%, color-mix(in srgb, var(--paper) 20%, transparent) 0 9px, transparent 10px), repeating-linear-gradient(112deg, transparent 0 13px, color-mix(in srgb, var(--doc-accent) 18%, transparent) 14px 16px, transparent 17px 34px); --skin-bg-size: 96px 112px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.8); }
+.dm-table[data-bg="dungeon"] { --skin-bg-pattern: linear-gradient(color-mix(in srgb, var(--paper) 22%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--paper) 22%, transparent) 1px, transparent 1px), linear-gradient(135deg, transparent 0 47%, color-mix(in srgb, var(--paper) 12%, transparent) 48% 50%, transparent 51% 100%); --skin-bg-size: 34px 26px, 34px 26px, 68px 52px; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.85); }
+.dm-table[data-bg="custom"] { --skin-bg-pattern: var(--skin-bg-image, none); --skin-bg-size: cover; --skin-bg-opacity: calc(var(--bg-opacity, 0.5) * 0.35); }
+.dm-table[data-bg="custom"]::before { background-attachment: fixed; background-repeat: no-repeat; }
 
 .dm-table-head {
   display: flex;

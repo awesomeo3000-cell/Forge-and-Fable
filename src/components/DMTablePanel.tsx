@@ -3,6 +3,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
+import { FONT_STACKS } from "@/lib/skins";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeCombatant, InitiativeState } from "@/types/campaign";
 
@@ -139,8 +140,35 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (await onPostEvent(type, { label: conditionLabel.trim() }, conditionTarget)) setConditionLabel("");
   };
 
+  const tableThemeVars = theme ? ({
+    "--paper": theme.paper,
+    "--paper-raised": `color-mix(in srgb, ${theme.paper} 94%, #000)`,
+    "--ink": theme.ink,
+    "--ink-2": `color-mix(in srgb, ${theme.ink} 65%, ${theme.paper})`,
+    "--ink-3": `color-mix(in srgb, ${theme.ink} 45%, ${theme.paper})`,
+    "--doc-accent": theme.accent,
+    "--doc-accent-deep": `color-mix(in srgb, ${theme.accent} 82%, #000)`,
+    "--doc-rule": `color-mix(in srgb, ${theme.ink} 40%, ${theme.paper})`,
+    "--doc-rule-soft": `color-mix(in srgb, ${theme.ink} 16%, ${theme.paper})`,
+    "--font-body": FONT_STACKS[theme.fontKey],
+    "--font-display": FONT_STACKS[theme.fontKey],
+    "--sheet-scale": `${theme.fontScale ?? 1}`,
+    "--bg-opacity": `${theme.backgroundOpacity ?? 0.5}`,
+    ...(theme.backgroundImageUrl ? { "--skin-bg-image": `url("${theme.backgroundImageUrl.replace(/["\\)]/g, "")}")` } : {}),
+    // The Table stays a dark desk, but its desk, rules, and type are all
+    // derived from the currently open character's skin rather than globals.
+    "--ground": `color-mix(in srgb, ${theme.ink} 94%, #000)`,
+    "--ground-2": `color-mix(in srgb, ${theme.ink} 88%, ${theme.paper})`,
+    "--ground-3": `color-mix(in srgb, ${theme.ink} 97%, #000)`,
+    "--parchment": theme.paper,
+    "--parchment-2": `color-mix(in srgb, ${theme.paper} 70%, ${theme.ink})`,
+    "--ink-faint": `color-mix(in srgb, ${theme.paper} 48%, ${theme.ink})`,
+    "--rule": `color-mix(in srgb, ${theme.paper} 28%, ${theme.ink})`,
+    "--rule-soft": `color-mix(in srgb, ${theme.paper} 15%, ${theme.ink})`,
+  } as React.CSSProperties) : undefined;
+
   return (
-    <section className="dm-table" style={theme ? ({ "--paper": theme.paper, "--ink": theme.ink, "--doc-accent": theme.accent } as React.CSSProperties) : undefined}>
+    <section className="dm-table" style={tableThemeVars} data-bg={theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment"}>
       <header className="dm-table-head"><div><span>THE TABLE</span><h2>{campaign.campaign.name}</h2></div><div><button type="button" className="dm-table-code" onClick={() => navigator.clipboard.writeText(campaign.campaign.code).catch(() => {})}>Code {campaign.campaign.code} <Copy size={13} /></button><button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button></div></header>
       {error ? <p className="dm-table-error">{error}</p> : null}
       <div className="dm-table-grid">

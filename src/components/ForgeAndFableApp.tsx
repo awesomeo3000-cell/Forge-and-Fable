@@ -1873,6 +1873,7 @@ export default function ForgeAndFableApp() {
       campaign={campaignSync}
       events={campaignEvents}
       currentUserId={user.id}
+      theme={selected?.theme ?? null}
       onOpen={() => setCampaignOpen(true)}
       onToast={(title, body) => pushToast("announce", title, body)}
     /> : null}
