@@ -11126,12 +11126,20 @@ button.dj-card {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(230px, 0.8fr) minmax(360px, 1.5fr) minmax(240px, 0.85fr);
+  /* Constrain the single row to the grid's flex box (not its content) so a long
+     party rail can never grow the grid past its slot and paint over the
+     soundboard below. Each pane scrolls internally instead. */
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
+  overflow: hidden;
 }
+.dm-table-grid > * { min-height: 0; }
 .dm-table-region {
   min-width: 0;
+  min-height: 0;
   padding: 18px;
   border-right: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 16%, transparent);
+  overflow: auto;
 }
 .dm-table-region:last-child { border-right: 0; }
 .dm-table-region > h3 { margin-bottom: 12px; }
@@ -11629,8 +11637,9 @@ button.dj-card {
 
 @media (max-width: 900px) {
   .dm-table { padding: 12px; min-height: 0; }
-  .dm-table-grid { grid-template-columns: 1fr; }
-  .dm-table-region { border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 16%, transparent); }
+  .dm-table-grid { grid-template-columns: 1fr; grid-template-rows:none; overflow:visible; }
+  .dm-table-region { border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 16%, transparent); overflow:visible; }
+  .dm-command-party,.dm-command-party-list { overflow:visible; }
   .dm-record { max-height: 360px; }
   .dm-soundboard { grid-template-columns: 1fr; }
   .campaign-table-strip { left: 10px; right: 10px; bottom: 10px; }
@@ -12273,13 +12282,14 @@ button.dj-card {
 .dm-layout-picker select { min-height:36px; border:0; border-bottom:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 28%,transparent); background:transparent; color:var(--paper,#e9dfc8); }
 .dm-layout-picker option { background:var(--ground-2,#1f1a12); }
 .dm-table-grid { grid-template-columns:minmax(270px,310px) minmax(480px,1fr) minmax(340px,390px); }
-.dm-command-party,.dm-command-inspector { min-width:0; padding:18px; border-right:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 16%,transparent); }
+.dm-command-party,.dm-command-inspector { min-width:0; min-height:0; padding:18px; border-right:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 16%,transparent); }
+.dm-command-party { display:flex; flex-direction:column; }
 .dm-command-inspector { border-right:0; border-left:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 16%,transparent); }
 .dm-command-party>header,.dm-command-inspector>header { display:grid; gap:3px; padding-bottom:12px; border-bottom:2px solid color-mix(in srgb,var(--paper,#e9dfc8) 34%,transparent); }
 .dm-command-party>header>span,.dm-command-inspector>header>span,.dm-scene-workspace>span,.dm-workspace-empty>span { color:var(--doc-accent,#c9a25a); font-family:var(--font-label); font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
 .dm-command-party>header strong { color:var(--paper,#e9dfc8); font-size:15px; font-weight:600; }
 .dm-command-party>header small,.dm-command-inspector>header small { color:color-mix(in srgb,var(--paper,#e9dfc8) 58%,transparent); font-size:12px; }
-.dm-command-party-list { display:grid; }
+.dm-command-party-list { display:grid; flex:1; min-height:0; overflow:auto; }
 .dm-command-member { position:relative; border-bottom:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 14%,transparent); border-left:3px solid transparent; }
 .dm-command-member.is-selected { border-left-color:var(--doc-accent,#c9a25a); background:color-mix(in srgb,var(--paper,#e9dfc8) 5%,transparent); }
 .dm-command-member.is-current::before { content:"CURRENT"; position:absolute; top:8px; right:34px; color:var(--doc-accent,#c9a25a); font-family:var(--font-label); font-size:9px; letter-spacing:.1em; }
@@ -12335,8 +12345,10 @@ button.dj-card {
   .dm-table-head { flex-wrap:wrap; }
 }
 @media (max-width:800px) {
-  .dm-table-grid { grid-template-columns:1fr; }
+  .dm-table-grid { grid-template-columns:1fr; grid-template-rows:none; overflow:visible; }
   .dm-command-party { border-right:0; border-bottom:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 16%,transparent); }
+  /* On small screens the whole table scrolls; let panes size to content. */
+  .dm-command-party,.dm-command-party-list,.dm-table-region { overflow:visible; }
   .dm-workspace-modes { overflow:auto; justify-content:flex-start; }
   .dm-layout-picker { display:none; }
 }
