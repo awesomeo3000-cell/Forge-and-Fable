@@ -72,7 +72,7 @@ export type EncounterCombatantTemplate = {
 export type EncounterWave = {
   id: string;
   name: string;
-  trigger: { type: "round-start"; round: number } | { type: "combatant-hp"; combatantId: string; belowPercent: number } | { type: "manual" };
+  trigger: { type: "round-start"; round: number } | { type: "combatant-hp"; combatantId: string; belowPercent: number } | { type: "combatant-defeated"; combatantId: string } | { type: "manual" };
   combatantIds: string[];
 };
 
@@ -225,6 +225,8 @@ export type EncounterRun = {
   reminders: EncounterReminder[];
   readAloudRead?: boolean;
   activatedWaveIds?: string[];
+  cancelledWaveIds?: string[];
+  postponedWaveIds?: string[];
   startedAt: string;
   endedAt?: string;
 };

@@ -242,6 +242,8 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
   const visibility = ["hidden", "name-only", "name-and-conditions", "approximate-health", "exact-hp", "full-public"].includes(String(raw.visibility))
     ? raw.visibility as CampaignCombatant["visibility"] : undefined;
   const defeated = raw.defeated === true ? true : undefined;
+  const reactionUsed = raw.reactionUsed === true ? true : undefined;
+  const turnStatus = raw.turnStatus === "delayed" || raw.turnStatus === "readied" ? raw.turnStatus : undefined;
 
   // -- text fields ---------------------------------------------------------
   const concentratingOn = typeof raw.concentratingOn === "string" && raw.concentratingOn.trim()
@@ -272,6 +274,8 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
     ...(hidden ? { hidden: true } : {}),
     ...(visibility ? { visibility } : {}),
     ...(defeated ? { defeated: true } : {}),
+    ...(reactionUsed ? { reactionUsed: true } : {}),
+    ...(turnStatus ? { turnStatus } : {}),
     ...(concentratingOn ? { concentratingOn } : {}),
     ...(conditions.length ? { conditions } : {}),
     ...(privateNote ? { privateNote } : {}),

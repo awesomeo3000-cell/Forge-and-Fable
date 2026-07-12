@@ -31,6 +31,8 @@ export type CampaignCombatant = {
   healthLabel?: "Unhurt" | "Wounded" | "Bloodied" | "Near death" | "Defeated";
   defeated?: boolean;
   concentratingOn?: string;
+  reactionUsed?: boolean;
+  turnStatus?: "delayed" | "readied";
 
   /** NPC conditions (DM-managed — display only, no mechanical effect on the owning client). */
   conditions?: CampaignCombatantCondition[];

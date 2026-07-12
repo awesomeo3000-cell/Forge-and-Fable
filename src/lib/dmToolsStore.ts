@@ -342,6 +342,8 @@ function sanitizeWave(input: unknown): EncounterWave | null {
             combatantId: safeText(t.combatantId, 80),
             belowPercent: safeInt(t.belowPercent, 1, 99, 50),
           }
+        : t.type === "combatant-defeated"
+          ? { type: "combatant-defeated" as const, combatantId: safeText(t.combatantId, 80) }
         : { type: "manual" as const };
   return {
     id: safeText(raw.id, 80) || randomUUID(),
@@ -649,7 +651,7 @@ export function startEncounter(userId: string, id: string) {
         session?.id ?? null,
         "active",
         JSON.stringify(encounter),
-        JSON.stringify({ reminders: run.reminders, readAloudRead: false, activatedWaveIds: [] }),
+        JSON.stringify({ reminders: run.reminders, readAloudRead: false, activatedWaveIds: [], cancelledWaveIds: [], postponedWaveIds: [] }),
         now,
       );
     getDb().prepare("UPDATE saved_encounters SET last_used_at=? WHERE id=?").run(now, id);
@@ -1093,14 +1095,14 @@ export function activeWorkspace(campaignId: string, userId: string) {
     .prepare("SELECT * FROM campaign_sessions WHERE campaign_id=? AND status='active' ORDER BY started_at DESC LIMIT 1")
     .get(campaignId) as Parameters<typeof sessionFromRow>[0] | undefined;
   const runRow = getDb()
-    .prepare("SELECT * FROM encounter_runs WHERE campaign_id=? AND status='active' ORDER BY started_at DESC LIMIT 1")
+    .prepare("SELECT * FROM encounter_runs WHERE campaign_id=? AND status IN ('active','paused') ORDER BY started_at DESC LIMIT 1")
     .get(campaignId) as
     | {
         id: string;
         campaign_id: string;
         encounter_id: string | null;
         session_id: string | null;
-        status: "active";
+        status: "active" | "paused";
         snapshot_json: string;
         live_json: string;
         started_at: string;
@@ -1111,7 +1113,7 @@ export function activeWorkspace(campaignId: string, userId: string) {
   let run: EncounterRun | null = null;
   if (runRow) {
     const snapshot = parseJson<SavedEncounter>(runRow.snapshot_json),
-      live = parseJson<{ reminders: EncounterReminder[]; readAloudRead?: boolean; activatedWaveIds?: string[] }>(
+      live = parseJson<{ reminders: EncounterReminder[]; readAloudRead?: boolean; activatedWaveIds?: string[]; cancelledWaveIds?: string[]; postponedWaveIds?: string[] }>(
         runRow.live_json,
       );
     run = {
@@ -1119,7 +1121,7 @@ export function activeWorkspace(campaignId: string, userId: string) {
       campaignId,
       ...(runRow.encounter_id ? { encounterId: runRow.encounter_id } : {}),
       ...(runRow.session_id ? { sessionId: runRow.session_id } : {}),
-      status: "active",
+      status: runRow.status,
       snapshot: dm
         ? snapshot
         : {
@@ -1134,6 +1136,8 @@ export function activeWorkspace(campaignId: string, userId: string) {
       reminders: dm ? live.reminders : [],
       readAloudRead: dm ? live.readAloudRead : undefined,
       activatedWaveIds: dm ? live.activatedWaveIds : undefined,
+      cancelledWaveIds: dm ? live.cancelledWaveIds : undefined,
+      postponedWaveIds: dm ? live.postponedWaveIds : undefined,
       startedAt: runRow.started_at,
     };
   }
@@ -1198,7 +1202,12 @@ export function updateEncounterRun(
       insertAuditEvent(campaignId, userId, "encounter-ended", { runId: id, name: snapshot.name });
       return { ok: true, endedAt };
     });
-  const live = parseJson<{ reminders: EncounterReminder[]; readAloudRead?: boolean; activatedWaveIds?: string[] }>(
+  if (input.action === "pause" || input.action === "resume") {
+    const status = input.action === "pause" ? "paused" : "active";
+    getDb().prepare("UPDATE encounter_runs SET status=? WHERE id=?").run(status, id);
+    return { ok: true, status };
+  }
+  const live = parseJson<{ reminders: EncounterReminder[]; readAloudRead?: boolean; activatedWaveIds?: string[]; cancelledWaveIds?: string[]; postponedWaveIds?: string[] }>(
     row.live_json,
   );
   if (input.action === "activate-wave") {
@@ -1222,6 +1231,13 @@ export function updateEncounterRun(
       return { ok: true, activatedWaveIds: live.activatedWaveIds };
     });
   }
+  if (input.action === "cancel-wave" || input.action === "postpone-wave") {
+    const waveId = safeText(input.waveId, 80);
+    const snapshot = parseJson<SavedEncounter>(row.snapshot_json);
+    if (!waveId || !snapshot.waves.some((wave) => wave.id === waveId) || live.activatedWaveIds?.includes(waveId)) throw new Error("Wave is missing or already active.");
+    if (input.action === "cancel-wave") live.cancelledWaveIds = [...new Set([...(live.cancelledWaveIds ?? []), waveId])];
+    else live.postponedWaveIds = [...new Set([...(live.postponedWaveIds ?? []), waveId])];
+  }
   if (Array.isArray(input.reminders))
     live.reminders = input.reminders
       .slice(0, 30)
@@ -1229,7 +1245,7 @@ export function updateEncounterRun(
       .filter((item): item is EncounterReminder => Boolean(item));
   if (typeof input.readAloudRead === "boolean") live.readAloudRead = input.readAloudRead;
   getDb().prepare("UPDATE encounter_runs SET live_json=? WHERE id=?").run(JSON.stringify(live), id);
-  return { ok: true, reminders: live.reminders, readAloudRead: live.readAloudRead };
+  return { ok: true, reminders: live.reminders, readAloudRead: live.readAloudRead, cancelledWaveIds: live.cancelledWaveIds, postponedWaveIds: live.postponedWaveIds };
 }
 
 export function getPlayerMemory(campaignId: string, userId: string): PlayerCampaignMemory {

@@ -100,6 +100,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   });
   const [workspaceMode, setWorkspaceMode] = useState<DmWorkspaceMode>(() => presetMode(layoutPreset));
   const [characterNotes, setCharacterNotes] = useState<CampaignCharacterNote[]>([]);
+  const [clockNow, setClockNow] = useState(() => Date.now());
   const isPlaying = campaign.audio.trackId;
   const players = useMemo(
     () => campaign.members.filter((member) => member.userId !== campaign.campaign.dmUserId),
@@ -118,18 +119,23 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (!activeEncounter) return [];
     const current = sortedCombatants[campaign.initiative.data.turnIndex];
     const round = campaign.initiative.data.round;
-    const contexts: ReminderContext[] = [
-      { type: "encounter-start", round },
-      { type: "round-start", round },
-    ];
+    const contexts: ReminderContext[] = [];
+    if (campaign.initiative.data.turnIndex === 0) contexts.push({ type: "round-start", round });
     if (current) {
       contexts.push(
         { type: "turn-start", round, combatantId: current.id },
-        { type: "turn-end", round, combatantId: current.id },
         { type: "initiative-count", round, initiative: current.initiative },
       );
-      if (campaign.initiative.data.turnIndex === sortedCombatants.length - 1) contexts.push({ type: "round-end", round });
     }
+    return activeEncounter.reminders.filter((reminder) => contexts.some((context) => reminderMatches(reminder, context)));
+  }, [activeEncounter, campaign.initiative.data.round, campaign.initiative.data.turnIndex, sortedCombatants]);
+  const endTurnReminders = useMemo(() => {
+    if (!activeEncounter) return [];
+    const current = sortedCombatants[campaign.initiative.data.turnIndex];
+    if (!current) return [];
+    const round = campaign.initiative.data.round;
+    const contexts: ReminderContext[] = [{ type: "turn-end", round, combatantId: current.id }];
+    if (campaign.initiative.data.turnIndex === sortedCombatants.length - 1) contexts.push({ type: "round-end", round });
     return activeEncounter.reminders.filter((reminder) => contexts.some((context) => reminderMatches(reminder, context)));
   }, [activeEncounter, campaign.initiative.data.round, campaign.initiative.data.turnIndex, sortedCombatants]);
 
@@ -137,10 +143,17 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (sortedCombatants.length === 0) return;
     const { turnIndex, round } = campaign.initiative.data;
     const wrapped = turnIndex + 1 >= sortedCombatants.length;
+    const combatants = wrapped ? campaign.initiative.data.combatants.map((item) => ({ ...item, reactionUsed: false })) : campaign.initiative.data.combatants;
     void onInitiativeUpdate(
-      { ...campaign.initiative.data, turnIndex: wrapped ? 0 : turnIndex + 1, round: wrapped ? round + 1 : round },
+      { ...campaign.initiative.data, combatants, turnIndex: wrapped ? 0 : turnIndex + 1, round: wrapped ? round + 1 : round },
       campaign.initiative.version,
     );
+  };
+  const previousTurn = () => {
+    if (!sortedCombatants.length) return;
+    const { turnIndex, round } = campaign.initiative.data;
+    const wrapped = turnIndex === 0;
+    void onInitiativeUpdate({ ...campaign.initiative.data, turnIndex: wrapped ? sortedCombatants.length - 1 : turnIndex - 1, round: wrapped ? Math.max(1, round - 1) : round }, campaign.initiative.version);
   };
 
   useEffect(() => { void listCampaignTracks(campaign.campaign.id).then(setTracks).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not load tracks.")); }, [campaign.campaign.id]);
@@ -157,6 +170,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     const interval = window.setInterval(() => void refreshWorkspace(), 10000);
     return () => window.clearInterval(interval);
   }, [refreshWorkspace]);
+  useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   useEffect(() => {
     if (!selectedUserId) {
       const first = players.find((member) => member.characterId);
@@ -182,6 +196,31 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     ...campaign.rolls.map((roll) => ({ id: `roll-${roll.id}`, kind: "rolls" as const, at: roll.created_at, text: `${roll.character_name} — ${roll.label} ${roll.total}` })),
     ...events.map((event) => ({ id: event.id, kind: "table" as const, at: event.created_at, text: eventLine(event) })),
   ].filter((entry) => recordFilter === "all" || entry.kind === recordFilter).sort((a, b) => b.at.localeCompare(a.at)), [campaign.rolls, events, recordFilter]);
+  const encounterFacts = useMemo(() => {
+    const enemies = sortedCombatants.filter((item) => item.kind === "enemy");
+    const critical = players.filter((member) => member.maxHp && (member.currentHp ?? 0) / member.maxHp <= .25).length;
+    return {
+      elapsedMinutes: activeEncounter ? Math.max(0, Math.floor((clockNow - Date.parse(activeEncounter.startedAt)) / 60_000)) : 0,
+      activeEnemies: enemies.filter((item) => !item.defeated && (item.currentHp ?? 1) > 0).length,
+      defeatedEnemies: enemies.filter((item) => item.defeated || item.currentHp === 0).length,
+      critical, concentrating: players.filter((member) => member.concentratingOn).length,
+      pendingRequests: campaign.requests.filter((request) => request.status === "open").length,
+    };
+  }, [activeEncounter, campaign.requests, clockNow, players, sortedCombatants]);
+
+  const waveIsReady = (wave: EncounterRun["snapshot"]["waves"][number]) => {
+    const trigger = wave.trigger;
+    if (trigger.type === "round-start") return campaign.initiative.data.round >= trigger.round;
+    if (trigger.type === "combatant-hp") {
+      const combatant = campaign.initiative.data.combatants.find((item) => item.id === trigger.combatantId);
+      return Boolean(combatant?.maxHp && ((combatant.currentHp ?? combatant.maxHp) / combatant.maxHp) * 100 <= trigger.belowPercent);
+    }
+    if (trigger.type === "combatant-defeated") {
+      const combatant = campaign.initiative.data.combatants.find((item) => item.id === trigger.combatantId);
+      return Boolean(combatant?.defeated || combatant?.currentHp === 0);
+    }
+    return false;
+  };
 
   const replaceInitiative = (combatants: CampaignCombatant[], turnIndex = campaign.initiative.data.turnIndex) => onInitiativeUpdate({
     ...campaign.initiative.data,
@@ -331,9 +370,11 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
       {error ? <p className="dm-table-error">{error}</p> : null}
       {activeEncounter ? <section className="dm-live-encounter">
         <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
+        <div className="dm-pacing-facts" aria-label="Encounter status"><span>Round <strong>{campaign.initiative.data.round}</strong></span><span>Elapsed <strong>{encounterFacts.elapsedMinutes}m</strong></span><span>Enemies <strong>{encounterFacts.activeEnemies} active · {encounterFacts.defeatedEnemies} defeated</strong></span><span>Party <strong>{encounterFacts.critical} critical · {encounterFacts.concentrating} concentrating</strong></span><span>Pending <strong>{encounterFacts.pendingRequests}</strong></span></div>
         <details><summary>Scene notes</summary>{activeEncounter.snapshot.readAloud ? <><p><b>Read aloud:</b> {activeEncounter.snapshot.readAloud}</p><button type="button" className="dm-btn" onClick={() => navigator.clipboard.writeText(activeEncounter.snapshot.readAloud ?? "").catch(() => {})}>Copy</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { readAloudRead: !activeEncounter.readAloudRead }).then(() => refreshWorkspace())}>{activeEncounter.readAloudRead ? "Reset read status" : "Mark as read"}</button></> : null}{activeEncounter.snapshot.tactics ? <p><b>Tactics:</b> {activeEncounter.snapshot.tactics}</p> : null}{activeEncounter.snapshot.environmentNotes ? <p><b>Environment:</b> {activeEncounter.snapshot.environmentNotes}</p> : null}{activeEncounter.snapshot.developments ? <p><b>Developments:</b> {activeEncounter.snapshot.developments}</p> : null}{activeSession ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: `${activeEncounter.snapshot.name}: ${activeEncounter.snapshot.developments ?? activeEncounter.snapshot.objective ?? "Scene note"}` })}>Pin scene note</button> : null}</details>
         <div className="dm-upcoming"><span>{dueReminders.length ? "REMINDERS DUE" : "NO REMINDERS DUE"}</span>{dueReminders.slice(0, 3).map((item) => <div key={item.id}><label><input type="checkbox" checked={item.completed} onChange={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, completed: true } : row) }).then(() => refreshWorkspace())}/>{item.label}</label><button type="button" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, snoozedUntilRound: campaign.initiative.data.round + 1 } : row) }).then(() => refreshWorkspace())}>Snooze</button>{activeSession ? <button type="button" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: item.label })}>Record</button> : null}</div>)}</div>
-        <div>{activeEncounter.snapshot.waves.filter((wave) => !activeEncounter.activatedWaveIds?.includes(wave.id)).map((wave) => <button key={wave.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "activate-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Activate {wave.name}</button>)}{activeEncounter.snapshot.handoutIds.map((id) => savedHandouts.find((item) => item.id === id)).filter((item): item is CampaignHandout => Boolean(item)).map((handout) => <button key={handout.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, handout.id)}>Reveal {handout.title}</button>)}<button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "end" }).then(() => refreshWorkspace())}>End encounter</button></div>
+        <div className="dm-wave-list">{activeEncounter.snapshot.waves.filter((wave) => !activeEncounter.activatedWaveIds?.includes(wave.id) && !activeEncounter.cancelledWaveIds?.includes(wave.id)).map((wave) => { const ready = waveIsReady(wave); const postponed = activeEncounter.postponedWaveIds?.includes(wave.id); return <article key={wave.id} data-ready={ready}><span>{ready ? "READY" : postponed ? "POSTPONED" : "UPCOMING"}</span><strong>{wave.name}</strong><small>{wave.combatantIds.length} combatant templates</small><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "activate-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Deploy now</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "postpone-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Postpone</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "cancel-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Cancel</button></article>; })}</div>
+        <div>{activeEncounter.snapshot.handoutIds.map((id) => savedHandouts.find((item) => item.id === id)).filter((item): item is CampaignHandout => Boolean(item)).map((handout) => <button key={handout.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, handout.id)}>Reveal {handout.title}</button>)}<button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: activeEncounter.status === "paused" ? "resume" : "pause" }).then(() => refreshWorkspace())}>{activeEncounter.status === "paused" ? "Resume" : "Pause"}</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "end" }).then(() => refreshWorkspace())}>End encounter</button></div>
       </section> : null}
       <div className="dm-table-grid">
         <PartyRail
@@ -356,10 +397,12 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           ) : (
           <>
           <div className="dm-region-head">
-            <h3>Encounter</h3>
+            <h3>{sortedCombatants[campaign.initiative.data.turnIndex]?.name ?? "Encounter"}</h3>
             <span className="dm-round">Round {campaign.initiative.data.round}</span>
+            <button type="button" className="dm-btn" onClick={previousTurn} disabled={sortedCombatants.length === 0}>Previous</button>
             <button type="button" className="dm-btn dm-btn-primary" onClick={nextTurn} disabled={sortedCombatants.length === 0}>Next turn</button>
           </div>
+          {activeEncounter && (dueReminders.length || endTurnReminders.length) ? <section className="dm-turn-checklist"><strong>{sortedCombatants[campaign.initiative.data.turnIndex]?.name}&apos;s turn</strong>{[...dueReminders.map((item) => ({ item, phase: "Start" })), ...endTurnReminders.map((item) => ({ item, phase: "End" }))].map(({ item, phase }) => <label key={`${phase}-${item.id}`}><input type="checkbox" checked={item.completed} onChange={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, completed: true } : row) }).then(() => refreshWorkspace())}/><span><small>{phase}</small>{item.label}</span></label>)}</section> : null}
           {campaign.requests.length ? <section className="dm-request-center" aria-label="Recent player requests">
             {campaign.requests.slice(0, 4).map((request) => {
               const dc = typeof request.payload.dc === "number" ? request.payload.dc : undefined;
@@ -410,6 +453,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                   {item.defeated ? <em className="dm-defeated-label">DEFEATED</em> : null}
                   {item.privateNote ? <small>{item.privateNote}</small> : null}
                   {item.concentratingOn ? <small className="dm-concentrating">{item.concentratingOn}</small> : null}
+                  {item.reactionUsed ? <small>Reaction used</small> : null}{item.turnStatus ? <small>{item.turnStatus}</small> : null}
                   {item.conditions && item.conditions.length ? <span className="dm-condition-chips">{item.conditions.map((c) => <em key={c.id}>{c.label}{c.stack ? ` ${c.stack}` : ""}</em>)}</span> : null}
                 </span>
                 {displayHp ? <span className="dm-combatant-hp">HP <input aria-label={`${item.name} HP`} type="number" value={displayHp.current} onChange={(event) => {
@@ -417,6 +461,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                 }} disabled={isPlayer} />/{displayHp.max}</span> : null}
                 {displayAc !== undefined ? <small className="dm-combatant-ac">AC {displayAc}</small> : null}
                 {!isPlayer ? <select className="dm-visibility" aria-label={`${item.name} player visibility`} value={item.visibility ?? (item.hidden ? "hidden" : "name-only")} onChange={(event) => updateCombatant(item.id, { visibility: event.target.value as CampaignCombatant["visibility"], hidden: event.target.value === "hidden" })}><option value="hidden">Hidden</option><option value="name-only">Name only</option><option value="name-and-conditions">Name + conditions</option><option value="approximate-health">Approximate health</option><option value="exact-hp">Exact HP</option><option value="full-public">Full public</option></select> : null}
+                <div className="dm-turn-actions"><button type="button" className="dm-icon-btn" aria-label={`Jump to ${item.name}`} onClick={() => void onInitiativeUpdate({ ...campaign.initiative.data, turnIndex: sortedCombatants.findIndex((row) => row.id === item.id) }, campaign.initiative.version)}>Turn</button><button type="button" className={`dm-icon-btn${item.reactionUsed ? " is-active" : ""}`} aria-label={`Toggle ${item.name} reaction`} onClick={() => updateCombatant(item.id, { reactionUsed: !item.reactionUsed })}>R</button><button type="button" className="dm-icon-btn" aria-label={`Delay ${item.name}`} onClick={() => updateCombatant(item.id, { turnStatus: item.turnStatus === "delayed" ? undefined : "delayed" })}>Delay</button><button type="button" className="dm-icon-btn" aria-label={`Ready ${item.name}`} onClick={() => updateCombatant(item.id, { turnStatus: item.turnStatus === "readied" ? undefined : "readied" })}>Ready</button><button type="button" className="dm-icon-btn" aria-label={`Move ${item.name} earlier`} onClick={() => updateCombatant(item.id, { initiative: item.initiative + 1 })}>↑</button><button type="button" className="dm-icon-btn" aria-label={`Move ${item.name} later`} onClick={() => updateCombatant(item.id, { initiative: item.initiative - 1 })}>↓</button>{!isPlayer ? <><button type="button" className="dm-icon-btn" aria-label={`Reroll ${item.name} initiative`} onClick={() => updateCombatant(item.id, { initiative: Math.floor(Math.random() * 20) + 1 })}>↻</button><button type="button" className="dm-icon-btn" aria-label={`Duplicate ${item.name}`} onClick={() => void replaceInitiative([...campaign.initiative.data.combatants, { ...item, id: crypto.randomUUID(), name: `${item.name} copy` }])}>Copy</button></> : null}</div>
                 <button type="button" className="dm-icon-btn" aria-label={`Remove ${item.name}`} onClick={() => void replaceInitiative(campaign.initiative.data.combatants.filter((row) => row.id !== item.id))}><Trash2 size={13} /></button>
               </div>
             )})}
