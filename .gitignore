@@ -64,5 +64,3 @@ dev-server.err.log
 *.tsbuildinfo
 next-env.d.ts
 
-# admin email
-ADMIN_EMAILS=clarence.murray92@gmail.com
