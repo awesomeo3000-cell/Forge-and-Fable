@@ -63,6 +63,8 @@ export type CampaignEventType =
   | "roll-request"
   | "rest-short"
   | "rest-long"
+  | "death-save-update"
+  | "concentration-end"
   | "audio-cue"
   | "handout"
   | "campaign-audit";
@@ -157,6 +159,28 @@ export type CampaignCharacterNote = {
   updatedAt: string;
 };
 
+export type CampaignRequestResponse = {
+  userId: string;
+  status: "completed" | "dismissed" | "unavailable";
+  total?: number;
+  passed?: boolean;
+  summary: string;
+  respondedAt: string;
+};
+
+export type CampaignRequest = {
+  id: string;
+  campaignId: string;
+  kind: "roll" | "rest-short" | "rest-long";
+  status: "open" | "completed" | "dismissed";
+  resolution: "individual" | "group" | "best";
+  targetUserIds: string[];
+  payload: Record<string, unknown>;
+  responses: CampaignRequestResponse[];
+  createdAt: string;
+  resolvedAt?: string;
+};
+
 export type CampaignSyncPayload = {
   campaign: {
     id: string;
@@ -182,5 +206,6 @@ export type CampaignSyncPayload = {
   };
   members: CampaignMemberSummary[];
   presence: CampaignPresence[];
+  requests: CampaignRequest[];
   audio: CampaignAudioState;
 };

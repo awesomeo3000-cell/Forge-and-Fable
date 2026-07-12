@@ -1,5 +1,5 @@
 import type { CampaignHandout, CampaignJournalEntry, CampaignSession, CreatureLibraryRecord, EncounterRun, SavedEncounter, SessionSummary } from "@/types/dmTools";
-import type { CampaignCharacterNote } from "@/types/campaign";
+import type { CampaignCharacterNote, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 async function api<T>(url:string,init?:RequestInit):Promise<T>{const response=await fetch(url,{...init,headers:{"Content-Type":"application/json",...(init?.headers??{})}});const data=await response.json().catch(()=>({})) as T&{error?:string};if(!response.ok)throw new Error(data.error??"Request failed.");return data;}
 const body=(value:unknown)=>JSON.stringify(value);
@@ -37,4 +37,6 @@ export const dmToolsApi={
   createCharacterNote:(campaignId:string,input:unknown)=>api<{note:CampaignCharacterNote}>(`/api/campaigns/${campaignId}/notes`,{method:"POST",body:body(input)}),
   updateCharacterNote:(campaignId:string,noteId:string,input:unknown)=>api<{note:CampaignCharacterNote}>(`/api/campaigns/${campaignId}/notes/${noteId}`,{method:"PATCH",body:body(input)}),
   deleteCharacterNote:(campaignId:string,noteId:string)=>api<{ok:true}>(`/api/campaigns/${campaignId}/notes/${noteId}`,{method:"DELETE"}),
+  createRequest:(campaignId:string,input:unknown)=>api<{request:CampaignRequest}>(`/api/campaigns/${campaignId}/requests`,{method:"POST",body:body(input)}),
+  respondToRequest:(campaignId:string,requestId:string,input:unknown)=>api<{response:CampaignRequestResponse}>(`/api/campaigns/${campaignId}/requests/${requestId}/respond`,{method:"POST",body:body(input)}),
 };

@@ -15,9 +15,10 @@ type Props = {
   onRequestRoll: (member: CampaignMemberSummary) => void;
   onAddNote?: (member: CampaignMemberSummary) => void;
   onCreateNote?: (member: CampaignMemberSummary, input: { category: CampaignCharacterNoteCategory; title: string; body: string }) => Promise<boolean>;
+  onCharacterAction?: (member: CampaignMemberSummary, action: "concentration-check" | "concentration-end" | "death-success" | "death-failure" | "death-natural-20" | "death-natural-1" | "death-stabilize" | "death-reset" | "death-dead" | "heal", amount?: number) => void;
 };
 
-export default memo(function CharacterInspector({ member, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote }: Props) {
+export default memo(function CharacterInspector({ member, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote, onCharacterAction }: Props) {
   const [tab, setTab] = useState<InspectorTab>("overview");
   const [noteDraft, setNoteDraft] = useState({ category: "general" as CampaignCharacterNoteCategory, title: "", body: "" });
   const [noteBusy, setNoteBusy] = useState(false);
@@ -34,8 +35,8 @@ export default memo(function CharacterInspector({ member, notes = [], history = 
           <dl><div><dt>HP</dt><dd>{member.currentHp ?? "—"}/{member.maxHp ?? "—"}{member.tempHp ? ` +${member.tempHp}` : ""}</dd></div><div><dt>Armor</dt><dd>{member.ac ?? "—"}</dd></div><div><dt>Speed</dt><dd>{member.speed ?? "—"}</dd></div><div><dt>Spell DC</dt><dd>{member.spellSaveDc ?? "—"}</dd></div></dl>
           <section><h4>Passive scores</h4><p>Perception {member.passivePerception ?? "—"} · Insight {member.passiveInsight ?? "—"} · Investigation {member.passiveInvestigation ?? "—"}</p></section>
           {member.conditions.length ? <section><h4>Conditions</h4><div className="dm-command-tags">{member.conditions.map((condition) => <em key={condition}>{condition}</em>)}</div></section> : null}
-          {member.concentratingOn ? <section><h4>Concentration</h4><p>{member.concentratingOn}</p></section> : null}
-          {member.deathSaves ? <section><h4>Death saves</h4><p>{member.deathSaves.successes} successes · {member.deathSaves.failures} failures</p></section> : null}
+          {member.concentratingOn ? <section><h4>Concentration</h4><p>{member.concentratingOn}</p>{onCharacterAction ? <div className="dm-inspector-actions"><button type="button" className="dm-btn" onClick={() => { const value = window.prompt("Damage from this hit", "10"); if (value) onCharacterAction(member, "concentration-check", Number(value)); }}>Request check</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "concentration-end")}>End concentration</button></div> : null}</section> : null}
+          {member.deathSaves && member.currentHp === 0 ? <section><h4>Death saves</h4><p>{member.deathSaves.successes} successes · {member.deathSaves.failures} failures</p>{onCharacterAction ? <div className="dm-inspector-actions"><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-success")}>Success</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-failure")}>Failure</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-natural-20")}>Natural 20</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-natural-1")}>Natural 1</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-stabilize")}>Stabilize</button><button type="button" className="dm-btn" onClick={() => { const value = window.prompt("Healing amount", "1"); if (value) onCharacterAction(member, "heal", Number(value)); }}>Apply healing</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-reset")}>Reset</button><button type="button" className="dm-btn" onClick={() => onCharacterAction(member, "death-dead")}>Mark dead</button></div> : null}</section> : null}
           {member.spellSlots.length ? <section><h4>Spell slots</h4><p>{member.spellSlots.map((slot) => `${slot.level}: ${slot.remaining}/${slot.max}`).join(" · ")}</p></section> : null}
           {resources.length ? <section><h4>Resources</h4>{resources.map((resource) => <p key={resource.id}>{resource.label} {resource.current}/{resource.maximum}</p>)}</section> : null}
         </div> : null}

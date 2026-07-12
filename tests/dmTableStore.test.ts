@@ -5,7 +5,7 @@ import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
 import { createCampaign, joinCampaign } from "@/lib/campaignStore";
 import { createCharacter } from "@/lib/vaultStore";
-import { createCharacterNote, listCampaignPresence, listCharacterNotes, touchCampaignPresence } from "@/lib/dmTable/store";
+import { createCampaignRequest, createCharacterNote, listCampaignPresence, listCampaignRequests, listCharacterNotes, respondToCampaignRequest, touchCampaignPresence } from "@/lib/dmTable/store";
 import { characterInput } from "./fixtures/character";
 
 let dataDir = "";
@@ -37,5 +37,15 @@ describe("DM table presence and private notes", () => {
     const note = createCharacterNote(run.id, "dm", { characterId: hero.id, category: "secret", title: "Hidden lineage", body: "The crown recognizes the signet." });
     expect(listCharacterNotes(run.id, "dm", hero.id)).toEqual([expect.objectContaining({ id: note.id, category: "secret" })]);
     expect(() => listCharacterNotes(run.id, "player", hero.id)).toThrow(/Only the DM/);
+  });
+
+  it("tracks only targeted player responses and completes a request", async () => {
+    const hero = await createCharacter("player", characterInput("Rook"));
+    const run = createCampaign("dm", "Request Table"); joinCampaign("player", run.code, hero.id);
+    const request = createCampaignRequest(run.id, "dm", { kind: "roll", resolution: "group", targetUserIds: ["player"], payload: { kind: "save", key: "wisdom", dc: 15 } });
+    const response = respondToCampaignRequest(run.id, "player", request.id, { status: "completed", total: 17, passed: true, summary: "Wisdom save: 17 pass" });
+    expect(response).toMatchObject({ userId: "player", total: 17, passed: true });
+    expect(listCampaignRequests(run.id, "dm")[0]).toMatchObject({ id: request.id, status: "completed", responses: [expect.objectContaining({ total: 17 })] });
+    expect(() => respondToCampaignRequest(run.id, "dm", request.id, { status: "completed", summary: "No" })).toThrow(/not sent|no longer open/);
   });
 });

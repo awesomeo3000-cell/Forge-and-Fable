@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
-import type { CampaignCharacterNote, CampaignCharacterNoteCategory, CampaignPresence, CampaignPresenceState } from "@/types/campaign";
+import type { CampaignCharacterNote, CampaignCharacterNoteCategory, CampaignPresence, CampaignPresenceState, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 export const PRESENCE_CONNECTED_MS = 20_000;
 export const PRESENCE_DISCONNECTED_MS = 90_000;
@@ -120,4 +120,69 @@ export function deleteCharacterNote(campaignId: string, userId: string, noteId: 
   requireDm(campaignId, userId);
   const result = getDb().prepare("DELETE FROM campaign_character_notes WHERE id=? AND campaign_id=?").run(noteId, campaignId);
   if (!result.changes) throw new Error("Character note not found.");
+}
+
+function requestFromRow(row: Record<string, unknown>, responses: CampaignRequestResponse[]): CampaignRequest {
+  return {
+    id: String(row.id), campaignId: String(row.campaign_id), kind: row.kind as CampaignRequest["kind"],
+    status: row.status as CampaignRequest["status"], resolution: row.resolution as CampaignRequest["resolution"],
+    targetUserIds: JSON.parse(String(row.target_user_ids)) as string[],
+    payload: JSON.parse(String(row.payload)) as Record<string, unknown>, responses,
+    createdAt: String(row.created_at), ...(row.resolved_at ? { resolvedAt: String(row.resolved_at) } : {}),
+  };
+}
+
+export function createCampaignRequest(campaignId: string, userId: string, input: {
+  kind: CampaignRequest["kind"];
+  resolution: CampaignRequest["resolution"];
+  targetUserIds: string[];
+  payload: Record<string, unknown>;
+}) {
+  requireDm(campaignId, userId);
+  const validTargets = new Set((getDb().prepare("SELECT user_id FROM campaign_members WHERE campaign_id=? AND user_id<>?").all(campaignId, userId) as Array<{ user_id: string }>).map((row) => row.user_id));
+  const targetUserIds = [...new Set(input.targetUserIds)].filter((id) => validTargets.has(id)).slice(0, 50);
+  if (!targetUserIds.length) throw new Error("Choose at least one campaign player.");
+  const id = randomUUID(), createdAt = new Date().toISOString();
+  getDb().prepare("INSERT INTO campaign_requests(id,campaign_id,kind,status,resolution,target_user_ids,payload,created_at) VALUES(?,?,?,?,?,?,?,?)")
+    .run(id, campaignId, input.kind, "open", input.resolution, JSON.stringify(targetUserIds), JSON.stringify(input.payload), createdAt);
+  return { id, campaignId, ...input, targetUserIds, status: "open" as const, responses: [], createdAt } satisfies CampaignRequest;
+}
+
+export function respondToCampaignRequest(campaignId: string, userId: string, requestId: string, input: {
+  status: CampaignRequestResponse["status"];
+  total?: number;
+  passed?: boolean;
+  summary: string;
+}) {
+  membership(campaignId, userId);
+  const row = getDb().prepare("SELECT * FROM campaign_requests WHERE id=? AND campaign_id=?").get(requestId, campaignId) as Record<string, unknown> | undefined;
+  if (!row) throw new Error("Campaign request not found.");
+  const targets = JSON.parse(String(row.target_user_ids)) as string[];
+  if (!targets.includes(userId)) throw new Error("This request was not sent to you.");
+  if (row.status !== "open") throw new Error("This request is no longer open.");
+  const total = typeof input.total === "number" && Number.isInteger(input.total) ? Math.max(-999, Math.min(999, input.total)) : null;
+  const passed = typeof input.passed === "boolean" ? Number(input.passed) : null;
+  const summary = input.summary.trim().slice(0, 240);
+  const respondedAt = new Date().toISOString();
+  const db = getDb();
+  db.prepare(`INSERT INTO campaign_request_responses(request_id,user_id,status,total,passed,summary,responded_at) VALUES(?,?,?,?,?,?,?)
+    ON CONFLICT(request_id,user_id) DO UPDATE SET status=excluded.status,total=excluded.total,passed=excluded.passed,summary=excluded.summary,responded_at=excluded.responded_at`)
+    .run(requestId, userId, input.status, total, passed, summary, respondedAt);
+  const count = (db.prepare("SELECT COUNT(*) AS count FROM campaign_request_responses WHERE request_id=?").get(requestId) as { count: number }).count;
+  if (count >= targets.length) db.prepare("UPDATE campaign_requests SET status='completed',resolved_at=? WHERE id=?").run(respondedAt, requestId);
+  return { userId, status: input.status, ...(total !== null ? { total } : {}), ...(passed !== null ? { passed: Boolean(passed) } : {}), summary, respondedAt } satisfies CampaignRequestResponse;
+}
+
+export function listCampaignRequests(campaignId: string, userId: string): CampaignRequest[] {
+  const owner = campaign(campaignId).dm_user_id;
+  membership(campaignId, userId);
+  const rows = getDb().prepare("SELECT * FROM campaign_requests WHERE campaign_id=? ORDER BY created_at DESC LIMIT 20").all(campaignId) as Array<Record<string, unknown>>;
+  return rows.filter((row) => owner === userId || (JSON.parse(String(row.target_user_ids)) as string[]).includes(userId)).map((row) => {
+    const responses = (getDb().prepare("SELECT * FROM campaign_request_responses WHERE request_id=? ORDER BY responded_at").all(String(row.id)) as Array<Record<string, unknown>>).map((response) => ({
+      userId: String(response.user_id), status: response.status as CampaignRequestResponse["status"],
+      ...(response.total !== null ? { total: Number(response.total) } : {}), ...(response.passed !== null ? { passed: Boolean(response.passed) } : {}),
+      summary: String(response.summary), respondedAt: String(response.responded_at),
+    }));
+    return requestFromRow(row, responses);
+  });
 }

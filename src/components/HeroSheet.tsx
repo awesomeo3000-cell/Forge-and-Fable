@@ -47,6 +47,7 @@ import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
+import { longRestRecovery } from "@/lib/restRecovery";
 
 const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 
@@ -703,56 +704,12 @@ export default memo(function HeroSheet(props: {
   };
   const doLongRest = () => {
     if (!window.confirm("Take a long rest? HP and spell slots will be restored.")) return;
-    const level = props.character.level;
-    const spent = props.character.hitDiceSpent ?? 0;
-    const recovered = Math.max(1, Math.floor(level / 2));
     const allStatuses = spellStatusesRef.current;
-    const restedSpellStatuses = Object.fromEntries(
-      Object.entries(allStatuses).map(([spellId, status]) => [
-        spellId,
-        status.freeUse ? { ...status, freeUsed: false } : status,
-      ]),
-    );
-    spellStatusesRef.current = restedSpellStatuses;
+    const recovery = longRestRecovery(props.character, allStatuses);
+    spellStatusesRef.current = recovery.patch.spellStatuses;
 
-    // Class-specific resets
-    const classId = props.character.classId;
-    const classResetNotes: string[] = [];
-    const effectPatches: Partial<CharacterEffect>[] = [];
-
-    if (classId === "fighter") {
-      classResetNotes.push("Second Wind");
-      // Reset any effect that looks like Second Wind usage tracking
-      effectPatches.push({ id: "__fighter-second-wind", label: "Second Wind", active: true } as CharacterEffect);
-    }
-    if (classId === "monk") {
-      classResetNotes.push("Ki points");
-      // Reset Ki point tracking
-      effectPatches.push({ id: "__monk-ki", label: "Ki", active: true } as CharacterEffect);
-    }
-
-    const recoveredParts: string[] = [];
-    recoveredParts.push(`HP restored to ${props.character.maxHp}`);
-    if (props.character.tempHp > 0) recoveredParts.push("temp HP cleared");
-    recoveredParts.push("spell slots restored");
-    if (props.character.concentratingOn) recoveredParts.push("concentration ended");
-    if (spent > 0) recoveredParts.push(`${Math.min(recovered, spent)} hit dice recovered`);
-    const hadFreeUsed = Object.values(allStatuses).some((s) => s.freeUse && s.freeUsed);
-    if (hadFreeUsed) recoveredParts.push("per-rest spell uses restored");
-    if (classResetNotes.length > 0) recoveredParts.push(`${classResetNotes.join(", ")} recovered`);
-
-    const updatePatch: Partial<Omit<Character, "id" | "userId" | "createdAt">> = {
-      currentHp: props.character.maxHp,
-      tempHp: 0,
-      spellSlotsUsed: {},
-      pactSlotsUsed: 0,
-      concentratingOn: null,
-      hitDiceSpent: Math.max(0, spent - recovered),
-      spellStatuses: restedSpellStatuses,
-    };
-
-    props.onUpdate(updatePatch);
-    props.onNotify?.(`Long rest — ${recoveredParts.join(", ")}.`);
+    props.onUpdate(recovery.patch);
+    props.onNotify?.(`Long rest — ${recovery.summary}.`);
   };
 
   /* ── Spell preparation & casting ── */

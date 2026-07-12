@@ -19,6 +19,12 @@ import { presetMode, type DmLayoutPreset, type DmWorkspaceMode } from "@/lib/dmT
 
 /** Condition presets that a DM can apply. Matches the player-facing CampaignPanel dropdown. */
 const CONDITION_PRESETS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
+const ROLL_PRESETS = [
+  ["Perception", "check", "skill", "perception"], ["Insight", "check", "skill", "insight"],
+  ["Investigation", "check", "skill", "investigation"], ["Stealth", "check", "skill", "stealth"],
+  ["Dex save", "save", "ability", "dexterity"], ["Con save", "save", "ability", "constitution"],
+  ["Wis save", "save", "ability", "wisdom"], ["Initiative", "initiative", "ability", "dexterity"],
+] as const;
 
 type Props = {
   campaign: CampaignSyncPayload;
@@ -67,6 +73,8 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [rollAdvantage, setRollAdvantage] = useState<"normal" | "advantage" | "disadvantage">("normal");
   const [rollRevealDc, setRollRevealDc] = useState(false);
   const [rollTarget, setRollTarget] = useState("all");
+  const [rollSelectedTargets, setRollSelectedTargets] = useState<string[]>([]);
+  const [rollResolution, setRollResolution] = useState<"individual" | "group" | "best">("individual");
   const [codeCopied, setCodeCopied] = useState(false);
   const [conditionTarget, setConditionTarget] = useState("");
   const [conditionLabel, setConditionLabel] = useState(CONDITION_PRESETS[0]?.label ?? "Poisoned");
@@ -233,10 +241,27 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     // off the player's client entirely; the DM eyeballs the result.
     const dc = Number(rollDc);
     if (rollKind !== "initiative" && rollRevealDc && rollDc.trim() && Number.isFinite(dc)) payload.dc = dc;
-    if (await onPostEvent("roll-request", payload, rollTarget === "all" ? null : rollTarget)) {
+    const targetUserIds = rollTarget === "all" ? players.map((member) => member.userId)
+      : rollTarget === "selected" ? rollSelectedTargets
+      : rollTarget === "except" ? players.filter((member) => !rollSelectedTargets.includes(member.userId)).map((member) => member.userId)
+      : [rollTarget];
+    try {
+      await dmToolsApi.createRequest(campaign.campaign.id, { kind: "roll", resolution: rollResolution, targetUserIds, payload });
       setRollRequest("");
       setRollAdvantage("normal");
-    }
+      setError("");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create roll request."); }
+  };
+
+  const callRest = async (kind: "rest-short" | "rest-long") => {
+    const preview = players.map((member) => kind === "rest-short"
+      ? `${member.characterName ?? member.userName}: HP ${member.currentHp ?? "—"}/${member.maxHp ?? "—"} · ${member.hitDice?.remaining ?? "—"}/${member.hitDice?.maximum ?? "—"} hit dice`
+      : `${member.characterName ?? member.userName}: restore HP, slots, eligible hit dice; end concentration`).join("\n");
+    if (!window.confirm(`${kind === "rest-long" ? "LONG" : "SHORT"} REST\n\n${preview}\n\nCall this rest?`)) return;
+    try {
+      await dmToolsApi.createRequest(campaign.campaign.id, { kind, resolution: "individual", targetUserIds: players.map((member) => member.userId), payload: {} });
+      setError("");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not call rest."); }
   };
 
   const applyCondition = async (type: "condition-apply" | "condition-remove") => {
@@ -335,6 +360,28 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <span className="dm-round">Round {campaign.initiative.data.round}</span>
             <button type="button" className="dm-btn dm-btn-primary" onClick={nextTurn} disabled={sortedCombatants.length === 0}>Next turn</button>
           </div>
+          {campaign.requests.length ? <section className="dm-request-center" aria-label="Recent player requests">
+            {campaign.requests.slice(0, 4).map((request) => {
+              const dc = typeof request.payload.dc === "number" ? request.payload.dc : undefined;
+              const responses = request.responses;
+              const passes = responses.filter((response) => response.passed).length;
+              const totals = responses.flatMap((response) => typeof response.total === "number" ? [response.total] : []);
+              const groupPassed = request.resolution === "group" && dc !== undefined ? passes >= Math.ceil(request.targetUserIds.length / 2) : undefined;
+              const bestPassed = request.resolution === "best" && dc !== undefined && totals.length ? Math.max(...totals) >= dc : undefined;
+              const title = request.kind === "roll" ? summarizeRollRequest(request.payload) : request.kind === "rest-long" ? "Long rest" : "Short rest";
+              return <article key={request.id} className="dm-request-card" data-status={request.status}>
+                <header><strong>{title}</strong><span>{responses.length}/{request.targetUserIds.length} responded</span></header>
+                <div>{request.targetUserIds.map((userId) => {
+                  const member = campaign.members.find((item) => item.userId === userId);
+                  const response = responses.find((item) => item.userId === userId);
+                  return <p key={userId}><span>{member?.characterName ?? member?.userName ?? "Player"}</span><em>{response ? `${response.total ?? "✓"}${response.passed === true ? " Pass" : response.passed === false ? " Fail" : ""}` : "Waiting"}</em></p>;
+                })}</div>
+                {groupPassed !== undefined ? <footer>Group result: {groupPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
+                {bestPassed !== undefined ? <footer>Best result: {bestPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
+                {request.status !== "open" ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.createRequest(campaign.campaign.id, { kind: request.kind, resolution: request.resolution, targetUserIds: request.targetUserIds, payload: request.payload }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not repeat request."))}>Request again</button> : null}
+              </article>;
+            })}
+          </section> : null}
           <div className="dm-initiative">
             {sortedCombatants.map((item) => {
               const isPlayer = item.kind === "player";
@@ -390,8 +437,8 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               </button>
             ))}
             <span className="dm-command-gap" aria-hidden="true" />
-            <button type="button" className="dm-btn" onClick={() => void onPostEvent("rest-short", {})}>Short rest</button>
-            <button type="button" className="dm-btn" onClick={() => void onPostEvent("rest-long", {})}>Long rest</button>
+            <button type="button" className="dm-btn" onClick={() => void callRest("rest-short")}>Short rest</button>
+            <button type="button" className="dm-btn" onClick={() => void callRest("rest-long")}>Long rest</button>
           </div>
 
           {activeCommand === "announce" ? (
@@ -402,9 +449,12 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           ) : null}
           {activeCommand === "roll" ? (
             <div className="dm-inline-form">
+              <div className="dm-roll-presets" aria-label="Roll presets">{ROLL_PRESETS.map(([label, kind, scope, key]) => <button key={label} type="button" className="dm-btn" onClick={() => { setRollKind(kind); setCheckScope(scope); setRollKey(key); }}>{label}</button>)}</div>
               <input placeholder="Ask for a roll" value={rollRequest} onChange={(event) => setRollRequest(event.target.value)} />
               <select aria-label="Roll type" value={rollKind} onChange={(event) => { const kind = event.target.value as typeof rollKind; setRollKind(kind); setCheckScope("ability"); setRollKey("dexterity"); }}><option value="check">Check</option><option value="save">Save</option><option value="initiative">Initiative</option></select>
-              <select aria-label="Roll target" value={rollTarget} onChange={(event) => setRollTarget(event.target.value)}><option value="all">All players</option>{players.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
+              <select aria-label="Roll target" value={rollTarget} onChange={(event) => setRollTarget(event.target.value)}><option value="all">All players</option><option value="selected">Selected players</option><option value="except">Everyone except selected</option>{players.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select>
+              <select aria-label="Resolution mode" value={rollResolution} onChange={(event) => setRollResolution(event.target.value as typeof rollResolution)}><option value="individual">Individual</option><option value="group">Group check</option><option value="best">Best result</option></select>
+              {rollTarget === "selected" || rollTarget === "except" ? <fieldset className="dm-target-picker"><legend>Choose players</legend>{players.map((member) => <label key={member.userId}><input type="checkbox" checked={rollSelectedTargets.includes(member.userId)} onChange={(event) => setRollSelectedTargets((current) => event.target.checked ? [...new Set([...current, member.userId])] : current.filter((id) => id !== member.userId))} />{member.characterName ?? member.userName}</label>)}</fieldset> : null}
               {rollKind === "check" ? (
                 <select aria-label="Check type" value={checkScope} onChange={(event) => { const scope = event.target.value as typeof checkScope; setCheckScope(scope); setRollKey(scope === "skill" ? "perception" : "dexterity"); }}>
                   <option value="ability">Ability</option>
@@ -510,6 +560,17 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               setCharacterNotes((current) => [result.note, ...current]);
               return true;
             } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create character note."); return false; }
+          }}
+          onCharacterAction={(member, action, amount) => {
+            if (action === "concentration-check") {
+              const damage = Math.max(0, Math.floor(amount ?? 0));
+              const dc = Math.max(10, Math.floor(damage / 2));
+              void dmToolsApi.createRequest(campaign.campaign.id, { kind: "roll", resolution: "individual", targetUserIds: [member.userId], payload: { prompt: `${member.characterName ?? member.userName} took ${damage} damage while concentrating on ${member.concentratingOn}`, kind: "save", keyType: "ability", key: "constitution", dc } }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not request concentration check."));
+              return;
+            }
+            if (action === "concentration-end") { void onPostEvent("concentration-end", {}, member.userId); return; }
+            const deathAction = action === "heal" ? "heal" : action.replace("death-", "");
+            void onPostEvent("death-save-update", { action: deathAction, ...(action === "heal" ? { amount: Math.max(1, Math.floor(amount ?? 1)) } : {}) }, member.userId);
           }}
         />
       </div>

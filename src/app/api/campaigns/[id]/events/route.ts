@@ -18,6 +18,8 @@ const EVENT_TYPES: CampaignEventType[] = [
   "roll-request",
   "rest-short",
   "rest-long",
+  "death-save-update",
+  "concentration-end",
   "audio-cue",
   "handout",
 ];
@@ -98,6 +100,19 @@ function sanitizePayload(type: CampaignEventType, payload: unknown) {
     return out;
   }
   if (type === "rest-short" || type === "rest-long") return {};
+  if (type === "concentration-end") return {};
+  if (type === "death-save-update") {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Payload must be an object.");
+    const input = payload as Record<string, unknown>;
+    const allowed = new Set(["success", "failure", "natural-20", "natural-1", "stabilize", "heal", "reset", "dead"]);
+    if (typeof input.action !== "string" || !allowed.has(input.action)) throw new Error("Unsupported death-save action.");
+    const out: Record<string, unknown> = { action: input.action };
+    if (input.action === "heal") {
+      if (typeof input.amount !== "number" || !Number.isInteger(input.amount) || input.amount < 1 || input.amount > 999) throw new Error("Healing must be an integer from 1 to 999.");
+      out.amount = input.amount;
+    }
+    return out;
+  }
   if (type === "audio-cue" || type === "handout") {
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Payload must be an object.");
     const input = payload as Record<string, unknown>;
@@ -123,8 +138,8 @@ export async function POST(
     const targetUserId = typeof body.targetUserId === "string" && body.targetUserId.trim()
       ? body.targetUserId.trim()
       : null;
-    if ((type === "condition-apply" || type === "condition-remove") && !targetUserId) {
-      return NextResponse.json({ error: "Condition events require targetUserId." }, { status: 400 });
+    if ((type === "condition-apply" || type === "condition-remove" || type === "death-save-update" || type === "concentration-end") && !targetUserId) {
+      return NextResponse.json({ error: "This event requires targetUserId." }, { status: 400 });
     }
     const payload = sanitizePayload(type, body.payload);
     const event = postCampaignEvent(id, userId, type, payload, targetUserId);
