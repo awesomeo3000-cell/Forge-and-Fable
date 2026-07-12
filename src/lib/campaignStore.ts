@@ -11,11 +11,13 @@ import { computeFeatBonuses } from "@/lib/featBonuses";
 import { maxSlots } from "@/lib/spellSlots";
 import { approximateHealth } from "@/lib/encounterGenerator";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
-import { applyRaceBonuses, abilityModifier } from "@/lib/utils";
+import { applyRaceBonuses, abilityModifier, proficiencyBonus } from "@/lib/utils";
+import { passiveSkillScore } from "@/lib/derivedStats";
 import { ruleset } from "@/lib/ruleset";
 import type { Character } from "@/types/game";
 import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
+import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
 
 // -- Types -----------------------------------------------------------------
 
@@ -240,6 +242,8 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
   const visibility = ["hidden", "name-only", "name-and-conditions", "approximate-health", "exact-hp", "full-public"].includes(String(raw.visibility))
     ? raw.visibility as CampaignCombatant["visibility"] : undefined;
   const defeated = raw.defeated === true ? true : undefined;
+  const reactionUsed = raw.reactionUsed === true ? true : undefined;
+  const turnStatus = raw.turnStatus === "delayed" || raw.turnStatus === "readied" ? raw.turnStatus : undefined;
 
   // -- text fields ---------------------------------------------------------
   const concentratingOn = typeof raw.concentratingOn === "string" && raw.concentratingOn.trim()
@@ -270,6 +274,8 @@ function clampCombatant(raw: Record<string, unknown>): CampaignCombatant | null 
     ...(hidden ? { hidden: true } : {}),
     ...(visibility ? { visibility } : {}),
     ...(defeated ? { defeated: true } : {}),
+    ...(reactionUsed ? { reactionUsed: true } : {}),
+    ...(turnStatus ? { turnStatus } : {}),
     ...(concentratingOn ? { concentratingOn } : {}),
     ...(conditions.length ? { conditions } : {}),
     ...(privateNote ? { privateNote } : {}),
@@ -369,9 +375,18 @@ function calculateMemberSummary(
       characterLevel: null,
       currentHp: null,
       maxHp: null,
+      tempHp: null,
       ac: null,
+      speed: null,
       passivePerception: null,
+      passiveInsight: null,
+      passiveInvestigation: null,
+      spellSaveDc: null,
       conditions: [],
+      concentratingOn: null,
+      deathSaves: null,
+      heroicInspiration: false,
+      hitDice: null,
       spellSlots: [],
       ...(isDm ? { characterJson: null } : {}),
     };
@@ -385,18 +400,33 @@ function calculateMemberSummary(
   const acInfo = computeArmorClass(raced, characterJson.classId, characterJson.equipment, characterJson.inventory);
   const ruleAc = characterJson.customRules.filter((rule) => rule.type === "ac").reduce((sum, rule) => sum + rule.value, 0);
   const ac = acInfo.total + ruleAc + featInfo.acBonus + effectTotal(characterJson.effects, "ac");
-  const perception = SKILLS.find((skill) => skill.id === "perception");
-  const hasPerception =
-    (characterJson.skillProficiencies ?? []).includes("perception") ||
-    (BACKGROUND_SKILLS[characterJson.background] ?? []).includes("perception");
-  const passivePerception = perception
-    ? 10 + abilityModifier(raced[perception.ability]) + (hasPerception ? 2 + Math.floor((characterJson.level - 1) / 4) : 0)
-    : null;
+  const profBonus = proficiencyBonus(characterJson.level);
+  const passive = (skillId: "perception" | "insight" | "investigation") => {
+    const skill = SKILLS.find((item) => item.id === skillId);
+    if (!skill) return null;
+    const proficient = (characterJson.skillProficiencies ?? []).includes(skillId) ||
+      (BACKGROUND_SKILLS[characterJson.background] ?? []).includes(skillId);
+    return passiveSkillScore({
+      abilityScore: raced[skill.ability],
+      proficiencyBonus: profBonus,
+      proficient,
+      expertise: (characterJson.skillExpertise ?? []).includes(skillId),
+      jackOfAllTrades: characterJson.classId === "bard" && !proficient,
+    });
+  };
+  const passivePerception = passive("perception");
+  const passiveInsight = passive("insight");
+  const passiveInvestigation = passive("investigation");
   const conditions = (characterJson.effects ?? [])
     .filter((effect) => effect.active && (effect.source === "DM" || effect.advantageMode))
     .map((effect) => effect.label.slice(0, 32))
     .slice(0, 8);
-  const casterType = ruleset.classes.find((item) => item.id === characterJson.classId)?.casterType ?? "none";
+  const heroClass = ruleset.classes.find((item) => item.id === characterJson.classId);
+  const race = ruleset.races.find((item) => item.id === characterJson.raceId);
+  const casterType = heroClass?.casterType ?? "none";
+  const spellSaveDc = heroClass?.spellcastingAbility
+    ? 8 + profBonus + abilityModifier(raced[heroClass.spellcastingAbility])
+    : null;
   const slots = maxSlots(casterType, characterJson.level, characterJson.classId);
   const spellSlots = slots
     .map((max, index) => ({
@@ -417,9 +447,21 @@ function calculateMemberSummary(
     characterLevel: characterJson.level,
     currentHp: characterJson.currentHp,
     maxHp: characterJson.maxHp,
+    tempHp: characterJson.tempHp ?? 0,
     ac,
+    speed: race?.speed ?? null,
     passivePerception,
+    passiveInsight,
+    passiveInvestigation,
+    spellSaveDc,
     conditions,
+    concentratingOn: characterJson.concentratingOn ?? null,
+    deathSaves: characterJson.deathSaves ?? null,
+    heroicInspiration: characterJson.heroicInspiration ?? false,
+    hitDice: {
+      maximum: characterJson.level,
+      remaining: Math.max(0, characterJson.level - (characterJson.hitDiceSpent ?? 0)),
+    },
     spellSlots,
     ...(isDm || userId === viewerUserId ? { characterJson } : {}),
   };
@@ -623,6 +665,8 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
     rolls,
     initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),
     members: listMembers(campaignId, isDm, userId),
+    presence: listCampaignPresence(campaignId, userId),
+    requests: listCampaignRequests(campaignId, userId),
     audio: getCampaignAudio(campaignId),
   };
 }

@@ -28,7 +28,7 @@ describe("campaign v2 store", () => {
     joinCampaign("player", campaign.code, player.id);
     updateCampaignInitiative(campaign.id, "dm", { round: 1, turnIndex: 0, combatants: [
       { id: "monster:secret", name: "Secret monster", initiative: 18, kind: "enemy", hidden: true, currentHp: 12, maxHp: 12, ac: 14, privateNote: "the DM's secret", conditions: [{ id: "c1", label: "Enraged" }] },
-      { id: "monster:open", name: "Open monster", initiative: 11, kind: "enemy", currentHp: 5, maxHp: 12, ac: 15, visibility: "approximate-health", statBlock: { resistances: "fire" } },
+      { id: "monster:open", name: "Open monster", initiative: 11, kind: "enemy", currentHp: 5, maxHp: 12, ac: 15, visibility: "approximate-health", reactionUsed: true, turnStatus: "readied", statBlock: { resistances: "fire" } },
     ] }, 0);
     expect(syncCampaign(campaign.id, "player").initiative.data.combatants.map((item) => item.id)).toEqual(["monster:open"]);
     expect(syncCampaign(campaign.id, "dm").initiative.data.combatants).toHaveLength(2);
@@ -56,6 +56,7 @@ describe("campaign v2 store", () => {
     const dmOpen = syncCampaign(campaign.id, "dm").initiative.data.combatants.find((c) => c.id === ("monster:open" as unknown))!;
     expect(dmOpen.statBlock).toMatchObject({ resistances: "fire" });
     expect(dmOpen.currentHp).toBe(5);
+    expect(dmOpen).toMatchObject({ reactionUsed: true, turnStatus: "readied" });
 
     const track = addCampaignTrack(campaign.id, "dm", { title: "Tavern", url: "https://example.test/tavern.mp3", kind: "music" });
     const audio = updateCampaignAudio(campaign.id, "dm", track.id, 0);

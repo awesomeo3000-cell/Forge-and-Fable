@@ -31,6 +31,8 @@ export type CampaignCombatant = {
   healthLabel?: "Unhurt" | "Wounded" | "Bloodied" | "Near death" | "Defeated";
   defeated?: boolean;
   concentratingOn?: string;
+  reactionUsed?: boolean;
+  turnStatus?: "delayed" | "readied";
 
   /** NPC conditions (DM-managed — display only, no mechanical effect on the owning client). */
   conditions?: CampaignCombatantCondition[];
@@ -63,6 +65,9 @@ export type CampaignEventType =
   | "roll-request"
   | "rest-short"
   | "rest-long"
+  | "death-save-update"
+  | "concentration-end"
+  | "loot-offer"
   | "audio-cue"
   | "handout"
   | "campaign-audit";
@@ -98,9 +103,18 @@ export type CampaignMemberSummary = {
   characterLevel: number | null;
   currentHp: number | null;
   maxHp: number | null;
+  tempHp: number | null;
   ac: number | null;
+  speed: string | null;
   passivePerception: number | null;
+  passiveInsight: number | null;
+  passiveInvestigation: number | null;
+  spellSaveDc: number | null;
   conditions: string[];
+  concentratingOn: string | null;
+  deathSaves: { successes: number; failures: number } | null;
+  heroicInspiration: boolean;
+  hitDice: { remaining: number; maximum: number } | null;
   spellSlots: Array<{ level: number; remaining: number; max: number }>;
   characterJson?: Character | null;
 };
@@ -122,6 +136,52 @@ export type CampaignAudioState = {
   loop: boolean;
   startedAt: string | null;
   version: number;
+};
+
+export type CampaignPresenceState = "connected" | "background" | "away" | "disconnected";
+
+export type CampaignPresence = {
+  userId: string;
+  characterId: string | null;
+  state: CampaignPresenceState;
+  lastSeenAt: string | null;
+};
+
+export type CampaignCharacterNoteCategory = "secret" | "personal-hook" | "relationship" | "curse" | "unidentified-item" | "planned-beat" | "reward" | "general";
+
+export type CampaignCharacterNote = {
+  id: string;
+  campaignId: string;
+  characterId: string;
+  category: CampaignCharacterNoteCategory;
+  title: string;
+  body: string;
+  reminderId?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CampaignRequestResponse = {
+  userId: string;
+  status: "completed" | "dismissed" | "unavailable";
+  total?: number;
+  passed?: boolean;
+  summary: string;
+  respondedAt: string;
+};
+
+export type CampaignRequest = {
+  id: string;
+  campaignId: string;
+  kind: "roll" | "rest-short" | "rest-long";
+  status: "open" | "completed" | "dismissed";
+  resolution: "individual" | "group" | "best";
+  targetUserIds: string[];
+  payload: Record<string, unknown>;
+  responses: CampaignRequestResponse[];
+  createdAt: string;
+  resolvedAt?: string;
 };
 
 export type CampaignSyncPayload = {
@@ -148,5 +208,7 @@ export type CampaignSyncPayload = {
     updatedAt: string | null;
   };
   members: CampaignMemberSummary[];
+  presence: CampaignPresence[];
+  requests: CampaignRequest[];
   audio: CampaignAudioState;
 };

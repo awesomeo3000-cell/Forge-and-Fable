@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 7;
+const SCHEMA_REVISION = 11;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -158,6 +158,70 @@ function createSchema(db: DatabaseSync) {
       started_at TEXT,
       version INTEGER NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS campaign_presence (
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      character_id TEXT REFERENCES characters(id) ON DELETE SET NULL,
+      visibility TEXT NOT NULL CHECK(visibility IN ('visible', 'hidden')),
+      last_seen_at TEXT NOT NULL,
+      PRIMARY KEY (campaign_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_presence_seen ON campaign_presence(campaign_id, last_seen_at);
+
+    CREATE TABLE IF NOT EXISTS campaign_character_notes (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+      category TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      reminder_id TEXT,
+      resolved_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_character_notes_character ON campaign_character_notes(campaign_id, character_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_requests (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      status TEXT NOT NULL,
+      resolution TEXT NOT NULL,
+      target_user_ids TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      resolved_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_requests_created ON campaign_requests(campaign_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS campaign_request_responses (
+      request_id TEXT NOT NULL REFERENCES campaign_requests(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL,
+      total INTEGER,
+      passed INTEGER,
+      summary TEXT NOT NULL,
+      responded_at TEXT NOT NULL,
+      PRIMARY KEY (request_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS campaign_scenes (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_scenes_active ON campaign_scenes(campaign_id, active, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS campaign_npcs (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_npcs_updated ON campaign_npcs(campaign_id, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS campaign_loot_parcels (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_loot_updated ON campaign_loot_parcels(campaign_id, updated_at DESC);
 
     CREATE TABLE IF NOT EXISTS creature_library (
       id TEXT PRIMARY KEY,
@@ -314,6 +378,10 @@ function migrateSchema(db: DatabaseSync) {
     `);
     recordMigration(db, 6, "one campaign enrollment per character; preserve newest enrollment");
     recordMigration(db, 7, "persistent login and registration throttling");
+    recordMigration(db, 8, "campaign presence and private character notes");
+    recordMigration(db, 9, "tracked roll and rest requests");
+    recordMigration(db, 10, "campaign scenes and persistent NPC state");
+    recordMigration(db, 11, "campaign loot parcels and player proposals");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

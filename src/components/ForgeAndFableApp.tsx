@@ -71,6 +71,9 @@ import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
 import { patchFromSnapshot } from "@/lib/characterSnapshots";
 import { encodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
+import { dmToolsApi } from "@/lib/client/dmToolsApi";
+import { longRestRecovery } from "@/lib/restRecovery";
+import { deathSavePatch, type DeathSaveAction } from "@/lib/deathSaves";
 
 const CreatorPanel = dynamic(() => import("@/components/CreatorPanel"), { ssr: false });
 const FeedbackModal = dynamic(() => import("@/components/FeedbackModal"), { ssr: false });
@@ -458,6 +461,17 @@ export default function ForgeAndFableApp() {
         if (!processedCampaignEventsRef.current.has(event.id)) {
           pushToast("turn", "The DM asks for a roll", summarizeRollRequest(payload));
         }
+      } else if (event.type === "concentration-end" || event.type === "death-save-update") {
+        if (!myCharacter) break;
+        if (event.type === "concentration-end") {
+          void updateCharacterById(myCharacter.id, { concentratingOn: null });
+          if (!processedCampaignEventsRef.current.has(event.id)) pushToast("condition", "Concentration ended", myCharacter.name);
+        } else {
+          const action = typeof payload.action === "string" ? payload.action as DeathSaveAction : "reset";
+          const amount = typeof payload.amount === "number" ? payload.amount : 0;
+          void updateCharacterById(myCharacter.id, deathSavePatch(myCharacter, action, amount));
+          if (!processedCampaignEventsRef.current.has(event.id)) pushToast("condition", `Death saves: ${action.replaceAll("-", " ")}`, myCharacter.name);
+        }
       } else if (event.type === "handout") {
         const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
         const url = typeof payload.url === "string" ? payload.url.trim() : "";
@@ -556,12 +570,13 @@ export default function ForgeAndFableApp() {
     let inFlight = false;
 
     const sync = async () => {
-      if (document.visibilityState === "hidden" || inFlight) return;
+      if (inFlight) return;
       inFlight = true;
       const cursors = campaignCursorRef.current[activeCampaignId];
       const search = new URLSearchParams();
       if (cursors?.events) search.set("eventCursor", cursors.events);
       if (cursors?.rolls) search.set("rollCursor", cursors.rolls);
+      search.set("visibility", document.visibilityState === "hidden" ? "hidden" : "visible");
       const query = search.toString();
       const url = `/api/campaigns/${activeCampaignId}/sync${query ? `?${query}` : ""}`;
       try {
@@ -626,14 +641,20 @@ export default function ForgeAndFableApp() {
 
     sync();
     const interval = window.setInterval(sync, campaignOpen ? 5000 : 10000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") sync();
+    const onVisibility = () => { void sync(); };
+    const onPageHide = () => {
+      navigator.sendBeacon(
+        `/api/campaigns/${activeCampaignId}/presence`,
+        new Blob([JSON.stringify({ visibility: "hidden" })], { type: "application/json" }),
+      );
     };
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
     };
   }, [activeCampaignId, user, campaignOpen]);
 
@@ -1316,6 +1337,7 @@ export default function ForgeAndFableApp() {
     }
     const { character: campaignChar, abilities, initiative: enrolledInitiative } = enrolled;
     const payload = parseCampaignPayload(event);
+    const requestId = typeof payload.requestId === "string" ? payload.requestId : undefined;
     // The roll always names itself from its mechanics ("Perception check"),
     // with the DM's optional prompt as a lead-in.
     const descriptor = rollRequestDescriptor(payload);
@@ -1373,39 +1395,56 @@ export default function ForgeAndFableApp() {
       } else {
         setStatus(`${prompt}: rolled ${outcome.total}`);
       }
+      if (requestId && campaignSync) void dmToolsApi.respondToRequest(campaignSync.campaign.id, requestId, {
+        status: "completed", total: outcome.total, ...(dc !== undefined ? { passed: outcome.total >= dc } : {}),
+        summary: `${descriptor}: ${outcome.total}${dc !== undefined ? outcome.total >= dc ? " pass" : " fail" : ""}`,
+      }).catch(() => setStatus("Roll completed, but the DM response tracker could not be updated."));
       resolveCampaignEvent(event.id);
     }, forcedMode);
   }
 
   function applyCampaignRest(type: CampaignEvent["type"], eventId?: string) {
-    if (!selected) return;
+    const enrolled = getEnrolledCharacter();
+    if (!enrolled) return;
+    const campaignChar = enrolled.character;
+    const event = eventId ? campaignEvents.find((item) => item.id === eventId) : undefined;
+    const payload = event ? parseCampaignPayload(event) : {};
+    const requestId = typeof payload.requestId === "string" ? payload.requestId : undefined;
+    let summary = "Rest completed";
     if (type === "rest-short") {
-      const heroClass = ruleset?.classes.find((item) => item.id === selected.classId);
+      const heroClass = ruleset?.classes.find((item) => item.id === campaignChar.classId);
       if (heroClass?.casterType === "pact") {
-        void updateSelected({ pactSlotsUsed: 0 });
+        void updateCharacterById(campaignChar.id, { pactSlotsUsed: 0 });
+        summary = "Pact slots recovered; hit-die spending remains player controlled";
+      } else {
+        summary = "Short rest acknowledged; hit-die spending remains player controlled";
       }
       setStatus("Short rest acknowledged");
     } else if (type === "rest-long") {
-      const spent = selected.hitDiceSpent ?? 0;
-      const recovered = Math.max(1, Math.floor(selected.level / 2));
-      const restedSpellStatuses = Object.fromEntries(
-        Object.entries(selected.spellStatuses ?? {}).map(([spellId, status]) => [
-          spellId,
-          status.freeUse ? { ...status, freeUsed: false } : status,
-        ]),
-      );
-      void updateSelected({
-        currentHp: selected.maxHp,
-        tempHp: 0,
-        spellSlotsUsed: {},
-        pactSlotsUsed: 0,
-        concentratingOn: null,
-        hitDiceSpent: Math.max(0, spent - recovered),
-        spellStatuses: restedSpellStatuses,
-      });
+      const recovery = longRestRecovery(campaignChar);
+      void updateCharacterById(campaignChar.id, recovery.patch);
+      summary = recovery.summary;
       setStatus("Long rest complete");
     }
+    if (requestId && campaignSync) void dmToolsApi.respondToRequest(campaignSync.campaign.id, requestId, { status: "completed", summary }).catch(() => setStatus("Rest completed, but the DM response tracker could not be updated."));
     if (eventId) resolveCampaignEvent(eventId);
+  }
+
+  function respondToLoot(event: CampaignEvent, accept: boolean) {
+    const enrolled = getEnrolledCharacter();
+    if (!enrolled || !campaignSync) return;
+    const payload = parseCampaignPayload(event);
+    const parcelId = typeof payload.parcelId === "string" ? payload.parcelId : "";
+    const itemId = typeof payload.itemId === "string" ? payload.itemId : "";
+    if (!parcelId || !itemId) return;
+    if (accept) {
+      const name = typeof payload.name === "string" ? payload.name : "Campaign loot";
+      const quantity = typeof payload.quantity === "number" ? Math.max(1, Math.min(99, Math.trunc(payload.quantity))) : 1;
+      const description = typeof payload.description === "string" ? payload.description : "";
+      const additions = Array.from({ length: quantity }, () => ({ id: crypto.randomUUID(), name, rarity: "Mundane", attunement: false, notes: "Assigned by the DM", ...(description ? { description } : {}) }));
+      updateCharacterById(enrolled.character.id, { inventory: [...enrolled.character.inventory, ...additions] });
+    }
+    void dmToolsApi.respondLoot(campaignSync.campaign.id, parcelId, { itemId, accept }).then(() => { setStatus(accept ? "Loot added to your inventory" : "Loot declined"); resolveCampaignEvent(event.id); }).catch(() => setStatus("Could not record the loot response."));
   }
 
   function pushRoll(
@@ -1967,6 +2006,7 @@ export default function ForgeAndFableApp() {
         onPostEvent={postCampaignEvent}
         onRespondRollRequest={handleCampaignRollRequest}
         onAcceptRest={applyCampaignRest}
+        onRespondLoot={respondToLoot}
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
@@ -1983,6 +2023,7 @@ export default function ForgeAndFableApp() {
         onPostEvent={postCampaignEvent}
         onRespondRollRequest={handleCampaignRollRequest}
         onAcceptRest={applyCampaignRest}
+        onRespondLoot={respondToLoot}
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}

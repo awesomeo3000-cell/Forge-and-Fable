@@ -1,4 +1,5 @@
-import type { CampaignHandout, CampaignJournalEntry, CampaignSession, CreatureLibraryRecord, EncounterRun, SavedEncounter, SessionSummary } from "@/types/dmTools";
+import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionSummary } from "@/types/dmTools";
+import type { CampaignCharacterNote, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 async function api<T>(url:string,init?:RequestInit):Promise<T>{const response=await fetch(url,{...init,headers:{"Content-Type":"application/json",...(init?.headers??{})}});const data=await response.json().catch(()=>({})) as T&{error?:string};if(!response.ok)throw new Error(data.error??"Request failed.");return data;}
 const body=(value:unknown)=>JSON.stringify(value);
@@ -32,4 +33,20 @@ export const dmToolsApi={
   pin:(campaignId:string,sessionId:string,input:unknown)=>api<{pin:unknown}>(`/api/campaigns/${campaignId}/sessions/${sessionId}/pins`,{method:"POST",body:body(input)}),
   workspace:(campaignId:string)=>api<{activeSession:CampaignSession|null;activeEncounter:EncounterRun|null}>(`/api/campaigns/${campaignId}/workspace`),
   updateRun:(campaignId:string,runId:string,input:unknown)=>api<{ok:true;reminders?:EncounterRun["reminders"]}>(`/api/campaigns/${campaignId}/encounter-runs/${runId}`,{method:"PATCH",body:body(input)}),
+  listCharacterNotes:(campaignId:string,characterId?:string)=>api<{notes:CampaignCharacterNote[]}>(`/api/campaigns/${campaignId}/notes${characterId?`?characterId=${encodeURIComponent(characterId)}`:""}`),
+  createCharacterNote:(campaignId:string,input:unknown)=>api<{note:CampaignCharacterNote}>(`/api/campaigns/${campaignId}/notes`,{method:"POST",body:body(input)}),
+  updateCharacterNote:(campaignId:string,noteId:string,input:unknown)=>api<{note:CampaignCharacterNote}>(`/api/campaigns/${campaignId}/notes/${noteId}`,{method:"PATCH",body:body(input)}),
+  deleteCharacterNote:(campaignId:string,noteId:string)=>api<{ok:true}>(`/api/campaigns/${campaignId}/notes/${noteId}`,{method:"DELETE"}),
+  createRequest:(campaignId:string,input:unknown)=>api<{request:CampaignRequest}>(`/api/campaigns/${campaignId}/requests`,{method:"POST",body:body(input)}),
+  respondToRequest:(campaignId:string,requestId:string,input:unknown)=>api<{response:CampaignRequestResponse}>(`/api/campaigns/${campaignId}/requests/${requestId}/respond`,{method:"POST",body:body(input)}),
+  listScenes:(campaignId:string)=>api<{scenes:CampaignScene[]}>(`/api/campaigns/${campaignId}/scenes`),
+  createScene:(campaignId:string,input:unknown)=>api<{scene:CampaignScene}>(`/api/campaigns/${campaignId}/scenes`,{method:"POST",body:body(input)}),
+  updateScene:(campaignId:string,id:string,input:unknown)=>api<{scene:CampaignScene}>(`/api/campaigns/${campaignId}/scenes/${id}`,{method:"PATCH",body:body(input)}),
+  listNpcs:(campaignId:string)=>api<{npcs:CampaignNpc[]}>(`/api/campaigns/${campaignId}/npcs`),
+  createNpc:(campaignId:string,input:unknown)=>api<{npc:CampaignNpc}>(`/api/campaigns/${campaignId}/npcs`,{method:"POST",body:body(input)}),
+  updateNpc:(campaignId:string,id:string,input:unknown)=>api<{npc:CampaignNpc}>(`/api/campaigns/${campaignId}/npcs/${id}`,{method:"PATCH",body:body(input)}),
+  listLoot:(campaignId:string)=>api<{parcels:LootParcel[]}>(`/api/campaigns/${campaignId}/loot`),
+  createLoot:(campaignId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot`,{method:"POST",body:body(input)}),
+  offerLoot:(campaignId:string,parcelId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot/${parcelId}/offer`,{method:"POST",body:body(input)}),
+  respondLoot:(campaignId:string,parcelId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot/${parcelId}/respond`,{method:"POST",body:body(input)}),
 };

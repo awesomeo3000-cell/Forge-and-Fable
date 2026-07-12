@@ -72,7 +72,7 @@ export type EncounterCombatantTemplate = {
 export type EncounterWave = {
   id: string;
   name: string;
-  trigger: { type: "round-start"; round: number } | { type: "combatant-hp"; combatantId: string; belowPercent: number } | { type: "manual" };
+  trigger: { type: "round-start"; round: number } | { type: "combatant-hp"; combatantId: string; belowPercent: number } | { type: "combatant-defeated"; combatantId: string } | { type: "manual" };
   combatantIds: string[];
 };
 
@@ -225,9 +225,31 @@ export type EncounterRun = {
   reminders: EncounterReminder[];
   readAloudRead?: boolean;
   activatedWaveIds?: string[];
+  cancelledWaveIds?: string[];
+  postponedWaveIds?: string[];
   startedAt: string;
   endedAt?: string;
 };
+
+export type CampaignScene = {
+  id: string; campaignId: string; title: string; description?: string; readAloud?: string;
+  presentUserIds: string[]; npcIds: string[]; objectives: string[]; completedObjectives: string[];
+  clues: string[]; revealedClues: string[]; handoutIds: string[]; privateNotes?: string;
+  likelyChecks: string[]; linkedLocation?: string; linkedEncounterId?: string; active: boolean;
+  createdAt: string; updatedAt: string;
+};
+
+export type CampaignNpc = {
+  id: string; campaignId: string; name: string; attitude: string; voice?: string; goal?: string;
+  knows?: string; revealCondition?: string; armorClass?: number; currentHp?: number; maxHp?: number;
+  insightDc?: number; portraitUrl?: string; status: "alive" | "dead" | "missing";
+  disposition: "neutral" | "allied" | "hostile"; lastLocation?: string; relationshipNotes?: string;
+  revealedSecrets: string[]; currentSceneId?: string; linkedJournalEntryId?: string;
+  createdAt: string; updatedAt: string;
+};
+
+export type LootParcelItem = { id: string; name: string; quantity: number; description?: string; assignedUserId?: string; status: "unclaimed" | "offered" | "accepted" | "declined" };
+export type LootParcel = { id: string; campaignId: string; sessionId?: string; encounterId?: string; label: string; items: LootParcelItem[]; currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number }; status: "unclaimed" | "partially-assigned" | "resolved"; createdAt: string; updatedAt: string };
 
 export type PlayerCampaignMemory = {
   activeSession: Pick<CampaignSession, "id" | "number" | "title" | "startedAt"> | null;
