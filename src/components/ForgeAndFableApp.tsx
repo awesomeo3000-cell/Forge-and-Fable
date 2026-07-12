@@ -1430,6 +1430,23 @@ export default function ForgeAndFableApp() {
     if (eventId) resolveCampaignEvent(eventId);
   }
 
+  function respondToLoot(event: CampaignEvent, accept: boolean) {
+    const enrolled = getEnrolledCharacter();
+    if (!enrolled || !campaignSync) return;
+    const payload = parseCampaignPayload(event);
+    const parcelId = typeof payload.parcelId === "string" ? payload.parcelId : "";
+    const itemId = typeof payload.itemId === "string" ? payload.itemId : "";
+    if (!parcelId || !itemId) return;
+    if (accept) {
+      const name = typeof payload.name === "string" ? payload.name : "Campaign loot";
+      const quantity = typeof payload.quantity === "number" ? Math.max(1, Math.min(99, Math.trunc(payload.quantity))) : 1;
+      const description = typeof payload.description === "string" ? payload.description : "";
+      const additions = Array.from({ length: quantity }, () => ({ id: crypto.randomUUID(), name, rarity: "Mundane", attunement: false, notes: "Assigned by the DM", ...(description ? { description } : {}) }));
+      updateCharacterById(enrolled.character.id, { inventory: [...enrolled.character.inventory, ...additions] });
+    }
+    void dmToolsApi.respondLoot(campaignSync.campaign.id, parcelId, { itemId, accept }).then(() => { setStatus(accept ? "Loot added to your inventory" : "Loot declined"); resolveCampaignEvent(event.id); }).catch(() => setStatus("Could not record the loot response."));
+  }
+
   function pushRoll(
     label: string,
     sides: number,
@@ -1989,6 +2006,7 @@ export default function ForgeAndFableApp() {
         onPostEvent={postCampaignEvent}
         onRespondRollRequest={handleCampaignRollRequest}
         onAcceptRest={applyCampaignRest}
+        onRespondLoot={respondToLoot}
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
@@ -2005,6 +2023,7 @@ export default function ForgeAndFableApp() {
         onPostEvent={postCampaignEvent}
         onRespondRollRequest={handleCampaignRollRequest}
         onAcceptRest={applyCampaignRest}
+        onRespondLoot={respondToLoot}
         onResolveEvent={resolveCampaignEvent}
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}

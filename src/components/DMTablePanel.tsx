@@ -12,7 +12,7 @@ import { SKILLS } from "@/lib/srd";
 import { reminderMatches, type ReminderContext } from "@/lib/encounterGenerator";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCharacterNote, CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
-import type { CampaignHandout, CampaignNpc, CampaignScene, CampaignSession, EncounterRun } from "@/types/dmTools";
+import type { CampaignHandout, CampaignNpc, CampaignScene, CampaignSession, EncounterRun, LootParcel } from "@/types/dmTools";
 import PartyRail from "@/components/dmTable/PartyRail";
 import CharacterInspector from "@/components/dmTable/CharacterInspector";
 import { presetMode, type DmLayoutPreset, type DmWorkspaceMode } from "@/lib/dmTable/party";
@@ -25,6 +25,16 @@ const ROLL_PRESETS = [
   ["Dex save", "save", "ability", "dexterity"], ["Con save", "save", "ability", "constitution"],
   ["Wis save", "save", "ability", "wisdom"], ["Initiative", "initiative", "ability", "dexterity"],
 ] as const;
+const RULE_REFERENCES = [
+  ["Concentration", "A concentrating creature makes a Constitution save after each damage instance: DC 10 or half the damage, whichever is higher."],
+  ["Cover", "Half cover grants +2 AC and Dexterity saves; three-quarters cover grants +5; total cover prevents direct targeting."],
+  ["Typical DCs", "Very easy 5 · Easy 10 · Moderate 15 · Hard 20 · Very hard 25 · Nearly impossible 30."],
+  ["Falling", "A fall deals 1d6 bludgeoning damage per 10 feet, to the supported ruleset maximum."],
+  ["Grappling", "Use the supported ruleset's Unarmed Strike and escape rules; check the creature's current condition text for exact effects."],
+  ["Exhaustion", "Use the exhaustion track shown by the current campaign rules source; do not mix editions."],
+  ["Rests", "Short rests allow supported recovery features and hit-die spending; long rests use the shared recovery adapter."],
+] as const;
+const fuzzyMatch=(value:string,query:string)=>{let index=0;for(const char of value.toLowerCase())if(char===query.toLowerCase()[index])index++;return index===query.length;};
 
 type Props = {
   campaign: CampaignSyncPayload;
@@ -86,7 +96,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [recordFilter, setRecordFilter] = useState<"all" | "rolls" | "table">("all");
   // One command form open at a time — the row is the toolkit, not a wall of
   // stacked forms (proposal 24c).
-  const [activeCommand, setActiveCommand] = useState<null | "announce" | "roll" | "condition" | "handout" | "combatant">(null);
+  const [activeCommand, setActiveCommand] = useState<null | "announce" | "roll" | "condition" | "handout" | "loot" | "combatant">(null);
   const [error, setError] = useState("");
   const [prepOpen, setPrepOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
@@ -102,6 +112,14 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [characterNotes, setCharacterNotes] = useState<CampaignCharacterNote[]>([]);
   const [scenes, setScenes] = useState<CampaignScene[]>([]);
   const [npcs, setNpcs] = useState<CampaignNpc[]>([]);
+  const [lootParcels, setLootParcels] = useState<LootParcel[]>([]);
+  const [lootDraft, setLootDraft] = useState({ label: "", item: "", quantity: "1", targetUserId: "" });
+  const [sessionTitle, setSessionTitle] = useState("");
+  const [sessionOnBreak, setSessionOnBreak] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+  const [commandIndex, setCommandIndex] = useState(0);
+  const [tourOpen, setTourOpen] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("forge-dm-table-tour") !== "done");
   const [sceneTitle, setSceneTitle] = useState("");
   const [npcDraft, setNpcDraft] = useState({ name: "", attitude: "Neutral", goal: "", armorClass: "", hitPoints: "" });
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -164,11 +182,12 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   useEffect(() => { void listCampaignTracks(campaign.campaign.id).then(setTracks).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not load tracks.")); }, [campaign.campaign.id]);
   const refreshWorkspace = useCallback(async () => {
     try {
-      const [workspace, handoutData, sceneData, npcData] = await Promise.all([dmToolsApi.workspace(campaign.campaign.id), dmToolsApi.listHandouts(campaign.campaign.id), dmToolsApi.listScenes(campaign.campaign.id), dmToolsApi.listNpcs(campaign.campaign.id)]);
+      const [workspace, handoutData, sceneData, npcData, lootData] = await Promise.all([dmToolsApi.workspace(campaign.campaign.id), dmToolsApi.listHandouts(campaign.campaign.id), dmToolsApi.listScenes(campaign.campaign.id), dmToolsApi.listNpcs(campaign.campaign.id), dmToolsApi.listLoot(campaign.campaign.id)]);
       setActiveSession(workspace.activeSession);
       setActiveEncounter(workspace.activeEncounter);
       setSavedHandouts(handoutData.handouts);
       setScenes(sceneData.scenes); setNpcs(npcData.npcs);
+      setLootParcels(lootData.parcels);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load session workspace."); }
   }, [campaign.campaign.id]);
   useEffect(() => {
@@ -306,8 +325,13 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const createQuickNpc = async () => {
     if (!npcDraft.name.trim()) return;
     const hp = Number(npcDraft.hitPoints), ac = Number(npcDraft.armorClass);
-    try { const result = await dmToolsApi.createNpc(campaign.campaign.id, { name: npcDraft.name, attitude: npcDraft.attitude, goal: npcDraft.goal, ...(Number.isFinite(hp) && hp > 0 ? { currentHp: hp, maxHp: hp } : {}), ...(Number.isFinite(ac) ? { armorClass: ac } : {}), status: "alive", disposition: "neutral", ...(activeScene ? { currentSceneId: activeScene.id } : {}) }); if (activeScene) await dmToolsApi.updateScene(campaign.campaign.id, activeScene.id, { npcIds: [...new Set([...activeScene.npcIds, result.npc.id])] }); setNpcDraft({ name: "", attitude: "Neutral", goal: "", armorClass: "", hitPoints: "" }); await refreshWorkspace(); }
+    try { const result = await dmToolsApi.createNpc(campaign.campaign.id, { name: npcDraft.name, attitude: npcDraft.attitude, goal: npcDraft.goal, ...(Number.isFinite(hp) && hp > 0 ? { currentHp: hp, maxHp: hp } : {}), ...(npcDraft.armorClass.trim() && Number.isFinite(ac) ? { armorClass: ac } : {}), status: "alive", disposition: "neutral", ...(activeScene ? { currentSceneId: activeScene.id } : {}) }); if (activeScene) await dmToolsApi.updateScene(campaign.campaign.id, activeScene.id, { npcIds: [...new Set([...activeScene.npcIds, result.npc.id])] }); setNpcDraft({ name: "", attitude: "Neutral", goal: "", armorClass: "", hitPoints: "" }); await refreshWorkspace(); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create NPC."); }
+  };
+  const createAndOfferLoot = async () => {
+    if (!lootDraft.label.trim() || !lootDraft.item.trim()) return;
+    try { const result=await dmToolsApi.createLoot(campaign.campaign.id,{label:lootDraft.label,sessionId:activeSession?.id,encounterId:activeEncounter?.id,items:[{name:lootDraft.item,quantity:Math.max(1,Number(lootDraft.quantity)||1)}]}); if(lootDraft.targetUserId)await dmToolsApi.offerLoot(campaign.campaign.id,result.parcel.id,{itemId:result.parcel.items[0].id,targetUserId:lootDraft.targetUserId});setLootDraft({label:"",item:"",quantity:"1",targetUserId:""});await refreshWorkspace(); }
+    catch(reason){setError(reason instanceof Error?reason.message:"Could not create loot parcel.");}
   };
 
   const callRest = async (kind: "rest-short" | "rest-long") => {
@@ -369,6 +393,22 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     }
   };
 
+  useEffect(() => { const handler=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setCommandOpen((value)=>!value);}else if(event.key==="Escape")setCommandOpen(false);};window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler);},[]);
+  const commands = [
+    {label:"Request Perception from everyone",run:()=>{setRollKind("check");setCheckScope("skill");setRollKey("perception");setRollTarget("all");setWorkspaceMode("encounter");setActiveCommand("roll");}},
+    {label:"Advance turn",run:nextTurn,disabled:!sortedCombatants.length},
+    {label:"Call short rest",run:()=>void callRest("rest-short"),disabled:!players.length},
+    {label:"Call long rest",run:()=>void callRest("rest-long"),disabled:!players.length},
+    {label:"Open selected character sheet",run:()=>{if(selectedMember?.characterJson)onOpenSheet(selectedMember.characterJson);},disabled:!selectedMember?.characterJson},
+    {label:"Apply condition to selected character",run:()=>{if(selectedMember)setConditionTarget(selectedMember.userId);setWorkspaceMode("encounter");setActiveCommand("condition");},disabled:!selectedMember},
+    {label:"Add NPC to scene",run:()=>setWorkspaceMode("scene")},
+    {label:"Add combatant",run:()=>{setWorkspaceMode("encounter");setActiveCommand("combatant");}},
+    {label:"Share handout",run:()=>{setWorkspaceMode("encounter");setActiveCommand("handout");}},
+    {label:"Open party capabilities",run:()=>setWorkspaceMode("scene")},
+    ...(["scene","encounter","preparation","review"] as DmWorkspaceMode[]).map((mode)=>({label:`Switch to ${mode} mode`,run:()=>setWorkspaceMode(mode)})),
+  ];
+  const paletteItems: Array<{kind:string;label:string;detail?:string;disabled:boolean;run:()=>void}>=[...commands.map((command)=>({kind:"Command",...command,disabled:command.disabled??false})),...RULE_REFERENCES.map(([label,detail])=>({kind:"Rule",label,detail,disabled:false,run:()=>setCommandQuery(label)}))].filter((item)=>!commandQuery.trim()||fuzzyMatch(`${item.label} ${String("detail" in item?item.detail:"")}`,commandQuery.trim()));
+
   return (
     <section className="dm-table" style={theme ? ({ "--paper": theme.paper, "--ink": theme.ink, "--doc-accent": theme.accent } as React.CSSProperties) : undefined}>
       <header className="dm-table-head">
@@ -381,11 +421,15 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         <div>
           <label className="dm-layout-picker"><span>View</span><select value={layoutPreset} onChange={(event) => choosePreset(event.target.value as DmLayoutPreset)}><option value="combat">Combat</option><option value="roleplay">Roleplay</option><option value="preparation">Preparation</option><option value="compact">Compact</option></select></label>
           <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
+          <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
           <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
           <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
         </div>
       </header>
+      {commandOpen ? <div className="dm-command-palette" role="dialog" aria-label="DM command palette"><div><input autoFocus aria-label="Search commands and rules" placeholder="Type a command or rule…" value={commandQuery} onChange={(event)=>{setCommandQuery(event.target.value);setCommandIndex(0);}} onKeyDown={(event)=>{if(event.key==="ArrowDown"){event.preventDefault();setCommandIndex((index)=>Math.min(paletteItems.length-1,index+1));}if(event.key==="ArrowUp"){event.preventDefault();setCommandIndex((index)=>Math.max(0,index-1));}if(event.key==="Enter"){const item=paletteItems[commandIndex];if(item&&!item.disabled){item.run();setCommandOpen(false);setCommandQuery("");}}}}/><small>Commands and rules · ↑↓ navigate · Enter run · Esc close</small><ul>{paletteItems.slice(0,12).map((item,index)=><li key={`${item.kind}-${item.label}`}><button type="button" className={index===commandIndex?"is-active":""} disabled={item.disabled} onMouseEnter={()=>setCommandIndex(index)} onClick={()=>{item.run();setCommandOpen(false);setCommandQuery("");}}><span>{item.kind}</span><strong>{item.label}</strong>{"detail" in item?<small>{item.detail}</small>:item.disabled?<small>Unavailable in the current context</small>:null}</button></li>)}</ul></div></div> : null}
       {error ? <p className="dm-table-error">{error}</p> : null}
+      {tourOpen ? <aside className="dm-first-tour" aria-label="DM Table quick tour"><strong>Your Table workspace</strong><ol><li>Party state stays in the left command rail.</li><li>The center changes between Scene, Encounter, Preparation, and Review.</li><li>Select a character to open the right inspector.</li><li>Tools and Ctrl/Cmd+K expose the full command set.</li></ol><button type="button" className="dm-btn dm-btn-primary" onClick={()=>{window.localStorage.setItem("forge-dm-table-tour","done");setTourOpen(false);}}>Got it</button></aside> : null}
+      {activeSession ? <section className="dm-session-strip"><strong>{activeSession.title??"Active session"}</strong><span>{Math.max(0,Math.floor((clockNow-Date.parse(activeSession.startedAt))/60000))}m{sessionOnBreak?" · On break":""}</span><button type="button" className="dm-btn" onClick={()=>{const note=window.prompt("Session note");if(note)void dmToolsApi.pin(campaign.campaign.id,activeSession.id,{note});}}>Add note</button><button type="button" className="dm-btn" disabled={!records[0]} onClick={()=>records[0]&&void dmToolsApi.pin(campaign.campaign.id,activeSession.id,{note:records[0].text,eventId:records[0].id})}>Pin latest</button><button type="button" className="dm-btn" onClick={()=>setSessionOnBreak((value)=>!value)}>{sessionOnBreak?"Resume":"Take break"}</button><button type="button" className="dm-btn" onClick={()=>{if(window.confirm("End this session and prepare its summary draft?"))void dmToolsApi.endSession(campaign.campaign.id,activeSession.id).then(()=>{setPrepOpen(true);return refreshWorkspace();});}}>End session</button></section> : <section className="dm-session-strip"><strong>Start session</strong><input placeholder="Session title" value={sessionTitle} onChange={(event)=>setSessionTitle(event.target.value)}/><span>{activeScene?`Starting at ${activeScene.title}`:"No starting scene selected"}</span><button type="button" className="dm-btn dm-btn-primary" onClick={()=>void dmToolsApi.startSession(campaign.campaign.id,{title:sessionTitle||undefined}).then(()=>{setSessionTitle("");return refreshWorkspace();})}>Start session</button></section>}
       {activeEncounter ? <section className="dm-live-encounter">
         <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
         <div className="dm-pacing-facts" aria-label="Encounter status"><span>Round <strong>{campaign.initiative.data.round}</strong></span><span>Elapsed <strong>{encounterFacts.elapsedMinutes}m</strong></span><span>Enemies <strong>{encounterFacts.activeEnemies} active · {encounterFacts.defeatedEnemies} defeated</strong></span><span>Party <strong>{encounterFacts.critical} critical · {encounterFacts.concentrating} concentrating</strong></span><span>Pending <strong>{encounterFacts.pendingRequests}</strong></span></div>
@@ -488,7 +532,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
 
           {/* The toolkit: one row of commands, one open form at a time. */}
           <div className="dm-command-row">
-            {([["announce", "Announce"], ["roll", "Request a roll"], ["condition", "Condition"], ["handout", "Handout"], ["combatant", "Add combatant"]] as const).map(([id, label]) => (
+            {([["announce", "Announce"], ["roll", "Request a roll"], ["condition", "Condition"], ["handout", "Handout"], ["loot", "Loot"], ["combatant", "Add combatant"]] as const).map(([id, label]) => (
               <button
                 key={id}
                 type="button"
@@ -593,6 +637,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               <button type="button" className="dm-btn dm-btn-primary" disabled={!handoutTitle.trim() || !handoutUrl.trim()} onClick={() => { if (handoutTitle.trim() && handoutUrl.trim()) void onPostEvent("handout", { title: handoutTitle.trim(), url: handoutUrl.trim() }).then(() => { setHandoutTitle(""); setHandoutUrl(""); setActiveCommand(null); }); }}><Send size={14} /> Share a handout</button>
             </div>
           ) : null}
+          {activeCommand === "loot" ? <div className="dm-loot-manager"><div className="dm-inline-form"><input placeholder="Parcel label" value={lootDraft.label} onChange={(event)=>setLootDraft({...lootDraft,label:event.target.value})}/><input placeholder="Item name" value={lootDraft.item} onChange={(event)=>setLootDraft({...lootDraft,item:event.target.value})}/><input aria-label="Quantity" type="number" min="1" max="99" value={lootDraft.quantity} onChange={(event)=>setLootDraft({...lootDraft,quantity:event.target.value})}/><select aria-label="Offer loot to" value={lootDraft.targetUserId} onChange={(event)=>setLootDraft({...lootDraft,targetUserId:event.target.value})}><option value="">Leave unclaimed</option>{players.map((member)=><option key={member.userId} value={member.userId}>{member.characterName??member.userName}</option>)}</select><button type="button" className="dm-btn dm-btn-primary" onClick={createAndOfferLoot}>Create parcel</button></div>{lootParcels.filter((parcel)=>parcel.status!=="resolved").map((parcel)=><article key={parcel.id}><strong>{parcel.label}</strong>{parcel.items.map((item)=><p key={item.id}>{item.name} ×{item.quantity} <em>{item.status}{item.assignedUserId?` → ${campaign.members.find((member)=>member.userId===item.assignedUserId)?.characterName??"player"}`:""}</em></p>)}</article>)}</div> : null}
           {activeCommand === "combatant" ? (
             <div className="dm-inline-form">
               <input placeholder="Combatant" value={combatant.name} onChange={(event) => setCombatant({ ...combatant, name: event.target.value })} />

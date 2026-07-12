@@ -22,6 +22,7 @@ const EVENT_TYPES: CampaignEventType[] = [
   "concentration-end",
   "audio-cue",
   "handout",
+  "loot-offer",
 ];
 
 function assertString(value: unknown, label: string, max: number) {
@@ -120,6 +121,11 @@ function sanitizePayload(type: CampaignEventType, payload: unknown) {
     if (!/^https?:\/\//i.test(url)) throw new Error("URL must use http or https.");
     return { url, title: assertString(input.title, "Title", 60) };
   }
+  if (type === "loot-offer") {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Payload must be an object.");
+    const input=payload as Record<string,unknown>;
+    return { parcelId:assertString(input.parcelId,"Parcel",80),itemId:assertString(input.itemId,"Item",80),name:assertString(input.name,"Item name",160),quantity:typeof input.quantity==="number"?Math.max(1,Math.min(99,Math.trunc(input.quantity))):1,description:typeof input.description==="string"?input.description.trim().slice(0,1000):"" };
+  }
   throw new Error("Unsupported event type.");
 }
 
@@ -138,7 +144,7 @@ export async function POST(
     const targetUserId = typeof body.targetUserId === "string" && body.targetUserId.trim()
       ? body.targetUserId.trim()
       : null;
-    if ((type === "condition-apply" || type === "condition-remove" || type === "death-save-update" || type === "concentration-end") && !targetUserId) {
+    if ((type === "condition-apply" || type === "condition-remove" || type === "death-save-update" || type === "concentration-end" || type === "loot-offer") && !targetUserId) {
       return NextResponse.json({ error: "This event requires targetUserId." }, { status: 400 });
     }
     const payload = sanitizePayload(type, body.payload);

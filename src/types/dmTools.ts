@@ -248,6 +248,9 @@ export type CampaignNpc = {
   createdAt: string; updatedAt: string;
 };
 
+export type LootParcelItem = { id: string; name: string; quantity: number; description?: string; assignedUserId?: string; status: "unclaimed" | "offered" | "accepted" | "declined" };
+export type LootParcel = { id: string; campaignId: string; sessionId?: string; encounterId?: string; label: string; items: LootParcelItem[]; currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number }; status: "unclaimed" | "partially-assigned" | "resolved"; createdAt: string; updatedAt: string };
+
 export type PlayerCampaignMemory = {
   activeSession: Pick<CampaignSession, "id" | "number" | "title" | "startedAt"> | null;
   handouts: Array<Omit<CampaignHandout, "privateNotes">>;

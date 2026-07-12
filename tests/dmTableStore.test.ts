@@ -7,7 +7,7 @@ import { createCampaign, joinCampaign } from "@/lib/campaignStore";
 import { createCharacter } from "@/lib/vaultStore";
 import { createCampaignRequest, createCharacterNote, listCampaignPresence, listCampaignRequests, listCharacterNotes, respondToCampaignRequest, touchCampaignPresence } from "@/lib/dmTable/store";
 import { characterInput } from "./fixtures/character";
-import { createNpc, createScene, listNpcs, listScenes, updateNpc, updateScene } from "@/lib/dmTable/worldStore";
+import { createLoot, createNpc, createScene, listLoot, listNpcs, listScenes, offerLoot, respondLoot, updateNpc, updateScene } from "@/lib/dmTable/worldStore";
 
 let dataDir = "";
 
@@ -59,5 +59,16 @@ describe("DM table presence and private notes", () => {
     expect(listScenes(run.id, "dm")[0]).toMatchObject({ title: "Ruined Gate", npcIds: [npc.id], revealedClues: ["Broken seal"] });
     expect(listNpcs(run.id, "dm")[0]).toMatchObject({ disposition: "allied", lastLocation: "Ruined Gate" });
     expect(() => listScenes(run.id, "player")).toThrow(/Only the DM/);
+  });
+
+  it("requires a targeted player to accept loot before resolving it", async () => {
+    const hero = await createCharacter("player", characterInput("Rook"));
+    const run = createCampaign("dm", "Loot Table"); joinCampaign("player", run.code, hero.id);
+    const parcel = createLoot(run.id, "dm", { label: "Gate cache", items: [{ name: "Silvered dagger", quantity: 1 }] });
+    const offered = offerLoot(run.id, "dm", parcel.id, parcel.items[0].id, "player");
+    expect(offered.item.status).toBe("offered");
+    expect(() => respondLoot(run.id, "dm", parcel.id, parcel.items[0].id, true)).toThrow(/not available/);
+    expect(respondLoot(run.id, "player", parcel.id, parcel.items[0].id, true).item.status).toBe("accepted");
+    expect(listLoot(run.id, "dm")[0].status).toBe("resolved");
   });
 });

@@ -1,4 +1,4 @@
-import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, SavedEncounter, SessionSummary } from "@/types/dmTools";
+import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionSummary } from "@/types/dmTools";
 import type { CampaignCharacterNote, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 async function api<T>(url:string,init?:RequestInit):Promise<T>{const response=await fetch(url,{...init,headers:{"Content-Type":"application/json",...(init?.headers??{})}});const data=await response.json().catch(()=>({})) as T&{error?:string};if(!response.ok)throw new Error(data.error??"Request failed.");return data;}
@@ -45,4 +45,8 @@ export const dmToolsApi={
   listNpcs:(campaignId:string)=>api<{npcs:CampaignNpc[]}>(`/api/campaigns/${campaignId}/npcs`),
   createNpc:(campaignId:string,input:unknown)=>api<{npc:CampaignNpc}>(`/api/campaigns/${campaignId}/npcs`,{method:"POST",body:body(input)}),
   updateNpc:(campaignId:string,id:string,input:unknown)=>api<{npc:CampaignNpc}>(`/api/campaigns/${campaignId}/npcs/${id}`,{method:"PATCH",body:body(input)}),
+  listLoot:(campaignId:string)=>api<{parcels:LootParcel[]}>(`/api/campaigns/${campaignId}/loot`),
+  createLoot:(campaignId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot`,{method:"POST",body:body(input)}),
+  offerLoot:(campaignId:string,parcelId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot/${parcelId}/offer`,{method:"POST",body:body(input)}),
+  respondLoot:(campaignId:string,parcelId:string,input:unknown)=>api<{parcel:LootParcel}>(`/api/campaigns/${campaignId}/loot/${parcelId}/respond`,{method:"POST",body:body(input)}),
 };

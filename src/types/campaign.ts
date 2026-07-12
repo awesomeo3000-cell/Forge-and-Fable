@@ -67,6 +67,7 @@ export type CampaignEventType =
   | "rest-long"
   | "death-save-update"
   | "concentration-end"
+  | "loot-offer"
   | "audio-cue"
   | "handout"
   | "campaign-audit";

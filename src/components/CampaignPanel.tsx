@@ -25,6 +25,7 @@ type Props = {
   onPostEvent: (type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) => Promise<boolean>;
   onRespondRollRequest: (event: CampaignEvent) => void;
   onAcceptRest: (type: CampaignEvent["type"], eventId?: string) => void;
+  onRespondLoot: (event: CampaignEvent, accept: boolean) => void;
   onResolveEvent: (eventId: string) => void;
   onOpenSheet?: (character: Character) => void;
   onCreateCharacter?: () => void;
@@ -62,6 +63,7 @@ function eventTitle(event: CampaignEvent) {
   if (event.type === "rest-short") return "Short rest called";
   if (event.type === "rest-long") return "Long rest called";
   if (event.type === "announce") return typeof payload.message === "string" ? payload.message : "Campaign announcement";
+  if (event.type === "loot-offer") return `Loot offered: ${typeof payload.name === "string" ? payload.name : "Item"}`;
   if (event.type === "condition-apply") return `Condition applied: ${typeof payload.label === "string" ? payload.label : "Effect"}`;
   if (event.type === "condition-remove") return `Condition removed: ${typeof payload.label === "string" ? payload.label : "Effect"}`;
   return "Campaign event";
@@ -78,6 +80,7 @@ export default memo(function CampaignPanel({
   onPostEvent,
   onRespondRollRequest,
   onAcceptRest,
+  onRespondLoot,
   onResolveEvent,
   onOpenSheet,
   onCreateCharacter,
@@ -116,7 +119,7 @@ export default memo(function CampaignPanel({
     () => campaignEvents
       .filter((event) =>
         !resolvedEventIds.has(event.id) &&
-        (event.type === "roll-request" || event.type === "rest-short" || event.type === "rest-long" || event.type === "announce"),
+        (event.type === "roll-request" || event.type === "rest-short" || event.type === "rest-long" || event.type === "announce" || event.type === "loot-offer"),
       )
       .slice()
       .reverse(),
@@ -568,6 +571,7 @@ export default memo(function CampaignPanel({
                           {event.type === "rest-short" || event.type === "rest-long" ? (
                             <button className="dj-btn dj-btn-primary" type="button" onClick={() => onAcceptRest(event.type, event.id)}>Apply</button>
                           ) : null}
+                          {event.type === "loot-offer" ? <><button className="dj-btn dj-btn-primary" type="button" onClick={() => onRespondLoot(event, true)}>Accept</button><button className="glass-button" type="button" onClick={() => onRespondLoot(event, false)}>Decline</button></> : null}
                           <button className="glass-button" type="button" onClick={() => onResolveEvent(event.id)}>Dismiss</button>
                         </div>
                       </div>
