@@ -4,6 +4,7 @@ import {
   LogOut,
   MessageSquare,
   RotateCcw,
+  ShieldCheck,
   Swords,
   X,
 } from "lucide-react";
@@ -50,6 +51,7 @@ import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import OnboardingPanel from "@/components/OnboardingPanel";
+import AdminPanel from "@/components/AdminPanel";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
 import { cantripsKnownAt, learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
@@ -179,6 +181,7 @@ export default function ForgeAndFableApp() {
   }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [campaignOpen, setCampaignOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
     () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null,
@@ -2045,6 +2048,7 @@ export default function ForgeAndFableApp() {
       onOpen={() => setCampaignOpen(true)}
       onToast={(title, body) => pushToast("announce", title, body)}
     /> : null}
+    {adminOpen && user.isAdmin ? <AdminPanel onClose={() => setAdminOpen(false)} /> : null}
     {campaignHandout ? (
       <div className="modal-scrim" role="presentation" onMouseDown={() => setCampaignHandout(null)}>
         <figure className="campaign-handout" onMouseDown={(event) => event.stopPropagation()}>
@@ -2101,6 +2105,11 @@ export default function ForgeAndFableApp() {
           <button className="glass-icon ink-action" type="button" onClick={openFeedback} title="Submit feedback">
             <MessageSquare size={18} />
           </button>
+          {user.isAdmin ? (
+            <button className="glass-icon ink-action" type="button" onClick={() => setAdminOpen(true)} title="Admin console">
+              <ShieldCheck size={18} />
+            </button>
+          ) : null}
           <button className="glass-icon ink-action" type="button" onClick={logOut} title="Log out">
             <LogOut size={18} />
           </button>

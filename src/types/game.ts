@@ -391,6 +391,9 @@ export type PublicUser = {
   id: string;
   name: string;
   email: string;
+  /** Server-derived from ADMIN_EMAILS. A UI hint only — never trusted for
+      access; every admin endpoint re-checks server-side. */
+  isAdmin?: boolean;
 };
 
 export type Ruleset = {

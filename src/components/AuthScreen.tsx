@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Crown, LockKeyhole, UserPlus } from "lucide-react";
+import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react";
 import { memo } from "react";
 import type { FormEvent } from "react";
 import type { AuthMode } from "@/types/game";
@@ -22,7 +22,8 @@ export default memo(function AuthScreen(props: {
       <section className="entry-copy">
         <div className="brand-line">
           <span className="brand-seal" aria-hidden="true">
-            <Crown size={22} strokeWidth={1.6} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/Start/brand-seal.png" alt="" width={48} height={48} />
           </span>
           <span>Forge &amp; Fable</span>
         </div>

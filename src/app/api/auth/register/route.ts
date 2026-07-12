@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { registerUser, deleteUserById } from "@/lib/vaultStore";
 import { SESSION_COOKIE_NAME, sessionCookieOptions, signToken } from "@/lib/auth";
 import { authRateLimitKeys, clearAuthFailures, isAuthRateLimited, recordAuthFailure } from "@/lib/authRateLimit";
+import { consumeRegistrationCode, registrationRequiresCode } from "@/lib/adminStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,13 +22,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const requiredInviteCode = process.env.REGISTRATION_CODE?.trim();
-    if (requiredInviteCode && String(body.inviteCode ?? "") !== requiredInviteCode) {
-      recordAuthFailure(rateLimitKeys);
-      return NextResponse.json(
-        { error: "Registration requires a valid invite code." },
-        { status: 403 },
-      );
+    // Registration is gated when the env code is set OR any live admin invite
+    // exists. A valid code = the env value (unlimited) or a live DB invite
+    // (consumed atomically). Ungated instances register freely.
+    if (registrationRequiresCode()) {
+      if (!consumeRegistrationCode(String(body.inviteCode ?? ""))) {
+        recordAuthFailure(rateLimitKeys);
+        return NextResponse.json(
+          { error: "Registration requires a valid invite code." },
+          { status: 403 },
+        );
+      }
     }
 
     const user = await registerUser({

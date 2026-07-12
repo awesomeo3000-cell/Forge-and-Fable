@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 11;
+const SCHEMA_REVISION = 12;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -317,6 +317,16 @@ function createSchema(db: DatabaseSync) {
 
     CREATE INDEX IF NOT EXISTS idx_events_campaign_time ON campaign_events(campaign_id, created_at);
 
+    CREATE TABLE IF NOT EXISTS invite_codes (
+      code TEXT PRIMARY KEY,
+      label TEXT NOT NULL DEFAULT '',
+      created_by TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      max_uses INTEGER,
+      uses INTEGER NOT NULL DEFAULT 0,
+      revoked INTEGER NOT NULL DEFAULT 0
+    );
+
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -382,6 +392,7 @@ function migrateSchema(db: DatabaseSync) {
     recordMigration(db, 9, "tracked roll and rest requests");
     recordMigration(db, 10, "campaign scenes and persistent NPC state");
     recordMigration(db, 11, "campaign loot parcels and player proposals");
+    recordMigration(db, 12, "admin invite codes");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

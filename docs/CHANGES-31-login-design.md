@@ -19,6 +19,17 @@ weight-700+ type. Redesigned to the ledger world.
   `.login-heading span` rule (gold, weight 760) that was outranking
   `.ledger-eyebrow`.
 
+## Follow-up: wax-seal ampersand brand mark
+The crown glyph was replaced with a generated wax-seal-&-ampersand emblem
+(`public/Start/brand-seal.png`). The supplied PNG had a baked-in gray/white
+checkerboard "transparent" background (RGB, no real alpha) — keyed it out to
+true transparency, trimmed to the seal, squared, and downscaled to 384px
+(~157KB; original kept as `brand-seal.original.png`). Login `.brand-seal`
+CSS drops the old red CSS circle and just sizes the image (48px, contain,
+subtle drop shadow). Verified live: image loads (384² natural, 48² rendered)
+and screenshot confirms the emblem beside the "FORGE & FABLE" wordmark.
+Reusable for favicon + splash for full brand consistency (not yet wired).
+
 ## Verification
 - `npm run build` clean; `npm run lint:ci` 0 warnings.
 - The login page renders before the environment's login-wedge, so verified

@@ -3,6 +3,7 @@ import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { getDb } from "@/lib/db";
 import { validateCharacterInput } from "@/lib/validateCharacter";
+import { isAdminEmail } from "@/lib/adminEmail";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -40,7 +41,16 @@ function publicUser(user: StoredUser): PublicUser {
     id: user.id,
     name: user.name,
     email: user.email,
+    isAdmin: isAdminEmail(user.email),
   };
+}
+
+/** Synchronous stored-user lookup by id (email needed for the admin guard). */
+export function getUserById(userId: string): StoredUser | null {
+  const row = getDb()
+    .prepare("SELECT id, name, email, password_hash, created_at FROM users WHERE id = ?")
+    .get(userId) as UserRow | undefined;
+  return row ? storedUserFromRow(row) : null;
 }
 
 function storedUserFromRow(row: UserRow): StoredUser {
@@ -293,6 +303,14 @@ export async function listFeedback(userId: string): Promise<FeedbackEntry[]> {
   const rows = getDb()
     .prepare("SELECT data FROM feedback WHERE user_id = ? ORDER BY created_at DESC")
     .all(userId) as JsonRow[];
+  return rows.map(parseFeedback);
+}
+
+/** Every submission across all users — admin only (gated at the route). */
+export async function listAllFeedback(): Promise<FeedbackEntry[]> {
+  const rows = getDb()
+    .prepare("SELECT data FROM feedback ORDER BY created_at DESC")
+    .all() as JsonRow[];
   return rows.map(parseFeedback);
 }
 
