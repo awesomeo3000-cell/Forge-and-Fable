@@ -28,6 +28,10 @@ const STEP_LABELS: Record<LevelUpStep, string> = {
 };
 
 type LevelUpStep = "hp" | "subclass" | "expertise" | "asi" | "spells" | "summary";
+export const EXPERTISE_COUNTS: Record<string, Record<number, number>> = {
+  rogue: { 1: 2, 6: 2 },
+  bard: { 3: 2, 10: 2 },
+};
 type HpRollRequest = {
   label: string;
   sides: number;
@@ -88,8 +92,6 @@ export default memo(function LevelUpModal({
   const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
   const hasAsi = asiLevels.includes(newLevel);
 
-  // Expertise: Rogue gains at 1 (2 picks) and 6 (1 pick); Bard at 3 (2 picks) and 10 (1 pick).
-  const EXPERTISE_COUNTS: Record<string, Record<number, number>> = { rogue: { 1: 2, 6: 1 }, bard: { 3: 2, 10: 1 } };
   const expertisePickCount = EXPERTISE_COUNTS[classId]?.[newLevel] ?? 0;
   const bgSkillIds = BACKGROUND_SKILLS[character.background ?? ""] ?? [];
   const proficientSkillIds = [...(character.skillProficiencies ?? []), ...bgSkillIds];

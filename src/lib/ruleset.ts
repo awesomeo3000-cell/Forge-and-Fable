@@ -1,4 +1,4 @@
-import type { HeroClass, InventoryItem, Ruleset } from "@/types/game";
+import type { CombatAction, HeroClass, InventoryItem, Ruleset } from "@/types/game";
 
 export const starterItems: InventoryItem[] = [
   {
@@ -43,6 +43,7 @@ const featureDescriptions: Record<string, string> = {
   "9th-level spells": "You unlock the highest tier of spells available to mortal adventurers.",
   "Ability Score Improvement":
     "You gain the Ability Score Improvement feat or another feat of your choice for which you qualify.",
+  Archdruid: "You can use Wild Shape an unlimited number of times.",
   "Action Surge": "Take one additional action on your turn, giving you a burst of offense, movement, or utility.",
   "Action Surge improvement": "You can use Action Surge more often before you need a rest.",
   "Arcane Recovery": "Recover a small amount of expended spell power during a short rest.",
@@ -108,6 +109,7 @@ const featureDescriptions: Record<string, string> = {
   "Land's Stride": "Move more easily through natural terrain and resist some plant-based hindrances.",
   "Lay on Hands": "Heal wounds or cure certain conditions with a pool of divine healing.",
   "Magical Secrets": "Learn spells from outside the bard list to customize your magical toolkit.",
+  "Martial Arts": "Your unarmed strikes and monk weapons use your Martial Arts die for damage, and you can make an unarmed strike as a bonus action.",
   "Martial Archetype": "Choose the fighter subclass that defines your combat specialty.",
   Metamagic: "Spend sorcery points to reshape how your spells behave.",
   "Metamagic option": "Learn another way to alter your spells with sorcery points.",
@@ -144,6 +146,7 @@ const featureDescriptions: Record<string, string> = {
   "Slow Fall": "Reduce falling damage by controlling your descent.",
   "Sneak Attack": "Deal extra damage when you strike with precision under the right conditions.",
   "Sneak Attack improvement": "Your precision strikes hit harder, dealing more sneak attack damage.",
+  "Stillness of Mind": "Use your action to end one effect on yourself that is causing you to be charmed or frightened.",
   "Song of Rest": "Help allies recover extra hit points during a short rest.",
   "Song of Rest improvement": "Your restorative song heals more as your bard level rises.",
   "Sorcerous Origin": "Choose the source of your innate magic and its first benefits.",
@@ -530,7 +533,7 @@ const rawClassLearning: Record<string, RawClassLearning> = {
       { level: 9, features: ["Higher-level pact magic", "More invocations"] },
       { level: 10, features: ["Patron Feature"] },
       { level: 11, features: ["Mystic Arcanum"] },
-      { level: 12, features: ["Ability Score Improvement"] },
+      { level: 12, features: ["Ability Score Improvement", "More invocations"] },
       { level: 13, features: ["Mystic Arcanum improvement"] },
       { level: 14, features: ["Patron Feature"] },
       { level: 15, features: ["Mystic Arcanum improvement", "More invocations"] },
@@ -588,7 +591,7 @@ const rawClassLearning: Record<string, RawClassLearning> = {
       { level: 3, features: ["Artificer Specialist", "The Right Tool for the Job"] },
       { level: 4, features: ["Ability Score Improvement"] },
       { level: 5, features: ["Archetype Feature", "2nd-level spells"] },
-      { level: 6, features: ["Tool Expertise"] },
+      { level: 6, features: ["Tool Expertise", "Infuse Item improvement"] },
       { level: 7, features: ["Flash of Genius"] },
       { level: 8, features: ["Ability Score Improvement"] },
       { level: 9, features: ["Archetype Feature", "3rd-level spells"] },
@@ -1174,6 +1177,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A primal warrior who turns rage into raw staying power.",
       ...classLearning.barbarian,
+      subclassLevel: 3,
       hitDie: 12,
       primary: ["strength", "constitution"],
       proficiencies: ["Light armor", "Medium armor", "Shields", "Simple weapons", "Martial weapons"],
@@ -1202,6 +1206,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A charismatic performer who blends magic, skill, and inspiration.",
       ...classLearning.bard,
+      subclassLevel: 3,
       hitDie: 8,
       primary: ["charisma", "dexterity"],
       proficiencies: ["Light armor", "Simple weapons", "Hand crossbows", "Musical instruments"],
@@ -1231,6 +1236,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A divine caster with armor, recovery magic, and steady party support.",
       ...classLearning.cleric,
+      subclassLevel: 1,
       hitDie: 8,
       primary: ["wisdom"],
       proficiencies: ["Light armor", "Medium armor", "Shields", "Simple weapons"],
@@ -1260,6 +1266,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A nature-bound spellcaster who channels wilderness and transformation.",
       ...classLearning.druid,
+      subclassLevel: 2,
       hitDie: 8,
       primary: ["wisdom", "constitution"],
       proficiencies: ["Light armor", "Medium armor", "Shields", "Druidic focus"],
@@ -1289,6 +1296,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A front-line weapon expert with flexible combat pressure.",
       ...classLearning.fighter,
+      subclassLevel: 3,
       hitDie: 10,
       primary: ["strength", "dexterity"],
       proficiencies: ["All armor", "Shields", "Simple weapons", "Martial weapons"],
@@ -1317,6 +1325,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A disciplined martial artist built around speed, focus, and precision.",
       ...classLearning.monk,
+      subclassLevel: 3,
       hitDie: 8,
       primary: ["dexterity", "wisdom"],
       proficiencies: ["Simple weapons", "Shortswords", "Artisan's tools"],
@@ -1345,6 +1354,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A sworn champion who blends martial strength with divine power.",
       ...classLearning.paladin,
+      subclassLevel: 3,
       hitDie: 10,
       primary: ["strength", "charisma"],
       proficiencies: ["All armor", "Shields", "Simple weapons", "Martial weapons"],
@@ -1374,9 +1384,10 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A wilderness scout who mixes combat skill, tracking, and primal magic.",
       ...classLearning.ranger,
+      subclassLevel: 3,
       hitDie: 10,
       primary: ["dexterity", "wisdom"],
-      proficiencies: ["Light armor", "Medium armor", "Shields", "Martial weapons"],
+      proficiencies: ["Light armor", "Medium armor", "Shields", "Simple weapons", "Martial weapons"],
       startingGear: ["Longbow", "Shortswords", "Explorer's pack"],
       actions: [
         {
@@ -1403,9 +1414,10 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A precise infiltrator built around mobility, expertise, and burst damage.",
       ...classLearning.rogue,
+      subclassLevel: 3,
       hitDie: 8,
       primary: ["dexterity"],
-      proficiencies: ["Light armor", "Simple weapons", "Hand crossbows", "Thieves' tools"],
+      proficiencies: ["Light armor", "Simple weapons", "Hand crossbows", "Longswords", "Rapiers", "Shortswords", "Thieves' tools"],
       startingGear: ["Rapier", "Shortbow", "Burglar's pack"],
       actions: [
         {
@@ -1431,6 +1443,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "An innate arcane caster whose magic comes from bloodline, spark, or soul.",
       ...classLearning.sorcerer,
+      subclassLevel: 1,
       hitDie: 6,
       primary: ["charisma", "constitution"],
       proficiencies: ["Daggers", "Quarterstaffs", "Light crossbows"],
@@ -1460,6 +1473,7 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A pact-bound caster with strange gifts and reliable eldritch power.",
       ...classLearning.warlock,
+      subclassLevel: 1,
       hitDie: 8,
       primary: ["charisma", "constitution"],
       proficiencies: ["Light armor", "Simple weapons"],
@@ -1489,9 +1503,10 @@ export const ruleset: Ruleset = {
       sourceBook: "Player’s Handbook",
       summary: "A studied arcane caster with flexible spells and fragile defenses.",
       ...classLearning.wizard,
+      subclassLevel: 2,
       hitDie: 6,
       primary: ["intelligence"],
-      proficiencies: ["Daggers", "Quarterstaffs", "Light crossbows"],
+      proficiencies: ["Daggers", "Darts", "Slings", "Quarterstaffs", "Light crossbows"],
       startingGear: ["Quarterstaff", "Spellbook", "Scholar's pack"],
       actions: [
         {
@@ -1595,3 +1610,16 @@ export const ruleset: Ruleset = {
   ],
   items: starterItems,
 };
+
+/** Return class actions with level-dependent dice resolved for the sheet. */
+export function classActionsAtLevel(heroClass: HeroClass, level: number): CombatAction[] {
+  if (heroClass.id !== "rogue") return heroClass.actions;
+
+  const rogueLevel = Math.max(1, Math.min(20, Math.floor(level)));
+  const sneakAttackDice = Math.ceil(rogueLevel / 2);
+  return heroClass.actions.map((action) =>
+    action.name === "Sneak strike"
+      ? { ...action, formula: `1d8 + DEX + ${sneakAttackDice}d6` }
+      : action,
+  );
+}

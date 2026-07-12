@@ -43,6 +43,7 @@ import { revertHpLevel } from "@/lib/hitPoints";
 import { passiveSkillScore } from "@/lib/derivedStats";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
+import { classActionsAtLevel } from "@/lib/ruleset";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
@@ -121,6 +122,7 @@ export default memo(function HeroSheet(props: {
     props.ruleset.races.find((r) => r.id === props.character.raceId) ?? props.ruleset.races[0];
   const heroClass =
     props.ruleset.classes.find((c) => c.id === props.character.classId) ?? props.ruleset.classes[0];
+  const subclassLevel = getClassData(heroClass.id)?.subclassLevel ?? heroClass.subclassLevel ?? 3;
   const subclassFeatures = props.character.subclassId
     ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
     : [];
@@ -855,7 +857,6 @@ export default memo(function HeroSheet(props: {
     }
 
     // Clear subclass if gained at a level now above newLevel
-    const subclassLevel = heroClass.subclassLevel ?? 3;
     if (props.character.subclassId && subclassLevel > newLevel) {
       patch.subclassId = "";
     }
@@ -1324,7 +1325,7 @@ export default memo(function HeroSheet(props: {
               const damageType = w.damageType ? ` ${w.damageType}` : "";
               return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
             })
-          : heroClass.actions.map((action) => {
+          : classActionsAtLevel(heroClass, props.character.level).map((action) => {
               const mod = abilityModifier(props.finalAbilities[action.ability]);
               const damageMod = mod + effDamage;
               const dice = parseDamageDice(action.formula);
@@ -1358,7 +1359,7 @@ export default memo(function HeroSheet(props: {
               ) : availableSubclasses.length > 0 ? (
                 <div className="cs-feature-group">
                   <span className="cs-spell-level-head">Choose Subclass</span>
-                  <p className="cs-muted">Use the level-up button to select a subclass at level {heroClass.subclassLevel ?? 3}</p>
+                  <p className="cs-muted">Use the level-up button to select a subclass at level {subclassLevel}</p>
                 </div>
               ) : null}
             </div>
