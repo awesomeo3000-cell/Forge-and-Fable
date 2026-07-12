@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Eye, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
+import { Check, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import DMPrepPanel from "@/components/DMPrepPanel";
@@ -13,6 +13,9 @@ import { reminderMatches, type ReminderContext } from "@/lib/encounterGenerator"
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import type { CampaignHandout, CampaignSession, EncounterRun } from "@/types/dmTools";
+import PartyRail from "@/components/dmTable/PartyRail";
+import CharacterInspector from "@/components/dmTable/CharacterInspector";
+import { presetMode, type DmLayoutPreset, type DmWorkspaceMode } from "@/lib/dmTable/party";
 
 /** Condition presets that a DM can apply. Matches the player-facing CampaignPanel dropdown. */
 const CONDITION_PRESETS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
@@ -81,8 +84,19 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
   const [activeEncounter, setActiveEncounter] = useState<EncounterRun | null>(null);
   const [savedHandouts, setSavedHandouts] = useState<CampaignHandout[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [layoutPreset, setLayoutPreset] = useState<DmLayoutPreset>(() => {
+    if (typeof window === "undefined") return "combat";
+    const saved = window.localStorage.getItem("forge-and-fable-dm-layout");
+    return saved === "roleplay" || saved === "preparation" || saved === "compact" ? saved : "combat";
+  });
+  const [workspaceMode, setWorkspaceMode] = useState<DmWorkspaceMode>(() => presetMode(layoutPreset));
   const isPlaying = campaign.audio.trackId;
-  const players = campaign.members.filter((member) => member.userId !== campaign.campaign.dmUserId);
+  const players = useMemo(
+    () => campaign.members.filter((member) => member.userId !== campaign.campaign.dmUserId),
+    [campaign.members, campaign.campaign.dmUserId],
+  );
+  const selectedMember = campaign.members.find((member) => member.userId === selectedUserId) ?? null;
 
   // Display order is initiative-descending; turnIndex indexes the SORTED
   // list (same convention as the player-side "your turn" detection).
@@ -134,6 +148,18 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     const interval = window.setInterval(() => void refreshWorkspace(), 10000);
     return () => window.clearInterval(interval);
   }, [refreshWorkspace]);
+  useEffect(() => {
+    if (!selectedUserId) {
+      const first = players.find((member) => member.characterId);
+      if (first) queueMicrotask(() => setSelectedUserId(first.userId));
+    }
+  }, [players, selectedUserId]);
+
+  const choosePreset = (preset: DmLayoutPreset) => {
+    setLayoutPreset(preset);
+    setWorkspaceMode(presetMode(preset));
+    window.localStorage.setItem("forge-and-fable-dm-layout", preset);
+  };
 
   const records = useMemo(() => [
     ...campaign.rolls.map((roll) => ({ id: `roll-${roll.id}`, kind: "rolls" as const, at: roll.created_at, text: `${roll.character_name} — ${roll.label} ${roll.total}` })),
@@ -254,7 +280,20 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
 
   return (
     <section className="dm-table" style={theme ? ({ "--paper": theme.paper, "--ink": theme.ink, "--doc-accent": theme.accent } as React.CSSProperties) : undefined}>
-      <header className="dm-table-head"><div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}</span><h2>{campaign.campaign.name}</h2></div><div><button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Prepare</button><button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button><button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button></div></header>
+      <header className="dm-table-head">
+        <div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}</span><h2>{campaign.campaign.name}</h2></div>
+        <nav className="dm-workspace-modes" aria-label="Table mode">
+          {(["scene", "encounter", "preparation", "review"] as DmWorkspaceMode[]).map((mode) => (
+            <button key={mode} type="button" className={workspaceMode === mode ? "is-active" : ""} aria-pressed={workspaceMode === mode} onClick={() => setWorkspaceMode(mode)}>{mode === "review" ? "Session review" : mode}</button>
+          ))}
+        </nav>
+        <div>
+          <label className="dm-layout-picker"><span>View</span><select value={layoutPreset} onChange={(event) => choosePreset(event.target.value as DmLayoutPreset)}><option value="combat">Combat</option><option value="roleplay">Roleplay</option><option value="preparation">Preparation</option><option value="compact">Compact</option></select></label>
+          <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
+          <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
+          <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
+        </div>
+      </header>
       {error ? <p className="dm-table-error">{error}</p> : null}
       {activeEncounter ? <section className="dm-live-encounter">
         <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
@@ -263,8 +302,24 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         <div>{activeEncounter.snapshot.waves.filter((wave) => !activeEncounter.activatedWaveIds?.includes(wave.id)).map((wave) => <button key={wave.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "activate-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Activate {wave.name}</button>)}{activeEncounter.snapshot.handoutIds.map((id) => savedHandouts.find((item) => item.id === id)).filter((item): item is CampaignHandout => Boolean(item)).map((handout) => <button key={handout.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, handout.id)}>Reveal {handout.title}</button>)}<button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "end" }).then(() => refreshWorkspace())}>End encounter</button></div>
       </section> : null}
       <div className="dm-table-grid">
-        <aside className="dm-table-region dm-party"><h3>The Party</h3>{campaign.members.length ? campaign.members.map((member) => <button key={member.userId} type="button" className="dm-party-row" onClick={() => member.characterJson && onOpenSheet(member.characterJson)} disabled={!member.characterJson}><span className="dm-party-seal">{(member.characterName ?? member.userName).slice(0, 1)}</span><span><strong>{member.characterName ?? member.userName}</strong><small>HP {member.currentHp ?? "—"}/{member.maxHp ?? "—"} · AC {member.ac ?? "—"} · PP {member.passivePerception ?? "—"}</small><span className={`dm-hp-track${member.maxHp && (member.currentHp ?? 0) / member.maxHp <= 0.25 ? " is-low" : ""}`}><i style={{ width: `${member.maxHp ? Math.max(0, Math.min(100, (member.currentHp ?? 0) / member.maxHp * 100)) : 0}%` }} /></span>{member.spellSlots.length ? <em>Slots {member.spellSlots.map((slot) => `${slot.level}:${slot.remaining}/${slot.max}`).join(" · ")}</em> : null}{member.conditions.length ? <em className="dm-party-conditions">{member.conditions.slice(0, 4).join(" · ")}</em> : null}</span><Eye size={14} /></button>) : <p className="dm-empty">No souls at the table yet — share the code.</p>}</aside>
+        <PartyRail
+          members={campaign.members}
+          dmUserId={campaign.campaign.dmUserId}
+          selectedUserId={selectedUserId}
+          currentTurnUserId={sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId ?? null}
+          compact={layoutPreset === "compact"}
+          onSelect={(member) => setSelectedUserId(member.userId)}
+          onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
+        />
         <section className="dm-table-region dm-encounter">
+          {workspaceMode === "preparation" ? (
+            <div className="dm-workspace-empty"><span>Preparation</span><h3>Prepare the next beat</h3><p>Choose saved encounters, creatures, handouts, reminders, and session notes in the campaign workshop.</p><button type="button" className="dm-btn dm-btn-primary" onClick={() => setPrepOpen(true)}>Open campaign workshop</button></div>
+          ) : workspaceMode === "review" ? (
+            <div className="dm-workspace-review"><div className="dm-region-head"><h3>Session record</h3><span>{activeSession?.title ?? "No active session"}</span></div><div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div><div className="dm-record-list">{records.length ? records.map((record) => <p key={record.id}><time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{record.text}{activeSession ? <button type="button" className="dm-pin" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: record.text, eventId: record.id })}>Pin for summary</button> : null}</p>) : <p className="dm-empty">Nothing has been recorded yet.</p>}</div></div>
+          ) : workspaceMode === "scene" ? (
+            <div className="dm-scene-workspace"><span>Current scene</span><h3>{activeEncounter?.snapshot.name ?? activeSession?.title ?? "The table is ready"}</h3><p>{activeEncounter?.snapshot.objective ?? "Set the scene, share a handout, request a check, or open Preparation."}</p>{activeEncounter?.snapshot.readAloud ? <blockquote>{activeEncounter.snapshot.readAloud}</blockquote> : null}<div><button type="button" className="dm-btn" onClick={() => { setWorkspaceMode("encounter"); setActiveCommand("announce"); }}>Announce</button><button type="button" className="dm-btn" onClick={() => { setWorkspaceMode("encounter"); setActiveCommand("roll"); }}>Request a roll</button><button type="button" className="dm-btn" onClick={() => { setWorkspaceMode("encounter"); setActiveCommand("handout"); }}>Share handout</button><button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Scene tools</button></div></div>
+          ) : (
+          <>
           <div className="dm-region-head">
             <h3>Encounter</h3>
             <span className="dm-round">Round {campaign.initiative.data.round}</span>
@@ -429,8 +484,15 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               <button type="button" className="dm-btn dm-btn-primary" onClick={addCombatant} disabled={!combatant.name.trim() || !combatant.initiative.trim()}><Plus size={14} /> Add</button>
             </div>
           ) : null}
+          </>
+          )}
         </section>
-        <aside className="dm-table-region dm-record"><h3>The Record</h3><div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div>{records.length ? records.map((record) => <p key={record.id}><time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{record.text}{activeSession ? <button type="button" className="dm-pin" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: record.text, eventId: record.id })}>Pin for summary</button> : null}</p>) : <p>Nothing written yet.</p>}</aside>
+        <CharacterInspector
+          member={selectedMember}
+          history={records.slice(0, 12).map((record) => ({ id: record.id, summary: record.text, createdAt: record.at }))}
+          onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
+          onRequestRoll={(member) => { setRollTarget(member.userId); setWorkspaceMode("encounter"); setActiveCommand("roll"); }}
+        />
       </div>
       <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input placeholder="Direct audio URL" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || !trackUrl.trim()}><Plus size={14}/> Add track</button></div></section>
       {prepOpen ? <DMPrepPanel campaignId={campaign.campaign.id} onClose={() => { setPrepOpen(false); void refreshWorkspace(); }} onEncounterStarted={() => void refreshWorkspace()}/> : null}

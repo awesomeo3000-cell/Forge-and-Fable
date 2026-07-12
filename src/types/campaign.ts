@@ -98,9 +98,18 @@ export type CampaignMemberSummary = {
   characterLevel: number | null;
   currentHp: number | null;
   maxHp: number | null;
+  tempHp: number | null;
   ac: number | null;
+  speed: string | null;
   passivePerception: number | null;
+  passiveInsight: number | null;
+  passiveInvestigation: number | null;
+  spellSaveDc: number | null;
   conditions: string[];
+  concentratingOn: string | null;
+  deathSaves: { successes: number; failures: number } | null;
+  heroicInspiration: boolean;
+  hitDice: { remaining: number; maximum: number } | null;
   spellSlots: Array<{ level: number; remaining: number; max: number }>;
   characterJson?: Character | null;
 };
