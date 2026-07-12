@@ -4,6 +4,7 @@ import { defaultCharacterSettings } from "@/lib/utils";
 export function characterInput(name = "Foundation Hero"): Omit<Character, "id" | "userId" | "createdAt"> {
   return {
     name,
+    ruleset: "2014",
     level: 1,
     alignment: "Neutral",
     background: "Acolyte",

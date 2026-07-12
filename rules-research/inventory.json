@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-07-12",
+  "status": "initial-inventory",
+  "classes": [
+    { "id": "barbarian-2014", "name": "Barbarian", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "first-review" },
+    { "id": "bard-2014", "name": "Bard", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "cleric-2014", "name": "Cleric", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "druid-2014", "name": "Druid", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "fighter-2014", "name": "Fighter", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "monk-2014", "name": "Monk", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "paladin-2014", "name": "Paladin", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "ranger-2014", "name": "Ranger", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "rogue-2014", "name": "Rogue", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "sorcerer-2014", "name": "Sorcerer", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "warlock-2014", "name": "Warlock", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "wizard-2014", "name": "Wizard", "ruleset": "2014", "sourceId": "2014-srd-5.1", "status": "inventory-complete" },
+    { "id": "artificer-2014", "name": "Artificer", "ruleset": "2014", "sourceId": "2014-tce-artificer", "status": "inventory-complete" },
+    { "id": "barbarian-2024", "name": "Barbarian", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "first-review" },
+    { "id": "bard-2024", "name": "Bard", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "cleric-2024", "name": "Cleric", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "druid-2024", "name": "Druid", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "fighter-2024", "name": "Fighter", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "monk-2024", "name": "Monk", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "paladin-2024", "name": "Paladin", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "ranger-2024", "name": "Ranger", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "rogue-2024", "name": "Rogue", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "sorcerer-2024", "name": "Sorcerer", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "warlock-2024", "name": "Warlock", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" },
+    { "id": "wizard-2024", "name": "Wizard", "ruleset": "2024", "sourceId": "2024-basic-rules", "status": "inventory-complete" }
+  ],
+  "subclasses": {
+    "2014": { "status": "pending-source-inventory", "records": [] },
+    "2024": { "status": "pending-source-inventory", "records": [] }
+  }
+}

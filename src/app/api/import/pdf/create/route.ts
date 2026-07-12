@@ -274,6 +274,7 @@ function draftToCharacterPayload(draft: ImportDraft): Omit<Character, "id" | "us
 
   return {
     name,
+    ruleset: "2014",
     level,
     alignment: "Neutral",
     background: draft.identity.background.value?.trim() ?? "",

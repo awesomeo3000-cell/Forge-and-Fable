@@ -14,6 +14,7 @@ import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 import { applyRaceBonuses, abilityModifier, proficiencyBonus } from "@/lib/utils";
 import { passiveSkillScore } from "@/lib/derivedStats";
 import { ruleset } from "@/lib/ruleset";
+import { normalizeStoredRuleset } from "@/lib/characterRuleset";
 import type { Character } from "@/types/game";
 import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
@@ -117,7 +118,8 @@ function nowIso() {
 
 function parseCharacter(data: string): Character | null {
   try {
-    return JSON.parse(data) as Character;
+    const parsed = JSON.parse(data) as Record<string, unknown>;
+    return { ...parsed, ruleset: normalizeStoredRuleset(parsed.ruleset) } as Character;
   } catch {
     return null;
   }

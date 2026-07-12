@@ -82,6 +82,7 @@ export function buildQuickDraft(ruleset: Ruleset, classId: string, raceId: strin
 
   const draft: DraftCharacter = {
     name,
+    ruleset: ruleset.id,
     level: 1,
     alignment,
     background,

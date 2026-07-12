@@ -151,6 +151,7 @@ export function inventoryEntry(name: string, index: number): InventoryItem {
 export function createInitialDraft(ruleset: Ruleset) {
   return {
     name: "",
+    ruleset: ruleset.id,
     level: 1,
     alignment: ruleset.alignments[4],
     background: "",
@@ -262,6 +263,7 @@ export function characterPayload(
 
   return {
     ...characterDraft,
+    ruleset: ruleset.id,
     currentHp: maxHp,
     maxHp,
     tempHp: 0,

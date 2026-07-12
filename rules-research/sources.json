@@ -1,0 +1,28 @@
+[
+  {
+    "id": "2014-srd-5.1",
+    "ruleset": "2014",
+    "title": "System Reference Document 5.1",
+    "officialDigitalSource": "https://dnd.wizards.com/resources/systems-reference-document",
+    "licenseScope": "Project-licensed 2014 5e source catalog",
+    "verifiedAt": "2026-07-12",
+    "notes": "Production baseline for existing 2014 class records."
+  },
+  {
+    "id": "2024-basic-rules",
+    "ruleset": "2024",
+    "title": "D&D Beyond Basic Rules: Character Classes",
+    "officialDigitalSource": "https://www.dndbeyond.com/sources/dnd/br-2024/character-classes",
+    "licenseScope": "Project-licensed official 2024 source catalog",
+    "verifiedAt": "2026-07-12",
+    "notes": "Research-only source for the Barbarian pilot."
+  },
+  {
+    "id": "2014-tce-artificer",
+    "ruleset": "2014",
+    "title": "Tasha's Cauldron of Everything: Artificer",
+    "licenseScope": "Project-licensed source catalog",
+    "verifiedAt": "2026-07-12",
+    "notes": "Existing Artificer source; 2024 compatibility remains unresolved."
+  }
+]

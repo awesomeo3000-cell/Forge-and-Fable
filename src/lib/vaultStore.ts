@@ -4,6 +4,7 @@ import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { getDb } from "@/lib/db";
 import { validateCharacterInput } from "@/lib/validateCharacter";
 import { isAdminEmail } from "@/lib/adminEmail";
+import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -94,7 +95,10 @@ function parseCharacter(row: JsonRow): Character {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`Stored character ${row.id ?? "unknown"} is not a JSON object.`);
   }
-  const character = parsed as Character;
+  const character = {
+    ...(parsed as Record<string, unknown>),
+    ruleset: normalizeStoredRuleset((parsed as Record<string, unknown>).ruleset),
+  } as Character;
   if (
     typeof character.id !== "string" ||
     typeof character.userId !== "string" ||
@@ -102,6 +106,9 @@ function parseCharacter(row: JsonRow): Character {
     (row.id && character.id !== row.id)
   ) {
     throw new Error(`Stored character ${row.id ?? "unknown"} has invalid identity metadata.`);
+  }
+  if (!isSupportedRuleset(character.ruleset)) {
+    throw new Error(`Stored character ${row.id ?? "unknown"} uses an unsupported ruleset.`);
   }
   const mutable = { ...character } as Record<string, unknown>;
   delete mutable.id;

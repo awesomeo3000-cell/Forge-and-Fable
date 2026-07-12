@@ -631,6 +631,8 @@ function speciesTrait(name: string, description: string) {
 }
 
 export const ruleset: Ruleset = {
+  id: "2014",
+  label: "2014 Rules",
   alignments: [
     "Lawful Good",
     "Neutral Good",

@@ -5,6 +5,8 @@ const MAX_SNAPSHOT_JSON_LENGTH = 250_000;
 /**
  * Snapshots contain a complete character for display, but restoring one must
  * never send identity or persistence metadata through the character PATCH API.
+ * Edition identity is also immutable and is intentionally not restored by a
+ * gameplay snapshot.
  */
 export function patchFromSnapshot(snapshot: CharacterSnapshot, snapshots: CharacterSnapshot[]): CharacterPatch {
   const patch = structuredClone(snapshot.character) as Partial<Character>;
@@ -12,6 +14,7 @@ export function patchFromSnapshot(snapshot: CharacterSnapshot, snapshots: Charac
   delete patch.userId;
   delete patch.createdAt;
   delete patch.revision;
+  delete patch.ruleset;
   delete patch.snapshots;
   return { ...patch, snapshots } as CharacterPatch;
 }

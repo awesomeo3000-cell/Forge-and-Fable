@@ -1,4 +1,5 @@
 import { assertSnapshotCharacter } from "@/lib/characterSnapshots";
+import { isSupportedRuleset } from "@/lib/characterRuleset";
 
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
@@ -37,7 +38,7 @@ function assertPlainObjectOrString(value: unknown, label: string, maxStringLengt
 
 /** Fields that may be updated via PATCH or set at creation. id, userId, and createdAt are immutable. */
 export const ALLOWED_PATCH_FIELDS = new Set([
-  "name", "level", "alignment", "background",
+  "name", "ruleset", "level", "alignment", "background",
   "physicalCharacteristics", "personalCharacteristics", "generalNotes",
   "raceId", "classId", "sourceIds", "settings",
   "abilities", "currentHp", "maxHp", "tempHp",
@@ -67,6 +68,14 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
     const val = obj[key];
 
     switch (key) {
+      case "ruleset":
+        if (isPatch) {
+          throw new Error(`"ruleset" cannot be changed without an explicit conversion.`);
+        }
+        if (!isSupportedRuleset(val)) {
+          throw new Error(`Ruleset "${String(val)}" is not available in production yet.`);
+        }
+        break;
       case "name":
         if (!isPatch) assertString(val, "name", 100);
         else if (val !== undefined) assertString(val, "name", 100);
@@ -309,6 +318,10 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
   // Full creation requires a name
   if (!isPatch && !sanitized.name) {
     throw new Error(`"name" is required.`);
+  }
+
+  if (!isPatch && !sanitized.ruleset) {
+    throw new Error(`"ruleset" is required.`);
   }
 
   return sanitized;

@@ -8,6 +8,10 @@ export type AbilityKey =
 
 export type AbilityScores = Record<AbilityKey, number>;
 
+export type RulesetId = "2014" | "2024";
+
+export type RulesMode = "strict-2014" | "strict-2024" | "2024-with-legacy-options";
+
 export type Race = {
   id: string;
   name: string;
@@ -326,6 +330,8 @@ export type Character = {
   /** Server-managed optimistic concurrency token. Never included in update patches. */
   revision?: number;
   name: string;
+  /** Edition is persisted so characters never silently change rules systems. */
+  ruleset: RulesetId;
   level: number;
   alignment: string;
   background: string;
@@ -397,6 +403,8 @@ export type PublicUser = {
 };
 
 export type Ruleset = {
+  id: RulesetId;
+  label: string;
   races: Race[];
   classes: HeroClass[];
   spells: Spell[];
@@ -410,6 +418,7 @@ export type Ruleset = {
 /** In-progress character being built in the creator wizard. */
 export type DraftCharacter = {
   name: string;
+  ruleset: RulesetId;
   level: number;
   alignment: string;
   background: string;
