@@ -309,19 +309,37 @@ export type SheetSectionId =
   | "effects"
   | "attacks"
   | "features"
+  | "traits"
+  | "spells"
+  | "spellbook"
+  | "inventory"
   | "notes"
   | "background"
   | "pages"
   | "console";
 
 export type SheetLayout = {
-  columns: SheetSectionId[][];
-  collapsed: SheetSectionId[];
+  /** Stable module container IDs arranged into sheet columns. */
+  columns: string[][];
+  /** Stable containers; tabs may be reordered or moved without changing the container ID. */
+  modules?: SheetModule[];
+  collapsed: string[];
   version: number;
-  /** Sections the user has hidden from the sheet (still reorderable in edit mode). */
-  hidden?: SheetSectionId[];
+  /** Module container IDs hidden from the sheet. */
+  hidden?: string[];
   /** Column widths as percentages (one per column, ~summing to 100). Unset = CSS defaults. */
   columnWidths?: number[];
+  /** Player-defined labels for individual modules. */
+  customTitles?: Record<string, string>;
+  /** Legacy v2 merge representation, retained only for migration. */
+  mergedSections?: Partial<Record<SheetSectionId, SheetSectionId[]>>;
+};
+
+export type SheetModule = {
+  id: string;
+  tabs: SheetSectionId[];
+  title?: string;
+  tabTitles?: Partial<Record<SheetSectionId, string>>;
 };
 
 export type Character = {
@@ -366,6 +384,18 @@ export type Character = {
   pactSlotsUsed?: number;
   concentratingOn?: string | null;
   subclassId?: string;
+  /** Edition-scoped mechanical choices keyed by packet choice ID. */
+  featureChoices?: Record<string, FeatureChoiceValue>;
+  /** Persisted class/subclass resources used by the sheet and combat systems. */
+  featureResources?: Record<string, FeatureResourceState>;
+  /** Spells granted outside the normal known/prepared limit. */
+  alwaysPreparedSpells?: string[];
+  /** Spell-list expansions, grouped by the feature that granted them. */
+  expandedSpellLists?: Record<string, string[]>;
+  /** Wizard-style spellbook contents remain distinct from known spells. */
+  spellbookSpells?: string[];
+  /** Auditable, idempotent record of progression applied to the character. */
+  progressionState?: CharacterProgressionState;
   asiChoices?: ASIChoice[];
   hpRolls?: number[];
   equipment?: Equipment;
@@ -378,6 +408,29 @@ export type Character = {
   snapshots?: CharacterSnapshot[];
   createdAt: string;
 }
+
+export type FeatureChoiceScalar = string | number | boolean;
+export type FeatureChoiceValue = FeatureChoiceScalar | FeatureChoiceScalar[] | Record<string, FeatureChoiceScalar>;
+
+export type FeatureResourceState = {
+  maximum?: number | string;
+  current?: number;
+  recharge?: string;
+  die?: string;
+  sourceFeatureId?: string;
+};
+
+export type CharacterProgressionState = {
+  ruleset: RulesetId;
+  classId: string;
+  subclassId?: string;
+  appliedThroughLevel: number;
+  featureIds: string[];
+  featureGrants?: Array<{ featureId: string; level: number; source: "class" | "subclass"; sourcePacketId: string }>;
+  warnings?: string[];
+  choiceHistory?: Array<{ choiceId: string; level: number; selections: string[] }>;
+  spellHistory?: Array<{ level: number; spellIds: string[] }>;
+};
 
 export type CharacterSnapshot = {
   id: string;

@@ -19,10 +19,10 @@ import {
   Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { CSSProperties, FormEvent, KeyboardEvent } from "react";
-import type { AbilityKey, AbilityScores, CatalogItem, Character, CharacterPage, Equipment, InventoryItem, PageBlock, RollMode, Ruleset, SheetLayout, SheetSectionId, SpellStatus } from "@/types/game";
+import type { CSSProperties, FormEvent, ReactNode } from "react";
+import type { AbilityKey, AbilityScores, CatalogItem, Character, CharacterPage, Equipment, InventoryItem, PageBlock, RollMode, Ruleset, SheetLayout, SheetModule, SheetSectionId, SpellStatus } from "@/types/game";
 import {
   abilityKeys,
   abilityLabels,
@@ -35,8 +35,8 @@ import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
-import { ARMORS, WEAPONS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
-import { ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
+import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
+import { ITEM_CATALOG, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
 import { revertHpLevel } from "@/lib/hitPoints";
@@ -44,11 +44,13 @@ import { passiveSkillScore } from "@/lib/derivedStats";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
 import { classActionsAtLevel } from "@/lib/ruleset";
+import { progressionChoiceLabel } from "@/lib/progression/choiceOptions";
+import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
-import { longRestRecovery } from "@/lib/restRecovery";
+import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
 
 const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 
@@ -59,6 +61,8 @@ import {
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
+  useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -83,6 +87,47 @@ const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "inventory", label: "Inventory" },
 ];
 const TOUR_STORAGE_KEY = "forge-and-fable-tour-dismissed";
+const EQUIPMENT_CATEGORIES = ["Armor", "Potion", "Ring", "Rod", "Scroll", "Staff", "Wand", "Weapon", "Wondrous Item", "Other Gear"] as const;
+
+function equipmentCatalogCategory(item: CatalogItem): typeof EQUIPMENT_CATEGORIES[number] {
+  const text = `${item.category} ${item.classification ?? ""} ${item.name}`.toLowerCase();
+  if (text.includes("armor") || text.includes("shield")) return "Armor";
+  if (text.includes("potion") || text.includes("elixir")) return "Potion";
+  if (/\bring\b/.test(text)) return "Ring";
+  if (/\brod\b/.test(text)) return "Rod";
+  if (text.includes("scroll")) return "Scroll";
+  if (/\bstaff\b/.test(text)) return "Staff";
+  if (/\bwand\b/.test(text)) return "Wand";
+  if (text.includes("weapon")) return "Weapon";
+  if (text.includes("wondrous")) return "Wondrous Item";
+  return "Other Gear";
+}
+
+function ModuleTab({ groupId, sectionId, title, active, editMode, onSelect }: { groupId: string; sectionId: SheetSectionId; title: string; active: boolean; editMode: boolean; onSelect: () => void }) {
+  const dragId = `tab:${groupId}:${sectionId}`;
+  const draggable = useDraggable({ id: dragId, disabled: !editMode });
+  const droppable = useDroppable({ id: dragId, disabled: !editMode });
+  const setNodeRef = (node: HTMLElement | null) => { draggable.setNodeRef(node); droppable.setNodeRef(node); };
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className={`cs-reftab${active ? " is-active" : ""}${draggable.isDragging ? " cs-tab-dragging" : ""}${droppable.isOver ? " cs-tab-drop-target" : ""}`}
+      onClick={onSelect}
+      {...(editMode ? draggable.attributes : {})}
+      {...(editMode ? draggable.listeners : {})}
+      role="tab"
+      aria-selected={active}
+    >
+      {title}
+    </button>
+  );
+}
+
+function DroppableColumn({ index, className, style, children }: { index: number; className: string; style?: CSSProperties; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `column:${index}` });
+  return <div ref={setNodeRef} className={`${className}${isOver ? " cs-column-drop-target" : ""}`} style={style}>{children}</div>;
+}
 
 function armorProficienciesFromFeatures(features: { name: string; description: string }[]) {
   const proficiencies = new Set<string>();
@@ -296,6 +341,7 @@ export default memo(function HeroSheet(props: {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is intentionally read after hydration.
     setTourDismissed(window.localStorage.getItem(TOUR_STORAGE_KEY) === "true");
   }, []);
 
@@ -383,6 +429,20 @@ export default memo(function HeroSheet(props: {
       shield: false,
     });
   };
+  const inventoryItemEquipState = (item: InventoryItem) => ({
+    armor: equipment.armorItemId === item.id,
+    shield: equipment.shieldItemId === item.id,
+    weapon: (equipment.weaponItemIds ?? []).includes(item.id),
+    bonus: (equipment.bonusItemIds ?? []).includes(item.id),
+  });
+  const isBonusEquipmentItem = (item: InventoryItem) => itemHasPassiveBonus(item)
+    || ["ring", "rod", "staff", "wand", "wondrous item", "wondrous items"].includes((item.category ?? "").toLowerCase());
+  const toggleInventoryEquipment = (item: InventoryItem) => {
+    if (isArmorItem(item)) equipInventoryArmor(item);
+    else if (isShieldItem(item)) equipInventoryShield(item);
+    else if (isWeaponItem(item)) toggleInventoryWeapon(item.id);
+    else if (isBonusEquipmentItem(item)) toggleBonusItem(item.id);
+  };
   const cleanEquipmentForRemovedItem = (id: string): Equipment => {
     const next: Equipment = { ...equipment };
     if (next.armorItemId === id) next.armorItemId = undefined;
@@ -428,27 +488,6 @@ export default memo(function HeroSheet(props: {
     // Non-casters can still hold feat-granted spells (Fey/Shadow Touched) —
     // show the tab so those spells and their free-use casting are reachable.
     || (casterType === "none" && knownSpells.length > 0);
-  const visibleTabs = useMemo(() => REF_TABS.filter((t) => {
-    if (t.id === "spells") return hasSpellTab;
-    if (t.id === "spellbook") return canManageSpellbook;
-    return true;
-  }), [canManageSpellbook, hasSpellTab]);
-  const [refTab, setRefTab] = useState<RefTab>(visibleTabs[0]?.id ?? "features");
-  useEffect(() => {
-    if (!visibleTabs.some((tab) => tab.id === refTab)) {
-      setRefTab(visibleTabs[0]?.id ?? "features");
-    }
-  }, [refTab, visibleTabs]);
-  const handleRefTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
-    let nxt = i;
-    if (e.key === "ArrowRight") nxt = (i + 1) % visibleTabs.length;
-    else if (e.key === "ArrowLeft") nxt = (i - 1 + visibleTabs.length) % visibleTabs.length;
-    else if (e.key === "Home") nxt = 0;
-    else if (e.key === "End") nxt = visibleTabs.length - 1;
-    else return;
-    e.preventDefault();
-    setRefTab(visibleTabs[nxt].id);
-  };
 
   /* ── Theme ── */
   const [showPresets, setShowPresets] = useState(false);
@@ -537,7 +576,9 @@ export default memo(function HeroSheet(props: {
 
   /* ── Layout ── */
   const [editMode, setEditMode] = useState(false);
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeModuleTabs, setActiveModuleTabs] = useState<Partial<Record<string, SheetSectionId>>>({});
 
   // Layout lives in local state so drag/collapse update the UI instantly.
   // It re-syncs from props whenever the saved value changes AND we're not
@@ -593,10 +634,11 @@ export default memo(function HeroSheet(props: {
   const [itemSearch, setItemSearch] = useState("");
   const [itemCategory, setItemCategory] = useState("All");
   const [itemRarity, setItemRarity] = useState("All");
+  const [showEquipmentCatalog, setShowEquipmentCatalog] = useState(false);
   const itemMatches = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
     return ITEM_CATALOG.filter((item) => {
-      if (itemCategory !== "All" && item.category !== itemCategory) return false;
+      if (itemCategory !== "All" && equipmentCatalogCategory(item) !== itemCategory) return false;
       if (itemRarity !== "All" && item.rarity !== itemRarity) return false;
       if (!q) return true;
       return [
@@ -615,7 +657,7 @@ export default memo(function HeroSheet(props: {
     });
   }, [itemCategory, itemRarity, itemSearch]);
   const visibleItemMatches = itemMatches.slice(0, 24);
-  const hitDiceRolling = useRef(false);
+  const [hitDiceRolling, setHitDiceRolling] = useState(false);
   const [showHitDiceRest, setShowHitDiceRest] = useState(false);
   const isPactCaster = casterType === "pact";
   const slotMax = maxSlots(casterType, props.character.level, heroClass.id);
@@ -671,9 +713,8 @@ export default memo(function HeroSheet(props: {
   };
   const doShortRest = () => {
     const available = props.character.level - (props.character.hitDiceSpent ?? 0);
-    if (isPactCaster) {
-      props.onUpdate({ pactSlotsUsed: 0 });
-    }
+    const resources = recoverFeatureResources(props.character, "short");
+    if (isPactCaster || resources.changed) props.onUpdate({ ...(isPactCaster ? { pactSlotsUsed: 0 } : {}), ...(resources.changed ? { featureResources: resources.featureResources } : {}) });
     if (available > 0) {
       setShowHitDiceRest(true);
     } else if (isPactCaster) {
@@ -725,6 +766,12 @@ export default memo(function HeroSheet(props: {
     } else if (preparedIds.length < prepLimit) {
       props.onUpdate({ preparedSpells: [...preparedIds, spellId] });
     }
+  };
+  const adjustFeatureResource = (resourceId: string, delta: number) => {
+    const resource = props.character.featureResources?.[resourceId];
+    if (!resource || typeof resource.maximum !== "number" || resource.current === undefined) return;
+    const nextCurrent = Math.max(0, Math.min(resource.maximum, resource.current + delta));
+    props.onUpdate({ featureResources: { ...props.character.featureResources, [resourceId]: { ...resource, current: nextCurrent } } });
   };
   const learnSpell = (spellId: string) => {
     if (!spellId || props.character.spellsKnown.includes(spellId)) return;
@@ -861,6 +908,26 @@ export default memo(function HeroSheet(props: {
       patch.subclassId = "";
     }
 
+    const remainingChoiceHistory = (props.character.progressionState?.choiceHistory ?? []).filter((entry) => entry.level <= newLevel);
+    const remainingFeatureChoices = Object.fromEntries(Array.from(new Set(remainingChoiceHistory.map((entry) => entry.choiceId))).map((choiceId) => [
+      choiceId,
+      Array.from(new Set(remainingChoiceHistory.filter((entry) => entry.choiceId === choiceId).flatMap((entry) => entry.selections))),
+    ]));
+    const removedSpellIds = new Set((props.character.progressionState?.spellHistory ?? []).filter((entry) => entry.level > newLevel).flatMap((entry) => entry.spellIds));
+    const remainingSpellHistory = (props.character.progressionState?.spellHistory ?? []).filter((entry) => entry.level <= newLevel);
+    patch.featureChoices = remainingFeatureChoices;
+    patch.spellsKnown = props.character.spellsKnown.filter((id) => !removedSpellIds.has(id));
+    if (props.character.spellbookSpells) patch.spellbookSpells = props.character.spellbookSpells.filter((id) => !removedSpellIds.has(id));
+    const nextSubclassId = props.character.subclassId && subclassLevel <= newLevel ? props.character.subclassId : undefined;
+    const progressionPatch = progressionPatchForCharacter({
+      ...props.character,
+      level: newLevel,
+      subclassId: nextSubclassId,
+      featureChoices: remainingFeatureChoices,
+      progressionState: { ...props.character.progressionState!, appliedThroughLevel: newLevel, choiceHistory: remainingChoiceHistory, spellHistory: remainingSpellHistory },
+    });
+    Object.assign(patch, progressionPatch);
+
     props.onUpdate(patch as Partial<Omit<Character, "id" | "userId" | "createdAt">>);
   };
 
@@ -931,19 +998,89 @@ export default memo(function HeroSheet(props: {
     savePages(pages.map((p) => (p.id === pageId ? { ...p, blocks: p.blocks.filter((b) => b.id !== block.id) } : p)));
   };
 
-  const toggleCollapse = (id: SheetSectionId) => {
+  const toggleCollapse = (id: string) => {
     const next = collapsed.includes(id) ? collapsed.filter((x) => x !== id) : [...collapsed, id];
     saveLayout({ ...layout, collapsed: next });
   };
 
   const resetLayout = () => {
-    saveLayout({ ...DEFAULT_LAYOUT, columns: DEFAULT_LAYOUT.columns.map((c) => [...c]) });
+    saveLayout({ ...DEFAULT_LAYOUT, columns: DEFAULT_LAYOUT.columns.map((c) => [...c]), modules: DEFAULT_LAYOUT.modules?.map((module) => ({ ...module, tabs: [...module.tabs] })) });
   };
 
   const hiddenIds = layout.hidden ?? [];
-  const toggleHidden = (id: SheetSectionId) => {
+  const toggleHidden = (id: string) => {
     const next = hiddenIds.includes(id) ? hiddenIds.filter((x) => x !== id) : [...hiddenIds, id];
     saveLayout({ ...layout, hidden: next });
+  };
+
+  const sheetModules = layout.modules ?? [];
+  const moduleById = (id: string, sourceLayout: SheetLayout = layout) => sourceLayout.modules?.find((module) => module.id === id);
+  const moduleTitle = (id: string) => {
+    const sheetModule = moduleById(id);
+    return sheetModule?.title || (sheetModule?.tabs[0] ? SECTION_TITLES[sheetModule.tabs[0]] : "Module");
+  };
+  const tabTitle = (moduleId: string, sectionId: SheetSectionId) => moduleById(moduleId)?.tabTitles?.[sectionId] || SECTION_TITLES[sectionId];
+  const renameModule = (id: string, title: string) => {
+    saveLayout({ ...layout, modules: sheetModules.map((module) => module.id === id ? { ...module, title: title.slice(0, 60) } : module) });
+  };
+  const availableModuleTabs = (module: SheetModule) => module.tabs.filter((id) => {
+    if (id === "spells") return hasSpellTab;
+    if (id === "spellbook") return canManageSpellbook;
+    return true;
+  });
+  const moveTab = (sourceId: string, sectionId: SheetSectionId, targetId: string | null, columnIndex?: number, beforeTab?: SheetSectionId) => {
+    if (sourceId === targetId) {
+      if (!beforeTab || beforeTab === sectionId) return;
+      const modules = sheetModules.map((module) => {
+        if (module.id !== sourceId) return module;
+        const tabs = module.tabs.filter((id) => id !== sectionId);
+        const targetIndex = tabs.indexOf(beforeTab);
+        tabs.splice(targetIndex < 0 ? tabs.length : targetIndex, 0, sectionId);
+        return { ...module, tabs };
+      });
+      saveLayout({ ...layout, modules });
+      return;
+    }
+    const source = moduleById(sourceId);
+    if (!source) return;
+    const sourceTitle = source.tabTitles?.[sectionId] || (source.tabs[0] === sectionId ? source.title : undefined);
+    let modules = sheetModules.map((module) => module.id === sourceId
+      ? { ...module, tabs: module.tabs.filter((id) => id !== sectionId) }
+      : module);
+    let columns = layout.columns.map((column) => [...column]);
+    if (source.tabs.length === 1) {
+      modules = modules.filter((module) => module.id !== sourceId);
+      columns = columns.map((column) => column.filter((id) => id !== sourceId));
+    }
+    if (targetId) {
+      modules = modules.map((module) => {
+        if (module.id !== targetId) return module;
+        const tabs = [...module.tabs];
+        const targetIndex = beforeTab ? tabs.indexOf(beforeTab) : -1;
+        tabs.splice(targetIndex < 0 ? tabs.length : targetIndex, 0, sectionId);
+        return { ...module, tabs, tabTitles: { ...(module.tabTitles ?? {}), ...(sourceTitle ? { [sectionId]: sourceTitle } : {}) } };
+      });
+      setActiveModuleTabs((current) => ({ ...current, [targetId]: sectionId }));
+    } else {
+      const id = `module-${sectionId}-${crypto.randomUUID()}`;
+      modules.push({ id, tabs: [sectionId], ...(sourceTitle ? { title: sourceTitle } : {}) });
+      const targetColumn = Math.max(0, Math.min(columnIndex ?? columns.length - 1, columns.length - 1));
+      columns[targetColumn].push(id);
+    }
+    saveLayout({ ...layout, columns, modules });
+  };
+  const mergeModuleByDrop = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    const source = moduleById(sourceId);
+    const target = moduleById(targetId);
+    if (!source || !target) return;
+    const sourceTabTitles = { ...(source.tabTitles ?? {}), ...(source.title && source.tabs[0] ? { [source.tabs[0]]: source.title } : {}) };
+    const modules = sheetModules.filter((module) => module.id !== sourceId).map((module) => module.id === targetId
+      ? { ...module, tabs: [...module.tabs, ...source.tabs], tabTitles: { ...(module.tabTitles ?? {}), ...sourceTabTitles } }
+      : module);
+    const columns = layout.columns.map((column) => column.filter((id) => id !== sourceId));
+    setActiveModuleTabs((current) => ({ ...current, [targetId]: source.tabs[0] }));
+    saveLayout({ ...layout, columns, modules });
   };
 
   /* Column resize: drag the divider between columns in edit mode. Widths are
@@ -995,7 +1132,7 @@ export default memo(function HeroSheet(props: {
 
   const findColumn = (id: string): number => {
     for (let i = 0; i < layout.columns.length; i++) {
-      if (layout.columns[i].includes(id as SheetSectionId)) return i;
+      if (layout.columns[i].includes(id)) return i;
     }
     return -1;
   };
@@ -1009,14 +1146,50 @@ export default memo(function HeroSheet(props: {
     setActiveId(null);
     if (!over || active.id === over.id) return;
 
-    const activeCol = findColumn(active.id as string);
-    const overCol = findColumn(over.id as string);
+    const activeKey = String(active.id);
+    const overKey = String(over.id);
+    if (activeKey.startsWith("tab:")) {
+      const [, groupRoot, sectionId] = activeKey.split(":") as [string, string, SheetSectionId];
+      if (overKey.startsWith("column:")) {
+        moveTab(groupRoot, sectionId, null, Number(overKey.split(":")[1]));
+        return;
+      }
+      const targetRoot = overKey.startsWith("merge:")
+        ? overKey.slice("merge:".length)
+        : overKey.startsWith("tab:")
+          ? overKey.split(":")[1]
+          : overKey;
+      const beforeTab = overKey.startsWith("tab:") ? overKey.split(":")[2] as SheetSectionId : undefined;
+      moveTab(groupRoot, sectionId, targetRoot, undefined, beforeTab);
+      return;
+    }
+
+    const activeSection = activeKey;
+    if (overKey.startsWith("merge:") || overKey.startsWith("tab:")) {
+      const targetRoot = overKey.startsWith("merge:")
+        ? overKey.slice("merge:".length)
+        : overKey.split(":")[1];
+      mergeModuleByDrop(activeSection, targetRoot);
+      return;
+    }
+    if (overKey.startsWith("column:")) {
+      const activeCol = findColumn(activeSection);
+      const targetCol = Number(overKey.split(":")[1]);
+      if (activeCol < 0 || !Number.isInteger(targetCol) || !layout.columns[targetCol]) return;
+      const columns = layout.columns.map((column) => column.filter((id) => id !== activeSection));
+      columns[targetCol].push(activeSection);
+      saveLayout({ ...layout, columns });
+      return;
+    }
+
+    const activeCol = findColumn(activeSection);
+    const overCol = findColumn(overKey);
     if (activeCol === -1 || overCol === -1) return;
 
-    const current = mergeWithDefaults(props.character.sheetLayout);
+    const current = layout;
     const next = current.columns.map((c) => [...c]);
-    const activeIdStr = active.id as SheetSectionId;
-    const overIdStr = over.id as SheetSectionId;
+    const activeIdStr = activeSection;
+    const overIdStr = overKey;
 
     if (activeCol === overCol) {
       const col = next[activeCol];
@@ -1088,7 +1261,7 @@ export default memo(function HeroSheet(props: {
             </div>
           </div>
           <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie}</strong>
-            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling.current} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling.current) return; hitDiceRolling.current = true; const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); hitDiceRolling.current = false; }); }}>Roll</button>
+            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}>Roll</button>
           </div>
           <div className="cs-vital-cell cs-vital-death">
             <span className="cs-vital-label"><Skull size={12} />Death Saves</span>
@@ -1203,50 +1376,50 @@ export default memo(function HeroSheet(props: {
       );
       case "equipment": {
         const armor = equipment.armorId ? ARMORS.find((a) => a.id === equipment.armorId) : undefined;
-        const equippedArmor = equipment.armorItemId ? props.character.inventory.find((item) => item.id === equipment.armorItemId) : undefined;
-        const equippedShield = equipment.shieldItemId ? props.character.inventory.find((item) => item.id === equipment.shieldItemId) : undefined;
-        const equippedWeapons = (equipment.weaponItemIds ?? [])
-          .map((id) => props.character.inventory.find((item) => item.id === id))
-          .filter((item): item is InventoryItem => !!item);
-        const equippedBonuses = (equipment.bonusItemIds ?? [])
-          .map((id) => props.character.inventory.find((item) => item.id === id))
-          .filter((item): item is InventoryItem => !!item);
-        const equippedArmorWarning = armorProficiencyIssue.lacksArmor && equippedArmor?.name === armorProficiencyIssue.armorName;
-        const equippedShieldWarning = armorProficiencyIssue.lacksShield && equippedShield?.name === armorProficiencyIssue.shieldName;
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Shield size={12} />Equipment</h3>
-            <div className="cs-equip-row">
-              <label className="cs-equip-field">
-                <span>Armor</span>
-                <select value={equipment.armorId ?? ""} onChange={(e) => updateEquipment({ armorId: e.target.value || undefined, armorItemId: undefined })}>
-                  <option value="">None (unarmored)</option>
-                  {ARMORS.map((a) => (<option key={a.id} value={a.id}>{a.name} - {a.category}{isArmorCategoryProficient(effectiveProficiencies, a.category) ? "" : " (not proficient)"}</option>))}
-                </select>
-              </label>
-              <label className="cs-equip-check">
-                <input type="checkbox" checked={!!equipment.shield && !equipment.shieldItemId} onChange={(e) => updateEquipment({ shield: e.target.checked, shieldItemId: undefined })} />
-                Shield (+2){isShieldProficient(effectiveProficiencies) ? "" : " - not proficient"}
-              </label>
+            <div className="cs-equipment-list">
+              {armor ? <label className="cs-equipment-option"><input type="checkbox" checked onChange={() => updateEquipment({ armorId: undefined })} /><span><strong>{armor.name}</strong><small>Legacy armor · {armor.category}</small></span></label> : null}
+              {equipment.shield && !equipment.shieldItemId ? <label className="cs-equipment-option"><input type="checkbox" checked onChange={() => updateEquipment({ shield: false })} /><span><strong>Shield</strong><small>Legacy shield · +2 AC</small></span></label> : null}
+              {(equipment.weaponIds ?? []).map((weaponId) => {
+                const weapon = getWeapon(weaponId);
+                return weapon ? <label className="cs-equipment-option" key={weaponId}><input type="checkbox" checked onChange={() => toggleWeapon(weaponId)} /><span><strong>{weapon.name}</strong><small>Legacy weapon · {weapon.damage} {weapon.damageType}</small></span></label> : null;
+              })}
+              {props.character.inventory.map((item) => {
+                const state = inventoryItemEquipState(item);
+                const equippable = isArmorItem(item) || isShieldItem(item) || isWeaponItem(item) || isBonusEquipmentItem(item);
+                const equipped = state.armor || state.shield || state.weapon || state.bonus;
+                const armorInfo = isArmorItem(item) ? inventoryArmorProficiencyInfo(item) : null;
+                const proficiencyIssue = isArmorItem(item) && armorInfo
+                  ? !isArmorCategoryProficient(effectiveProficiencies, armorInfo.category)
+                  : isShieldItem(item) && !isShieldProficient(effectiveProficiencies);
+                return (
+                  <label className={`cs-equipment-option${equipped ? " is-equipped" : ""}${proficiencyIssue ? " has-warning" : ""}`} key={item.id}>
+                    <input type="checkbox" checked={equipped} disabled={!equippable} onChange={() => toggleInventoryEquipment(item)} />
+                    <span><strong>{item.name}</strong><small>{[item.category || "Other gear", item.rarity, proficiencyIssue ? "Not proficient" : equippable ? equipped ? "Equipped" : "Ready to equip" : "Carried only"].join(" · ")}</small></span>
+                  </label>
+                );
+              })}
+              {!armor && !equipment.shield && (equipment.weaponIds ?? []).length === 0 && props.character.inventory.length === 0 ? <p className="cs-muted">No equipment added yet.</p> : null}
             </div>
-            {equippedArmor || equippedShield || equippedWeapons.length > 0 || equippedBonuses.length > 0 ? (
-              <div className="cs-equipped-list" aria-label="Equipped inventory items">
-                {equippedArmor ? <span className={`cs-equipped-chip${equippedArmorWarning ? " cs-equipped-warning" : ""}`} title={equippedArmorWarning ? "Not proficient with this armor" : undefined}><Shield size={11} />Armor: {equippedArmor.name}<button type="button" onClick={() => updateEquipment({ armorItemId: undefined })}>Unequip</button></span> : null}
-                {equippedShield ? <span className={`cs-equipped-chip${equippedShieldWarning ? " cs-equipped-warning" : ""}`} title={equippedShieldWarning ? "Not proficient with this shield" : undefined}><Shield size={11} />Shield: {equippedShield.name}<button type="button" onClick={() => updateEquipment({ shieldItemId: undefined })}>Unequip</button></span> : null}
-                {equippedWeapons.map((item) => <span className="cs-equipped-chip" key={item.id}><Swords size={11} />{item.name}<button type="button" onClick={() => toggleInventoryWeapon(item.id)}>Unequip</button></span>)}
-                {equippedBonuses.map((item) => <span className="cs-equipped-chip" key={item.id}><Zap size={11} />{item.name}<button type="button" onClick={() => toggleBonusItem(item.id)}>Unequip</button></span>)}
-              </div>
-            ) : null}
             <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
             {armorProficiencyIssue.hasIssue ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: STR/DEX checks, saves, and attacks roll with disadvantage; spellcasting is blocked.</p> : null}
             {acInfo.stealthDisadvantage ? <p className="cs-rule-note">Disadvantage on Stealth checks</p> : null}
             {acInfo.strengthWarning ? <p className="cs-rule-note">Needs Str {acInfo.strengthRequirement ?? armor?.strengthReq}: speed reduced by 10 ft.</p> : null}
-            <span className="cs-spell-level-head">Weapons</span>
-            <div className="cs-weapon-chips">
-              {WEAPONS.map((w) => { const on = (equipment.weaponIds ?? []).includes(w.id); return (
-                <button key={w.id} type="button" className={`cs-prof-chip cs-weapon-chip${on ? " cs-weapon-on" : ""}`} aria-pressed={on} onClick={() => toggleWeapon(w.id)} title={`${w.damage} ${w.damageType}`}>{w.name}</button>
-              ); })}
-            </div>
+            <button type="button" className="cs-glass-btn cs-equipment-add" onClick={() => setShowEquipmentCatalog((open) => !open)}>{showEquipmentCatalog ? "Close equipment catalog" : "+ Add equipment"}</button>
+            {showEquipmentCatalog ? (
+              <div className="cs-item-catalog cs-equipment-catalog">
+                <div className="cs-item-catalog-controls">
+                  <input type="search" placeholder="Search equipment…" aria-label="Search equipment" value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} />
+                  <select value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}><option value="All">All types</option>{EQUIPMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select>
+                  <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}><option value="All">All rarities</option>{ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}</select>
+                </div>
+                <div className="cs-item-results">{visibleItemMatches.map((item) => <div className="cs-item-result" key={item.id}><div><strong data-rarity={item.rarity}>{item.name}</strong><span>{[equipmentCatalogCategory(item), item.rarity, ...itemMetaParts(item)].filter(Boolean).join(" | ")}</span>{item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "…" : ""}</p> : null}</div><button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button></div>)}{visibleItemMatches.length === 0 ? <p className="cs-muted">No matching equipment yet.</p> : null}</div>
+                {itemMatches.length > visibleItemMatches.length ? <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p> : null}
+                {showInvForm ? <div className="cs-inv-form"><input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} /><select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}><option value="Mundane">Mundane</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Very Rare">Very Rare</option><option value="Legendary">Legendary</option></select><input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} /><input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} /><div className="cs-inv-form-actions"><button type="button" className="cs-glass-btn" onClick={addItem}>Add custom item</button><button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button></div></div> : <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Create custom item</button>}
+              </div>
+            ) : null}
           </section>
         );
       }
@@ -1313,7 +1486,7 @@ export default memo(function HeroSheet(props: {
           .map((item) => inventoryWeaponToDef(item))
           .filter((weapon): weapon is WeaponDef => !!weapon);
         const weaponDefs = [...staticWeaponDefs, ...inventoryWeaponDefs];
-        const rows = weaponDefs.length > 0
+        const baseRows = weaponDefs.length > 0
           ? weaponDefs.map((w) => {
               const ability = weaponAbility(w, props.finalAbilities);
               const mod = abilityModifier(props.finalAbilities[ability]);
@@ -1332,24 +1505,66 @@ export default memo(function HeroSheet(props: {
               const hasDice = dice.length > 0;
               return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
+        const actionSpellIds = _isPrepared
+          ? new Set([
+              ...knownSpells.filter((spell) => spell.level === 0).map((spell) => spell.id),
+              ...preparedIds,
+              ...(props.character.alwaysPreparedSpells ?? []),
+            ])
+          : new Set(props.character.spellsKnown);
+        const spellRows = Array.from(actionSpellIds)
+          .map((id) => getSpell(id))
+          .filter((spell): spell is SpellData => Boolean(spell))
+          .map((spell) => ({ spell, effects: resolveSpellEffects(spell, Math.max(1, spell.level)) }))
+          .filter(({ effects }) => effects.some((effect) => effect.type === "damage"))
+          .map(({ spell, effects }) => ({
+            id: `spell-${spell.id}`,
+            name: spell.name,
+            ability: (spellAbility ?? "intelligence") as AbilityKey,
+            toHit: spellAttack,
+            mod: 0,
+            dice: [],
+            hasDice: false,
+            versatileDice: null,
+            damageLabel: effects.filter((effect) => effect.type === "damage").map((effect) => `${effect.dice} ${effect.damageType}`).join(" + "),
+            spell,
+          }));
+        const rows = [
+          ...baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined })),
+          ...spellRows,
+        ];
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => rollD20ForAbility(row.name, row.toHit, row.ability)} role="button" tabIndex={0} aria-label={`Roll ${row.name}, ${signed(row.toHit)} to hit`} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); rollD20ForAbility(row.name, row.toHit, row.ability); } }}><td>{row.name}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id} className="cs-action-row-click" onClick={() => row.spell ? castSpell(row.spell, Math.max(1, row.spell.level)) : rollD20ForAbility(row.name, row.toHit, row.ability)} role="button" tabIndex={0} aria-label={row.spell ? `Cast ${row.name}` : `Roll ${row.name}, ${signed(row.toHit)} to hit`} title={!row.spell && d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : undefined} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (row.spell) castSpell(row.spell, Math.max(1, row.spell.level)); else rollD20ForAbility(row.name, row.toHit, row.ability); } }}><td>{row.name}{row.spell ? <small> · spell</small> : null}</td><td>{signed(row.toHit)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.spell ? (<button type="button" className="cs-glass-btn cs-dmg-roll" onClick={(e) => { e.stopPropagation(); castSpell(row.spell!, Math.max(1, row.spell!.level)); }}>Cast</button>) : row.hasDice ? row.dice.map((d, di) => (<button key={di} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{!row.spell && row.versatileDice ? row.versatileDice.map((d, di) => (<button key={`v-${di}`} type="button" className="cs-glass-btn cs-dmg-roll" title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} onClick={(e) => { e.stopPropagation(); props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod); }}>{d.count}d{d.sides}{row.mod !== 0 ? `${signed(row.mod)}` : ""}</button>)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
       }
-      case "features": return (
+      case "features":
+      case "traits":
+      case "spells":
+      case "spellbook":
+      case "inventory": {
+        const activeRefTab = id as RefTab;
+        const refTab = activeRefTab;
+        return (
         <section className="cs-reftabs">
-          <div className="cs-reftablist" role="tablist" aria-label="Character reference">{visibleTabs.map((t, i) => (<button key={t.id} role="tab" type="button" className={`cs-reftab${refTab === t.id ? " is-active" : ""}`} aria-selected={refTab === t.id} aria-controls={`reftab-${t.id}`} tabIndex={refTab === t.id ? 0 : -1} onClick={() => setRefTab(t.id)} onKeyDown={(e) => handleRefTabKey(e, i)}>{t.label}</button>))}</div>
-          <div className="cs-reftab-panel" id={`reftab-${refTab}`} role="tabpanel" aria-label={visibleTabs.find((t) => t.id === refTab)?.label}>
-            <div className={refTab === "features" ? "" : "cs-reftab-hidden"}>
+          <div className="cs-reftab-panel" id={`reftab-${activeRefTab}`} role="tabpanel" aria-label={REF_TABS.find((tab) => tab.id === activeRefTab)?.label}>
+            <div className={activeRefTab === "features" ? "" : "cs-reftab-hidden"}>
               <div className="cs-feature-group">
                 <span className="cs-spell-level-head">Class Features</span>
                 {featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}
               </div>
-              {subclassFeatures.length > 0 ? (
+              {props.character.progressionState ? (
+                <div className="cs-feature-group">
+                  <span className="cs-spell-level-head">Subclass Features</span>
+                  {(props.character.progressionState.featureGrants ?? []).filter((feature) => feature.source === "subclass").map((feature) => (
+                    <div className="cs-feature-card" key={`${feature.sourcePacketId}-${feature.level}-${feature.featureId}`}><strong>Lv {feature.level}: {progressionChoiceLabel(feature.featureId)}</strong></div>
+                  ))}
+                  {(props.character.progressionState.featureGrants ?? []).every((feature) => feature.source !== "subclass") ? <p className="cs-muted">Subclass features not yet available at this level</p> : null}
+                </div>
+              ) : subclassFeatures.length > 0 ? (
                 <div className="cs-feature-group">
                   <span className="cs-spell-level-head">Subclass Features</span>
                   {subclassFeatures.map((f, i) => (<div className="cs-feature-card" key={`sub-${f.name}-${i}`}><strong>Lv {f.level}: {f.name}</strong><p>{f.description}</p></div>))}
@@ -1362,6 +1577,30 @@ export default memo(function HeroSheet(props: {
                   <p className="cs-muted">Use the level-up button to select a subclass at level {subclassLevel}</p>
                 </div>
               ) : null}
+              {props.character.progressionState ? (
+                <div className="cs-feature-group">
+                  <span className="cs-spell-level-head">Progression Ledger</span>
+                  {Object.entries(props.character.featureChoices ?? {}).map(([choiceId, selection]) => (
+                    <div className="cs-feature-card" key={choiceId}>
+                      <strong>{progressionChoiceLabel(choiceId)}</strong>
+                      <p>{(Array.isArray(selection) ? selection : typeof selection === "object" ? Object.keys(selection) : [selection]).map((value) => progressionChoiceLabel(String(value))).join(", ")}</p>
+                    </div>
+                  ))}
+                  {Object.entries(props.character.featureResources ?? {}).map(([resourceId, resource]) => (
+                    <div className="cs-feature-card" key={resourceId}>
+                      <strong>{progressionChoiceLabel(resourceId)}</strong>
+                      <p>{resource.current ?? resource.maximum ?? "Tracked"}{resource.maximum !== undefined && resource.current !== undefined ? ` / ${resource.maximum}` : ""}{resource.die ? ` · ${resource.die}` : ""}{resource.recharge ? ` · Recharges: ${progressionChoiceLabel(resource.recharge)}` : ""}</p>
+                      {typeof resource.maximum === "number" && resource.current !== undefined ? (
+                        <div className="cs-inline-actions">
+                          <button type="button" className="cs-glass-btn" disabled={resource.current <= 0} onClick={() => adjustFeatureResource(resourceId, -1)}>Spend</button>
+                          <button type="button" className="cs-glass-btn" disabled={resource.current >= resource.maximum} onClick={() => adjustFeatureResource(resourceId, 1)}>Restore</button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                  {(props.character.progressionState.warnings ?? []).map((warning) => <p className="cs-rule-note cs-rule-warning" key={warning}>{progressionChoiceLabel(warning.split(":")[0])}: tracked rules text; apply unautomated combat effects manually.</p>)}
+                </div>
+              ) : null}
             </div>
             <div className={refTab === "traits" ? "" : "cs-reftab-hidden"}>{race.traits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Racial Traits</span>{race.traits.map((trait) => (<div className="cs-feature-card" key={trait.name}><strong>{trait.name}</strong><p>{trait.description}</p></div>))}</div>) : <p className="cs-muted">No racial traits</p>}{heroClass.coreTraits.length > 0 ? (<div className="cs-feature-group"><span className="cs-spell-level-head">Core Traits</span>{heroClass.coreTraits.map((trait) => { const ci = trait.indexOf(":"); return (<div className="cs-feature-card" key={trait}>{ci > 0 ? <p><strong>{trait.slice(0, ci + 1)}</strong>{trait.slice(ci + 1)}</p> : <p>{trait}</p>}</div>); })}</div>) : null}</div>
             <div className={refTab === "spells" ? "" : "cs-reftab-hidden"}>
@@ -1372,6 +1611,12 @@ export default memo(function HeroSheet(props: {
                 </div>
               ) : null}
               {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
+              {(props.character.alwaysPreparedSpells?.length ?? 0) > 0 ? (
+                <div className="cs-spellbook-manager">
+                  <div className="cs-spellbook-head"><span className="cs-spell-level-head">Always Prepared</span><small>Granted by class or subclass</small></div>
+                  <div className="cs-spellbook-known">{props.character.alwaysPreparedSpells!.map((id) => <span key={id}>{getSpell(id)?.name ?? progressionChoiceLabel(id)}</span>)}</div>
+                </div>
+              ) : null}
               {props.character.concentratingOn ? (
                 <div className="cs-conc-banner">Concentrating on <strong>{props.character.concentratingOn}</strong>
                   <button type="button" className="cs-glass-btn" onClick={() => props.onUpdate({ concentratingOn: null })}>End</button>
@@ -1429,7 +1674,7 @@ export default memo(function HeroSheet(props: {
                     const source = status?.source?.trim();
                     return (
                       <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
-                        {!canManageSpellbook && _isPrepared && spell.level > 0 ? (<button type="button" className={`cs-prof-marker cs-prof-click cs-prep-marker${preparedIds.includes(spell.id) ? " cs-prof" : ""}`} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`} title={preparedIds.includes(spell.id) ? "Prepared" : "Prepare"}>{preparedIds.includes(spell.id) ? "●" : "○"}</button>) : null}
+                        {!canManageSpellbook && _isPrepared && spell.level > 0 ? (<button type="button" className={`cs-glass-btn cs-spellbook-prepare${preparedIds.includes(spell.id) ? " is-prepared" : ""}`} disabled={!preparedIds.includes(spell.id) && preparedIds.length >= prepLimit} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-pressed={preparedIds.includes(spell.id)} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`}>{preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"}</button>) : null}
                         <strong>{spell.name}</strong>
                         <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
                         {source || status?.freeUse ? (
@@ -1549,55 +1794,8 @@ export default memo(function HeroSheet(props: {
                   </p>
                 ) : null}
               </div>
-              <div className="cs-item-catalog">
-                <div className="cs-item-catalog-head">
-                  <span>Item catalog</span>
-                  <small>{ITEM_CATALOG.length} items</small>
-                </div>
-                <div className="cs-item-catalog-controls">
-                  <input
-                    type="search"
-                    placeholder="Search items..."
-                    aria-label="Search items"
-                    value={itemSearch}
-                    onChange={(e) => setItemSearch(e.target.value)}
-                  />
-                  <select value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}>
-                    <option value="All">All categories</option>
-                    {ITEM_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
-                  </select>
-                  <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}>
-                    <option value="All">All rarities</option>
-                    {ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity} data-rarity={rarity}>{rarity}</option>)}
-                  </select>
-                </div>
-                <div className="cs-item-results">
-                  {visibleItemMatches.map((item) => (
-                    <div className="cs-item-result" key={item.id}>
-                      <div>
-                        <strong data-rarity={item.rarity}>{item.name}</strong>
-                        <span>{[item.rarity, ...itemMetaParts(item)].filter(Boolean).join(" | ")}</span>
-                        {item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "..." : ""}</p> : null}
-                      </div>
-                      <button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button>
-                    </div>
-                  ))}
-                  {visibleItemMatches.length === 0 ? <p className="cs-muted">No matching items</p> : null}
-                </div>
-                {itemMatches.length > visibleItemMatches.length ? (
-                  <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p>
-                ) : null}
-              </div>
-
               {props.character.inventory.length > 0 ? (
                 <div className="cs-inv-list">{props.character.inventory.map((item) => {
-                  const canEquipArmor = isArmorItem(item);
-                  const canEquipShield = isShieldItem(item);
-                  const canEquipWeapon = isWeaponItem(item);
-                  const canEquipBonus = itemHasPassiveBonus(item) && !canEquipArmor && !canEquipShield;
-                  const armorProfInfo = canEquipArmor ? inventoryArmorProficiencyInfo(item) : null;
-                  const armorIsProficient = !armorProfInfo || isArmorCategoryProficient(effectiveProficiencies, armorProfInfo.category);
-                  const shieldIsProficient = !canEquipShield || isShieldProficient(effectiveProficiencies);
                   const equippedAsArmor = equipment.armorItemId === item.id;
                   const equippedAsShield = equipment.shieldItemId === item.id;
                   const equippedAsWeapon = (equipment.weaponItemIds ?? []).includes(item.id);
@@ -1607,14 +1805,7 @@ export default memo(function HeroSheet(props: {
                       <div>
                         <strong data-rarity={item.rarity}>{item.name}</strong>
                         {item.notes ? <span>{item.notes}</span> : null}
-                        {canEquipArmor || canEquipShield || canEquipWeapon || canEquipBonus ? (
-                          <div className="cs-inv-actions">
-                            {canEquipArmor ? <button type="button" className={`cs-glass-btn${equippedAsArmor ? " cs-edit-active" : ""}${armorIsProficient ? "" : " cs-equip-warning"}`} onClick={() => equipInventoryArmor(item)} title={armorIsProficient ? undefined : "Not proficient with this armor"}>{equippedAsArmor ? "Equipped armor" : "Equip armor"}{armorIsProficient ? "" : " (not proficient)"}</button> : null}
-                            {canEquipShield ? <button type="button" className={`cs-glass-btn${equippedAsShield ? " cs-edit-active" : ""}${shieldIsProficient ? "" : " cs-equip-warning"}`} onClick={() => equipInventoryShield(item)} title={shieldIsProficient ? undefined : "Not proficient with shields"}>{equippedAsShield ? "Equipped shield" : "Equip shield"}{shieldIsProficient ? "" : " (not proficient)"}</button> : null}
-                            {canEquipWeapon ? <button type="button" className={`cs-glass-btn${equippedAsWeapon ? " cs-edit-active" : ""}`} onClick={() => toggleInventoryWeapon(item.id)}>{equippedAsWeapon ? "Equipped weapon" : "Equip weapon"}</button> : null}
-                            {canEquipBonus ? <button type="button" className={`cs-glass-btn${equippedAsBonus ? " cs-edit-active" : ""}`} onClick={() => toggleBonusItem(item.id)}>{equippedAsBonus ? "Bonus active" : "Equip bonus"}</button> : null}
-                          </div>
-                        ) : null}
+                        {equippedAsArmor || equippedAsShield || equippedAsWeapon || equippedAsBonus ? <span className="cs-inv-equipped-badge">Equipped</span> : null}
                         {item.description ? (
                           <details className="cs-inv-details">
                             <summary>Details</summary>
@@ -1627,31 +1818,11 @@ export default memo(function HeroSheet(props: {
                   );
                 })}</div>
               ) : <p className="cs-muted">No items in inventory</p>}
-              {showInvForm ? (
-                <div className="cs-inv-form">
-                  <input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} />
-                  <select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}>
-                    <option value="Mundane">Mundane</option>
-                    <option value="Common">Common</option>
-                    <option value="Uncommon">Uncommon</option>
-                    <option value="Rare">Rare</option>
-                    <option value="Very Rare">Very Rare</option>
-                    <option value="Legendary">Legendary</option>
-                  </select>
-                  <input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} />
-                  <input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} />
-                  <div className="cs-inv-form-actions">
-                    <button type="button" className="cs-glass-btn" onClick={addItem}>Add</button>
-                    <button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Add item</button>
-              )}
             </div>
           </div>
         </section>
-      );
+        );
+      }
       case "notes": return (
         <section className="cs-block"><h3 className="cs-section-eyebrow"><PenLine size={12} />Notes</h3><div className="cs-notes-block">{props.character.physicalCharacteristics ? (<div className="cs-bg-field"><span className="cs-bg-label">Physical Characteristics</span><p>{props.character.physicalCharacteristics}</p></div>) : null}{props.character.personalCharacteristics ? (<div className="cs-bg-field"><span className="cs-bg-label">Personal Characteristics</span><p>{props.character.personalCharacteristics}</p></div>) : null}{props.character.generalNotes ? (<div className="cs-bg-field"><span className="cs-bg-label">General Notes</span><p>{props.character.generalNotes}</p></div>) : null}{!props.character.physicalCharacteristics && !props.character.personalCharacteristics && !props.character.generalNotes ? <p className="cs-muted">No notes recorded</p> : null}</div></section>
       );
@@ -1788,6 +1959,27 @@ export default memo(function HeroSheet(props: {
 
   /* ── Render ── */
   const allIds = layout.columns.flat().filter((id) => !hiddenIds.includes(id));
+  const activeSectionId = activeId?.startsWith("tab:") ? activeId.split(":")[2] as SheetSectionId : activeId as SheetSectionId | null;
+  const renderModuleContent = (moduleId: string) => {
+    const sheetModule = moduleById(moduleId);
+    if (!sheetModule) return null;
+    const tabs = availableModuleTabs(sheetModule);
+    const requested = activeModuleTabs[moduleId];
+    const activeTab = requested && tabs.includes(requested) ? requested : tabs[0];
+    if (!activeTab) return <p className="cs-muted">No available tabs for this character.</p>;
+    return (
+      <>
+        {tabs.length > 1 ? (
+          <div className="cs-reftablist cs-module-tabs" role="tablist" aria-label={`${moduleTitle(moduleId)} tabs`}>
+            {tabs.map((tabId) => (
+              <ModuleTab key={tabId} groupId={moduleId} sectionId={tabId} title={tabTitle(moduleId, tabId)} active={tabId === activeTab} editMode={editMode} onSelect={() => setActiveModuleTabs((current) => ({ ...current, [moduleId]: tabId }))} />
+            ))}
+          </div>
+        ) : null}
+        {sectionContent(activeTab)}
+      </>
+    );
+  };
   const skinMenuThemeVars = theme ? {
     ...themeVars,
     "--ground": "var(--paper)",
@@ -1858,10 +2050,24 @@ export default memo(function HeroSheet(props: {
         <div className="cs-readonly-banner">Viewing <strong>{props.character.name}</strong> (read-only)</div>
       ) : null}
       <div className="cs-sheet-tools" role="toolbar" aria-label="Sheet tools">
+        {!isReadOnly && editMode ? <span className="cs-layout-drag-hint">Drop a module onto another to make a tab · drag a tab into a column to pull it out</span> : null}
         {!isReadOnly && <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>}
-        {!isReadOnly && <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => setEditMode(!editMode)} title="Customize layout" aria-pressed={editMode}><GripHorizontal size={13} />Layout</button>}
-        {!isReadOnly && editMode ? <button className="cs-glass-btn cs-reset-layout" type="button" onClick={resetLayout} title="Reset layout"><RotateCcw size={13} />Reset</button> : null}
+        {!isReadOnly && <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => { const next = !editMode; setEditMode(next); setShowLayoutMenu(next); }} title="Customize layout" aria-pressed={editMode} aria-expanded={showLayoutMenu}><GripHorizontal size={13} />Layout</button>}
       </div>
+      {!isReadOnly && editMode && showLayoutMenu ? (
+        <div className="cs-layout-menu">
+          <div className="cs-layout-menu-head"><strong>Visible modules</strong><span>Drag modules and tabs to reorganize the sheet.</span></div>
+          <div className="cs-layout-visibility-list">
+            {sheetModules.map((module) => (
+              <label key={module.id}><input type="checkbox" checked={!hiddenIds.includes(module.id)} onChange={() => toggleHidden(module.id)} />{moduleTitle(module.id)}</label>
+            ))}
+          </div>
+          <div className="cs-layout-menu-actions">
+            <button type="button" className="cs-glass-btn" onClick={() => saveLayout({ ...layout, hidden: [] })}>Show all</button>
+            <button type="button" className="cs-glass-btn" onClick={resetLayout}><RotateCcw size={13} />Reset layout</button>
+          </div>
+        </div>
+      ) : null}
       {!tourDismissed ? (
         <div className="cs-tour-card">
           <div>
@@ -1892,8 +2098,9 @@ export default memo(function HeroSheet(props: {
         <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
           <div className="cs-sheet-columns" ref={columnsRef}>
             {layout.columns.map((col, ci) => (
-              <Fragment key={ci}>
-                <div
+                <DroppableColumn
+                  key={ci}
+                  index={ci}
                   className="cs-sheet-col"
                   style={layout.columnWidths ? { flex: `0 0 ${layout.columnWidths[ci]}%`, maxWidth: "none", minWidth: 0 } : undefined}
                 >
@@ -1903,28 +2110,20 @@ export default memo(function HeroSheet(props: {
                     <div className="cs-col-divider" role="separator" aria-orientation="vertical" title="Drag to resize columns" onPointerDown={(e) => startColumnDrag(ci, e)} />
                   ) : null}
                   {col.map((id) =>
-                    hiddenIds.includes(id) ? (
-                      editMode ? (
-                        <div className="cs-section cs-hidden-ghost" key={id}>
-                          <span className="cs-section-title">{SECTION_TITLES[id]}</span>
-                          <button type="button" className="cs-glass-btn" onClick={() => toggleHidden(id)}>Show</button>
-                        </div>
-                      ) : null
-                    ) : (
-                      <SheetSection key={id} id={id} title={SECTION_TITLES[id]} collapsed={collapsed.includes(id)} onToggle={() => toggleCollapse(id)} editMode={editMode} onHide={() => toggleHidden(id)}>
-                        {sectionContent(id)}
+                    hiddenIds.includes(id) ? null : (
+                      <SheetSection key={id} id={id} title={moduleTitle(id)} collapsed={collapsed.includes(id)} onToggle={() => toggleCollapse(id)} editMode={editMode} onRename={(title) => renameModule(id, title)}>
+                        {renderModuleContent(id)}
                       </SheetSection>
                     ),
                   )}
-                </div>
-              </Fragment>
+                </DroppableColumn>
             ))}
           </div>
         </SortableContext>
         <DragOverlay dropAnimation={null}>
           {activeId ? (
             <div className="cs-drag-overlay-card">
-              <span className="cs-section-title">{SECTION_TITLES[activeId as SheetSectionId] ?? activeId}</span>
+              <span className="cs-section-title">{activeId?.startsWith("tab:") && activeSectionId ? SECTION_TITLES[activeSectionId] : activeId ? moduleTitle(activeId) : "Module"}</span>
             </div>
           ) : null}
         </DragOverlay>

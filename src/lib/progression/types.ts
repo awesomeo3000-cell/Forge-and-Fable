@@ -148,6 +148,36 @@ export type ProgressionPacket = {
   subclass?: SubclassProgressionPacket;
 };
 
+export type FeatureGrant = {
+  featureId: string;
+  level: number;
+  source: "class" | "subclass";
+  sourcePacketId: string;
+  parentInteractions?: string[];
+  scaling?: FeatureScaling[];
+};
+
+export type LevelUpChoice = ProgressionChoice & {
+  level: number;
+  source: "class" | "subclass";
+  sourcePacketId: string;
+};
+
+export type PlannedResourceChange = ResourceChange & {
+  level: number;
+  source: "class" | "subclass";
+  sourcePacketId: string;
+};
+
+export type PlannedSpellChange = SpellChange & {
+  level: number;
+  source: "class" | "subclass";
+  sourcePacketId: string;
+  before?: number | number[];
+  after?: number | number[];
+  formula?: string;
+};
+
 export type ProgressionCatalog = {
   classes: ReadonlyMap<string, ClassProgressionPacket>;
   subclasses: ReadonlyMap<string, SubclassProgressionPacket>;
@@ -156,9 +186,10 @@ export type ProgressionCatalog = {
 export type LevelUpPlan = {
   fromLevel: number;
   toLevel: number;
-  automaticFeatures: string[];
-  choices: ProgressionChoice[];
-  resourceChanges: ResourceChange[];
-  spellChanges: SpellChange[];
+  proficiencyBonus: { before: number; after: number };
+  automaticFeatures: FeatureGrant[];
+  choices: LevelUpChoice[];
+  resourceChanges: PlannedResourceChange[];
+  spellChanges: PlannedSpellChange[];
   warnings: string[];
 };

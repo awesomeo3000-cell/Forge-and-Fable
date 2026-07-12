@@ -54,8 +54,10 @@ import OnboardingPanel from "@/components/OnboardingPanel";
 import AdminPanel from "@/components/AdminPanel";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
-import { cantripsKnownAt, learnsIndividualSpells, loadSpells, spellsForClass } from "@/lib/spells";
+import { loadSpells } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
+import { buildClassLevelUpPlan } from "@/lib/progression/engine";
+import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { RollingDie } from "@/components/DiceRollOverlay";
 import type { RollHistoryEntry } from "@/components/RollDrawer";
 import { SaveStatusBadge, type SaveStatus } from "@/components/SaveStatusBadge";
@@ -106,6 +108,11 @@ type CreationChoices = {
   hpRolls?: number[];
   spellStatuses?: Record<string, SpellStatus>;
   skillExpertise?: string[];
+  featureChoices?: Character["featureChoices"];
+  featureResources?: Character["featureResources"];
+  alwaysPreparedSpells?: string[];
+  spellbookSpells?: string[];
+  progressionState?: Character["progressionState"];
 };
 
 type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
@@ -117,21 +124,8 @@ type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoice
     cleric) so a high-level start still picks its origin. HP-only levels are
     skipped — the creator already computes starting HP for the chosen level. */
 function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number[] {
-  const asiLevels = heroClass.asiLevels ?? [4, 8, 12, 16, 19];
-  const subclassLevel = getClassData(heroClass.id)?.subclassLevel;
-  const knownCaster =
-    learnsIndividualSpells(heroClass.id, heroClass.casterType) && spellsForClass(heroClass.id).length > 0;
-  const out: number[] = [];
-  for (let level = 1; level <= targetLevel; level++) {
-    const isSubclass = subclassLevel != null && level === subclassLevel;
-    if (level === 1) {
-      if (isSubclass) out.push(1);
-      continue;
-    }
-    const gainsCantrip = cantripsKnownAt(heroClass.id, level) > cantripsKnownAt(heroClass.id, level - 1);
-    if (isSubclass || asiLevels.includes(level) || knownCaster || gainsCantrip) out.push(level);
-  }
-  return out;
+  const plan = buildClassLevelUpPlan({ ruleset: "2014", classId: heroClass.id, fromLevel: 0, toLevel: targetLevel });
+  return Array.from(new Set(plan.choices.map((choice) => choice.level))).sort((a, b) => a - b);
 }
 
 const NORMAL_ROLL_LINGER_MS = 1800;
@@ -956,7 +950,7 @@ export default function ForgeAndFableApp() {
     // Starting above level 1: collect the feat/ASI/subclass/spell choices for the
     // levels gained, then forge with them. Level-1 starts forge immediately.
     const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
-    if (heroClass && draft.level > 1) {
+    if (heroClass && draft.level >= 1) {
       const levels = creationChoiceLevels(heroClass, draft.level);
       if (levels.length > 0) {
         const base = characterPayload(draft, ruleset);
@@ -964,7 +958,7 @@ export default function ForgeAndFableApp() {
           levels,
           index: 0,
           soFar: {
-            level: 1,
+            level: 0,
             maxHp: base.maxHp,
             currentHp: base.currentHp,
             subclassId: undefined,
@@ -1010,9 +1004,21 @@ export default function ForgeAndFableApp() {
               spellsKnown: choices.spellsKnown,
               spellStatuses: choices.spellStatuses,
               skillExpertise: choices.skillExpertise,
+              featureChoices: choices.featureChoices,
+              featureResources: choices.featureResources,
+              alwaysPreparedSpells: choices.alwaysPreparedSpells,
+              spellbookSpells: choices.spellbookSpells,
+              progressionState: choices.progressionState,
             }
           : {}),
       };
+      Object.assign(payload, progressionPatchForCharacter({
+        ruleset: payload.ruleset,
+        classId: payload.classId,
+        subclassId: payload.subclassId,
+        level: draft.level,
+        featureChoices: payload.featureChoices,
+      }));
 
       const response = await fetch("/api/characters", {
         method: "POST",
@@ -1061,6 +1067,11 @@ export default function ForgeAndFableApp() {
       spellsKnown: (patch.spellsKnown as string[] | undefined) ?? creationSeq.soFar.spellsKnown,
       spellStatuses: (patch.spellStatuses as Record<string, SpellStatus> | undefined) ?? creationSeq.soFar.spellStatuses,
       skillExpertise: (patch.skillExpertise as string[] | undefined) ?? creationSeq.soFar.skillExpertise,
+      featureChoices: (patch.featureChoices as Character["featureChoices"]) ?? creationSeq.soFar.featureChoices,
+      featureResources: (patch.featureResources as Character["featureResources"]) ?? creationSeq.soFar.featureResources,
+      alwaysPreparedSpells: (patch.alwaysPreparedSpells as string[] | undefined) ?? creationSeq.soFar.alwaysPreparedSpells,
+      spellbookSpells: (patch.spellbookSpells as string[] | undefined) ?? creationSeq.soFar.spellbookSpells,
+      progressionState: (patch.progressionState as Character["progressionState"]) ?? creationSeq.soFar.progressionState,
     };
     if (creationSeq.index + 1 < creationSeq.levels.length) {
       setCreationSeq({ ...creationSeq, index: creationSeq.index + 1, soFar });
@@ -1177,7 +1188,7 @@ export default function ForgeAndFableApp() {
   function restoreSnapshot(snapshot: CharacterSnapshot) {
     if (!selected) return;
     if (!window.confirm(`Restore snapshot "${snapshot.label}"? Current unsaved changes will be lost.`)) return;
-    const patch = patchFromSnapshot(snapshot, selected.snapshots ?? []);
+    const patch = patchFromSnapshot(snapshot, selected.snapshots ?? [], selected.ruleset);
     updateCharacterById(selected.id, patch);
     setSnapshotsOpen(false);
   }
@@ -1934,6 +1945,7 @@ export default function ForgeAndFableApp() {
           key={`create-${creationSeq.index}`}
           character={{
             ...creationSeq.soFar,
+            ruleset: draft.ruleset,
             // The modal derives expertise eligibility from proficiencies and
             // background; soFar doesn't carry them — the draft does.
             skillProficiencies: draft.skillProficiencies,

@@ -11,6 +11,7 @@ import { DELETE } from "@/app/api/characters/[id]/route";
 import { GET as LIST, POST } from "@/app/api/characters/route";
 import { GET as HEALTH } from "@/app/api/health/route";
 import { characterInput } from "./fixtures/character";
+import { progressionPatchForCharacter } from "@/lib/progression/state";
 
 let dataDir = "";
 
@@ -112,7 +113,10 @@ describe("character API persistence", () => {
     const advancedResponse = await PUT(new Request(`http://local/api/characters/${created.id}`, {
       method: "PUT",
       headers: { cookie, "Content-Type": "application/json", "If-Match": "0" },
-      body: JSON.stringify({ level: 2, maxHp: 20, currentHp: 20, hpRolls: [8] }),
+      body: JSON.stringify({
+        level: 2, maxHp: 20, currentHp: 20, hpRolls: [8],
+        ...progressionPatchForCharacter({ ...created, level: 2 }),
+      }),
     }), context);
     expect(advancedResponse.status).toBe(200);
 
@@ -133,5 +137,86 @@ describe("character API persistence", () => {
     const response = await HEALTH();
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ ok: true, database: { writable: true, schemaVersion: 12 } });
+  });
+
+  it("persists subclass choices and rejects incomplete progression patches", async () => {
+    const { cookie } = await seededUser();
+    const input = {
+      ...characterInput("Battle Master"),
+      level: 3,
+      subclassId: "battle-master",
+      featureChoices: {
+        "choose-fighting-style": ["defense"],
+        "choose-3-maneuvers": ["parry", "precision-attack", "trip-attack"],
+        "choose-artisans-tool": ["smiths-tools"],
+      },
+    };
+    const payload = { ...input, ...progressionPatchForCharacter(input) };
+    const createdResponse = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }));
+    expect(createdResponse.status).toBe(201);
+    const created = (await createdResponse.json()).character;
+    expect(created).toMatchObject({
+      subclassId: "battle-master",
+      featureChoices: { "choose-3-maneuvers": ["parry", "precision-attack", "trip-attack"] },
+      featureResources: { "superiority-dice": { maximum: 4, die: "d8" } },
+      progressionState: { appliedThroughLevel: 3 },
+    });
+
+    const legacyResponse = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify(characterInput("Legacy Fighter")),
+    }));
+    const character = (await legacyResponse.json()).character;
+    const invalid = await PUT(new Request(`http://local/api/characters/${character.id}`, {
+      method: "PUT",
+      headers: { cookie, "Content-Type": "application/json", "If-Match": "0" },
+      body: JSON.stringify({ level: 3, subclassId: "battle-master" }),
+    }), { params: Promise.resolve({ id: character.id }) });
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toMatchObject({ error: expect.stringMatching(/choice|required|progressionState/) });
+  });
+
+  it("keeps known, prepared, and always-prepared spell sources distinct after reload", async () => {
+    const { cookie } = await seededUser();
+    const input = {
+      ...characterInput("Life Cleric"),
+      classId: "cleric",
+      level: 5,
+      subclassId: "life-domain",
+      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy"],
+      preparedSpells: ["guidance", "bless", "cure-wounds"],
+      asiChoices: [{ type: "asi" as const, level: 4, increases: { wisdom: 2 } }],
+    };
+    const payload = { ...input, ...progressionPatchForCharacter(input) };
+    const response = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }));
+    expect(response.status, JSON.stringify(await response.clone().json())).toBe(201);
+    const created = (await response.json()).character;
+    expect(created.alwaysPreparedSpells).toEqual(expect.arrayContaining(["bless", "cure-wounds", "lesser-restoration", "spiritual-weapon", "beacon-of-hope", "revivify"]));
+    expect(created.preparedSpells).toEqual(["guidance", "bless", "cure-wounds"]);
+
+    closeDb();
+    const loaded = await GET(new Request(`http://local/api/characters/${created.id}`, { headers: { cookie } }), { params: Promise.resolve({ id: created.id as string }) });
+    expect(await loaded.json()).toMatchObject({ character: {
+      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy"],
+      preparedSpells: ["guidance", "bless", "cure-wounds"],
+      alwaysPreparedSpells: expect.arrayContaining(["bless", "revivify"]),
+    } });
+
+    const invalidSpell = await PUT(new Request(`http://local/api/characters/${created.id}`, {
+      method: "PUT",
+      headers: { cookie, "Content-Type": "application/json", "If-Match": "0" },
+      body: JSON.stringify({ spellsKnown: [...created.spellsKnown, "not-a-real-spell"] }),
+    }), { params: Promise.resolve({ id: created.id as string }) });
+    expect(invalidSpell.status).toBe(400);
+    expect(await invalidSpell.json()).toMatchObject({ error: expect.stringMatching(/spell.*invalid/) });
   });
 });

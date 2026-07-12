@@ -28,7 +28,7 @@
   },
   "levels": {
     "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["druidic", "spellcasting"], "choices": ["choose-2-cantrips"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
-    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["wild-shape", "druid-circle"], "choices": ["choose-subclass"], "resourceChanges": [{ "resourceId": "wild-shape-uses", "maximum": 2 }, { "resourceId": "wild-shape-max-cr", "maximum": "1/4" }], "sourceReferences": ["2014-srd-5.1"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["wild-shape", "druid-circle"], "choices": ["choose-subclass"], "resourceChanges": [{ "resourceId": "wild-shape-uses", "maximum": 2, "recharge": "short-or-long-rest" }, { "resourceId": "wild-shape-max-cr", "maximum": "1/4" }], "sourceReferences": ["2014-srd-5.1"] },
     "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
     "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["wild-shape-improvement", "ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [{ "resourceId": "wild-shape-max-cr", "maximum": "1/2" }], "sourceReferences": ["2014-srd-5.1"] },
     "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },

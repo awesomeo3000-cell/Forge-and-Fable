@@ -39,4 +39,14 @@ describe("character snapshots", () => {
       snapshots: [{ id: "snapshot-1", label: "Nested", createdAt: "2026-07-11", character: nested }],
     }, true)).toThrow(/cannot contain nested snapshots/);
   });
+
+  it("never restores a snapshot across edition identity", () => {
+    const snapshot: CharacterSnapshot = {
+      id: "snapshot-2024",
+      label: "Other edition",
+      character: { ...character(), ruleset: "2024" },
+      createdAt: "2026-07-11T01:00:00.000Z",
+    };
+    expect(() => patchFromSnapshot(snapshot, [snapshot], "2014")).toThrow(/cannot be restored/);
+  });
 });

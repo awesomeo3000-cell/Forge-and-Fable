@@ -48,6 +48,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
   "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
+  "featureChoices", "featureResources", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState",
   "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects", "pages", "snapshots",
 ]);
 
@@ -113,10 +114,65 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         }
         break;
       case "spellsKnown":
+      case "alwaysPreparedSpells":
+      case "spellbookSpells":
         if (val !== undefined) {
           assertArray(val, key);
           if (val.length > 300) throw new Error(`"${key}" must have at most 300 entries.`);
           for (const entry of val) assertString(entry, `${key}[]`, 96);
+        }
+        break;
+      case "featureChoices":
+        if (val !== undefined) {
+          if (!val || typeof val !== "object" || Array.isArray(val)) throw new Error(`"${key}" must be an object.`);
+          if (JSON.stringify(val).length > 50_000) throw new Error(`"${key}" is too large.`);
+          for (const [choiceId, choice] of Object.entries(val as Record<string, unknown>)) {
+            assertString(choiceId, "featureChoices key", 128);
+            const scalars = Array.isArray(choice) ? choice : choice && typeof choice === "object" ? Object.values(choice as Record<string, unknown>) : [choice];
+            if (scalars.length > 50 || scalars.some((entry) => !["string", "number", "boolean"].includes(typeof entry))) {
+              throw new Error(`"featureChoices.${choiceId}" contains an invalid selection.`);
+            }
+          }
+        }
+        break;
+      case "expandedSpellLists":
+        if (val !== undefined) {
+          if (!val || typeof val !== "object" || Array.isArray(val)) throw new Error(`"expandedSpellLists" must be an object.`);
+          for (const [source, spells] of Object.entries(val as Record<string, unknown>)) {
+            assertString(source, "expandedSpellLists key", 128);
+            assertArray(spells, `expandedSpellLists.${source}`);
+            for (const spell of spells) assertString(spell, `expandedSpellLists.${source}[]`, 128);
+          }
+        }
+        break;
+      case "featureResources":
+        if (val !== undefined) {
+          if (!val || typeof val !== "object" || Array.isArray(val)) throw new Error(`"featureResources" must be an object.`);
+          for (const [resourceId, rawResource] of Object.entries(val as Record<string, unknown>)) {
+            assertString(resourceId, "featureResources key", 128);
+            if (!rawResource || typeof rawResource !== "object" || Array.isArray(rawResource)) throw new Error(`"featureResources.${resourceId}" must be an object.`);
+            const resource = rawResource as Record<string, unknown>;
+            if (resource.current !== undefined) assertInteger(resource.current, `featureResources.${resourceId}.current`, 0, 9999);
+            if (resource.maximum !== undefined && typeof resource.maximum !== "string") assertInteger(resource.maximum, `featureResources.${resourceId}.maximum`, 0, 9999);
+            if (resource.recharge !== undefined) assertString(resource.recharge, `featureResources.${resourceId}.recharge`, 80);
+            if (resource.die !== undefined) assertString(resource.die, `featureResources.${resourceId}.die`, 20);
+          }
+        }
+        break;
+      case "progressionState":
+        if (val !== undefined) {
+          if (!val || typeof val !== "object" || Array.isArray(val)) throw new Error(`"progressionState" must be an object.`);
+          const state = val as Record<string, unknown>;
+          if (!isSupportedRuleset(state.ruleset)) throw new Error(`"progressionState.ruleset" is not enabled in production.`);
+          assertString(state.classId, "progressionState.classId", 80);
+          if (state.subclassId !== undefined) assertString(state.subclassId, "progressionState.subclassId", 128);
+          assertInteger(state.appliedThroughLevel, "progressionState.appliedThroughLevel", 1, 20);
+          assertArray(state.featureIds, "progressionState.featureIds");
+          for (const featureId of state.featureIds) assertString(featureId, "progressionState.featureIds[]", 128);
+          if (state.warnings !== undefined) {
+            assertArray(state.warnings, "progressionState.warnings");
+            for (const warning of state.warnings) assertString(warning, "progressionState.warnings[]", 300);
+          }
         }
         break;
       case "skillProficiencies":

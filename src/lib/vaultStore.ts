@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { validateCharacterInput } from "@/lib/validateCharacter";
 import { isAdminEmail } from "@/lib/adminEmail";
 import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
+import { validateCharacterProgression } from "@/lib/progression/validate";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -217,6 +218,7 @@ export async function createCharacter(
     revision: 0,
     createdAt,
   };
+  validateCharacterProgression(character, Boolean(character.progressionState));
 
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -272,6 +274,10 @@ export async function updateCharacter(
       revision: nextRevision,
       createdAt: current.createdAt,
     };
+    if (updated.classId !== current.classId) throw new Error(`Character ${current.id} classId cannot change through an ordinary patch.`);
+    const progressionTouched = ["level", "classId", "subclassId", "featureChoices", "featureResources", "spellsKnown", "preparedSpells", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState"]
+      .some((field) => Object.prototype.hasOwnProperty.call(patch, field));
+    if (progressionTouched) validateCharacterProgression(updated, updated.level !== current.level || Boolean(updated.progressionState), current.level);
 
     const result = db.prepare("UPDATE characters SET data = ?, revision = ?, updated_at = ? WHERE user_id = ? AND id = ? AND revision = ?")
       .run(serializedCharacter(updated), nextRevision, new Date().toISOString(), userId, id, expectedRevision);

@@ -3476,6 +3476,33 @@ button:disabled {
   z-index: 1;
 }
 
+.cs-layout-drag-hint {
+  margin-right: auto;
+  color: var(--ink-faint);
+  font-size: 0.72em;
+}
+
+.cs-layout-menu { position: relative; z-index: 4; margin: 8px 10px 12px auto; width: min(620px, calc(100% - 20px)); padding: 12px; border: 1px solid var(--rule); border-top: 3px solid var(--accent); border-radius: var(--r-sm); background: var(--ground-2); box-shadow: 0 8px 22px rgba(24, 17, 10, 0.16); }
+.cs-layout-menu-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.cs-layout-menu-head strong { color: var(--accent); font-family: var(--font-label); text-transform: uppercase; letter-spacing: 0.05em; }
+.cs-layout-menu-head span { color: var(--ink-faint); font-size: 0.72em; }
+.cs-layout-visibility-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 6px 12px; }
+.cs-layout-visibility-list label { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground); font-size: 0.78em; cursor: pointer; }
+.cs-layout-menu-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 10px; }
+
+.cs-equipment-list { display: grid; gap: 6px; margin-bottom: 10px; }
+.cs-equipment-option { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--rule-soft); border-radius: var(--r-sm); background: var(--ground-2); cursor: pointer; }
+.cs-equipment-option:has(input:disabled) { cursor: default; opacity: 0.7; }
+.cs-equipment-option.is-equipped { border-color: color-mix(in srgb, var(--accent) 55%, var(--rule)); background: color-mix(in srgb, var(--accent) 7%, var(--ground-2)); }
+.cs-equipment-option.has-warning { border-color: var(--danger, #9a3f35); }
+.cs-equipment-option input { accent-color: var(--accent); }
+.cs-equipment-option span { display: grid; min-width: 0; }
+.cs-equipment-option strong { color: var(--ink); }
+.cs-equipment-option small { color: var(--ink-faint); }
+.cs-equipment-add { width: 100%; margin-top: 8px; justify-content: center; }
+.cs-equipment-catalog { margin-top: 9px; }
+.cs-inv-equipped-badge { display: inline-flex; width: fit-content; margin-top: 5px; padding: 2px 6px; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); font-size: 0.66em; text-transform: uppercase; letter-spacing: 0.04em; }
+
 .cs-section {
   position: relative;
   background: var(--ground);
@@ -3505,13 +3532,14 @@ button:disabled {
   width: 100%;
   padding: 8px 10px;
   border: 0;
-  background: transparent;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
   color: var(--parchment);
   cursor: pointer;
   border-bottom: 1px solid var(--rule-soft);
 }
 
 .cs-section-header:hover { background: rgba(0, 0, 0, 0.04); }
+.cs-section-header.cs-section-header-edit { width: auto; padding-right: 3px; }
 
 .cs-section-chevron {
   transition: transform 180ms;
@@ -3531,10 +3559,45 @@ button:disabled {
 }
 
 .cs-section-body {
+  position: relative;
   padding: 0.6em 0.75em;
 }
 
+.cs-sheet-col > .cs-section { border: 1px solid color-mix(in srgb, var(--rule) 82%, var(--accent)); border-top: 3px solid var(--accent); border-radius: var(--r-sm); box-shadow: 0 3px 10px rgba(24, 17, 10, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.24); }
+.cs-sheet-col > .cs-section + .cs-section { margin-top: 12px; }
+
 .cs-section-body.cs-collapsed { display: none; }
+
+.cs-section-body.cs-merge-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.cs-section-body.cs-merge-target::after {
+  position: absolute;
+  inset: 8px;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  content: "Drop to add as a tab";
+  border: 1px dashed var(--accent);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--ground) 90%, transparent);
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.cs-module-tabs .cs-reftab { touch-action: none; }
+.cs-editing .cs-module-tabs .cs-reftab { cursor: grab; }
+.cs-editing .cs-module-tabs .cs-reftab:active { cursor: grabbing; }
+.cs-tab-dragging { opacity: 0.35; }
+.cs-tab-drop-target { box-shadow: inset 0 -2px 0 var(--accent); }
+.cs-column-drop-target { outline: 1px dashed color-mix(in srgb, var(--accent) 65%, transparent); outline-offset: -4px; }
 
 .cs-section-header-row {
   display: flex;
@@ -4807,6 +4870,8 @@ button:disabled {
 .cs-feature-card strong { font-size: 1em; color: var(--parchment); }
 
 .cs-feature-card p { font-size: 0.92em; color: var(--parchment-2); margin-top: 2px; line-height: 1.5; }
+.cs-inline-actions { display: flex; gap: 6px; margin-top: 7px; }
+.cs-inline-actions .cs-glass-btn { font-size: 0.72em; padding: 3px 9px; }
 
 /* ── Reference Tabs ── */
 
@@ -12389,6 +12454,20 @@ button.dj-card {
   max-height: min(880px, calc(100dvh - 40px));
   overflow: hidden;
 }
+
+.cs-section-title-input {
+  width: min(100%, 240px);
+  padding: 2px 5px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: var(--ground-2);
+  color: var(--accent);
+  font-family: var(--font-label);
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .admin-head {
   display: flex;
   align-items: flex-start;

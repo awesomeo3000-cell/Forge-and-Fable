@@ -1,8 +1,8 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import type { AbilityKey, AbilityScores, ASIChoice, CasterType, CharacterSettings, SpellStatus } from "@/types/game";
+import type { AbilityKey, AbilityScores, ASIChoice, CasterType, Character, CharacterSettings, FeatureChoiceValue, RulesetId, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, proficiencyBonus, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
 import { ALL_SPELLS, cantripsKnownAt, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
@@ -14,6 +14,11 @@ import { fixedHpGain, rolledHpGain } from "@/lib/hitPoints";
 import { ordinalLevel } from "@/lib/ledgerCopy";
 import { finalAbilityAfterChoices, levelUpHpGain } from "@/lib/derivedStats";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+import { buildClassLevelUpPlan, buildLevelUpPlan } from "@/lib/progression/engine";
+import { progressionCatalog } from "@/lib/progression/packets";
+import { progressionChoiceLabel, progressionChoiceOptions } from "@/lib/progression/choiceOptions";
+import { progressionPatchForCharacter } from "@/lib/progression/state";
+import type { LevelUpChoice } from "@/lib/progression/types";
 import "./LevelUpModal.css";
 
 /** Checklist labels. Plain mechanical nouns — the flavor lives in descriptors,
@@ -22,12 +27,14 @@ const STEP_LABELS: Record<LevelUpStep, string> = {
   hp: "Hit points",
   subclass: "Subclass",
   expertise: "Expertise",
+  features: "Feature choices",
+  resources: "Resource choices",
   asi: "Feat or ability",
   spells: "Spells",
   summary: "The seal",
 };
 
-type LevelUpStep = "hp" | "subclass" | "expertise" | "asi" | "spells" | "summary";
+type LevelUpStep = "hp" | "subclass" | "expertise" | "features" | "resources" | "asi" | "spells" | "summary";
 export const EXPERTISE_COUNTS: Record<string, Record<number, number>> = {
   rogue: { 1: 2, 6: 2 },
   bard: { 3: 2, 10: 2 },
@@ -46,8 +53,6 @@ export default memo(function LevelUpModal({
   classId,
   className,
   hitDie,
-  asiLevels,
-  subclassLevel,
   casterType,
   skipHp = false,
   onHpRoll,
@@ -60,7 +65,7 @@ export default memo(function LevelUpModal({
   characterName,
   gainedFeatures = [],
 }: {
-  character: { level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string };
+  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -88,11 +93,56 @@ export default memo(function LevelUpModal({
 }) {
   const conMod = abilityModifier(finalAbilities.constitution);
 
-  const hasHp = newLevel > 1 && !skipHp;
-  const hasSubclass = subclassLevel != null && newLevel >= subclassLevel && !character.subclassId;
-  const hasAsi = asiLevels.includes(newLevel);
+  const [step, setStep] = useState(0);
+  const [pickedSubclass, setPickedSubclass] = useState("");
+  const [pickedFeat, setPickedFeat] = useState("");
+  const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
+  const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
+  const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
+  const [pickedSpells, setPickedSpells] = useState<string[]>([]);
+  const [pickedCantrips, setPickedCantrips] = useState<string[]>([]);
+  const [spellToForget, setSpellToForget] = useState<string | null>(null);
+  const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
+  const [featureSelections, setFeatureSelections] = useState<Record<string, string[]>>({});
+  const mounted = useRef(true);
 
-  const expertisePickCount = EXPERTISE_COUNTS[classId]?.[newLevel] ?? 0;
+  const selectedSubclassId = character.subclassId || pickedSubclass || undefined;
+  const progressionResult = useMemo(() => {
+    try {
+      return { plan: buildLevelUpPlan({
+        ruleset: character.ruleset,
+        classId,
+        subclassId: selectedSubclassId,
+        fromLevel: character.level,
+        toLevel: newLevel,
+        featureChoices: character.featureChoices,
+      }), error: "" };
+    } catch (error) {
+      return {
+        plan: buildClassLevelUpPlan({ ruleset: character.ruleset, classId, fromLevel: character.level, toLevel: newLevel }),
+        error: error instanceof Error ? error.message : "Progression data is unavailable.",
+      };
+    }
+  }, [character.featureChoices, character.level, character.ruleset, classId, newLevel, selectedSubclassId]);
+  const progressionPlan = progressionResult.plan;
+
+  const classChoiceIds = new Set(progressionPlan.choices.map((choice) => choice.choiceId));
+  const progressionChoices = progressionPlan.choices.filter((choice) =>
+    choice.choiceId !== "choose-subclass"
+    && choice.choiceId !== "choose-asi-or-feat"
+    && !choice.choiceId.includes("expertise")
+    && !choice.choiceId.includes("spell")
+    && !choice.choiceId.includes("cantrip"),
+  );
+  const resourceChoices = progressionChoices.filter((choice) => /cannon|armor-model|companion|beast-form|elemental-form/.test(choice.choiceId));
+  const genericChoices = progressionChoices.filter((choice) => !resourceChoices.includes(choice));
+
+  const hasHp = newLevel > 1 && !skipHp;
+  const hasSubclass = classChoiceIds.has("choose-subclass") && !character.subclassId;
+  const hasAsi = classChoiceIds.has("choose-asi-or-feat");
+
+  const expertiseChoice = progressionPlan.choices.find((choice) => choice.choiceId.includes("expertise"));
+  const expertisePickCount = expertiseChoice?.count ?? (Number(expertiseChoice?.choiceId.match(/choose-(\d+)/)?.[1] ?? 0) || EXPERTISE_COUNTS[classId]?.[newLevel] || 0);
   const bgSkillIds = BACKGROUND_SKILLS[character.background ?? ""] ?? [];
   const proficientSkillIds = [...(character.skillProficiencies ?? []), ...bgSkillIds];
   const existingExpertise = new Set(character.skillExpertise ?? []);
@@ -110,22 +160,42 @@ export default memo(function LevelUpModal({
   // never learn a fixed set — they prepare freely each day — so they get no
   // "learn spells" step. Computed up here so stepComplete can enforce the cap.
   const slots = maxSlots((casterType ?? "none") as CasterType, newLevel, classId);
-  const maxCastableLevel = slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0);
-  const availableSpells = spellsForClass(classId)
+  const spellChoices = progressionPlan.choices.filter((choice) => choice.choiceId.includes("spell") && !choice.choiceId.includes("cantrip"));
+  const choiceMaxSpellLevel = spellChoices.reduce((max, choice) => {
+    if (typeof choice.maximumSpellLevel === "number") return Math.max(max, choice.maximumSpellLevel);
+    if (/first-level|1st-level/.test(choice.choiceId)) return Math.max(max, 1);
+    if (/2nd-level/.test(choice.choiceId)) return Math.max(max, 2);
+    return max;
+  }, 0);
+  const maxCastableLevel = Math.max(choiceMaxSpellLevel, slots.reduce((max, count, i) => (count > 0 ? i + 1 : max), 0));
+  const anyClassSpellChoice = progressionPlan.spellChanges.some((change) => change.sourceLists === "any-class")
+    || progressionPlan.choices.some((choice) => choice.spellLimit?.includes("any-class"));
+  const restrictedSchools = progressionPlan.choices.flatMap((choice) => choice.restrictedSchools ?? []);
+  const spellSourceClass = restrictedSchools.length > 0 && classId === "fighter" ? "wizard" : classId;
+  const availableSpells = (anyClassSpellChoice ? ALL_SPELLS : spellsForClass(spellSourceClass))
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
+    .filter((s) => restrictedSchools.length === 0 || restrictedSchools.includes(s.school.toLowerCase()))
     .filter((s) => !character.spellsKnown.includes(s.id))
     .slice(0, 50);
-  const newSpellsCount = spellsLearnedReachingLevel(classId, newLevel);
+  const plannedSpellCount = progressionPlan.spellChanges.find((change) => change.kind === "spells-known" || change.kind === "spellbook-spells")?.count;
+  const choiceSpellCount = progressionPlan.choices.map((choice) => Number(choice.choiceId.match(/choose-(\d+).*(?:spell)/)?.[1] ?? 0)).reduce((max, count) => Math.max(max, count), 0);
+  const newSpellsCount = Math.max(0, plannedSpellCount ?? choiceSpellCount ?? spellsLearnedReachingLevel(classId, newLevel));
   // Can't learn more than remain unlearned on the class list (small-list edge).
   const spellTarget = Math.min(newSpellsCount, availableSpells.length);
-  const hasSpells = learnsIndividualSpells(classId, casterType) && newSpellsCount > 0 && spellTarget > 0;
+  const hasSpells = (learnsIndividualSpells(classId, casterType) || spellChoices.length > 0) && newSpellsCount > 0 && spellTarget > 0;
 
   // Cantrips are chosen individually by EVERY caster that has them — prepared
   // casters included — at the levels where the class total increases
   // (e.g. bard 4/10, artificer 10/14). Per the SRD cantrip-known columns.
-  const newCantripsCount = Math.max(0, cantripsKnownAt(classId, newLevel) - cantripsKnownAt(classId, newLevel - 1));
-  const availableCantrips = spellsForClass(classId)
+  const plannedCantripCount = progressionPlan.spellChanges.find((change) => change.kind === "cantrips-known")?.count;
+  const choiceCantripCount = progressionPlan.choices.map((choice) => Number(choice.choiceId.match(/choose-(\d+).*cantrip/)?.[1] ?? 0)).reduce((max, count) => Math.max(max, count), 0);
+  const newCantripsCount = Math.max(0, plannedCantripCount ?? choiceCantripCount ?? (cantripsKnownAt(classId, newLevel) - cantripsKnownAt(classId, newLevel - 1)));
+  const cantripChoices = progressionPlan.choices.filter((choice) => choice.choiceId.includes("cantrip"));
+  const cantripSourceClass = cantripChoices.some((choice) => choice.choiceId.includes("druid-cantrip")) ? "druid"
+    : cantripChoices.some((choice) => choice.choiceId.includes("wizard-cantrip")) ? "wizard" : classId;
+  const availableCantrips = spellsForClass(cantripSourceClass)
     .filter((s) => s.level === 0)
+    .filter((s) => !cantripChoices.some((choice) => choice.choiceId === "choose-light-cantrip") || s.id === "light")
     .filter((s) => !character.spellsKnown.includes(s.id))
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 50);
@@ -136,11 +206,12 @@ export default memo(function LevelUpModal({
   if (hasHp) steps.push("hp");
   if (hasSubclass) steps.push("subclass");
   if (hasExpertise) steps.push("expertise");
+  if (genericChoices.length > 0) steps.push("features");
+  if (resourceChoices.length > 0) steps.push("resources");
   if (hasAsi) steps.push("asi");
   if (hasSpells || hasCantrips) steps.push("spells");
   steps.push("summary");
 
-  const [step, setStep] = useState(0);
   const current = steps[step];
 
   // For manual HP the default (the average roll) is a valid gain the user can
@@ -157,16 +228,6 @@ export default memo(function LevelUpModal({
     hitPointType === "manual" ? manualDefault : hitPointType === "fixed" ? fixedGain : 0,
   );
   const [manualHp, setManualHp] = useState(manualDefault);
-  const [pickedSubclass, setPickedSubclass] = useState("");
-  const [pickedFeat, setPickedFeat] = useState("");
-  const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
-  const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
-  const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
-  const [pickedSpells, setPickedSpells] = useState<string[]>([]);
-  const [pickedCantrips, setPickedCantrips] = useState<string[]>([]);
-  const [spellToForget, setSpellToForget] = useState<string | null>(null);
-  const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
-  const mounted = useRef(true);
 
   useEffect(() => {
     // Set true on mount AND back-to-true on StrictMode's remount; only false
@@ -202,6 +263,8 @@ export default memo(function LevelUpModal({
       case "hp": return hitPointType === "manual" ? manualHp > 0 : hpRolled;
       case "subclass": return pickedSubclass !== "";
       case "expertise": return pickedExpertise.length >= expertiseTarget;
+      case "features": return genericChoices.every((choice) => (featureSelections[choice.choiceId]?.length ?? 0) >= (choice.count ?? 1));
+      case "resources": return resourceChoices.every((choice) => (featureSelections[choice.choiceId]?.length ?? 0) >= (choice.count ?? 1));
       case "asi": {
         if (pickedFeat === "") return false;
         if (pickedFeat === "asi") return Object.values(asiIncreases).reduce((s, v) => s + (v ?? 0), 0) === 2;
@@ -225,7 +288,7 @@ export default memo(function LevelUpModal({
   };
 
   const canContinue = stepComplete(current);
-  const allDone = steps.slice(0, -1).every(stepComplete);
+  const allDone = !progressionResult.error && steps.slice(0, -1).every(stepComplete);
 
   const feats = availableFeats({
     raceName,
@@ -316,6 +379,17 @@ export default memo(function LevelUpModal({
     );
   };
 
+  const toggleFeatureChoice = (choice: LevelUpChoice, id: string) => {
+    const target = choice.count ?? 1;
+    setFeatureSelections((currentSelections) => {
+      const current = currentSelections[choice.choiceId] ?? [];
+      const next = current.includes(id)
+        ? current.filter((value) => value !== id)
+        : current.length < target ? [...current, id] : current;
+      return { ...currentSelections, [choice.choiceId]: next };
+    });
+  };
+
   // Spells the character already knows that are leveled (not cantrips) —
   // eligible for the optional "replace one known spell" swap at level-up.
   const forgettableSpells = (character.spellsKnown ?? [])
@@ -368,6 +442,13 @@ export default memo(function LevelUpModal({
     if (hasAsi) {
       if (nextAsiChoices.length > (character.asiChoices ?? []).length) data.asiChoices = nextAsiChoices;
     }
+    const nextFeatureChoices: Record<string, FeatureChoiceValue> = { ...(character.featureChoices ?? {}) };
+    for (const choice of progressionChoices) {
+      const existing = nextFeatureChoices[choice.choiceId];
+      const existingValues = typeof existing === "string" ? [existing] : Array.isArray(existing) ? existing.map(String) : [];
+      nextFeatureChoices[choice.choiceId] = Array.from(new Set([...existingValues, ...(featureSelections[choice.choiceId] ?? [])]));
+    }
+    if (Object.keys(nextFeatureChoices).length > 0) data.featureChoices = nextFeatureChoices;
     if ((hasSpells && pickedSpells.length > 0) || (hasCantrips && pickedCantrips.length > 0)) {
       let updated = [...character.spellsKnown, ...pickedCantrips, ...pickedSpells];
       // The swap is a known-caster feature; wizard spellbooks never forget.
@@ -375,6 +456,7 @@ export default memo(function LevelUpModal({
         updated = updated.filter((id) => id !== spellToForget);
       }
       data.spellsKnown = updated;
+      if (classId === "wizard") data.spellbookSpells = Array.from(new Set([...(character.spellbookSpells ?? character.spellsKnown), ...pickedCantrips, ...pickedSpells]));
     }
     // Feat-granted spells: add both fixed and chosen spells, and register them
     // as free-use (once per long rest, no slot) with the feat as their source.
@@ -395,6 +477,24 @@ export default memo(function LevelUpModal({
         }
       }
     }
+    const progressionCharacter = {
+      ...character,
+      level: newLevel,
+      classId,
+      subclassId: (data.subclassId as string | undefined) ?? character.subclassId,
+      featureChoices: (data.featureChoices as Record<string, FeatureChoiceValue> | undefined) ?? character.featureChoices,
+    };
+    Object.assign(data, progressionPatchForCharacter(progressionCharacter));
+    const progressionState = data.progressionState as NonNullable<Character["progressionState"]>;
+    progressionState.choiceHistory = [
+      ...(character.progressionState?.choiceHistory ?? []),
+      ...progressionChoices.map((choice) => ({ choiceId: choice.choiceId, level: newLevel, selections: featureSelections[choice.choiceId] ?? [] })),
+    ];
+    const gainedSpellIds = [...pickedCantrips, ...pickedSpells];
+    progressionState.spellHistory = [
+      ...(character.progressionState?.spellHistory ?? []),
+      ...(gainedSpellIds.length > 0 ? [{ level: newLevel, spellIds: gainedSpellIds }] : []),
+    ];
     onConfirm(data);
   };
 
@@ -415,6 +515,7 @@ export default memo(function LevelUpModal({
     .map((count, i) => (count > 0 && (prevSlots[i] ?? 0) === 0 ? { level: i + 1, count } : null))
     .filter((t): t is { level: number; count: number } => t !== null);
   const gainedLines: string[] = [
+    ...progressionPlan.automaticFeatures.map((feature) => `${progressionChoiceLabel(feature.featureId)}${feature.source === "subclass" ? " (subclass)" : ""}`),
     ...gainedFeatures.map((f) => (f.description ? `${f.name} — ${f.description}` : f.name)),
     ...(nextProf !== prevProf ? [`Proficiency bonus rises to ${signed(nextProf)}.`] : []),
     ...newSlotTiers.map((t) => `New: ${t.count} level-${t.level} spell slot${t.count > 1 ? "s" : ""}.`),
@@ -429,6 +530,8 @@ export default memo(function LevelUpModal({
       case "expertise": return pickedExpertise.length === 1
         ? (expertiseNames[0] ?? "").toLowerCase()
         : `${pickedExpertise.length} skills`;
+      case "features": return `${genericChoices.length} choice${genericChoices.length === 1 ? "" : "s"}`;
+      case "resources": return `${resourceChoices.length} resource choice${resourceChoices.length === 1 ? "" : "s"}`;
       case "asi": return pickedFeat === "asi" ? "ability points" : chosenFeatName.toLowerCase();
       case "spells": return `${pickedCantrips.length + pickedSpells.length} learned`;
       case "summary": return "";
@@ -488,6 +591,7 @@ export default memo(function LevelUpModal({
             </nav>
             <div className="level-rite-main">
               {/* Gained automatically — shown once, on the first step. */}
+              {progressionResult.error ? <p className="cs-rule-note cs-rule-warning">{progressionResult.error}</p> : null}
               {step === 0 && gainedLines.length > 0 ? (
                 <div className="level-rite-gained">
                   <span className="level-rite-gained-label">Gained at {ordinalLevel(newLevel)} level</span>
@@ -565,7 +669,7 @@ export default memo(function LevelUpModal({
                   <h3 className="level-rite-panel-title">Subclass</h3>
                   <p className="level-rite-panel-sub">the path within the vocation</p>
                   <div className="level-rite-choice-grid">
-                    {subclassesForClass(classId).map((sub) => (
+                    {subclassesForClass(classId).filter((sub) => progressionCatalog.subclasses.has(`${character.ruleset}:${sub.id}`)).map((sub) => (
                       <button
                         key={sub.id}
                         type="button"
@@ -606,6 +710,45 @@ export default memo(function LevelUpModal({
               )}
 
               {/* Feat / ASI step — top-level fork */}
+              {(current === "features" || current === "resources") && (
+                <div className="level-rite-panel">
+                  <h3 className="level-rite-panel-title">{current === "resources" ? "Resource choices" : "Feature choices"}</h3>
+                  <p className="level-rite-panel-sub">Decisions required by your class or subclass at this level.</p>
+                  {(current === "resources" ? resourceChoices : genericChoices).map((choice) => {
+                    const options = progressionChoiceOptions(choice).filter((option) => {
+                      const existing = character.featureChoices?.[choice.choiceId];
+                      return !Array.isArray(existing) || !existing.includes(option);
+                    });
+                    const selected = featureSelections[choice.choiceId] ?? [];
+                    const target = choice.count ?? 1;
+                    return (
+                      <div key={`${choice.sourcePacketId}-${choice.level}-${choice.choiceId}`}>
+                        <span className="level-rite-eyebrow">{progressionChoiceLabel(choice.choiceId)} · {selected.length}/{target}</span>
+                        {options.length > 0 ? (
+                          <div className="level-rite-choice-grid compact scroll">
+                            {options.map((option) => (
+                              <button key={option} type="button" className={`level-rite-option${selected.includes(option) ? " is-selected" : ""}`} onClick={() => toggleFeatureChoice(choice, option)}>
+                                <span className="level-rite-option-name">{progressionChoiceLabel(option)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <input
+                            className="level-rite-hp-select"
+                            value={selected.join(", ")}
+                            placeholder={`Enter ${target} selection${target === 1 ? "" : "s"}, separated by commas`}
+                            onChange={(event) => setFeatureSelections((currentSelections) => ({
+                              ...currentSelections,
+                              [choice.choiceId]: event.target.value.split(",").map((value) => value.trim().toLowerCase().replace(/\s+/g, "-")).filter(Boolean).slice(0, target),
+                            }))}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {current === "asi" && (
                 <div className="level-rite-panel">
                   <h3 className="level-rite-panel-title">Feat or ability</h3>
@@ -822,6 +965,14 @@ export default memo(function LevelUpModal({
                         <span className="level-rite-summary-label">Mastery</span>
                         <span className={`level-rite-summary-value${expertiseNames.length > 0 ? "" : " pending"}`}>
                           {expertiseNames.length > 0 ? expertiseNames.join(", ") : `${pickedExpertise.length} of ${expertiseTarget} chosen`}
+                        </span>
+                      </li>
+                    ) : null}
+                    {genericChoices.length > 0 ? (
+                      <li className="level-rite-summary-item">
+                        <span className="level-rite-summary-label">Feature choices</span>
+                        <span className={`level-rite-summary-value${stepComplete("features") ? "" : " pending"}`}>
+                          {genericChoices.map((choice) => `${progressionChoiceLabel(choice.choiceId)}: ${(featureSelections[choice.choiceId] ?? []).map(progressionChoiceLabel).join(", ") || "pending"}`).join("; ")}
                         </span>
                       </li>
                     ) : null}

@@ -8,7 +8,10 @@ const MAX_SNAPSHOT_JSON_LENGTH = 250_000;
  * Edition identity is also immutable and is intentionally not restored by a
  * gameplay snapshot.
  */
-export function patchFromSnapshot(snapshot: CharacterSnapshot, snapshots: CharacterSnapshot[]): CharacterPatch {
+export function patchFromSnapshot(snapshot: CharacterSnapshot, snapshots: CharacterSnapshot[], currentRuleset?: Character["ruleset"]): CharacterPatch {
+  if (currentRuleset && snapshot.character.ruleset && snapshot.character.ruleset !== currentRuleset) {
+    throw new Error(`Snapshot ruleset ${snapshot.character.ruleset} cannot be restored onto a ${currentRuleset} character.`);
+  }
   const patch = structuredClone(snapshot.character) as Partial<Character>;
   delete patch.id;
   delete patch.userId;
@@ -16,6 +19,7 @@ export function patchFromSnapshot(snapshot: CharacterSnapshot, snapshots: Charac
   delete patch.revision;
   delete patch.ruleset;
   delete patch.snapshots;
+  if (!snapshot.character.subclassId) patch.subclassId = "";
   return { ...patch, snapshots } as CharacterPatch;
 }
 
