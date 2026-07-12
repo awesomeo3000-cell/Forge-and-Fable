@@ -11,7 +11,7 @@ import { abilityKeys, abilityNames } from "@/lib/utils";
 import { SKILLS } from "@/lib/srd";
 import { reminderMatches, type ReminderContext } from "@/lib/encounterGenerator";
 import type { Character, CharacterTheme } from "@/types/game";
-import type { CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
+import type { CampaignCharacterNote, CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import type { CampaignHandout, CampaignSession, EncounterRun } from "@/types/dmTools";
 import PartyRail from "@/components/dmTable/PartyRail";
 import CharacterInspector from "@/components/dmTable/CharacterInspector";
@@ -91,6 +91,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     return saved === "roleplay" || saved === "preparation" || saved === "compact" ? saved : "combat";
   });
   const [workspaceMode, setWorkspaceMode] = useState<DmWorkspaceMode>(() => presetMode(layoutPreset));
+  const [characterNotes, setCharacterNotes] = useState<CampaignCharacterNote[]>([]);
   const isPlaying = campaign.audio.trackId;
   const players = useMemo(
     () => campaign.members.filter((member) => member.userId !== campaign.campaign.dmUserId),
@@ -154,6 +155,14 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
       if (first) queueMicrotask(() => setSelectedUserId(first.userId));
     }
   }, [players, selectedUserId]);
+  useEffect(() => {
+    if (!selectedMember?.characterId) { queueMicrotask(() => setCharacterNotes([])); return; }
+    let active = true;
+    void dmToolsApi.listCharacterNotes(campaign.campaign.id, selectedMember.characterId)
+      .then((result) => { if (active) setCharacterNotes(result.notes); })
+      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load character notes."); });
+    return () => { active = false; };
+  }, [campaign.campaign.id, selectedMember?.characterId]);
 
   const choosePreset = (preset: DmLayoutPreset) => {
     setLayoutPreset(preset);
@@ -307,6 +316,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           dmUserId={campaign.campaign.dmUserId}
           selectedUserId={selectedUserId}
           currentTurnUserId={sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId ?? null}
+          presence={campaign.presence}
           compact={layoutPreset === "compact"}
           onSelect={(member) => setSelectedUserId(member.userId)}
           onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
@@ -489,9 +499,18 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         </section>
         <CharacterInspector
           member={selectedMember}
-          history={records.slice(0, 12).map((record) => ({ id: record.id, summary: record.text, createdAt: record.at }))}
+          notes={characterNotes}
+          history={records.filter((record) => !selectedMember?.characterName || record.text.toLowerCase().includes(selectedMember.characterName.toLowerCase())).slice(0, 12).map((record) => ({ id: record.id, summary: record.text, createdAt: record.at }))}
           onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
           onRequestRoll={(member) => { setRollTarget(member.userId); setWorkspaceMode("encounter"); setActiveCommand("roll"); }}
+          onCreateNote={async (member, input) => {
+            if (!member.characterId) return false;
+            try {
+              const result = await dmToolsApi.createCharacterNote(campaign.campaign.id, { ...input, characterId: member.characterId });
+              setCharacterNotes((current) => [result.note, ...current]);
+              return true;
+            } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create character note."); return false; }
+          }}
         />
       </div>
       <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input placeholder="Direct audio URL" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || !trackUrl.trim()}><Plus size={14}/> Add track</button></div></section>

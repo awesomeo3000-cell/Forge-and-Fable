@@ -556,12 +556,13 @@ export default function ForgeAndFableApp() {
     let inFlight = false;
 
     const sync = async () => {
-      if (document.visibilityState === "hidden" || inFlight) return;
+      if (inFlight) return;
       inFlight = true;
       const cursors = campaignCursorRef.current[activeCampaignId];
       const search = new URLSearchParams();
       if (cursors?.events) search.set("eventCursor", cursors.events);
       if (cursors?.rolls) search.set("rollCursor", cursors.rolls);
+      search.set("visibility", document.visibilityState === "hidden" ? "hidden" : "visible");
       const query = search.toString();
       const url = `/api/campaigns/${activeCampaignId}/sync${query ? `?${query}` : ""}`;
       try {
@@ -626,14 +627,20 @@ export default function ForgeAndFableApp() {
 
     sync();
     const interval = window.setInterval(sync, campaignOpen ? 5000 : 10000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") sync();
+    const onVisibility = () => { void sync(); };
+    const onPageHide = () => {
+      navigator.sendBeacon(
+        `/api/campaigns/${activeCampaignId}/presence`,
+        new Blob([JSON.stringify({ visibility: "hidden" })], { type: "application/json" }),
+      );
     };
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
     };
   }, [activeCampaignId, user, campaignOpen]);
 

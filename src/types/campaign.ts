@@ -133,6 +133,30 @@ export type CampaignAudioState = {
   version: number;
 };
 
+export type CampaignPresenceState = "connected" | "background" | "away" | "disconnected";
+
+export type CampaignPresence = {
+  userId: string;
+  characterId: string | null;
+  state: CampaignPresenceState;
+  lastSeenAt: string | null;
+};
+
+export type CampaignCharacterNoteCategory = "secret" | "personal-hook" | "relationship" | "curse" | "unidentified-item" | "planned-beat" | "reward" | "general";
+
+export type CampaignCharacterNote = {
+  id: string;
+  campaignId: string;
+  characterId: string;
+  category: CampaignCharacterNoteCategory;
+  title: string;
+  body: string;
+  reminderId?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CampaignSyncPayload = {
   campaign: {
     id: string;
@@ -157,5 +181,6 @@ export type CampaignSyncPayload = {
     updatedAt: string | null;
   };
   members: CampaignMemberSummary[];
+  presence: CampaignPresence[];
   audio: CampaignAudioState;
 };

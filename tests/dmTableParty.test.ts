@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveImportantResources, memberHpState, presetMode } from "@/lib/dmTable/party";
+import { derivePartyAlerts } from "@/lib/dmTable/alerts";
 import type { CampaignMemberSummary } from "@/types/campaign";
 
 const member: CampaignMemberSummary = {
@@ -41,5 +42,11 @@ describe("DM party command center derivation", () => {
     expect(presetMode("combat")).toBe("encounter");
     expect(presetMode("roleplay")).toBe("scene");
     expect(presetMode("preparation")).toBe("preparation");
+  });
+
+  it("deduplicates deterministic critical, condition, and presence alerts", () => {
+    const alerts = derivePartyAlerts([member], [{ userId: "player", characterId: "hero", state: "disconnected", lastSeenAt: null }], "dm");
+    expect(alerts.map((alert) => alert.id)).toEqual(expect.arrayContaining(["player:critical", "player:condition:poisoned", "player:disconnected"]));
+    expect(new Set(alerts.map((alert) => alert.id)).size).toBe(alerts.length);
   });
 });

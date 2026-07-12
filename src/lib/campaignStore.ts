@@ -17,6 +17,7 @@ import { ruleset } from "@/lib/ruleset";
 import type { Character } from "@/types/game";
 import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
+import { listCampaignPresence } from "@/lib/dmTable/store";
 
 // -- Types -----------------------------------------------------------------
 
@@ -660,6 +661,7 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
     rolls,
     initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),
     members: listMembers(campaignId, isDm, userId),
+    presence: listCampaignPresence(campaignId, userId),
     audio: getCampaignAudio(campaignId),
   };
 }

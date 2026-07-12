@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest, AuthError } from "@/lib/auth";
 import { syncCampaign } from "@/lib/campaignStore";
+import { touchCampaignPresence } from "@/lib/dmTable/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export async function GET(
     const userId = await authenticateRequest(request);
     const { id } = await params;
     const search = new URL(request.url).searchParams;
+    touchCampaignPresence(id, userId, search.get("visibility") === "hidden" ? "hidden" : "visible");
     const legacySince = search.get("since") ?? undefined;
     return NextResponse.json(syncCampaign(id, userId, {
       events: search.get("eventCursor") ?? legacySince,
