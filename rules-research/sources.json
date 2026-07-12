@@ -15,14 +15,15 @@
     "officialDigitalSource": "https://www.dndbeyond.com/sources/dnd/br-2024/character-classes",
     "licenseScope": "Project-licensed official 2024 source catalog",
     "verifiedAt": "2026-07-12",
-    "notes": "Research-only source for the Barbarian pilot."
+    "notes": "Research-only source for the twelve 2024 core class packets. It does not establish a 2024 Artificer class record."
   },
   {
     "id": "2014-tce-artificer",
     "ruleset": "2014",
     "title": "Tasha's Cauldron of Everything: Artificer",
+    "officialDigitalSource": "https://www.dndbeyond.com/sources/dnd/tcoe",
     "licenseScope": "Project-licensed source catalog",
     "verifiedAt": "2026-07-12",
-    "notes": "Existing Artificer source; 2024 compatibility remains unresolved."
+    "notes": "Licensed 2014 Artificer class source. The 2024 Basic Rules class chapter does not include Artificer; later or Unearthed Arcana material is deferred pending explicit source approval."
   }
 ]

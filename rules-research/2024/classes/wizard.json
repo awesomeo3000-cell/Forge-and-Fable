@@ -1,0 +1,45 @@
+{
+  "id": "wizard-2024",
+  "ruleset": "2024",
+  "name": "Wizard",
+  "sourceId": "2024-basic-rules",
+  "researchStatus": "second-review",
+  "hitDie": 6,
+  "primaryAbilities": ["intelligence"],
+  "savingThrowProficiencies": ["intelligence", "wisdom"],
+  "armorTraining": [],
+  "weaponProficiencies": ["daggers", "darts", "slings", "quarterstaffs", "light crossbows"],
+  "skillProficiencies": { "count": 2, "options": ["arcana", "history", "insight", "investigation", "medicine", "religion"] },
+  "spellcasting": {
+    "type": "spellbook-prepared-spells",
+    "ability": "intelligence",
+    "preparedSpellsByLevel": [0, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25],
+    "cantripsKnownByLevel": [0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+    "spellbookSpellsByLevel": [0, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44],
+    "spellSlotsByLevel": {
+      "1": [2], "2": [3], "3": [4, 2], "4": [4, 3], "5": [4, 3, 2], "6": [4, 3, 3], "7": [4, 3, 3, 1], "8": [4, 3, 3, 2], "9": [4, 3, 3, 3, 1], "10": [4, 3, 3, 3, 2], "11": [4, 3, 3, 3, 2, 1], "12": [4, 3, 3, 3, 2, 1], "13": [4, 3, 3, 3, 2, 1, 1], "14": [4, 3, 3, 3, 2, 1, 1], "15": [4, 3, 3, 3, 2, 1, 1, 1], "16": [4, 3, 3, 3, 2, 1, 1, 1], "17": [4, 3, 3, 3, 2, 1, 1, 1, 1], "18": [4, 3, 3, 3, 2, 1, 1, 1, 1], "19": [4, 3, 3, 3, 2, 1, 1, 1, 1], "20": [4, 3, 3, 3, 2, 1, 1, 1, 1]
+    }
+  },
+  "levels": {
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["spellcasting", "ritual-adept", "arcane-recovery"], "choices": ["choose-3-cantrips", "choose-4-prepared-spells"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["scholar"], "choices": ["choose-scholar-skill"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["wizard-subclass"], "choices": ["choose-subclass"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat", "choose-1-cantrip"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": ["memorize-spell"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "6": { "level": 6, "proficiencyBonus": 3, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "7": { "level": 7, "proficiencyBonus": 3, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "8": { "level": 8, "proficiencyBonus": 3, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "9": { "level": 9, "proficiencyBonus": 4, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "10": { "level": 10, "proficiencyBonus": 4, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "11": { "level": 11, "proficiencyBonus": 4, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "12": { "level": 12, "proficiencyBonus": 4, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "13": { "level": 13, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "14": { "level": 14, "proficiencyBonus": 5, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "15": { "level": 15, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "16": { "level": 16, "proficiencyBonus": 5, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "17": { "level": 17, "proficiencyBonus": 6, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "18": { "level": 18, "proficiencyBonus": 6, "automaticFeatures": ["spell-mastery"], "choices": ["choose-1st-level-spell", "choose-2nd-level-spell"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "19": { "level": 19, "proficiencyBonus": 6, "automaticFeatures": ["epic-boon"], "choices": ["choose-epic-boon"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "20": { "level": 20, "proficiencyBonus": 6, "automaticFeatures": ["signature-spells"], "choices": ["choose-2-signature-spells"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] }
+  }
+}

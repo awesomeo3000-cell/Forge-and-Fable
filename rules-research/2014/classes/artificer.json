@@ -1,0 +1,45 @@
+{
+  "id": "artificer-2014",
+  "ruleset": "2014",
+  "name": "Artificer",
+  "sourceId": "2014-tce-artificer",
+  "researchStatus": "second-review",
+  "hitDie": 8,
+  "primaryAbilities": ["intelligence"],
+  "savingThrowProficiencies": ["constitution", "intelligence"],
+  "armorTraining": ["light armor", "medium armor", "shields"],
+  "weaponProficiencies": ["simple weapons"],
+  "toolProficiencies": ["thieves-tools", "tinkers-tools", "one-artisans-tool"],
+  "skillProficiencies": { "count": 2, "options": ["arcana", "history", "investigation", "medicine", "nature", "perception", "sleight-of-hand", "survival"] },
+  "spellcasting": {
+    "type": "prepared-spells",
+    "ability": "intelligence",
+    "preparedSpellsFormula": "intelligenceModifier + floor(artificerLevel / 2) (minimum 1)",
+    "cantripsKnownByLevel": [0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4],
+    "spellSlotsByLevel": {
+      "1": [2], "2": [2], "3": [3], "4": [3], "5": [4, 2], "6": [4, 2], "7": [4, 3], "8": [4, 3], "9": [4, 3, 2], "10": [4, 3, 2], "11": [4, 3, 3], "12": [4, 3, 3], "13": [4, 3, 3, 1], "14": [4, 3, 3, 1], "15": [4, 3, 3, 2], "16": [4, 3, 3, 2], "17": [4, 3, 3, 3, 1], "18": [4, 3, 3, 3, 1], "19": [4, 3, 3, 3, 2], "20": [4, 3, 3, 3, 2]
+    }
+  },
+  "levels": {
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["magical-tinkering", "spellcasting"], "choices": ["choose-2-cantrips"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["infuse-item"], "choices": ["choose-4-infusions"], "resourceChanges": [{ "resourceId": "infusions-known", "maximum": 4 }, { "resourceId": "infused-items", "maximum": 2 }], "sourceReferences": ["2014-tce-artificer"] },
+    "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["artificer-specialist", "the-right-tool-for-the-job"], "choices": ["choose-subclass", "choose-artisans-tool"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": ["artificer-specialist-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "6": { "level": 6, "proficiencyBonus": 3, "automaticFeatures": ["tool-expertise"], "choices": [], "resourceChanges": [{ "resourceId": "infusions-known", "maximum": 6 }, { "resourceId": "infused-items", "maximum": 3 }], "sourceReferences": ["2014-tce-artificer"] },
+    "7": { "level": 7, "proficiencyBonus": 3, "automaticFeatures": ["flash-of-genius"], "choices": [], "resourceChanges": [{ "resourceId": "flash-of-genius-uses", "maximum": "intelligenceModifier" }], "sourceReferences": ["2014-tce-artificer"] },
+    "8": { "level": 8, "proficiencyBonus": 3, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "9": { "level": 9, "proficiencyBonus": 4, "automaticFeatures": ["artificer-specialist-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "10": { "level": 10, "proficiencyBonus": 4, "automaticFeatures": ["magic-item-adept"], "choices": [], "resourceChanges": [{ "resourceId": "infusions-known", "maximum": 8 }, { "resourceId": "infused-items", "maximum": 4 }], "sourceReferences": ["2014-tce-artificer"] },
+    "11": { "level": 11, "proficiencyBonus": 4, "automaticFeatures": ["spell-storing-item"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "12": { "level": 12, "proficiencyBonus": 4, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "13": { "level": 13, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "14": { "level": 14, "proficiencyBonus": 5, "automaticFeatures": ["magic-item-savant"], "choices": [], "resourceChanges": [{ "resourceId": "infusions-known", "maximum": 10 }, { "resourceId": "infused-items", "maximum": 5 }], "sourceReferences": ["2014-tce-artificer"] },
+    "15": { "level": 15, "proficiencyBonus": 5, "automaticFeatures": ["artificer-specialist-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "16": { "level": 16, "proficiencyBonus": 5, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "17": { "level": 17, "proficiencyBonus": 6, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "18": { "level": 18, "proficiencyBonus": 6, "automaticFeatures": ["magic-item-master"], "choices": [], "resourceChanges": [{ "resourceId": "infusions-known", "maximum": 12 }, { "resourceId": "infused-items", "maximum": 6 }], "sourceReferences": ["2014-tce-artificer"] },
+    "19": { "level": 19, "proficiencyBonus": 6, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] },
+    "20": { "level": 20, "proficiencyBonus": 6, "automaticFeatures": ["soul-of-artifice"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-tce-artificer"] }
+  }
+}

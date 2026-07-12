@@ -1,4 +1,3 @@
 # 2014 Progression Audit
 
-This document is the generated-audit destination for strict 2014 progression. The Barbarian pilot is the first structured packet; the remaining classes will be added after extraction and independent review.
-
+This document is the generated-audit destination for strict 2014 progression. All twelve core class packets and the licensed Tasha’s Artificer packet now have independent second-pass review.

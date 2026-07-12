@@ -1,0 +1,163 @@
+{
+  "ruleset": "2024",
+  "sourceId": "2024-basic-rules",
+  "researchStatus": "first-extraction",
+  "independentSecondReview": "pending",
+  "records": [
+    {
+      "id": "path-of-the-berserker-2024",
+      "classId": "barbarian-2024",
+      "name": "Path of the Berserker",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        {
+          "level": 3,
+          "automaticFeatures": ["frenzy"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["requires-reckless-attack", "requires-active-rage", "strength-based-attack"],
+          "scaling": [{ "formula": "rage-damage-bonus-d6-count", "effect": "extra-damage-dice" }],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 6,
+          "automaticFeatures": ["mindless-rage"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["modifies-rage"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 10,
+          "automaticFeatures": ["retaliation"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["reaction", "damaged-by-creature-within-5-feet"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 14,
+          "automaticFeatures": ["intimidating-presence"],
+          "choices": [],
+          "resourceChanges": [{ "resourceId": "intimidating-presence-use", "maximum": 1, "recharge": "long-rest", "restoreBy": "expend-rage-use" }],
+          "parentInteractions": ["bonus-action", "rage-use-can-restore-feature"],
+          "sourceReferences": ["2024-basic-rules"]
+        }
+      ]
+    },
+    {
+      "id": "college-of-lore-2024",
+      "classId": "bard-2024",
+      "name": "College of Lore",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        {
+          "level": 3,
+          "automaticFeatures": ["bonus-proficiencies", "cutting-words"],
+          "choices": [{ "choiceId": "choose-3-skills", "count": 3, "options": "all-skills" }],
+          "resourceChanges": [{ "resourceId": "bardic-inspiration-use", "consumedBy": "cutting-words" }],
+          "parentInteractions": ["reaction", "uses-bardic-inspiration", "subtract-from-damage-or-successful-attack-or-ability-check"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 6,
+          "automaticFeatures": ["magical-discoveries"],
+          "choices": [{ "choiceId": "choose-2-spells", "count": 2, "lists": ["cleric", "druid", "wizard"], "spellLimit": "cantrip-or-spell-for-which-bard-has-slots" }],
+          "resourceChanges": [],
+          "spellChanges": [{ "kind": "always-prepared", "count": 2, "replaceableOnBardLevelUp": 1, "sourceLists": ["cleric", "druid", "wizard"] }],
+          "parentInteractions": ["uses-bard-spell-slots", "spells-count-as-bard-spells"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 14,
+          "automaticFeatures": ["peerless-skill"],
+          "choices": [],
+          "resourceChanges": [{ "resourceId": "bardic-inspiration-use", "consumedBy": "peerless-skill-on-success" }],
+          "parentInteractions": ["failed-ability-check-or-attack-roll", "failed-attempt-does-not-consume-inspiration"],
+          "sourceReferences": ["2024-basic-rules"]
+        }
+      ]
+    },
+    {
+      "id": "life-domain-2024",
+      "classId": "cleric-2024",
+      "name": "Life Domain",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        {
+          "level": 3,
+          "automaticFeatures": ["disciple-of-life", "life-domain-spells", "preserve-life"],
+          "choices": [],
+          "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "preserve-life" }],
+          "spellChanges": [{ "kind": "always-prepared", "byClericLevel": { "3": ["aid", "bless", "cure-wounds", "lesser-restoration"], "5": ["mass-healing-word", "revivify"], "7": ["aura-of-life", "death-ward"], "9": ["greater-restoration", "mass-cure-wounds"] } }],
+          "parentInteractions": ["uses-channel-divinity", "healing-spell-slot-level-adds-2-plus-slot-level"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 6,
+          "automaticFeatures": ["blessed-healer"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["healing-spell-slot-on-another-creature", "self-healing-equals-2-plus-slot-level"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 17,
+          "automaticFeatures": ["supreme-healing"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["applies-to-spell-or-channel-divinity-healing", "replace-healing-dice-with-maximum"],
+          "sourceReferences": ["2024-basic-rules"]
+        }
+      ]
+    },
+    {
+      "id": "circle-of-the-land-2024",
+      "classId": "druid-2024",
+      "name": "Circle of the Land",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        {
+          "level": 3,
+          "automaticFeatures": ["circle-of-the-land-spells", "lands-aid"],
+          "choices": [{ "choiceId": "choose-land-type", "options": ["arid", "polar", "temperate", "tropical"], "when": "after-each-long-rest" }],
+          "resourceChanges": [{ "resourceId": "wild-shape-use", "consumedBy": "lands-aid-and-natures-sanctuary" }],
+          "spellChanges": [{ "kind": "always-prepared-by-choice", "choiceId": "choose-land-type", "byChoice": { "arid": { "3": ["blur", "burning-hands", "fire-bolt"], "5": ["fireball"], "7": ["blight"], "9": ["wall-of-stone"] }, "polar": { "3": ["fog-cloud", "hold-person", "ray-of-frost"], "5": ["sleet-storm"], "7": ["ice-storm"], "9": ["cone-of-cold"] }, "temperate": { "3": ["misty-step", "shocking-grasp", "sleep"], "5": ["lightning-bolt"], "7": ["freedom-of-movement"], "9": ["tree-stride"] }, "tropical": { "3": ["acid-splash", "ray-of-sickness", "web"], "5": ["stinking-cloud"], "7": ["polymorph"], "9": ["insect-plague"] } } }],
+          "parentInteractions": ["spell-save-dc", "wild-shape-use", "damage-and-healing-scale-at-druid-levels-10-and-14"],
+          "scaling": [{ "levels": [3, 9], "lands-aid-dice": "2d6" }, { "levels": [10, 13], "lands-aid-dice": "3d6" }, { "levels": [14, 20], "lands-aid-dice": "4d6" }],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 6,
+          "automaticFeatures": ["natural-recovery"],
+          "choices": [],
+          "resourceChanges": [{ "resourceId": "natural-recovery-free-circle-spell", "maximum": 1, "recharge": "long-rest" }, { "resourceId": "natural-recovery-slot-levels", "maximum": "ceil(druid-level/2)", "recharge": "long-rest", "maxSlotLevel": 5 }],
+          "spellChanges": [{ "kind": "free-cast", "source": "circle-spells", "maximum": 1, "recharge": "long-rest" }],
+          "parentInteractions": ["short-rest-slot-recovery", "uses-prepared-circle-spell", "no-slot-level-6-or-higher"],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 10,
+          "automaticFeatures": ["natures-ward"],
+          "choices": [],
+          "resourceChanges": [],
+          "parentInteractions": ["current-land-choice", "poison-immunity", "land-dependent-resistance"],
+          "scaling": [{ "choice": "arid", "resistance": "fire" }, { "choice": "polar", "resistance": "cold" }, { "choice": "temperate", "resistance": "lightning" }, { "choice": "tropical", "resistance": "poison" }],
+          "sourceReferences": ["2024-basic-rules"]
+        },
+        {
+          "level": 14,
+          "automaticFeatures": ["natures-sanctuary"],
+          "choices": [],
+          "resourceChanges": [{ "resourceId": "wild-shape-use", "consumedBy": "natures-sanctuary" }],
+          "parentInteractions": ["current-land-resistance", "wild-shape-use", "bonus-action-move-created-cube"],
+          "sourceReferences": ["2024-basic-rules"]
+        }
+      ]
+    }
+  ]
+}

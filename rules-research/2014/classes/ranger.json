@@ -1,0 +1,46 @@
+{
+  "id": "ranger-2014",
+  "ruleset": "2014",
+  "name": "Ranger",
+  "sourceId": "2014-srd-5.1",
+  "researchStatus": "second-review",
+  "hitDie": 10,
+  "primaryAbilities": ["dexterity", "wisdom"],
+  "savingThrowProficiencies": ["strength", "dexterity"],
+  "armorTraining": ["light armor", "medium armor", "shields"],
+  "weaponProficiencies": ["simple weapons", "martial weapons"],
+  "skillProficiencies": { "count": 3, "options": ["animal-handling", "athletics", "insight", "investigation", "nature", "perception", "stealth", "survival"] },
+  "spellcasting": {
+    "type": "known-spells",
+    "ability": "wisdom",
+    "spellsKnownByLevel": [0, 0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11],
+    "spellSlotsByLevel": {
+      "1": [], "2": [2], "3": [3], "4": [3], "5": [4, 2], "6": [4, 2], "7": [4, 3], "8": [4, 3],
+      "9": [4, 3, 2], "10": [4, 3, 2], "11": [4, 3, 3], "12": [4, 3, 3], "13": [4, 3, 3, 1],
+      "14": [4, 3, 3, 1], "15": [4, 3, 3, 2], "16": [4, 3, 3, 2], "17": [4, 3, 3, 3, 1],
+      "18": [4, 3, 3, 3, 1], "19": [4, 3, 3, 3, 2], "20": [4, 3, 3, 3, 2]
+    }
+  },
+  "levels": {
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["favored-enemy", "natural-explorer"], "choices": ["choose-favored-enemy", "choose-favored-terrain"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["fighting-style", "spellcasting"], "choices": ["choose-fighting-style"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["ranger-archetype", "primeval-awareness"], "choices": ["choose-subclass"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": ["extra-attack"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "6": { "level": 6, "proficiencyBonus": 3, "automaticFeatures": ["favored-enemy-improvement", "natural-explorer-improvement"], "choices": ["choose-favored-enemy", "choose-favored-terrain"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "7": { "level": 7, "proficiencyBonus": 3, "automaticFeatures": ["ranger-archetype-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "8": { "level": 8, "proficiencyBonus": 3, "automaticFeatures": ["ability-score-improvement", "lands-stride"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "9": { "level": 9, "proficiencyBonus": 4, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "10": { "level": 10, "proficiencyBonus": 4, "automaticFeatures": ["natural-explorer-improvement", "hide-in-plain-sight"], "choices": ["choose-favored-terrain"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "11": { "level": 11, "proficiencyBonus": 4, "automaticFeatures": ["ranger-archetype-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "12": { "level": 12, "proficiencyBonus": 4, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "13": { "level": 13, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "14": { "level": 14, "proficiencyBonus": 5, "automaticFeatures": ["favored-enemy-improvement", "vanish"], "choices": ["choose-favored-enemy"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "15": { "level": 15, "proficiencyBonus": 5, "automaticFeatures": ["ranger-archetype-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "16": { "level": 16, "proficiencyBonus": 5, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "17": { "level": 17, "proficiencyBonus": 6, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "18": { "level": 18, "proficiencyBonus": 6, "automaticFeatures": ["feral-senses"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "19": { "level": 19, "proficiencyBonus": 6, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "20": { "level": 20, "proficiencyBonus": 6, "automaticFeatures": ["foe-slayer"], "choices": [], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] }
+  }
+}

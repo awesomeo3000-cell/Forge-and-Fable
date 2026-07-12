@@ -1,0 +1,51 @@
+{
+  "id": "druid-2024",
+  "ruleset": "2024",
+  "name": "Druid",
+  "sourceId": "2024-basic-rules",
+  "researchStatus": "second-review",
+  "hitDie": 8,
+  "primaryAbilities": ["wisdom"],
+  "savingThrowProficiencies": ["intelligence", "wisdom"],
+  "armorTraining": ["light armor", "shields"],
+  "weaponProficiencies": ["simple weapons"],
+  "toolProficiencies": ["herbalism kit"],
+  "skillProficiencies": { "count": 2, "options": ["arcana", "animal-handling", "insight", "medicine", "nature", "perception", "religion", "survival"] },
+  "spellcasting": {
+    "type": "prepared-spells",
+    "ability": "wisdom",
+    "preparedSpellsByLevel": [0, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22],
+    "cantripsKnownByLevel": [0, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    "spellSlotsByLevel": {
+      "1": [2], "2": [3], "3": [4, 2], "4": [4, 3], "5": [4, 3, 2],
+      "6": [4, 3, 3], "7": [4, 3, 3, 1], "8": [4, 3, 3, 2], "9": [4, 3, 3, 3, 1],
+      "10": [4, 3, 3, 3, 2], "11": [4, 3, 3, 3, 2, 1], "12": [4, 3, 3, 3, 2, 1],
+      "13": [4, 3, 3, 3, 2, 1, 1], "14": [4, 3, 3, 3, 2, 1, 1],
+      "15": [4, 3, 3, 3, 2, 1, 1, 1], "16": [4, 3, 3, 3, 2, 1, 1, 1],
+      "17": [4, 3, 3, 3, 2, 1, 1, 1, 1], "18": [4, 3, 3, 3, 3, 1, 1, 1, 1],
+      "19": [4, 3, 3, 3, 3, 2, 1, 1, 1], "20": [4, 3, 3, 3, 3, 2, 2, 1, 1]
+    }
+  },
+  "levels": {
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["spellcasting", "druidic", "primal-order"], "choices": ["choose-primal-order", "choose-2-cantrips"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["wild-shape", "wild-companion"], "choices": ["choose-4-known-beast-forms"], "resourceChanges": [{ "resourceId": "wild-shape-uses", "maximum": 2 }, { "resourceId": "wild-shape-max-cr", "maximum": "1/4" }], "sourceReferences": ["2024-basic-rules"] },
+    "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["druid-subclass"], "choices": ["choose-subclass"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat", "choose-2-known-beast-forms"], "resourceChanges": [{ "resourceId": "wild-shape-max-cr", "maximum": "1/2" }], "sourceReferences": ["2024-basic-rules"] },
+    "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": ["wild-resurgence"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "6": { "level": 6, "proficiencyBonus": 3, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [{ "resourceId": "wild-shape-uses", "maximum": 3 }], "sourceReferences": ["2024-basic-rules"] },
+    "7": { "level": 7, "proficiencyBonus": 3, "automaticFeatures": ["elemental-fury"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "8": { "level": 8, "proficiencyBonus": 3, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat", "choose-2-known-beast-forms"], "resourceChanges": [{ "resourceId": "wild-shape-max-cr", "maximum": 1 }, { "resourceId": "wild-shape-fly-speed", "maximum": true }], "sourceReferences": ["2024-basic-rules"] },
+    "9": { "level": 9, "proficiencyBonus": 4, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "10": { "level": 10, "proficiencyBonus": 4, "automaticFeatures": ["subclass-feature"], "choices": ["choose-1-cantrip"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "11": { "level": 11, "proficiencyBonus": 4, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "12": { "level": 12, "proficiencyBonus": 4, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "13": { "level": 13, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "14": { "level": 14, "proficiencyBonus": 5, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "15": { "level": 15, "proficiencyBonus": 5, "automaticFeatures": ["improved-elemental-fury"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "16": { "level": 16, "proficiencyBonus": 5, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "17": { "level": 17, "proficiencyBonus": 6, "automaticFeatures": [], "choices": [], "resourceChanges": [{ "resourceId": "wild-shape-uses", "maximum": 4 }], "sourceReferences": ["2024-basic-rules"] },
+    "18": { "level": 18, "proficiencyBonus": 6, "automaticFeatures": ["beast-spells"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "19": { "level": 19, "proficiencyBonus": 6, "automaticFeatures": ["epic-boon"], "choices": ["choose-epic-boon"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "20": { "level": 20, "proficiencyBonus": 6, "automaticFeatures": ["archdruid"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] }
+  }
+}

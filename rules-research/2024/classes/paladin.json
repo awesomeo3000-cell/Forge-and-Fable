@@ -1,0 +1,46 @@
+{
+  "id": "paladin-2024",
+  "ruleset": "2024",
+  "name": "Paladin",
+  "sourceId": "2024-basic-rules",
+  "researchStatus": "second-review",
+  "hitDie": 10,
+  "primaryAbilities": ["strength", "charisma"],
+  "savingThrowProficiencies": ["wisdom", "charisma"],
+  "armorTraining": ["light armor", "medium armor", "heavy armor", "shields"],
+  "weaponProficiencies": ["simple weapons", "martial weapons"],
+  "skillProficiencies": { "count": 2, "options": ["athletics", "insight", "intimidation", "medicine", "persuasion", "religion"] },
+  "spellcasting": {
+    "type": "prepared-spells",
+    "ability": "charisma",
+    "preparedSpellsByLevel": [0, 2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15],
+    "spellSlotsByLevel": {
+      "1": [], "2": [], "3": [], "4": [], "5": [4, 2], "6": [4, 2], "7": [4, 3], "8": [4, 3],
+      "9": [4, 3, 2], "10": [4, 3, 2], "11": [4, 3, 3], "12": [4, 3, 3], "13": [4, 3, 3, 1],
+      "14": [4, 3, 3, 1], "15": [4, 3, 3, 2], "16": [4, 3, 3, 2], "17": [4, 3, 3, 3, 1],
+      "18": [4, 3, 3, 3, 1], "19": [4, 3, 3, 3, 2], "20": [4, 3, 3, 3, 2]
+    }
+  },
+  "levels": {
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["lay-on-hands", "spellcasting", "weapon-mastery"], "choices": ["choose-weapon-mastery"], "resourceChanges": [{ "resourceId": "lay-on-hands-pool", "maximum": "paladinLevel * 5" }, { "resourceId": "weapon-mastery", "maximum": 2 }], "sourceReferences": ["2024-basic-rules"] },
+    "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["fighting-style", "paladins-smite"], "choices": ["choose-fighting-style"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["channel-divinity", "paladin-subclass"], "choices": ["choose-subclass"], "resourceChanges": [{ "resourceId": "channel-divinity-uses", "maximum": 2 }], "sourceReferences": ["2024-basic-rules"] },
+    "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "5": { "level": 5, "proficiencyBonus": 3, "automaticFeatures": ["extra-attack", "faithful-steed"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "6": { "level": 6, "proficiencyBonus": 3, "automaticFeatures": ["aura-of-protection"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "7": { "level": 7, "proficiencyBonus": 3, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "8": { "level": 8, "proficiencyBonus": 3, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "9": { "level": 9, "proficiencyBonus": 4, "automaticFeatures": ["abjure-foes"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "10": { "level": 10, "proficiencyBonus": 4, "automaticFeatures": ["aura-of-courage"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "11": { "level": 11, "proficiencyBonus": 4, "automaticFeatures": ["radiant-strikes"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-uses", "maximum": 3 }], "sourceReferences": ["2024-basic-rules"] },
+    "12": { "level": 12, "proficiencyBonus": 4, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "13": { "level": 13, "proficiencyBonus": 5, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "14": { "level": 14, "proficiencyBonus": 5, "automaticFeatures": ["restoring-touch"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "15": { "level": 15, "proficiencyBonus": 5, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "16": { "level": 16, "proficiencyBonus": 5, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "17": { "level": 17, "proficiencyBonus": 6, "automaticFeatures": [], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "18": { "level": 18, "proficiencyBonus": 6, "automaticFeatures": ["aura-expansion"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "19": { "level": 19, "proficiencyBonus": 6, "automaticFeatures": ["epic-boon"], "choices": ["choose-epic-boon"], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] },
+    "20": { "level": 20, "proficiencyBonus": 6, "automaticFeatures": ["subclass-feature"], "choices": [], "resourceChanges": [], "sourceReferences": ["2024-basic-rules"] }
+  }
+}
