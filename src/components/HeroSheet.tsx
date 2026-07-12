@@ -103,6 +103,26 @@ function equipmentCatalogCategory(item: CatalogItem): typeof EQUIPMENT_CATEGORIE
   return "Other Gear";
 }
 
+function catalogBackedInventoryItem(item: InventoryItem): InventoryItem {
+  const normalizedName = item.name.toLowerCase().replace(/\s+armor$/, "").trim();
+  const catalog = ITEM_CATALOG.find((candidate) => candidate.id === item.sourceItemId)
+    ?? ITEM_CATALOG.find((candidate) => candidate.name.toLowerCase() === normalizedName);
+  if (!catalog) return item;
+  const base = catalogItemToInventory(catalog);
+  return {
+    ...base,
+    ...item,
+    category: item.category || base.category,
+    classification: item.classification || base.classification,
+    description: item.description || base.description,
+    ac: item.ac || base.ac,
+    damage: item.damage || base.damage,
+    damageType: item.damageType || base.damageType,
+    properties: item.properties || base.properties,
+    cost: item.cost || base.cost,
+  };
+}
+
 function ModuleTab({ groupId, sectionId, title, active, editMode, onSelect }: { groupId: string; sectionId: SheetSectionId; title: string; active: boolean; editMode: boolean; onSelect: () => void }) {
   const dragId = `tab:${groupId}:${sectionId}`;
   const draggable = useDraggable({ id: dragId, disabled: !editMode });
@@ -176,7 +196,8 @@ export default memo(function HeroSheet(props: {
   const pb = proficiencyBonus(props.character.level);
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
   const equipment = props.character.equipment ?? {};
-  const equipmentItemBonuses = getEquippedItemBonuses(props.character.inventory, equipment, { includeAc: false });
+  const inventoryItems = props.character.inventory.map(catalogBackedInventoryItem);
+  const equipmentItemBonuses = getEquippedItemBonuses(inventoryItems, equipment, { includeAc: false });
 
   const effectsList = props.character.effects ?? [];
   const activeEffects = effectsList.filter((e) => e.active);
@@ -200,8 +221,8 @@ export default memo(function HeroSheet(props: {
   };
 
   const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
-  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, props.character.inventory);
-  const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, props.character.inventory);
+  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, inventoryItems);
+  const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, inventoryItems);
   const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" or ")}` : "";
   const d20OptionsForAbility = (ability?: AbilityKey): RollD20Options | undefined =>
     armorProficiencyIssue.strengthDexterityDisadvantage && (ability === "strength" || ability === "dexterity")
@@ -210,7 +231,7 @@ export default memo(function HeroSheet(props: {
   const rollD20ForAbility = (label: string, modifier: number, ability?: AbilityKey) => rollD20(label, modifier, d20OptionsForAbility(ability));
   const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
   const currency = props.character.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
-  const carriedWeight = totalCarriedWeight(props.character.inventory, equipment, currency, props.character.settings.ignoreCoinWeight);
+  const carriedWeight = totalCarriedWeight(inventoryItems, equipment, currency, props.character.settings.ignoreCoinWeight);
   const capacity = carryCapacity(props.finalAbilities.strength, props.character.settings.encumbranceType);
   const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
@@ -295,7 +316,7 @@ export default memo(function HeroSheet(props: {
         .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
     : [];
   // Cumulative max of leveled (non-cantrip) spells a known caster can know at their current level.
-  const knownSpellsCumulativeMax = useMemo(() => {
+  const knownSpellsCumulativeMax = (() => {
     const table = SPELLS_LEARNED_PER_LEVEL[heroClass.id];
     if (!table) return 0;
     let total = 0;
@@ -303,7 +324,7 @@ export default memo(function HeroSheet(props: {
       total += table[i];
     }
     return total;
-  }, [heroClass.id, props.character.level]);
+  })();
   // Non-wizard known casters (Bard, Ranger, Sorcerer, Warlock) who learn individual spells.
   const isKnownCasterNotWizard = !canManageSpellbook && learnsIndividualSpells(heroClass.id, casterType);
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
@@ -1386,7 +1407,7 @@ export default memo(function HeroSheet(props: {
                 const weapon = getWeapon(weaponId);
                 return weapon ? <label className="cs-equipment-option" key={weaponId}><input type="checkbox" checked onChange={() => toggleWeapon(weaponId)} /><span><strong>{weapon.name}</strong><small>Legacy weapon · {weapon.damage} {weapon.damageType}</small></span></label> : null;
               })}
-              {props.character.inventory.map((item) => {
+              {inventoryItems.map((item) => {
                 const state = inventoryItemEquipState(item);
                 const equippable = isArmorItem(item) || isShieldItem(item) || isWeaponItem(item) || isBonusEquipmentItem(item);
                 const equipped = state.armor || state.shield || state.weapon || state.bonus;
@@ -1481,7 +1502,7 @@ export default memo(function HeroSheet(props: {
       case "attacks": {
         const staticWeaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
         const inventoryWeaponDefs = (equipment.weaponItemIds ?? [])
-          .map((id) => props.character.inventory.find((item) => item.id === id))
+          .map((id) => inventoryItems.find((item) => item.id === id))
           .filter((item): item is InventoryItem => !!item)
           .map((item) => inventoryWeaponToDef(item))
           .filter((weapon): weapon is WeaponDef => !!weapon);
@@ -1795,7 +1816,7 @@ export default memo(function HeroSheet(props: {
                 ) : null}
               </div>
               {props.character.inventory.length > 0 ? (
-                <div className="cs-inv-list">{props.character.inventory.map((item) => {
+                <div className="cs-inv-list">{inventoryItems.map((item) => {
                   const equippedAsArmor = equipment.armorItemId === item.id;
                   const equippedAsShield = equipment.shieldItemId === item.id;
                   const equippedAsWeapon = (equipment.weaponItemIds ?? []).includes(item.id);
