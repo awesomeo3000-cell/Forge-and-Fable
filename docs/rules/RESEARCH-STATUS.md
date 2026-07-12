@@ -30,7 +30,7 @@
 | Artificer | 2024 | policy-blocked | Not part of the twelve-class 2024 Basic Rules core inventory; later and Unearthed Arcana sources are deferred. |
 | Remaining base classes | 2014 | inventory-complete | Existing production catalog exists; structured extraction remains. |
 | Remaining base classes | 2024 | inventory-complete | Core class names identified; structured extraction remains. |
-| Subclasses | 2014 | inventory-complete | 32 source-backed records have edition-specific IDs; feature extraction remains. |
-| Subclasses | 2024 | inventory-complete-basic-rules | 12 Basic Rules records have edition-specific IDs; additional licensed coverage remains pending. |
+| Subclasses | 2014 | first-extraction-partial | 32 source-backed records have edition-specific IDs; detailed packets now cover the four first edition-comparison subclasses, with the remaining records pending. |
+| Subclasses | 2024 | first-extraction-basic-rules | 12 Basic Rules records have edition-specific IDs and detailed structured feature packets; independent second review and additional licensed coverage remain pending. |
 
 No 2024 record is production-approved by this status file.

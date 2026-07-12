@@ -8,6 +8,7 @@ const sourceIds = new Set(sources.map((source) => source.id));
 const inventory = JSON.parse(fs.readFileSync(path.join(researchRoot, "inventory.json"), "utf8"));
 const subclassInventory = JSON.parse(fs.readFileSync(path.join(researchRoot, "subclasses/inventory.json"), "utf8"));
 const detailedSubclassPackets = [
+  "subclasses/2014/basic-rules.json",
   "subclasses/2024/basic-rules.json",
 ];
 const errors = [];

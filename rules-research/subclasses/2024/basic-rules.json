@@ -158,6 +158,111 @@
           "sourceReferences": ["2024-basic-rules"]
         }
       ]
+    },
+    {
+      "id": "champion-2024",
+      "classId": "fighter-2024",
+      "name": "Champion",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["improved-critical", "remarkable-athlete"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapons-and-unarmed-strikes", "critical-hit"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 7, "automaticFeatures": ["additional-fighting-style"], "choices": [{ "choiceId": "choose-fighting-style-feat", "count": 1 }], "resourceChanges": [], "parentInteractions": ["fighting-style-feat"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 10, "automaticFeatures": ["heroic-warrior"], "choices": [], "resourceChanges": [{ "resourceId": "heroic-inspiration", "grantedWhen": "start-turn-without-heroic-inspiration-during-combat" }], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 15, "automaticFeatures": ["superior-critical"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapons-and-unarmed-strikes", "critical-hit-on-18-through-20"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 18, "automaticFeatures": ["survivor"], "choices": [], "resourceChanges": [], "parentInteractions": ["death-saving-throws", "bloodied", "constitution-modifier"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "warrior-of-the-open-hand-2024",
+      "classId": "monk-2024",
+      "name": "Warrior of the Open Hand",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["open-hand-technique"], "choices": [{ "choiceId": "choose-flurry-of-blows-technique", "options": ["addle", "push", "topple"] }], "resourceChanges": [{ "resourceId": "focus-point", "consumedBy": "flurry-of-blows" }], "parentInteractions": ["flurry-of-blows", "strength-or-dexterity-saving-throw"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 6, "automaticFeatures": ["wholeness-of-body"], "choices": [], "resourceChanges": [{ "resourceId": "wholeness-of-body-uses", "maximum": "wisdom-modifier(min1)", "recharge": "long-rest" }], "parentInteractions": ["bonus-action", "martial-arts-die", "wisdom-modifier"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 11, "automaticFeatures": ["fleet-step"], "choices": [], "resourceChanges": [], "parentInteractions": ["bonus-action", "step-of-the-wind"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 17, "automaticFeatures": ["quivering-palm"], "choices": [], "resourceChanges": [{ "resourceId": "focus-point", "cost": 4, "consumedBy": "start-vibrations" }], "parentInteractions": ["unarmed-strike", "one-active-target", "constitution-saving-throw"], "scaling": [{ "effect": "force-damage", "amount": "10d12" }], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "oath-of-devotion-2024",
+      "classId": "paladin-2024",
+      "name": "Oath of Devotion",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["oath-of-devotion-spells", "sacred-weapon"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "sacred-weapon" }], "spellChanges": [{ "kind": "always-prepared", "byPaladinLevel": { "3": ["protection-from-evil-and-good", "shield-of-faith"], "5": ["aid", "zone-of-truth"], "9": ["beacon-of-hope", "dispel-magic"], "13": ["freedom-of-movement", "guardian-of-faith"], "17": ["commune", "flame-strike"] } }], "parentInteractions": ["channel-divinity", "attack-action", "charisma-modifier-to-attack-rolls"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 7, "automaticFeatures": ["aura-of-devotion"], "choices": [], "resourceChanges": [], "parentInteractions": ["aura-of-protection", "charmed-immunity"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 15, "automaticFeatures": ["smite-of-protection"], "choices": [], "resourceChanges": [], "parentInteractions": ["divine-smite", "aura-of-protection", "half-cover"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 20, "automaticFeatures": ["holy-nimbus"], "choices": [], "resourceChanges": [{ "resourceId": "holy-nimbus-use", "maximum": 1, "recharge": "long-rest", "restoreBy": "expend-level-5-spell-slot" }], "parentInteractions": ["bonus-action", "aura-of-protection", "fiend-or-undead-saving-throws"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "hunter-2024",
+      "classId": "ranger-2024",
+      "name": "Hunter",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["hunters-lore", "hunters-prey"], "choices": [{ "choiceId": "choose-hunters-prey", "options": ["colossus-slayer", "horde-breaker"], "replaceable": "short-or-long-rest" }], "resourceChanges": [], "parentInteractions": ["hunters-mark", "marked-creature-defenses"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 7, "automaticFeatures": ["defensive-tactics"], "choices": [{ "choiceId": "choose-defensive-tactics", "options": ["escape-the-horde", "multiattack-defense"], "replaceable": "short-or-long-rest" }], "resourceChanges": [], "parentInteractions": ["opportunity-attacks", "attack-rolls-against-you"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 11, "automaticFeatures": ["superior-hunters-prey"], "choices": [], "resourceChanges": [], "parentInteractions": ["hunters-mark", "once-per-turn", "second-creature-within-30-feet"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 15, "automaticFeatures": ["superior-hunters-defense"], "choices": [], "resourceChanges": [], "parentInteractions": ["reaction", "damage-type-resistance-until-end-of-turn"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "thief-2024",
+      "classId": "rogue-2024",
+      "name": "Thief",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["fast-hands", "second-story-work"], "choices": [], "resourceChanges": [], "parentInteractions": ["bonus-action", "sleight-of-hand", "utilize-action", "magic-action", "climb-speed-equals-speed", "dexterity-jump"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 9, "automaticFeatures": ["supreme-sneak"], "choices": [], "resourceChanges": [{ "resourceId": "cunning-strike-d6", "cost": 1, "consumedBy": "stealth-attack" }], "parentInteractions": ["cunning-strike", "hide-action-invisible-condition", "cover-preserves-invisibility"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 13, "automaticFeatures": ["use-magic-device"], "choices": [], "resourceChanges": [{ "resourceId": "attunement-slots", "maximum": 4 }, { "resourceId": "magic-item-charge-free-use", "chance": "1d6-equals-6" }], "parentInteractions": ["intelligence-arcana", "spell-scrolls", "spellcasting-ability-intelligence"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 17, "automaticFeatures": ["thiefs-reflexes"], "choices": [], "resourceChanges": [], "parentInteractions": ["two-turns-first-combat-round", "second-initiative-at-minus-10"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "draconic-sorcery-2024",
+      "classId": "sorcerer-2024",
+      "name": "Draconic Sorcery",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["draconic-resilience", "draconic-spells"], "choices": [], "resourceChanges": [{ "resourceId": "hit-point-maximum", "maximum": "plus-3-at-level-3-plus-1-per-sorcerer-level" }], "spellChanges": [{ "kind": "always-prepared", "bySorcererLevel": { "3": ["alter-self", "chromatic-orb", "command", "dragons-breath"], "5": ["fear", "fly"], "7": ["arcane-eye", "charm-monster"], "9": ["legend-lore", "summon-dragon"] } }], "parentInteractions": ["unarmored-ac-equals-10-plus-dexterity-and-charisma"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 6, "automaticFeatures": ["elemental-affinity"], "choices": [{ "choiceId": "choose-draconic-damage-type", "options": ["acid", "cold", "fire", "lightning", "poison"] }], "resourceChanges": [], "parentInteractions": ["chosen-damage-type", "charisma-modifier-to-one-damage-roll"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 14, "automaticFeatures": ["dragon-wings"], "choices": [], "resourceChanges": [{ "resourceId": "dragon-wings-use", "maximum": 1, "recharge": "long-rest", "restoreBy": "spend-3-sorcery-points" }], "parentInteractions": ["bonus-action", "fly-speed-60"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 18, "automaticFeatures": ["dragon-companion"], "choices": [], "resourceChanges": [{ "resourceId": "summon-dragon-free-cast", "maximum": 1, "recharge": "long-rest" }], "spellChanges": [{ "kind": "cast-without-material-component", "spell": "summon-dragon" }, { "kind": "optional-concentration-removal", "spell": "summon-dragon", "duration": "1-minute" }], "parentInteractions": ["summon-dragon", "no-material-component", "no-concentration-option"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "fiend-2024",
+      "classId": "warlock-2024",
+      "name": "The Fiend",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["dark-ones-blessing", "fiend-spells"], "choices": [], "resourceChanges": [{ "resourceId": "temporary-hit-points", "maximum": "charisma-modifier-plus-warlock-level-min1", "trigger": "you-or-creature-within-10-feet-reduces-enemy-to-zero" }], "spellChanges": [{ "kind": "always-prepared", "byWarlockLevel": { "3": ["burning-hands", "command", "scorching-ray", "suggestion"], "5": ["fireball", "stinking-cloud"], "7": ["fire-shield", "wall-of-fire"], "9": ["geas", "insect-plague"] } }], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 6, "automaticFeatures": ["dark-ones-own-luck"], "choices": [], "resourceChanges": [{ "resourceId": "dark-ones-own-luck-uses", "maximum": "charisma-modifier-min1", "recharge": "long-rest" }], "parentInteractions": ["ability-check-or-saving-throw", "add-1d10-after-roll"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 10, "automaticFeatures": ["fiendish-resilience"], "choices": [{ "choiceId": "choose-resistance-damage-type", "exclude": ["force"], "when": "after-short-or-long-rest" }], "resourceChanges": [], "parentInteractions": ["damage-resistance", "replace-previous-choice"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 14, "automaticFeatures": ["hurl-through-hell"], "choices": [], "resourceChanges": [], "parentInteractions": ["once-per-turn-attack-roll", "charisma-saving-throw", "spell-save-dc", "8d10-psychic-if-not-fiend"], "sourceReferences": ["2024-basic-rules"] }
+      ]
+    },
+    {
+      "id": "evoker-2024",
+      "classId": "wizard-2024",
+      "name": "Evoker",
+      "selectionLevel": 3,
+      "reprintRelationship": "2024-basic-rules-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["evocation-savant", "potent-cantrip"], "choices": [{ "choiceId": "choose-2-evocation-wizard-spells", "maximumSpellLevel": 2 }, { "choiceId": "add-evocation-spell-on-new-slot-level", "count": 1 }], "resourceChanges": [], "spellChanges": [{ "kind": "spellbook-addition", "school": "evocation", "count": 2, "maximumSpellLevel": 2 }, { "kind": "spellbook-addition", "school": "evocation", "count": 1, "when": "gain-access-to-new-spell-slot-level" }], "parentInteractions": ["wizard-spellbook", "wizard-cantrips", "missed-attack-or-successful-save"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 6, "automaticFeatures": ["sculpt-spells"], "choices": [], "resourceChanges": [], "parentInteractions": ["evocation-spell", "visible-creatures", "automatically-succeed-saving-throw", "no-half-damage"], "scaling": [{ "formula": "1-plus-spell-level", "effect": "number-of-protected-creatures" }], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 10, "automaticFeatures": ["empowered-evocation"], "choices": [], "resourceChanges": [], "parentInteractions": ["evocation-wizard-spell", "intelligence-modifier-to-one-damage-roll"], "sourceReferences": ["2024-basic-rules"] },
+        { "level": 14, "automaticFeatures": ["overchannel"], "choices": [], "resourceChanges": [{ "resourceId": "overchannel-free-use", "maximum": 1, "recharge": "long-rest" }, { "resourceId": "overchannel-follow-up-cost", "maximum": "2d12-necrotic-per-spell-slot-level", "ignores": ["resistance", "immunity"] }], "parentInteractions": ["wizard-spell-slot-level-1-through-5", "damage-spell", "first-use-no-adverse-effect"], "sourceReferences": ["2024-basic-rules"] }
+      ]
     }
   ]
 }

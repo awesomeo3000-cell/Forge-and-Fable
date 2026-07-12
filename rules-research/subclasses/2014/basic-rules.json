@@ -1,0 +1,60 @@
+{
+  "ruleset": "2014",
+  "sourceId": "2014-srd-5.1",
+  "researchStatus": "first-extraction",
+  "independentSecondReview": "pending",
+  "records": [
+    {
+      "id": "path-of-the-berserker-2014",
+      "classId": "barbarian-2014",
+      "name": "Path of the Berserker",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["frenzy"], "choices": [], "resourceChanges": [{ "resourceId": "exhaustion", "appliedWhen": "frenzy-rage-ends", "amount": 1 }], "parentInteractions": ["rage", "bonus-action", "melee-weapon-attack-after-first-turn"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["mindless-rage"], "choices": [], "resourceChanges": [], "parentInteractions": ["rage", "suspend-charmed-or-frightened"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 10, "automaticFeatures": ["intimidating-presence"], "choices": [], "resourceChanges": [], "parentInteractions": ["action", "single-creature", "charisma-modifier", "repeat-save-each-turn", "24-hour-immunity-on-success"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 14, "automaticFeatures": ["retaliation"], "choices": [], "resourceChanges": [], "parentInteractions": ["reaction", "damaged-by-creature-within-5-feet", "melee-weapon-attack"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "college-of-lore-2014",
+      "classId": "bard-2014",
+      "name": "College of Lore",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["bonus-proficiencies", "cutting-words"], "choices": [{ "choiceId": "choose-3-skills", "count": 3, "options": "all-skills" }], "resourceChanges": [{ "resourceId": "bardic-inspiration-use", "consumedBy": "cutting-words" }], "parentInteractions": ["reaction", "uses-bardic-inspiration", "creature-must-hear-you", "charmed-immunity"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["additional-magical-secrets"], "choices": [{ "choiceId": "choose-2-spells-from-any-class", "count": 2, "spellLimit": "cantrip-or-spell-for-which-bard-has-slots" }], "resourceChanges": [], "spellChanges": [{ "kind": "known-spells", "count": 2, "sourceLists": "any-class", "countsAgainstBardSpellsKnown": false, "countsAsBardSpells": true }], "parentInteractions": ["bard-spell-slots"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 14, "automaticFeatures": ["peerless-skill"], "choices": [], "resourceChanges": [{ "resourceId": "bardic-inspiration-use", "consumedBy": "peerless-skill" }], "parentInteractions": ["ability-check", "reaction-to-roll-before-success-failure"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "life-domain-2014",
+      "classId": "cleric-2014",
+      "name": "Life Domain",
+      "selectionLevel": 1,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 1, "automaticFeatures": ["life-domain-spells", "bonus-proficiency-heavy-armor", "disciple-of-life"], "choices": [], "resourceChanges": [], "spellChanges": [{ "kind": "always-prepared", "byClericLevel": { "1": ["bless", "cure-wounds"], "3": ["lesser-restoration", "spiritual-weapon"], "5": ["beacon-of-hope", "revivify"], "7": ["death-ward", "guardian-of-faith"], "9": ["mass-cure-wounds", "raise-dead"] } }], "parentInteractions": ["healing-spell-level-1-or-higher", "additional-healing-2-plus-spell-level"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 2, "automaticFeatures": ["channel-divinity-preserve-life"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "preserve-life" }], "parentInteractions": ["action", "channel-divinity", "five-times-cleric-level", "half-hit-point-maximum", "no-undead-or-constructs"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["blessed-healer"], "choices": [], "resourceChanges": [], "parentInteractions": ["healing-spell-on-another-creature", "self-healing-2-plus-spell-level"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 8, "automaticFeatures": ["divine-strike"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapon-attack", "once-per-turn", "radiant-damage"], "scaling": [{ "levels": [8, 13], "extraDamage": "1d8" }, { "levels": [14, 20], "extraDamage": "2d8" }], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 17, "automaticFeatures": ["supreme-healing"], "choices": [], "resourceChanges": [], "parentInteractions": ["spell-healing-only", "healing-dice-become-maximum"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "circle-of-the-land-2014",
+      "classId": "druid-2014",
+      "name": "Circle of the Land",
+      "selectionLevel": 2,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 2, "automaticFeatures": ["bonus-cantrip", "natural-recovery", "circle-spells"], "choices": [{ "choiceId": "choose-bonus-druid-cantrip", "count": 1 }, { "choiceId": "choose-land", "options": ["arctic", "coast", "desert", "forest", "grassland", "mountain", "swamp", "underdark"] }], "resourceChanges": [{ "resourceId": "natural-recovery-slot-levels", "maximum": "ceil(druid-level/2)", "recharge": "long-rest", "maxSlotLevel": 5 }], "spellChanges": [{ "kind": "always-prepared-by-choice", "choiceId": "choose-land", "byChoice": { "arctic": { "3": ["hold-person", "spike-growth"], "5": ["sleet-storm", "slow"], "7": ["freedom-of-movement", "ice-storm"], "9": ["commune-with-nature", "cone-of-cold"] }, "coast": { "3": ["mirror-image", "misty-step"], "5": ["water-breathing", "water-walk"], "7": ["control-water", "freedom-of-movement"], "9": ["conjure-elemental", "scrying"] }, "desert": { "3": ["blur", "silence"], "5": ["create-food-and-water", "protection-from-energy"], "7": ["blight", "hallucinatory-terrain"], "9": ["insect-plague", "wall-of-stone"] }, "forest": { "3": ["barkskin", "spider-climb"], "5": ["call-lightning", "plant-growth"], "7": ["divination", "freedom-of-movement"], "9": ["commune-with-nature", "tree-stride"] }, "grassland": { "3": ["invisibility", "pass-without-trace"], "5": ["daylight", "haste"], "7": ["divination", "freedom-of-movement"], "9": ["dream", "insect-plague"] }, "mountain": { "3": ["spider-climb", "spike-growth"], "5": ["lightning-bolt", "meld-into-stone"], "7": ["stone-shape", "stoneskin"], "9": ["passwall", "wall-of-stone"] }, "swamp": { "3": ["darkness", "melfs-acid-arrow"], "5": ["water-walk", "stinking-cloud"], "7": ["freedom-of-movement", "locate-creature"], "9": ["insect-plague", "scrying"] }, "underdark": { "3": ["spider-climb", "web"], "5": ["gaseous-form", "stinking-cloud"], "7": ["greater-invisibility", "stone-shape"], "9": ["cloudkill", "insect-plague"] } } }], "parentInteractions": ["short-rest-slot-recovery", "no-slot-level-6-or-higher", "always-prepared-and-counts-as-druid-spell"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["lands-stride"], "choices": [], "resourceChanges": [], "parentInteractions": ["nonmagical-difficult-terrain", "nonmagical-plants", "advantage-against-magical-plants"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 10, "automaticFeatures": ["natures-ward"], "choices": [], "resourceChanges": [], "parentInteractions": ["elemental-or-fey-charmed-frightened-immunity", "poison-immunity", "disease-immunity"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 14, "automaticFeatures": ["natures-sanctuary"], "choices": [], "resourceChanges": [], "parentInteractions": ["beast-or-plant-attack", "wisdom-saving-throw", "24-hour-immunity-on-success"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    }
+  ]
+}

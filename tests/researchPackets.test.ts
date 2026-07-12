@@ -44,6 +44,10 @@ function loadDetailedSubclassPackets(): DetailedSubclassPacket[] {
   return (JSON.parse(readFileSync(resolve(process.cwd(), "rules-research/subclasses/2024/basic-rules.json"), "utf8")) as { records: DetailedSubclassPacket[] }).records;
 }
 
+function loadDetailedSubclassPackets2014(): DetailedSubclassPacket[] {
+  return (JSON.parse(readFileSync(resolve(process.cwd(), "rules-research/subclasses/2014/basic-rules.json"), "utf8")) as { records: DetailedSubclassPacket[] }).records;
+}
+
 describe("class research pilot packets", () => {
   it("keeps all four pilot packets edition-scoped and complete", () => {
     for (const [relativePath, id, ruleset] of [
@@ -236,6 +240,14 @@ describe("class research pilot packets", () => {
       "college-of-lore-2024",
       "life-domain-2024",
       "circle-of-the-land-2024",
+      "champion-2024",
+      "warrior-of-the-open-hand-2024",
+      "oath-of-devotion-2024",
+      "hunter-2024",
+      "thief-2024",
+      "draconic-sorcery-2024",
+      "fiend-2024",
+      "evoker-2024",
     ]);
     expect(packets.every((packet) => packet.featureLevels.every((feature) => feature.sourceReferences.includes("2024-basic-rules")))).toBe(true);
 
@@ -251,5 +263,38 @@ describe("class research pilot packets", () => {
     const land = packets.find((packet) => packet.id === "circle-of-the-land-2024")!;
     expect(land.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-land-type" }));
     expect(land.featureLevels[2].scaling).toContainEqual(expect.objectContaining({ choice: "temperate", resistance: "lightning" }));
+
+    const hunter = packets.find((packet) => packet.id === "hunter-2024")!;
+    expect(hunter.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-hunters-prey" }));
+
+    const devotion = packets.find((packet) => packet.id === "oath-of-devotion-2024")!;
+    expect(devotion.featureLevels[3].resourceChanges).toContainEqual(expect.objectContaining({ restoreBy: "expend-level-5-spell-slot" }));
+
+    const draconic = packets.find((packet) => packet.id === "draconic-sorcery-2024")!;
+    expect(draconic.featureLevels[1].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-draconic-damage-type" }));
+
+    const evoker = packets.find((packet) => packet.id === "evoker-2024")!;
+    expect(evoker.featureLevels[3].resourceChanges).toContainEqual(expect.objectContaining({ resourceId: "overchannel-free-use" }));
+  });
+
+  it("keeps 2014 subclass behavior separate from the 2024 redesign", () => {
+    const packets = loadDetailedSubclassPackets2014();
+    expect(packets.map((packet) => packet.id)).toEqual([
+      "path-of-the-berserker-2014",
+      "college-of-lore-2014",
+      "life-domain-2014",
+      "circle-of-the-land-2014",
+    ]);
+
+    const berserker = packets.find((packet) => packet.id === "path-of-the-berserker-2014")!;
+    expect(berserker.featureLevels[0].resourceChanges).toContainEqual(expect.objectContaining({ resourceId: "exhaustion" }));
+
+    const life = packets.find((packet) => packet.id === "life-domain-2014")!;
+    expect(life.featureLevels[0].automaticFeatures).toContain("bonus-proficiency-heavy-armor");
+    expect(life.featureLevels[3].automaticFeatures).toContain("divine-strike");
+
+    const land = packets.find((packet) => packet.id === "circle-of-the-land-2014")!;
+    expect(land.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-land" }));
+    expect(land.featureLevels[0].spellChanges).toContainEqual(expect.objectContaining({ kind: "always-prepared-by-choice" }));
   });
 });
