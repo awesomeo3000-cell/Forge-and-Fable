@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { updateNpc } from "@/lib/dmTable/worldStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export async function PATCH(request:Request,{params}:{params:Promise<{id:string;npcId:string}>}){try{const userId=await authenticateRequest(request),{id,npcId}=await params;return NextResponse.json({npc:updateNpc(id,userId,npcId,await request.json())});}catch(error){return dmToolsError(error,"Could not update NPC.");}}

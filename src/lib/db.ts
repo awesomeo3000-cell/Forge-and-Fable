@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 9;
+const SCHEMA_REVISION = 10;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -207,6 +207,17 @@ function createSchema(db: DatabaseSync) {
       PRIMARY KEY (request_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS campaign_scenes (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_scenes_active ON campaign_scenes(campaign_id, active, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS campaign_npcs (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      data TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_npcs_updated ON campaign_npcs(campaign_id, updated_at DESC);
+
     CREATE TABLE IF NOT EXISTS creature_library (
       id TEXT PRIMARY KEY,
       owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -364,6 +375,7 @@ function migrateSchema(db: DatabaseSync) {
     recordMigration(db, 7, "persistent login and registration throttling");
     recordMigration(db, 8, "campaign presence and private character notes");
     recordMigration(db, 9, "tracked roll and rest requests");
+    recordMigration(db, 10, "campaign scenes and persistent NPC state");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

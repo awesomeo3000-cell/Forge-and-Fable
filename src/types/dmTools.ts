@@ -231,6 +231,23 @@ export type EncounterRun = {
   endedAt?: string;
 };
 
+export type CampaignScene = {
+  id: string; campaignId: string; title: string; description?: string; readAloud?: string;
+  presentUserIds: string[]; npcIds: string[]; objectives: string[]; completedObjectives: string[];
+  clues: string[]; revealedClues: string[]; handoutIds: string[]; privateNotes?: string;
+  likelyChecks: string[]; linkedLocation?: string; linkedEncounterId?: string; active: boolean;
+  createdAt: string; updatedAt: string;
+};
+
+export type CampaignNpc = {
+  id: string; campaignId: string; name: string; attitude: string; voice?: string; goal?: string;
+  knows?: string; revealCondition?: string; armorClass?: number; currentHp?: number; maxHp?: number;
+  insightDc?: number; portraitUrl?: string; status: "alive" | "dead" | "missing";
+  disposition: "neutral" | "allied" | "hostile"; lastLocation?: string; relationshipNotes?: string;
+  revealedSecrets: string[]; currentSceneId?: string; linkedJournalEntryId?: string;
+  createdAt: string; updatedAt: string;
+};
+
 export type PlayerCampaignMemory = {
   activeSession: Pick<CampaignSession, "id" | "number" | "title" | "startedAt"> | null;
   handouts: Array<Omit<CampaignHandout, "privateNotes">>;

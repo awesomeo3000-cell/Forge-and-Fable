@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";import { authenticateRequest } from "@/lib/auth";import { updateScene } from "@/lib/dmTable/worldStore";import { dmToolsError } from "@/lib/dmToolsRoute";
+export const runtime="nodejs";export async function PATCH(request:Request,{params}:{params:Promise<{id:string;sceneId:string}>}){try{const userId=await authenticateRequest(request),{id,sceneId}=await params;return NextResponse.json({scene:updateScene(id,userId,sceneId,await request.json())});}catch(error){return dmToolsError(error,"Could not update scene.");}}

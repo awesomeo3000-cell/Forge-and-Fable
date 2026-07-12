@@ -7,6 +7,7 @@ import { createCampaign, joinCampaign } from "@/lib/campaignStore";
 import { createCharacter } from "@/lib/vaultStore";
 import { createCampaignRequest, createCharacterNote, listCampaignPresence, listCampaignRequests, listCharacterNotes, respondToCampaignRequest, touchCampaignPresence } from "@/lib/dmTable/store";
 import { characterInput } from "./fixtures/character";
+import { createNpc, createScene, listNpcs, listScenes, updateNpc, updateScene } from "@/lib/dmTable/worldStore";
 
 let dataDir = "";
 
@@ -47,5 +48,16 @@ describe("DM table presence and private notes", () => {
     expect(response).toMatchObject({ userId: "player", total: 17, passed: true });
     expect(listCampaignRequests(run.id, "dm")[0]).toMatchObject({ id: request.id, status: "completed", responses: [expect.objectContaining({ total: 17 })] });
     expect(() => respondToCampaignRequest(run.id, "dm", request.id, { status: "completed", summary: "No" })).toThrow(/not sent|no longer open/);
+  });
+
+  it("persists DM-only scene and NPC state across updates", async () => {
+    const run = createCampaign("dm", "World Table");
+    const scene = createScene(run.id, "dm", { title: "Ruined Gate", active: true, objectives: ["Find a way inside"], clues: ["Broken seal"] });
+    const npc = createNpc(run.id, "dm", { name: "Captain Merrow", attitude: "Suspicious", status: "alive", disposition: "neutral", currentSceneId: scene.id, currentHp: 22, maxHp: 22 });
+    updateScene(run.id, "dm", scene.id, { npcIds: [npc.id], revealedClues: ["Broken seal"] });
+    updateNpc(run.id, "dm", npc.id, { disposition: "allied", lastLocation: "Ruined Gate" });
+    expect(listScenes(run.id, "dm")[0]).toMatchObject({ title: "Ruined Gate", npcIds: [npc.id], revealedClues: ["Broken seal"] });
+    expect(listNpcs(run.id, "dm")[0]).toMatchObject({ disposition: "allied", lastLocation: "Ruined Gate" });
+    expect(() => listScenes(run.id, "player")).toThrow(/Only the DM/);
   });
 });
