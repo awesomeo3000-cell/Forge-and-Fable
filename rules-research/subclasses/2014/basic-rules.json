@@ -55,6 +55,152 @@
         { "level": 10, "automaticFeatures": ["natures-ward"], "choices": [], "resourceChanges": [], "parentInteractions": ["elemental-or-fey-charmed-frightened-immunity", "poison-immunity", "disease-immunity"], "sourceReferences": ["2014-srd-5.1"] },
         { "level": 14, "automaticFeatures": ["natures-sanctuary"], "choices": [], "resourceChanges": [], "parentInteractions": ["beast-or-plant-attack", "wisdom-saving-throw", "24-hour-immunity-on-success"], "sourceReferences": ["2014-srd-5.1"] }
       ]
+    },
+    {
+      "id": "champion-2014",
+      "classId": "fighter-2014",
+      "name": "Champion",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["improved-critical"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapon-and-unarmed-strike-critical-on-19-or-20"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["remarkable-athlete"], "choices": [], "resourceChanges": [], "parentInteractions": ["half-proficiency-to-untrained-strength-dexterity-constitution-checks", "long-jump", "high-jump"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 10, "automaticFeatures": ["additional-fighting-style"], "choices": [{ "choiceId": "choose-fighting-style", "count": 1 }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["superior-critical"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapon-and-unarmed-strike-critical-on-18-through-20"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 18, "automaticFeatures": ["survivor"], "choices": [], "resourceChanges": [], "parentInteractions": ["death-saving-throws", "regain-hit-points-when-bloodied"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "battle-master-2014",
+      "classId": "fighter-2014",
+      "name": "Battle Master",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["combat-superiority", "maneuver-options", "maneuvers", "student-of-war"], "choices": [{ "choiceId": "choose-3-maneuvers", "count": 3 }, { "choiceId": "choose-artisans-tool", "count": 1 }], "resourceChanges": [{ "resourceId": "superiority-dice", "maximum": 4, "die": "d8", "recharge": "short-or-long-rest" }], "parentInteractions": ["maneuver-save-dc-8-plus-proficiency-plus-strength-or-dexterity", "maneuver-uses-superiority-die"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["additional-superiority-die", "know-your-enemy"], "choices": [{ "choiceId": "choose-2-maneuvers", "count": 2 }], "resourceChanges": [{ "resourceId": "superiority-dice", "maximum": 5 }], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 10, "automaticFeatures": ["improved-combat-superiority"], "choices": [{ "choiceId": "choose-2-maneuvers", "count": 2 }], "resourceChanges": [{ "resourceId": "superiority-die", "die": "d10" }], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["additional-superiority-die", "relentless"], "choices": [{ "choiceId": "choose-2-maneuvers", "count": 2 }], "resourceChanges": [{ "resourceId": "superiority-dice", "maximum": 6 }], "parentInteractions": ["regain-one-die-on-initiative-with-zero-dice"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 18, "automaticFeatures": ["improved-combat-superiority"], "choices": [], "resourceChanges": [{ "resourceId": "superiority-die", "die": "d12" }], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "eldritch-knight-2014",
+      "classId": "fighter-2014",
+      "name": "Eldritch Knight",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["spellcasting", "weapon-bond"], "choices": [{ "choiceId": "choose-2-wizard-cantrips", "count": 2 }, { "choiceId": "choose-3-first-level-wizard-spells", "count": 3, "restrictedCount": 2, "restrictedSchools": ["abjuration", "evocation"] }], "resourceChanges": [{ "resourceId": "weapon-bonds", "maximum": 2 }], "spellChanges": [{ "kind": "known-spells", "class": "wizard", "restrictedSchools": ["abjuration", "evocation"] }], "parentInteractions": ["weapon-bond-no-attunement", "spellcasting-intelligence"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["war-magic"], "choices": [], "resourceChanges": [], "parentInteractions": ["cast-cantrip-action", "weapon-attack-bonus-action"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 10, "automaticFeatures": ["eldritch-strike"], "choices": [], "resourceChanges": [], "parentInteractions": ["weapon-hit", "next-saving-throw-against-spell-disadvantage"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["arcane-charge"], "choices": [], "resourceChanges": [], "parentInteractions": ["action-surge", "teleport-up-to-30-feet"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 18, "automaticFeatures": ["improved-war-magic"], "choices": [], "resourceChanges": [], "parentInteractions": ["cast-spell-action", "weapon-attack-bonus-action"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "way-of-the-open-hand-2014",
+      "classId": "monk-2014",
+      "name": "Way of the Open Hand",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["open-hand-technique"], "choices": [{ "choiceId": "choose-flurry-of-blows-effect", "options": ["no-reactions", "push-15-feet", "knock-prone"] }], "resourceChanges": [{ "resourceId": "ki", "consumedBy": "flurry-of-blows" }], "parentInteractions": ["flurry-of-blows-hit"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["wholeness-of-body"], "choices": [], "resourceChanges": [{ "resourceId": "wholeness-of-body-use", "maximum": 1, "recharge": "long-rest" }], "parentInteractions": ["action", "heal-three-times-monk-level"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 11, "automaticFeatures": ["tranquility"], "choices": [], "resourceChanges": [], "parentInteractions": ["sanctuary-effect-after-long-rest", "ends-on-attack-or-spell"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 17, "automaticFeatures": ["quivering-palm"], "choices": [], "resourceChanges": [{ "resourceId": "ki", "cost": 3, "consumedBy": "start-vibrations" }], "parentInteractions": ["unarmed-strike", "constitution-saving-throw", "one-active-target"], "scaling": [{ "effect": "necrotic-damage", "amount": "10d10" }], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "way-of-shadow-2014",
+      "classId": "monk-2014",
+      "name": "Way of Shadow",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["shadow-arts"], "choices": [], "resourceChanges": [{ "resourceId": "ki", "cost": 2, "consumedBy": "shadow-arts-spells" }], "spellChanges": [{ "kind": "at-will-cantrip", "spell": "minor-illusion" }, { "kind": "ki-cast", "spells": ["darkness", "darkvision", "pass-without-trace", "silence"] }], "parentInteractions": ["dim-light-or-darkness"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["shadow-step"], "choices": [], "resourceChanges": [], "parentInteractions": ["bonus-action", "teleport-60-feet-between-dim-or-darkness", "advantage-on-first-melee-attack"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 11, "automaticFeatures": ["cloak-of-shadows"], "choices": [], "resourceChanges": [], "parentInteractions": ["action", "invisibility-in-dim-or-darkness", "ends-on-attack-or-spell"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 17, "automaticFeatures": ["opportunist"], "choices": [], "resourceChanges": [], "parentInteractions": ["reaction", "creature-within-5-feet-hit-by-other-creature"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "way-of-the-four-elements-2014",
+      "classId": "monk-2014",
+      "name": "Way of the Four Elements",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["disciple-of-the-elements", "elemental-disciplines"], "choices": [{ "choiceId": "choose-elemental-discipline", "count": 1 }, { "choiceId": "choose-elemental-attunement", "count": 1, "fixed": true }], "resourceChanges": [{ "resourceId": "ki", "consumedBy": "elemental-discipline" }], "parentInteractions": ["elemental-discipline-ki-cost"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 6, "automaticFeatures": ["extra-elemental-discipline"], "choices": [{ "choiceId": "choose-elemental-discipline", "count": 1 }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 11, "automaticFeatures": ["extra-elemental-discipline"], "choices": [{ "choiceId": "choose-elemental-discipline", "count": 1 }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 17, "automaticFeatures": ["extra-elemental-discipline"], "choices": [{ "choiceId": "choose-elemental-discipline", "count": 1 }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "oath-of-devotion-2014",
+      "classId": "paladin-2014",
+      "name": "Oath of Devotion",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["channel-divinity", "oath-spells", "sacred-weapon", "turn-the-unholy"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "sacred-weapon-or-turn-the-unholy" }], "spellChanges": [{ "kind": "always-prepared", "byPaladinLevel": { "3": ["protection-from-evil-and-good", "sanctuary"], "5": ["lesser-restoration", "zone-of-truth"], "9": ["beacon-of-hope", "dispel-magic"], "13": ["freedom-of-movement", "guardian-of-faith"], "17": ["commune", "flame-strike"] } }], "parentInteractions": ["sacred-oath-channel-divinity"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["aura-of-devotion"], "choices": [], "resourceChanges": [], "parentInteractions": ["charmed-immunity-while-in-aura-of-protection"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["purity-of-spirit"], "choices": [], "resourceChanges": [], "parentInteractions": ["always-protected-from-evil-and-good"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 20, "automaticFeatures": ["holy-nimbus"], "choices": [], "resourceChanges": [{ "resourceId": "holy-nimbus-use", "maximum": 1, "recharge": "long-rest" }], "parentInteractions": ["action", "one-hour-transformation", "fiend-or-undead-radiant-damage"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "oath-of-the-ancients-2014",
+      "classId": "paladin-2014",
+      "name": "Oath of the Ancients",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["channel-divinity", "natures-wrath", "oath-spells", "turn-the-faithless"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "natures-wrath-or-turn-the-faithless" }], "spellChanges": [{ "kind": "always-prepared", "byPaladinLevel": { "3": ["ensnaring-strike", "speak-with-animals"], "5": ["moonbeam", "misty-step"], "9": ["plant-growth", "protection-from-energy"], "13": ["ice-storm", "stoneskin"], "17": ["commune-with-nature", "tree-stride"] } }], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["aura-of-warding"], "choices": [], "resourceChanges": [], "parentInteractions": ["resistance-to-damage-from-spells"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["undying-sentinel"], "choices": [], "resourceChanges": [{ "resourceId": "undying-sentinel-use", "maximum": 1, "recharge": "long-rest" }], "parentInteractions": ["drop-to-one-hit-point", "no-magical-aging"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 20, "automaticFeatures": ["elder-champion"], "choices": [], "resourceChanges": [{ "resourceId": "elder-champion-use", "maximum": 1, "recharge": "long-rest" }], "parentInteractions": ["one-minute-transformation", "regain-10-hit-points-per-turn", "bonus-action-oath-spells"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "oath-of-vengeance-2014",
+      "classId": "paladin-2014",
+      "name": "Oath of Vengeance",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["abjure-enemy", "channel-divinity", "oath-spells", "vow-of-enmity"], "choices": [], "resourceChanges": [{ "resourceId": "channel-divinity-use", "consumedBy": "abjure-enemy-or-vow-of-enmity" }], "spellChanges": [{ "kind": "always-prepared", "byPaladinLevel": { "3": ["bane", "hunters-mark"], "5": ["hold-person", "misty-step"], "9": ["haste", "protection-from-energy"], "13": ["banishment", "dimension-door"], "17": ["hold-monster", "swift-quiver"] } }], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["relentless-avenger"], "choices": [], "resourceChanges": [], "parentInteractions": ["opportunity-attack-hit", "move-half-speed-without-provoking"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["soul-of-vengeance"], "choices": [], "resourceChanges": [], "parentInteractions": ["reaction", "creature-under-vow-of-enmity-hits"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 20, "automaticFeatures": ["avenging-angel"], "choices": [], "resourceChanges": [{ "resourceId": "avenging-angel-use", "maximum": 1, "recharge": "long-rest" }], "parentInteractions": ["one-hour-transformation", "fly-speed-60", "fear-aura-30-feet"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "hunter-2014",
+      "classId": "ranger-2014",
+      "name": "Hunter",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["hunters-prey"], "choices": [{ "choiceId": "choose-hunters-prey", "options": ["colossus-slayer", "giant-killer", "horde-breaker"] }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["defensive-tactics"], "choices": [{ "choiceId": "choose-defensive-tactics", "options": ["escape-the-horde", "multiattack-defense", "steel-will"] }], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 11, "automaticFeatures": ["multiattack"], "choices": [{ "choiceId": "choose-multiattack", "options": ["volley", "whirlwind-attack"] }], "resourceChanges": [], "parentInteractions": ["ranged-weapon-ammunition", "melee-weapon-attack"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["superior-hunters-defense"], "choices": [{ "choiceId": "choose-superior-hunters-defense", "options": ["evasion", "stand-against-the-tide", "uncanny-dodge"] }], "resourceChanges": [], "parentInteractions": ["reaction-or-dexterity-saving-throw"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
+    },
+    {
+      "id": "beast-master-2014",
+      "classId": "ranger-2014",
+      "name": "Beast Master",
+      "selectionLevel": 3,
+      "reprintRelationship": "legacy-2014-version",
+      "featureLevels": [
+        { "level": 3, "automaticFeatures": ["rangers-companion"], "choices": [{ "choiceId": "choose-companion-beast", "restriction": "beast-cr-1-4-or-lower-no-fly-speed" }], "resourceChanges": [{ "resourceId": "beast-companion", "maximum": 1 }], "parentInteractions": ["companion-shares-initiative", "bonus-action-command", "proficiency-bonus-scaling"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 7, "automaticFeatures": ["exceptional-training"], "choices": [], "resourceChanges": [], "parentInteractions": ["bonus-action-command", "companion-magical-attacks", "dash-disengage-dodge-help-hide"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 11, "automaticFeatures": ["bestial-fury"], "choices": [], "resourceChanges": [], "parentInteractions": ["companion-multiattack"], "sourceReferences": ["2014-srd-5.1"] },
+        { "level": 15, "automaticFeatures": ["share-spells"], "choices": [], "resourceChanges": [], "parentInteractions": ["spell-targets-ranger-and-companion-within-30-feet"], "sourceReferences": ["2014-srd-5.1"] }
+      ]
     }
   ]
 }

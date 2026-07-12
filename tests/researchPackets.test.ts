@@ -45,7 +45,9 @@ function loadDetailedSubclassPackets(): DetailedSubclassPacket[] {
 }
 
 function loadDetailedSubclassPackets2014(): DetailedSubclassPacket[] {
-  return (JSON.parse(readFileSync(resolve(process.cwd(), "rules-research/subclasses/2014/basic-rules.json"), "utf8")) as { records: DetailedSubclassPacket[] }).records;
+  const base = (JSON.parse(readFileSync(resolve(process.cwd(), "rules-research/subclasses/2014/basic-rules.json"), "utf8")) as { records: DetailedSubclassPacket[] }).records;
+  const remaining = (JSON.parse(readFileSync(resolve(process.cwd(), "rules-research/subclasses/2014/remaining.json"), "utf8")) as { records: DetailedSubclassPacket[] }).records;
+  return [...base, ...remaining];
 }
 
 describe("class research pilot packets", () => {
@@ -233,6 +235,15 @@ describe("class research pilot packets", () => {
     expect(inventory.records.find((record) => record.id === "life-domain-2024")?.featureLevels).toEqual([3, 6, 17]);
   });
 
+  it("has a detailed packet for every inventory record", () => {
+    const inventory = loadSubclassInventory();
+    const detailed2014 = loadDetailedSubclassPackets2014();
+    const detailed2024 = loadDetailedSubclassPackets();
+    const detailedIds = new Set([...detailed2014, ...detailed2024].map((packet) => packet.id));
+    expect(detailedIds.size).toBe(44);
+    expect(inventory.records.every((record) => detailedIds.has(record.id))).toBe(true);
+  });
+
   it("captures structured 2024 level-up behavior for the first subclass extraction batch", () => {
     const packets = loadDetailedSubclassPackets();
     expect(packets.map((packet) => packet.id)).toEqual([
@@ -284,6 +295,34 @@ describe("class research pilot packets", () => {
       "college-of-lore-2014",
       "life-domain-2014",
       "circle-of-the-land-2014",
+      "champion-2014",
+      "battle-master-2014",
+      "eldritch-knight-2014",
+      "way-of-the-open-hand-2014",
+      "way-of-shadow-2014",
+      "way-of-the-four-elements-2014",
+      "oath-of-devotion-2014",
+      "oath-of-the-ancients-2014",
+      "oath-of-vengeance-2014",
+      "hunter-2014",
+      "beast-master-2014",
+      "knowledge-domain-2014",
+      "light-domain-2014",
+      "nature-domain-2014",
+      "tempest-domain-2014",
+      "trickery-domain-2014",
+      "war-domain-2014",
+      "circle-of-the-moon-2014",
+      "thief-2014",
+      "draconic-bloodline-2014",
+      "archfey-2014",
+      "fiend-2014",
+      "great-old-one-2014",
+      "school-of-evocation-2014",
+      "alchemist-2014",
+      "armorer-2014",
+      "artillerist-2014",
+      "battle-smith-2014",
     ]);
 
     const berserker = packets.find((packet) => packet.id === "path-of-the-berserker-2014")!;
@@ -296,5 +335,17 @@ describe("class research pilot packets", () => {
     const land = packets.find((packet) => packet.id === "circle-of-the-land-2014")!;
     expect(land.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-land" }));
     expect(land.featureLevels[0].spellChanges).toContainEqual(expect.objectContaining({ kind: "always-prepared-by-choice" }));
+
+    const battleMaster = packets.find((packet) => packet.id === "battle-master-2014")!;
+    expect(battleMaster.featureLevels[0].resourceChanges).toContainEqual(expect.objectContaining({ resourceId: "superiority-dice", maximum: 4 }));
+
+    const eldritchKnight = packets.find((packet) => packet.id === "eldritch-knight-2014")!;
+    expect(eldritchKnight.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-3-first-level-wizard-spells", restrictedCount: 2 }));
+
+    const hunter = packets.find((packet) => packet.id === "hunter-2014")!;
+    expect(hunter.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-hunters-prey" }));
+
+    const beastMaster = packets.find((packet) => packet.id === "beast-master-2014")!;
+    expect(beastMaster.featureLevels[0].choices).toContainEqual(expect.objectContaining({ choiceId: "choose-companion-beast" }));
   });
 });

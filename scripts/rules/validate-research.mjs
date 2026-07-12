@@ -9,6 +9,7 @@ const inventory = JSON.parse(fs.readFileSync(path.join(researchRoot, "inventory.
 const subclassInventory = JSON.parse(fs.readFileSync(path.join(researchRoot, "subclasses/inventory.json"), "utf8"));
 const detailedSubclassPackets = [
   "subclasses/2014/basic-rules.json",
+  "subclasses/2014/remaining.json",
   "subclasses/2024/basic-rules.json",
 ];
 const errors = [];
@@ -45,6 +46,7 @@ for (const entry of subclassInventory.records ?? []) {
 
 const subclassInventoryById = new Map((subclassInventory.records ?? []).map((entry) => [entry.id, entry]));
 let detailedSubclassCount = 0;
+const detailedSubclassIds = new Set();
 for (const relativePath of detailedSubclassPackets) {
   const packetFile = path.join(researchRoot, relativePath);
   const packetSet = JSON.parse(fs.readFileSync(packetFile, "utf8"));
@@ -54,8 +56,12 @@ for (const relativePath of detailedSubclassPackets) {
   }
   for (const packet of packetSet.records) {
     detailedSubclassCount += 1;
+    if (detailedSubclassIds.has(packet.id)) errors.push(`Duplicate detailed subclass packet ID: ${packet.id}`);
+    detailedSubclassIds.add(packet.id);
     const inventoryEntry = subclassInventoryById.get(packet.id);
     if (!inventoryEntry) errors.push(`${relativePath} references unlisted subclass ${packet.id}`);
+    if (packet.sourceId && !sourceIds.has(packet.sourceId)) errors.push(`${packet.id} references missing packet source ${packet.sourceId}`);
+    if (inventoryEntry && packet.sourceId && inventoryEntry.sourceId !== packet.sourceId) errors.push(`${packet.id} packet source does not match inventory source`);
     if (packet.ruleset && packet.ruleset !== packetSet.ruleset) errors.push(`${packet.id} has a mismatched ruleset`);
     if (!packet.classId || !classById.has(packet.classId)) errors.push(`${packet.id} references missing class packet ${packet.classId}`);
     if (inventoryEntry && inventoryEntry.ruleset !== packetSet.ruleset) errors.push(`${packet.id} ruleset does not match inventory`);
@@ -76,6 +82,10 @@ for (const relativePath of detailedSubclassPackets) {
       if (feature.sourceReferences?.some((sourceId) => !sourceIds.has(sourceId))) errors.push(`${packet.id} level ${feature.level} has an invalid source reference`);
     }
   }
+}
+
+for (const entry of subclassInventory.records ?? []) {
+  if (!detailedSubclassIds.has(entry.id)) errors.push(`${entry.id} has inventory coverage but no detailed subclass packet`);
 }
 
 function validatePacket(relativePath, expectedId, expectedRuleset) {
@@ -137,4 +147,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Research validation passed: source ledger, ${inventory.classes.length} class packets, ${subclassInventory.records.length} subclass inventory records, and ${detailedSubclassCount} detailed subclass packets are structurally valid.`);
+console.log(`Research validation passed: source ledger, ${inventory.classes.length} class packets, ${subclassInventory.records.length} subclass inventory records, and ${detailedSubclassCount} complete detailed subclass packets are structurally valid.`);
