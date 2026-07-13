@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portrait Selector — Claude's take</title>
+<style>
+  :root {
+    /* Site tokens from globals.css — warm ground, parchment ink, gold select */
+    --backdrop:   #100c07;   /* --ground-3 */
+    --surface:    #1f1a12;   /* --ground-2 */
+    --surface-2:  #251f14;   /* library well, one step raised */
+    --band:       #16120c;   /* --ground: header / footer bands */
+    --rule:       #3a3223;   /* between --rule-soft and --rule */
+    --ink:        #ece0c8;   /* --parchment */
+    --muted:      #b8a888;   /* --parchment-2 */
+    --faint:      #8a8070;   /* --ink-faint */
+    --gold:       #c9a25a;   /* --select */
+    --gold-deep:  #a8853f;
+    --ring:       #4a4030;   /* --rule: resting tile ring */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 50% 35%, #1f1a12 0%, var(--backdrop) 70%);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Modal ─────────────────────────────────────────────── */
+
+  .modal {
+    width: min(880px, 100%);
+    /* Scene backdrop: visible up top, dissolving to solid surface below.
+       The bottom stop must hit full opacity before the footer so actions
+       always sit on solid ground. */
+    background:
+      linear-gradient(180deg,
+        rgba(31, 26, 18, 0.44) 0%,
+        rgba(31, 26, 18, 0.70) 46%,
+        rgba(31, 26, 18, 0.94) 68%,
+        #1f1a12 80%),
+      url("modal-backdrop.png") center 26% / cover no-repeat;
+    background-color: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,.4),
+      0 24px 60px rgba(0,0,0,.55);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header band ── */
+  .modal-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(16, 12, 7, 0.78);
+    backdrop-filter: blur(3px);
+    border-bottom: 1px solid rgba(74, 64, 48, 0.65);
+  }
+  .modal-head .crest {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    color: var(--gold);
+    flex: none;
+  }
+  .modal-head h1 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .modal-head .close {
+    margin-left: auto;
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .modal-head .close:hover { color: var(--ink); background: rgba(255,255,255,.06); }
+
+  /* ── Body split ── */
+  .modal-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    min-height: 480px;
+  }
+
+  /* ── Left: library ── */
+  .library {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--rule);
+    min-width: 0;
+  }
+
+  .library-head {
+    padding: 16px 20px 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,.55);
+  }
+  .library-head p {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 20px;
+    padding: 12px 20px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab {
+    background: none;
+    border: none;
+    padding: 8px 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab .count { color: var(--faint); font-weight: 500; margin-left: 4px; }
+
+  .grid-scroll {
+    flex: 1;
+    overflow-y: auto;
+    background: transparent;   /* scrim comes from the modal-wide gradient only */
+    padding: 18px 20px;
+    max-height: 380px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 14px;
+    align-content: start;
+  }
+
+  .tile {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--band);
+    box-shadow: 0 0 0 2px var(--ring);
+    cursor: pointer;
+    overflow: hidden;
+    transition: box-shadow .15s, transform .15s;
+  }
+  .tile .art {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-repeat: no-repeat;
+  }
+  .tile:hover {
+    box-shadow: 0 0 0 2px var(--gold-deep);
+    transform: translateY(-1px);
+  }
+  .tile:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
+  .tile.selected {
+    box-shadow:
+      0 0 0 2px var(--surface-2),
+      0 0 0 4px var(--gold);
+  }
+  .tile.selected::after {
+    content: "✓";
+    position: absolute;
+    right: 1px; bottom: 1px;
+    width: 20px; height: 20px;
+    display: grid; place-items: center;
+    background: var(--gold);
+    color: #241c12;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  }
+
+  .grid-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--faint);
+    font-size: 13px;
+    padding: 30px 0;
+  }
+
+  /* ── Right: selection panel ── */
+  .selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 22px 18px;
+    text-align: center;
+    gap: 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,.55);
+  }
+
+  .preview-wrap {
+    margin-top: 14px;
+    position: relative;
+    width: 208px;
+    height: 208px;
+  }
+  .preview {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-color: var(--band);
+    background-repeat: no-repeat;
+    box-shadow:
+      0 0 0 3px var(--gold),
+      0 0 0 8px rgba(201, 162, 90, .14),
+      0 10px 30px rgba(0,0,0,.45);
+    display: grid;
+    place-items: center;
+    transition: opacity .18s;
+  }
+  .preview .initials {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 56px;
+    color: var(--faint);
+    letter-spacing: .04em;
+  }
+
+  .char-name {
+    margin-top: 18px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 19px;
+    color: var(--ink);
+  }
+  .preview-copy {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 220px;
+  }
+
+  .selection .divider {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 16px 0 12px;
+  }
+
+  .upload-link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .upload-link:hover { color: var(--gold); }
+
+  .url-row { width: 100%; margin-top: 10px; display: none; }
+  .url-row.open { display: flex; gap: 6px; }
+  .url-row input {
+    flex: 1;
+    min-width: 0;
+    background: var(--band);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 7px 9px;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .url-row input::placeholder { color: var(--faint); }
+  .url-row button {
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+  .url-row button:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* ── Footer band ── */
+  .modal-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    background: var(--band);
+    border-top: 1px solid var(--rule);
+    position: relative;   /* sits on the solid zone of the gradient */
+  }
+
+  .framing-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .framing-toggle .switch {
+    width: 30px; height: 17px;
+    border-radius: 17px;
+    background: var(--rule);
+    position: relative;
+    transition: background .15s;
+  }
+  .framing-toggle .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: left .15s, background .15s;
+  }
+  .framing-toggle input { display: none; }
+  .framing-toggle input:checked + .switch { background: var(--gold-deep); }
+  .framing-toggle input:checked + .switch::after { left: 15px; background: #fff8e8; }
+
+  .modal-foot .spacer { flex: 1; }
+
+  .btn {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+  }
+  .btn-cancel:hover { color: var(--ink); border-color: var(--muted); }
+  .btn-save {
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    color: #241c12;
+    letter-spacing: .02em;
+  }
+  .btn-save:hover { background: var(--gold-deep); border-color: var(--gold-deep); }
+  .btn-save:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── Mobile ── */
+  @media (max-width: 700px) {
+    .modal-body { grid-template-columns: 1fr; }
+    .library { border-right: none; border-top: 1px solid var(--rule); order: 2; }
+    .selection { order: 1; }
+    .preview-wrap { width: 150px; height: 150px; }
+    .preview .initials { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pm-title">
+
+  <!-- Header band -->
+  <div class="modal-head">
+    <span class="crest" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+    </span>
+    <h1 id="pm-title">Choose Character Portrait</h1>
+    <button class="close" aria-label="Close">✕</button>
+  </div>
+
+  <!-- Body -->
+  <div class="modal-body">
+
+    <!-- Library -->
+    <div class="library">
+      <div class="library-head">
+        <span class="eyebrow">Portrait Library</span>
+        <p>Pick a portrait for your character. Suggestions are sorted for your species first.</p>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tab-suggested" role="tab" aria-selected="true">
+          Suggested <span class="count" id="count-suggested"></span>
+        </button>
+        <button class="tab" id="tab-all" role="tab" aria-selected="false">
+          All Portraits <span class="count" id="count-all"></span>
+        </button>
+      </div>
+      <div class="grid-scroll">
+        <div class="grid" id="grid" role="radiogroup" aria-label="Portrait options"></div>
+      </div>
+    </div>
+
+    <!-- Selection panel -->
+    <div class="selection">
+      <span class="eyebrow">Selected Portrait</span>
+      <div class="preview-wrap">
+        <div class="preview" id="preview">
+          <span class="initials" id="preview-initials">SD</span>
+        </div>
+      </div>
+      <div class="char-name">Seraphine Duskwillow</div>
+      <p class="preview-copy" id="preview-copy">Choose a portrait from the library, or upload your own.</p>
+      <hr class="divider">
+      <button class="upload-link" id="upload-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Use an image link instead
+      </button>
+      <div class="url-row" id="url-row">
+        <input type="text" id="url-input" placeholder="https://… image link">
+        <button id="url-apply">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer band -->
+  <div class="modal-foot">
+    <label class="framing-toggle" title="Demo: per-image framing data vs. today's plain center-crop">
+      <input type="checkbox" id="framing-fix" checked>
+      <span class="switch"></span>
+      Framing fix <span style="color:var(--faint)">(demo before/after)</span>
+    </label>
+    <div class="spacer"></div>
+    <button class="btn btn-cancel">Cancel</button>
+    <button class="btn btn-save" id="save-btn" disabled>Save Portrait</button>
+  </div>
+</div>
+
+<script>
+/* ── Catalog with per-image framing data ──────────────────────────────────
+   Each source PNG is a loose 512×512 crop of a sheet: the painted face
+   circle sits at a different (cx, cy) with radius r in every file. These
+   values recenter each face. In production, the same numbers would drive a
+   one-time re-crop script; the ZOOM factor crops slightly inside the
+   painted circle so the sheet's dashed border never shows. */
+const PORTRAITS = [
+  { id: "aasimar-01",  src: "../public/portraits/aasimar-male.png",     cx: 300, cy: 235, r: 195, tags: ["aasimar"] },
+  { id: "aasimar-02",  src: "../public/portraits/aasimar-female.png",   cx: 235, cy: 240, r: 200, tags: ["aasimar"] },
+  { id: "dwarf-01",    src: "../public/portraits/dwarf-male.png",       cx: 300, cy: 272, r: 190, tags: ["dwarf"] },
+  { id: "dwarf-02",    src: "../public/portraits/dwarf-female.png",     cx: 240, cy: 265, r: 200, tags: ["dwarf"] },
+  { id: "elf-01",      src: "../public/portraits/elf-male.png",         cx: 290, cy: 255, r: 215, tags: ["elf", "half-elf"] },
+  { id: "elf-02",      src: "../public/portraits/elf-female.png",       cx: 232, cy: 252, r: 205, tags: ["elf", "half-elf"] },
+  { id: "genasi-01",   src: "../public/portraits/genasi-male.png",      cx: 285, cy: 262, r: 205, tags: ["genasi"] },
+  { id: "genasi-02",   src: "../public/portraits/genasi-female.png",    cx: 225, cy: 252, r: 210, tags: ["genasi"] },
+  { id: "gnome-01",    src: "../public/portraits/gnome-male.png",       cx: 310, cy: 290, r: 195, tags: ["gnome"] },
+  { id: "gnome-02",    src: "../public/portraits/gnome-female.png",     cx: 235, cy: 265, r: 200, tags: ["gnome"] },
+  { id: "goliath-01",  src: "../public/portraits/goliath-male.png",     cx: 295, cy: 285, r: 205, tags: ["goliath"] },
+  { id: "goliath-02",  src: "../public/portraits/goliath-female.png",   cx: 240, cy: 280, r: 210, tags: ["goliath"] },
+  { id: "half-elf-01", src: "../public/portraits/half-elf-male.png",    cx: 300, cy: 235, r: 212, tags: ["half-elf", "elf"] },
+  { id: "half-elf-02", src: "../public/portraits/half-elf-female.png",  cx: 232, cy: 242, r: 210, tags: ["half-elf", "elf"] },
+  { id: "halfling-01", src: "../public/portraits/halfling-male.png",    cx: 300, cy: 255, r: 205, tags: ["halfling"] },
+  { id: "halfling-02", src: "../public/portraits/halfling-female.png",  cx: 230, cy: 240, r: 210, tags: ["halfling"] },
+  { id: "human-01",    src: "../public/portraits/human-male.png",       cx: 305, cy: 290, r: 210, tags: ["human"] },
+  { id: "human-02",    src: "../public/portraits/human-female.png",     cx: 238, cy: 285, r: 200, tags: ["human"] },
+  { id: "tiefling-01", src: "../public/portraits/tiefling-male.png",    cx: 300, cy: 272, r: 210, tags: ["tiefling"] },
+  { id: "tiefling-02", src: "../public/portraits/tiefling-female.png",  cx: 228, cy: 260, r: 215, tags: ["tiefling"] },
+];
+
+const IMG = 512;          // source image dimensions
+const ZOOM = 0.90;        // crop inside the painted circle (hides dashed border)
+const SUGGESTED_TAG = "half-elf";   // demo: Seraphine is a half-elf
+
+let framingFix = true;
+let selectedId = null;
+let activeTab = "suggested";
+let customUrl = null;
+
+/* Convert (cx, cy, r) into background-size/position for a square element. */
+function framingStyle(p) {
+  if (!framingFix) return "background-image:url('" + p.src + "');background-size:cover;background-position:center;";
+  const R = p.r * ZOOM;
+  const size = (IMG / (2 * R)) * 100;
+  const px = ((p.cx - R) / (IMG - 2 * R)) * 100;
+  const py = ((p.cy - R) / (IMG - 2 * R)) * 100;
+  return "background-image:url('" + p.src + "');background-size:" + size.toFixed(2) + "%;" +
+         "background-position:" + px.toFixed(2) + "% " + py.toFixed(2) + "%;";
+}
+
+const grid = document.getElementById("grid");
+const preview = document.getElementById("preview");
+const previewInitials = document.getElementById("preview-initials");
+const previewCopy = document.getElementById("preview-copy");
+const saveBtn = document.getElementById("save-btn");
+
+function visiblePortraits() {
+  if (activeTab === "suggested") return PORTRAITS.filter(p => p.tags.includes(SUGGESTED_TAG));
+  return PORTRAITS;
+}
+
+function renderGrid() {
+  grid.innerHTML = "";
+  const list = visiblePortraits();
+  list.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "tile" + (p.id === selectedId ? " selected" : "");
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(p.id === selectedId));
+    b.setAttribute("aria-label", "Portrait option " + (i + 1));
+    const art = document.createElement("span");
+    art.className = "art";
+    art.style.cssText = framingStyle(p);
+    b.appendChild(art);
+    b.addEventListener("click", () => select(p.id));
+    grid.appendChild(b);
+  });
+  if (!list.length) {
+    grid.innerHTML = '<p class="grid-empty">No matching portraits.</p>';
+  }
+}
+
+function renderPreview() {
+  const p = PORTRAITS.find(x => x.id === selectedId);
+  if (customUrl) {
+    preview.style.cssText = "background-image:url('" + customUrl + "');background-size:cover;background-position:center;";
+    previewInitials.style.display = "none";
+    previewCopy.textContent = "Custom image link. It will appear on your character sheet and in party views.";
+    saveBtn.disabled = false;
+  } else if (p) {
+    preview.style.cssText = framingStyle(p);
+    previewInitials.style.display = "none";
+    previewCopy.textContent = "This portrait will appear on your character sheet and in the campaign party view.";
+    saveBtn.disabled = false;
+  } else {
+    preview.style.cssText = "";
+    previewInitials.style.display = "";
+    previewCopy.textContent = "Choose a portrait from the library, or upload your own.";
+    saveBtn.disabled = true;
+  }
+}
+
+function select(id) {
+  selectedId = id;
+  customUrl = null;
+  renderGrid();
+  renderPreview();
+}
+
+/* Tabs */
+const tabSuggested = document.getElementById("tab-suggested");
+const tabAll = document.getElementById("tab-all");
+function setTab(tab) {
+  activeTab = tab;
+  tabSuggested.classList.toggle("active", tab === "suggested");
+  tabAll.classList.toggle("active", tab === "all");
+  tabSuggested.setAttribute("aria-selected", String(tab === "suggested"));
+  tabAll.setAttribute("aria-selected", String(tab === "all"));
+  renderGrid();
+}
+tabSuggested.addEventListener("click", () => setTab("suggested"));
+tabAll.addEventListener("click", () => setTab("all"));
+document.getElementById("count-suggested").textContent =
+  PORTRAITS.filter(p => p.tags.includes(SUGGESTED_TAG)).length;
+document.getElementById("count-all").textContent = PORTRAITS.length;
+
+/* Framing fix demo toggle */
+document.getElementById("framing-fix").addEventListener("change", (e) => {
+  framingFix = e.target.checked;
+  renderGrid();
+  renderPreview();
+});
+
+/* Custom URL */
+document.getElementById("upload-link").addEventListener("click", () => {
+  document.getElementById("url-row").classList.toggle("open");
+  document.getElementById("url-input").focus();
+});
+document.getElementById("url-apply").addEventListener("click", () => {
+  const v = document.getElementById("url-input").value.trim();
+  if (!v) return;
+  customUrl = v;
+  selectedId = null;
+  renderGrid();
+  renderPreview();
+});
+
+/* Save feedback (demo only) */
+saveBtn.addEventListener("click", () => {
+  saveBtn.textContent = "Saved ✓";
+  setTimeout(() => { saveBtn.textContent = "Save Portrait"; }, 1400);
+});
+
+renderGrid();
+renderPreview();
+</script>
+</body>
+</html>

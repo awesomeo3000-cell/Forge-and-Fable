@@ -160,7 +160,6 @@ export function createInitialDraft(ruleset: Ruleset) {
     generalNotes: "",
     raceId: "",
     classId: "",
-    portraitUrl: "",
     sourceIds: [] as string[],
     settings: defaultCharacterSettings(),
     abilities: { ...emptyAbilities },
@@ -218,7 +217,6 @@ export function characterPayload(
     generalNotes: string;
     raceId: string;
     classId: string;
-    portraitUrl?: string;
     sourceIds: string[];
     settings: CharacterSettings;
     abilities: AbilityScores;

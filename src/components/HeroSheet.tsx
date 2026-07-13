@@ -50,6 +50,7 @@ import { progressionPatchForCharacter } from "@/lib/progression/state";
 import { capabilitiesForCharacter, capabilityResourceCost, type CharacterCapability, type CapabilityLane } from "@/lib/capabilities";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
@@ -1350,7 +1351,11 @@ export default memo(function HeroSheet(props: {
     switch (id) {
       case "identity": return (
         <div className="cs-identity">
-          <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
+          {props.character.portraitUrl ? (
+            <CharacterPortrait portraitId={props.character.portraitUrl} characterName={props.character.name} size={52} shape="circle" decorative className="cs-identity-portrait" />
+          ) : (
+            <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
+          )}
           <div><h1 className="cs-char-name">{props.character.name}</h1><p className="cs-char-subtitle">{subtitleParts.join(" / ")}</p></div>
           <span className="cs-level-badge">
             <button className="cs-lvl-stepper" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={10} /></button>
@@ -2257,7 +2262,7 @@ export default memo(function HeroSheet(props: {
         ))}
       </div>
 
-      {showAppearance ? (<AppearancePanel theme={theme ?? undefined} onUpdate={(t) => { props.onUpdate({ theme: t ?? null }); }} onClose={() => setShowAppearance(false)} />) : null}
+      {showAppearance ? (<AppearancePanel theme={theme ?? undefined} onUpdate={(t) => { props.onUpdate({ theme: t ?? null }); }} portraitUrl={props.character.portraitUrl} onPortraitUpdate={(portraitUrl) => props.onUpdate({ portraitUrl })} onClose={() => setShowAppearance(false)} />) : null}
       {spellDetail ? (
         <div className="cs-spell-detail-overlay" onClick={() => setSpellDetail(null)}>
           <div className="cs-spell-detail" onClick={(e) => e.stopPropagation()}>

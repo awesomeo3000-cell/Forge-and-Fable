@@ -4,6 +4,8 @@ import { memo, useCallback, useMemo, useState } from "react";
 import type { Ruleset, DraftCharacter, BuildMode } from "@/types/game";
 import { FIGHT_STYLES, STYLE_TO_CLASSES, buildQuickDraft, PREMADE_ARCHETYPES, type FightStyle } from "@/lib/quickbuild";
 import { classDescriptor, firstSentence } from "@/lib/ledgerCopy";
+import PortraitField from "@/components/PortraitField";
+import { suggestPortraitAncestry } from "@/data/portraits";
 
 export default memo(function QuickbuilderPanel(props: {
   ruleset: Ruleset;
@@ -18,6 +20,7 @@ export default memo(function QuickbuilderPanel(props: {
   const [classId, setClassId] = useState("");
   const [raceId, setRaceId] = useState("");
   const [charName, setCharName] = useState("");
+  const [portraitUrl, setPortraitUrl] = useState("");
 
   const classOptions = useMemo(() => {
     if (!fightStyle) return [];
@@ -35,8 +38,9 @@ export default memo(function QuickbuilderPanel(props: {
 
   const handleFinish = useCallback(() => {
     const draft = buildQuickDraft(ruleset, classId, raceId, charName.trim());
+    if (portraitUrl) draft.portraitUrl = portraitUrl;
     onComplete(draft);
-  }, [ruleset, classId, raceId, charName, onComplete]);
+  }, [ruleset, classId, raceId, charName, portraitUrl, onComplete]);
 
   // Premade: show archetype ledger
   if (isPremade) {
@@ -84,7 +88,13 @@ export default memo(function QuickbuilderPanel(props: {
             />
           </label>
         </div>
-        <div className="creator-footer dj-footer">
+        <PortraitField
+          value={portraitUrl}
+          characterName={charName || "Adventurer"}
+          suggestedAncestry={raceId ? suggestPortraitAncestry(raceId) : undefined}
+          onChange={setPortraitUrl}
+        />
+        <div className="creator-footer dj-footer"> {/* premade */}
           <button
             className="ledger-button ledger-button-primary"
             type="button"
@@ -183,6 +193,12 @@ export default memo(function QuickbuilderPanel(props: {
               />
             </label>
           </div>
+          <PortraitField
+            value={portraitUrl}
+            characterName={charName || "Adventurer"}
+            suggestedAncestry={raceId ? suggestPortraitAncestry(raceId) : undefined}
+            onChange={setPortraitUrl}
+          />
         </div>
       ) : null}
 

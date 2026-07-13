@@ -29,9 +29,6 @@ import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
-import PortraitField from "@/components/PortraitField";
-import { suggestPortraitAncestry } from "@/data/portraits";
-
 import { CHAPTERS, classDescriptor, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
 import {
   CLASS_SKILL_CHOICES,
@@ -420,12 +417,6 @@ export default memo(function CreatorPanel(props: {
                     onChange={(event) => props.onDraftChange({ ...props.draft, name: event.target.value })}
                   />
                 </label>
-                <PortraitField
-                  value={props.draft.portraitUrl}
-                  characterName={props.draft.name || "Adventurer"}
-                  suggestedAncestry={props.draft.raceId ? suggestPortraitAncestry(props.draft.raceId) : undefined}
-                  onChange={(portraitUrl) => props.onDraftChange({ ...props.draft, portraitUrl })}
-                />
                 <div className="dj-settings-panel">
                   <SourceSettingsPanel
                     selectedSourceIds={props.draft.sourceIds}

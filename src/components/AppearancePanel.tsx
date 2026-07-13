@@ -2,9 +2,12 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { RotateCcw, X } from "lucide-react";
+import PortraitField from "@/components/PortraitField";
+import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import type { CharacterTheme, ThemeBackgroundKey, ThemeFontKey } from "@/types/game";
 import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS, loadUserPresets, saveUserPreset, deleteUserPreset, encodeSkinCode, decodeSkinCode, isValidBackgroundImageUrl } from "@/lib/skins";
 import { useFocusTrap } from "@/lib/useFocusTrap";
+import { isCatalogPortrait } from "@/data/portraits";
 
 function contrastRatio(hex1: string, hex2: string) {
   const lum = (h: string) => {
@@ -28,6 +31,10 @@ function normalizeHex(raw: string, fallback: string): string {
   return fallback;
 }
 
+function isValidPortraitUrl(value: string) {
+  return value === "" || isCatalogPortrait(value) || /^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value);
+}
+
 const BACKGROUNDS: ThemeBackgroundKey[] = ["parchment", "plain", "linen", "stars", "sparkle", "forest", "dungeon"];
 
 function userIdFromStorage(): string | null {
@@ -43,6 +50,8 @@ function userIdFromStorage(): string | null {
 export default memo(function AppearancePanel(props: {
   theme: CharacterTheme | undefined;
   onUpdate: (theme: CharacterTheme | undefined) => void;
+  portraitUrl?: string;
+  onPortraitUpdate?: (portraitUrl: string) => void;
   onClose: () => void;
 }) {
   const current = props.theme ?? SKIN_PRESETS[0].theme;
@@ -57,12 +66,15 @@ export default memo(function AppearancePanel(props: {
   const [accentHex, setAccentHex] = useState(current.accent);
   const [fontScale, setFontScale] = useState(current.fontScale ?? 1);
   const [bgUrl, setBgUrl] = useState(current.backgroundImageUrl ?? "");
+  const [portraitUrl, setPortraitUrl] = useState(props.portraitUrl ?? "");
   const [importCode, setImportCode] = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [presetName, setPresetName] = useState("");
   const [userPresets, setUserPresets] = useState<{ id: string; name: string; theme: CharacterTheme }[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const snapshotRef = useRef<CharacterTheme | undefined>(props.theme);
+  const portraitSnapshotRef = useRef(props.portraitUrl ?? "");
+  const portraitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load user presets on mount
   useEffect(() => {
@@ -141,6 +153,9 @@ export default memo(function AppearancePanel(props: {
   const handleRevert = () => {
     const snap = snapshotRef.current;
     if (timer.current) clearTimeout(timer.current);
+    if (portraitTimer.current) clearTimeout(portraitTimer.current);
+    setPortraitUrl(portraitSnapshotRef.current);
+    props.onPortraitUpdate?.(portraitSnapshotRef.current);
     if (snap) {
       applyPreset(snap);
     } else {
@@ -186,13 +201,22 @@ export default memo(function AppearancePanel(props: {
   };
 
   const bgUrlInvalid = bgUrl.trim() !== "" && !isValidBackgroundImageUrl(bgUrl.trim());
+  const portraitUrlInvalid = !isValidPortraitUrl(portraitUrl.trim());
 
   const inkPaperRatio = contrastRatio(ink, paper);
   const accentPaperRatio = contrastRatio(accent, paper);
   const inkWarn = inkPaperRatio < 4.5;
   const accentWarn = accentPaperRatio < 3.0;
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); if (portraitTimer.current) clearTimeout(portraitTimer.current); }, []);
+
+  const updatePortrait = (value: string) => {
+    setPortraitUrl(value);
+    const trimmed = value.trim();
+    if (!isValidPortraitUrl(trimmed)) return;
+    if (portraitTimer.current) clearTimeout(portraitTimer.current);
+    portraitTimer.current = setTimeout(() => props.onPortraitUpdate?.(trimmed), 300);
+  };
 
   // Sync hex fields when color pickers change externally
   useEffect(() => { setPaperHex(paper); }, [paper]);
@@ -281,6 +305,31 @@ export default memo(function AppearancePanel(props: {
         </div>
         {inkWarn ? <p className="cs-skin-warn">Low contrast — text may be hard to read</p> : null}
         {accentWarn ? <p className="cs-skin-warn">Accent has low contrast against the parchment — small labels may be hard to read</p> : null}
+      </div>
+
+      <div className="cs-skin-section">
+        <span className="cs-skin-label">Character portrait</span>
+        <div className="cs-portrait-setting">
+          <CharacterPortrait
+            portraitId={portraitUrl || null}
+            characterName="Character"
+            size={58}
+            shape="circle"
+            decorative
+            className="cs-portrait-preview"
+          />
+          <div>
+            <input type="text" className="qb-name-input" aria-label="Character portrait URL" placeholder="Portrait URL (https://...)" value={portraitUrl} onChange={(event) => updatePortrait(event.target.value)} maxLength={500} />
+            <p className="cs-muted">Used in campaign and DM party views. Class artwork remains the fallback.</p>
+          </div>
+          {portraitUrl ? <button type="button" className="cs-glass-btn" onClick={() => updatePortrait("")}>Clear</button> : null}
+        </div>
+        <PortraitField
+          value={portraitUrl}
+          characterName="Character"
+          onChange={(url) => updatePortrait(url)}
+        />
+        {portraitUrlInvalid ? <p className="cs-skin-warn">Enter a full http(s) image link or a site-relative image path.</p> : null}
       </div>
 
       <div className="cs-skin-section">

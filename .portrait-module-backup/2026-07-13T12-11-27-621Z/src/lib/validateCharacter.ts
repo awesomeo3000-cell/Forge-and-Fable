@@ -1,6 +1,5 @@
 import { assertSnapshotCharacter } from "@/lib/characterSnapshots";
 import { isSupportedRuleset } from "@/lib/characterRuleset";
-import { isCatalogPortrait } from "@/data/portraits";
 
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
@@ -85,8 +84,8 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "portraitUrl":
         if (val !== undefined) {
           assertString(val, "portraitUrl", 500);
-          if (val && !isCatalogPortrait(val) && !/^https?:\/\//i.test(val) && !/^\/(?!\/)/.test(val)) {
-            throw new Error(`"portraitUrl" must be a catalog portrait ID, an http(s) URL, or a site-relative path.`);
+          if (val && !/^https?:\/\//i.test(val) && !/^\/(?!\/)/.test(val)) {
+            throw new Error(`"portraitUrl" must be an http(s) URL or a site-relative path.`);
           }
         }
         break;

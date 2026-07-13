@@ -486,8 +486,6 @@ export type DraftCharacter = {
   generalNotes: string;
   raceId: string;
   classId: string;
-  /** Optional portrait selected during creation. Persisted as portraitUrl on the Character. */
-  portraitUrl?: string;
   sourceIds: string[];
   settings: CharacterSettings;
   abilities: AbilityScores;

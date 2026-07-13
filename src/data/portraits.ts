@@ -1,0 +1,179 @@
+/**
+ * Portrait catalog for the character builder and appearance panel.
+ *
+ * Each portrait is a pre-cropped 512 × 512 image stored in public/portraits/.
+ * Opaque IDs are the stable persistable keys — the UI never exposes ancestry
+ * or presentation metadata to players.
+ */
+
+export type PortraitFrame = {
+  /** Center of the painted face circle in source-image pixels. */
+  cx: number;
+  cy: number;
+  /** Radius of the painted face circle in source-image pixels. */
+  r: number;
+};
+
+export type PortraitOption = {
+  /** Opaque stable ID — the value persisted on character.portraitUrl. */
+  id: string;
+  /** Asset path relative to the public/ directory. */
+  src: string;
+  /** Ancestries this portrait is a reasonable visual match for (sorting hint only). */
+  suggestedAncestries: string[];
+  /**
+   * The current source PNGs are loose 512×512 crops of a sheet: the painted
+   * face circle sits at a different spot in every file. `frame` recenters the
+   * face at render time. Delete these once assets are re-cropped uniformly —
+   * portraits without a frame render as a plain center-crop.
+   */
+  frame?: PortraitFrame;
+};
+
+/* ── Full catalog ───────────────────────────────────────────────────────── */
+
+export const PORTRAITS: readonly PortraitOption[] = [
+  { id: "portrait-aasimar-01",    src: "/portraits/aasimar-male.png",    suggestedAncestries: ["aasimar"],          frame: { cx: 300, cy: 235, r: 195 } },
+  { id: "portrait-aasimar-02",    src: "/portraits/aasimar-female.png",   suggestedAncestries: ["aasimar"],          frame: { cx: 235, cy: 240, r: 200 } },
+  { id: "portrait-dwarf-01",      src: "/portraits/dwarf-male.png",       suggestedAncestries: ["dwarf"],            frame: { cx: 300, cy: 272, r: 190 } },
+  { id: "portrait-dwarf-02",      src: "/portraits/dwarf-female.png",     suggestedAncestries: ["dwarf"],            frame: { cx: 240, cy: 265, r: 200 } },
+  { id: "portrait-elf-01",        src: "/portraits/elf-male.png",         suggestedAncestries: ["elf", "half-elf"],  frame: { cx: 290, cy: 255, r: 215 } },
+  { id: "portrait-elf-02",        src: "/portraits/elf-female.png",       suggestedAncestries: ["elf", "half-elf"],  frame: { cx: 232, cy: 252, r: 205 } },
+  { id: "portrait-genasi-01",     src: "/portraits/genasi-male.png",      suggestedAncestries: ["genasi"],           frame: { cx: 285, cy: 262, r: 205 } },
+  { id: "portrait-genasi-02",     src: "/portraits/genasi-female.png",    suggestedAncestries: ["genasi"],           frame: { cx: 225, cy: 252, r: 210 } },
+  { id: "portrait-gnome-01",      src: "/portraits/gnome-male.png",       suggestedAncestries: ["gnome"],            frame: { cx: 310, cy: 290, r: 195 } },
+  { id: "portrait-gnome-02",      src: "/portraits/gnome-female.png",     suggestedAncestries: ["gnome"],            frame: { cx: 235, cy: 265, r: 200 } },
+  { id: "portrait-goliath-01",    src: "/portraits/goliath-male.png",     suggestedAncestries: ["goliath"],          frame: { cx: 295, cy: 285, r: 205 } },
+  { id: "portrait-goliath-02",    src: "/portraits/goliath-female.png",   suggestedAncestries: ["goliath"],          frame: { cx: 240, cy: 280, r: 210 } },
+  { id: "portrait-half-elf-01",   src: "/portraits/half-elf-male.png",    suggestedAncestries: ["half-elf", "elf"],  frame: { cx: 300, cy: 235, r: 212 } },
+  { id: "portrait-half-elf-02",   src: "/portraits/half-elf-female.png",  suggestedAncestries: ["half-elf", "elf"],  frame: { cx: 232, cy: 242, r: 210 } },
+  { id: "portrait-halfling-01",   src: "/portraits/halfling-male.png",    suggestedAncestries: ["halfling"],         frame: { cx: 300, cy: 255, r: 205 } },
+  { id: "portrait-halfling-02",   src: "/portraits/halfling-female.png",  suggestedAncestries: ["halfling"],         frame: { cx: 230, cy: 240, r: 210 } },
+  { id: "portrait-human-01",      src: "/portraits/human-male.png",       suggestedAncestries: ["human"],            frame: { cx: 305, cy: 290, r: 210 } },
+  { id: "portrait-human-02",      src: "/portraits/human-female.png",     suggestedAncestries: ["human"],            frame: { cx: 238, cy: 285, r: 200 } },
+  { id: "portrait-tiefling-01",   src: "/portraits/tiefling-male.png",    suggestedAncestries: ["tiefling"],         frame: { cx: 300, cy: 272, r: 210 } },
+  { id: "portrait-tiefling-02",   src: "/portraits/tiefling-female.png",  suggestedAncestries: ["tiefling"],         frame: { cx: 228, cy: 260, r: 215 } },
+] as const;
+
+/* ── Lookup helpers ────────────────────────────────────────────────────── */
+
+export const PORTRAIT_BY_ID: ReadonlyMap<string, PortraitOption> = new Map(
+  PORTRAITS.map((p) => [p.id, p]),
+);
+
+/** Ancestries present in the catalog, sorted alphabetically (internal use only). */
+export const ANCESTRY_LIST: readonly string[] = [...new Set(PORTRAITS.flatMap((p) => p.suggestedAncestries))].sort();
+
+/* ── Race-ID → ancestry mapping ────────────────────────────────────────── */
+
+/**
+ * Maps a ruleset raceId to the best-matching portrait ancestry.
+ *
+ * Handles:
+ *  - 2024-style plain IDs   ("elf", "dwarf", "tiefling", …)
+ *  - Legacy subrace IDs     ("high-elf-legacy", "hill-dwarf-legacy", …)
+ *  - Special entries        ("variant-aasimar" → "aasimar")
+ *
+ * Returns `undefined` when no portrait ancestry matches (e.g. "dragonborn", "orc").
+ */
+const RACE_TO_ANCESTRY: ReadonlyMap<string, string> = new Map([
+  // Direct matches (2024 species)
+  ["aasimar",   "aasimar"],
+  ["dwarf",     "dwarf"],
+  ["elf",       "elf"],
+  ["genasi",    "genasi"],
+  ["gnome",     "gnome"],
+  ["goliath",   "goliath"],
+  ["halfling",  "halfling"],
+  ["half-elf",  "half-elf"],
+  ["human",     "human"],
+  ["tiefling",  "tiefling"],
+
+  // Legacy subraces — match compound names first
+  ["hill-dwarf-legacy",       "dwarf"],
+  ["mountain-dwarf-legacy",   "dwarf"],
+  ["dwarf-legacy",           "dwarf"],
+
+  ["high-elf-legacy",        "half-elf"],
+  ["wood-elf-legacy",        "half-elf"],
+  ["drow-legacy",            "half-elf"],
+  ["half-elf-legacy",        "half-elf"],
+  ["elf-legacy",             "half-elf"],
+
+  ["lightfoot-halfling-legacy", "halfling"],
+  ["stout-halfling-legacy",    "halfling"],
+  ["halfling-legacy",          "halfling"],
+
+  ["rock-gnome-legacy",       "gnome"],
+  ["deep-gnome-legacy",       "gnome"],
+  ["forest-gnome-legacy",      "gnome"],
+  ["gnome-legacy",            "gnome"],
+
+  ["air-genasi-legacy",       "genasi"],
+  ["earth-genasi-legacy",     "genasi"],
+  ["fire-genasi-legacy",      "genasi"],
+  ["water-genasi-legacy",     "genasi"],
+  ["genasi-legacy",          "genasi"],
+
+  ["goliath-legacy",          "goliath"],
+
+  // Special entries
+  ["variant-aasimar",          "aasimar"],
+  ["half-orc-legacy",         "human"],
+  ["orc",                     "human"],
+  ["human-legacy",            "human"],
+  ["dragonborn",              "human"],
+  ["dragonborn-legacy",       "human"],
+  ["tiefling-legacy",         "tiefling"],
+]);
+
+export function suggestPortraitAncestry(raceId: string): string | undefined {
+  return RACE_TO_ANCESTRY.get(raceId);
+}
+
+/** Resolve a portrait ID to its image src. Returns undefined for unknown IDs. */
+export function resolvePortraitSrc(portraitId: string): string | undefined {
+  return PORTRAIT_BY_ID.get(portraitId)?.src;
+}
+
+/* ── Framing ───────────────────────────────────────────────────────────── */
+
+/** Source image dimensions (all catalog assets are square). */
+export const PORTRAIT_IMG_SIZE = 512;
+/** Crop slightly inside the painted circle so the sheet's dashed border never shows. */
+export const PORTRAIT_FRAME_ZOOM = 0.9;
+
+export type PortraitFrameCss = {
+  backgroundImage: string;
+  backgroundSize: string;
+  backgroundPosition: string;
+};
+
+/**
+ * Background-image CSS that recenters a catalog portrait's face circle inside
+ * a square element. Returns undefined for unknown IDs; unframed portraits get
+ * a plain center-crop (equivalent to object-fit: cover).
+ */
+export function portraitFrameCss(portraitId: string): PortraitFrameCss | undefined {
+  const portrait = PORTRAIT_BY_ID.get(portraitId);
+  if (!portrait) return undefined;
+  const base = { backgroundImage: `url("${portrait.src}")` };
+  if (!portrait.frame) {
+    return { ...base, backgroundSize: "cover", backgroundPosition: "center" };
+  }
+  const { cx, cy, r } = portrait.frame;
+  const cropR = r * PORTRAIT_FRAME_ZOOM;
+  const size = (PORTRAIT_IMG_SIZE / (2 * cropR)) * 100;
+  const px = ((cx - cropR) / (PORTRAIT_IMG_SIZE - 2 * cropR)) * 100;
+  const py = ((cy - cropR) / (PORTRAIT_IMG_SIZE - 2 * cropR)) * 100;
+  return {
+    ...base,
+    backgroundSize: `${size.toFixed(2)}%`,
+    backgroundPosition: `${px.toFixed(2)}% ${py.toFixed(2)}%`,
+  };
+}
+
+/** Check whether a portrait ID exists in the approved catalog. */
+export function isCatalogPortrait(portraitId: string): boolean {
+  return PORTRAIT_BY_ID.has(portraitId);
+}
