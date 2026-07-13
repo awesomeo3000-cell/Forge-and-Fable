@@ -11232,7 +11232,7 @@ button.dj-card {
 .dm-table-code:hover { border-color: var(--paper, #e9dfc8); color: var(--paper, #e9dfc8); }
 .dm-table-error {
   margin: 10px 0 0;
-  color: #ef9a85;
+  color: var(--dm-danger, #b33b32);
   font-size: 12.5px;
   font-style: italic;
 }
@@ -12515,7 +12515,7 @@ button.dj-card {
 .dm-note-form textarea { min-height:92px; resize:vertical; }
 .dm-note-form option { background:var(--ground-2,#1f1a12); }
 .dm-note-form :is(input,select,textarea):focus { outline:none; border-bottom-color:var(--doc-accent,#c9a25a); }
-.dm-request-center{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:0 0 14px}.dm-request-card{border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);background:color-mix(in srgb,var(--paper) 94%,white);padding:12px}.dm-request-card header,.dm-request-card p{display:flex;justify-content:space-between;gap:12px}.dm-request-card header{border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent);padding-bottom:8px}.dm-request-card header span,.dm-request-card em{font-size:.74rem;color:var(--muted);font-style:normal}.dm-request-card p{margin:7px 0 0;font-size:.8rem}.dm-request-card footer{margin-top:9px;font-weight:700;font-size:.78rem}.dm-target-picker{display:flex;gap:8px;border:0;padding:0;margin:0}.dm-target-picker legend{position:absolute;clip:rect(0 0 0 0)}.dm-target-picker label{display:flex;align-items:center;gap:4px;font-size:.75rem}
+.dm-request-center{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:0 0 14px}.dm-request-card{border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);background:color-mix(in srgb,var(--dm-surface,#e9dfc8) 94%,white);padding:12px}.dm-request-card header,.dm-request-card p{display:flex;justify-content:space-between;gap:12px}.dm-request-card header{border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent);padding-bottom:8px}.dm-request-card header span,.dm-request-card em{font-size:.74rem;color:var(--muted);font-style:normal}.dm-request-card p{margin:7px 0 0;font-size:.8rem}.dm-request-card footer{margin-top:9px;font-weight:700;font-size:.78rem}.dm-target-picker{display:flex;gap:8px;border:0;padding:0;margin:0}.dm-target-picker legend{position:absolute;clip:rect(0 0 0 0)}.dm-target-picker label{display:flex;align-items:center;gap:4px;font-size:.75rem}
 .dm-inspector-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.dm-inspector-actions .dm-btn{font-size:.68rem;padding:5px 7px}
 .dm-roll-presets{display:flex;flex-wrap:wrap;gap:5px;flex-basis:100%}.dm-roll-presets .dm-btn{font-size:.66rem;padding:5px 7px}
 .dm-pacing-facts{display:flex;flex-wrap:wrap;gap:8px 16px}.dm-pacing-facts span{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}.dm-pacing-facts strong{color:var(--paper,#e9dfc8)}.dm-wave-list{display:flex;flex-wrap:wrap;gap:8px}.dm-wave-list article{display:grid;grid-template-columns:1fr auto;gap:3px 8px;min-width:230px;padding:8px;border:1px solid color-mix(in srgb,var(--paper,#e9dfc8) 18%,transparent)}.dm-wave-list article[data-ready=true]{border-color:var(--doc-accent,#c9a25a)}.dm-wave-list article>span{font-size:.6rem;letter-spacing:.12em;color:var(--doc-accent,#c9a25a)}.dm-wave-list article>small{grid-column:1/-1}.dm-wave-list article>.dm-btn{font-size:.62rem;padding:4px}.dm-turn-actions{display:flex;flex-wrap:wrap;gap:3px}.dm-turn-actions .dm-icon-btn{width:auto;min-width:24px;padding:4px;font-size:.58rem}.dm-turn-actions .is-active{color:var(--doc-accent,#c9a25a)}
@@ -12628,8 +12628,23 @@ button.dj-card {
    Color is semantic here, not decorative: green = bodily/ready, blue = magic,
    violet = concentration, amber = warning/spent, red = immediate danger. */
 .dm-table {
-  --dm-surface: var(--ground-2, #f4eddf);
-  --dm-ink: var(--paper, #2b241b);
+  /* THE TABLE IS PAPER - decided here, in the stylesheet. The Table began as
+     a dark desk whose rules used --paper as the FOREGROUND role and
+     --ground-2 as the SURFACE role; DM-1 flipped it light by hijacking those
+     tokens with hex values in an inline style (and set --ink equal to
+     --paper, killing ink/paper contrast). This block is the honest version:
+     ledger tokens are the single source, the legacy role names are remapped
+     once below, and the campaign skin arrives only through --doc-accent.
+     New rules use --dm-ink / --dm-surface / --dm-accent, never --paper or
+     --ground-2. */
+  --dm-surface: var(--ledger-paper, #e9dfc8);
+  --dm-ink: var(--ledger-ink, #2a2018);
+  --dm-accent: var(--doc-accent, var(--ledger-seal, #8c2f22));
+  /* Legacy role remap (foreground / surface / muted foreground): */
+  --paper: var(--dm-ink);
+  --ground-2: var(--dm-surface);
+  --ink: var(--dm-ink);
+  --paper-muted: color-mix(in srgb, var(--dm-ink) 55%, var(--dm-surface));
   --dm-rule: color-mix(in srgb, var(--dm-ink) 16%, transparent);
   --dm-muted: color-mix(in srgb, var(--dm-ink) 62%, transparent);
   --dm-ready: #2f8554;
@@ -12833,30 +12848,33 @@ button.dj-card {
 }
 
 .portrait-modal {
-  /* Site tokens: warm ground, parchment ink, gold select. */
-  --pm-surface: var(--ground-2, #1f1a12);
-  --pm-band: var(--ground, #16120c);
-  --pm-ink: var(--parchment, #ece0c8);
-  --pm-muted: var(--parchment-2, #b8a888);
-  --pm-faint: var(--ink-faint, #8a8070);
+  /* Fixed dark palette. This is a scene dialog — do NOT use the site tokens:
+     the document theme remaps --ground/--parchment to light paper/dark ink,
+     which turns the bands parchment and the text dark-on-dark. */
+  --pm-surface: #1f1a12;
+  --pm-band: #16120c;
+  --pm-ink: #ece0c8;
+  --pm-muted: #b8a888;
+  --pm-faint: #9c9280;
   --pm-rule: #3a3223;
-  --pm-gold: var(--select, #c9a25a);
+  --pm-gold: #c9a25a;
   --pm-gold-deep: #a8853f;
-  --pm-ring: var(--rule, #4a4030);
+  --pm-ring: #4a4030;
 
   width: 100%;
   max-width: 880px;
   max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
-  /* Scene backdrop: visible up top, dissolving to solid surface before the
-     footer. The rgba stops must match --pm-surface (#1f1a12). */
+  /* Scene backdrop: a hint of scene up top, dissolving to solid surface
+     before the footer. Kept dark throughout so body text stays legible.
+     The rgba stops must match --pm-surface (#1f1a12). */
   background:
     linear-gradient(180deg,
-      rgba(31, 26, 18, 0.44) 0%,
-      rgba(31, 26, 18, 0.70) 46%,
-      rgba(31, 26, 18, 0.94) 68%,
-      #1f1a12 80%),
+      rgba(31, 26, 18, 0.72) 0%,
+      rgba(31, 26, 18, 0.84) 40%,
+      rgba(31, 26, 18, 0.96) 64%,
+      #1f1a12 78%),
     url("/portraits/modal-backdrop.png") center 26% / cover no-repeat;
   background-color: var(--pm-surface);
   border: 1px solid var(--pm-rule);
@@ -12880,8 +12898,8 @@ button.dj-card {
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  background: rgba(16, 12, 7, 0.78);
-  backdrop-filter: blur(3px);
+  /* Solid band — the scene backdrop made the title illegible. */
+  background: var(--pm-band);
   border-bottom: 1px solid rgba(74, 64, 48, 0.65);
 }
 .portrait-modal-crest {
@@ -12989,8 +13007,12 @@ button.dj-card {
 
 .portrait-modal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  /* Fixed tracks: fr/auto rows let flex height constraints compress the
+     rows so the circles overlapped. Pixel tracks can't be squeezed. */
+  grid-template-columns: repeat(auto-fill, 92px);
+  grid-auto-rows: 92px;
   gap: 14px;
+  justify-content: center;
   padding: 18px 20px;
   overflow-y: auto;
   flex: 1;
@@ -13000,8 +13022,8 @@ button.dj-card {
 
 .portrait-modal-tile {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1;
+  width: 92px;
+  height: 92px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -13057,6 +13079,8 @@ button.dj-card {
   text-align: center;
   text-shadow: 0 1px 3px rgba(0,0,0,.55);
   overflow-y: auto;
+  /* Scrim over the scene backdrop — the panel is all text. */
+  background: rgba(16, 12, 7, 0.55);
 }
 
 .portrait-modal-preview-ring {
@@ -13071,6 +13095,14 @@ button.dj-card {
   border: none;
   background: var(--pm-band);
   color: var(--pm-faint);
+}
+/* Empty state before any portrait is picked — a blank circle, no initials. */
+.portrait-modal-preview-empty {
+  display: block;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--pm-band);
 }
 
 .portrait-modal-char-name {
@@ -13216,15 +13248,21 @@ button.dj-card {
     padding: 16px 20px;
     overflow-y: visible;
   }
-  .portrait-modal-preview-ring .cportrait {
+  .portrait-modal-preview-ring .cportrait,
+  .portrait-modal-preview-empty {
     width: 140px !important;
     height: 140px !important;
   }
   .portrait-modal-grid {
-    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    grid-template-columns: repeat(auto-fill, 72px);
+    grid-auto-rows: 72px;
     gap: 10px;
     padding: 12px;
     max-height: none;
+  }
+  .portrait-modal-tile {
+    width: 72px;
+    height: 72px;
   }
   .portrait-modal-actions {
     padding: 12px 16px;

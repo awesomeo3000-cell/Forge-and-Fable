@@ -411,7 +411,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const paletteItems: Array<{kind:string;label:string;detail?:string;disabled:boolean;run:()=>void}>=[...commands.map((command)=>({kind:"Command",...command,disabled:command.disabled??false})),...RULE_REFERENCES.map(([label,detail])=>({kind:"Rule",label,detail,disabled:false,run:()=>setCommandQuery(label)}))].filter((item)=>!commandQuery.trim()||fuzzyMatch(`${item.label} ${String("detail" in item?item.detail:"")}`,commandQuery.trim()));
 
   return (
-    <section className="dm-table" style={({ "--paper": "#2b241b", "--ink": "#2b241b", "--ground-2": "#f4eddf", "--doc-accent": theme?.accent ?? "#8c5a2b" } as React.CSSProperties)}>
+    <section className="dm-table" style={({ "--doc-accent": theme?.accent ?? "#8c5a2b" } as React.CSSProperties)}>
       <header className="dm-table-head">
         <div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}</span><h2>{campaign.campaign.name}</h2></div>
         <nav className="dm-workspace-modes" aria-label="Table mode">

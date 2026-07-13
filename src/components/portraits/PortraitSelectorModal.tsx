@@ -190,14 +190,18 @@ export default memo(function PortraitSelectorModal({
           <div className="portrait-modal-selection">
             <span className="portrait-modal-eyebrow">Selected Portrait</span>
             <div className="portrait-modal-preview-ring">
-              <CharacterPortrait
-                portraitId={pendingId}
-                characterName={characterName}
-                size={200}
-                shape="circle"
-                decorative
-                className="portrait-modal-preview-art"
-              />
+              {pendingId ? (
+                <CharacterPortrait
+                  portraitId={pendingId}
+                  characterName={characterName}
+                  size={200}
+                  shape="circle"
+                  decorative
+                  className="portrait-modal-preview-art"
+                />
+              ) : (
+                <span className="portrait-modal-preview-empty" aria-hidden="true" />
+              )}
             </div>
             {characterName ? <div className="portrait-modal-char-name">{characterName}</div> : null}
             <p className="portrait-modal-preview-copy">
