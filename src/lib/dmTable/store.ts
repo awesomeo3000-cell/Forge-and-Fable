@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import type { CampaignCharacterNote, CampaignCharacterNoteCategory, CampaignPresence, CampaignPresenceState, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
+import { scheduleRehearsalRequest } from "@/lib/dmTable/rehearsal";
 
 export const PRESENCE_CONNECTED_MS = 20_000;
 export const PRESENCE_DISCONNECTED_MS = 90_000;
@@ -43,13 +44,14 @@ export function touchCampaignPresence(campaignId: string, userId: string, visibi
 
 export function listCampaignPresence(campaignId: string, userId: string, now = Date.now()): CampaignPresence[] {
   membership(campaignId, userId);
+  const owner = campaign(campaignId).dm_user_id;
   const rows = getDb().prepare(`
     SELECT cm.user_id,cm.character_id,cp.visibility,cp.last_seen_at
     FROM campaign_members cm
     LEFT JOIN campaign_presence cp ON cp.campaign_id=cm.campaign_id AND cp.user_id=cm.user_id
-    WHERE cm.campaign_id=?
+    WHERE cm.campaign_id=? AND (? = cm.user_id OR ? = ? OR cm.is_ghost=0)
     ORDER BY cm.joined_at
-  `).all(campaignId) as Array<{ user_id: string; character_id: string | null; visibility: string | null; last_seen_at: string | null }>;
+  `).all(campaignId, userId, owner, userId) as Array<{ user_id: string; character_id: string | null; visibility: string | null; last_seen_at: string | null }>;
   return rows.map((row) => ({
     userId: row.user_id,
     characterId: row.character_id,
@@ -145,6 +147,7 @@ export function createCampaignRequest(campaignId: string, userId: string, input:
   const id = randomUUID(), createdAt = new Date().toISOString();
   getDb().prepare("INSERT INTO campaign_requests(id,campaign_id,kind,status,resolution,target_user_ids,payload,created_at) VALUES(?,?,?,?,?,?,?,?)")
     .run(id, campaignId, input.kind, "open", input.resolution, JSON.stringify(targetUserIds), JSON.stringify(input.payload), createdAt);
+  scheduleRehearsalRequest(campaignId, id);
   return { id, campaignId, ...input, targetUserIds, status: "open" as const, responses: [], createdAt } satisfies CampaignRequest;
 }
 

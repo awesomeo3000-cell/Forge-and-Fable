@@ -97,6 +97,8 @@ export type CampaignEvent = {
 export type CampaignMemberSummary = {
   userId: string;
   userName: string;
+  /** DM-only rehearsal member; omitted from player-facing projections. */
+  isGhost?: boolean;
   characterId: string | null;
   characterName: string | null;
   characterClass: string | null;

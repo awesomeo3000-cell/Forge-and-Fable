@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 12;
+const SCHEMA_REVISION = 13;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -103,6 +103,7 @@ function createSchema(db: DatabaseSync) {
       campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
       user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
       character_id TEXT REFERENCES characters(id) ON DELETE SET NULL,
+      is_ghost INTEGER NOT NULL DEFAULT 0,
       joined_at TEXT NOT NULL,
       PRIMARY KEY (campaign_id, user_id)
     );
@@ -393,6 +394,10 @@ function migrateSchema(db: DatabaseSync) {
     recordMigration(db, 10, "campaign scenes and persistent NPC state");
     recordMigration(db, 11, "campaign loot parcels and player proposals");
     recordMigration(db, 12, "admin invite codes");
+    if (!tableHasColumn(db, "campaign_members", "is_ghost")) {
+      db.exec("ALTER TABLE campaign_members ADD COLUMN is_ghost INTEGER NOT NULL DEFAULT 0");
+    }
+    recordMigration(db, 13, "DM rehearsal party ghost members");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

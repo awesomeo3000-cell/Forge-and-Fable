@@ -19,6 +19,7 @@ import type { Character } from "@/types/game";
 import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
+import { scheduleRehearsalEvent } from "@/lib/dmTable/rehearsal";
 
 // -- Types -----------------------------------------------------------------
 
@@ -34,6 +35,7 @@ export type CampaignMemberRow = {
   campaign_id: string;
   user_id: string;
   character_id: string | null;
+  is_ghost: number;
   joined_at: string;
 };
 
@@ -357,6 +359,7 @@ function calculateMemberSummary(
   characterId: string | null,
   isDm: boolean,
   viewerUserId: string,
+  isGhost = false,
 ): CampaignMemberSummary {
   let characterJson: Character | null = null;
 
@@ -371,6 +374,7 @@ function calculateMemberSummary(
     return {
       userId,
       userName,
+      ...(isDm && isGhost ? { isGhost: true } : {}),
       characterId,
       characterName: null,
       characterClass: null,
@@ -443,6 +447,7 @@ function calculateMemberSummary(
   return {
     userId,
     userName,
+    ...(isDm && isGhost ? { isGhost: true } : {}),
     characterId,
     characterName: characterJson.name,
     characterClass: characterJson.classId,
@@ -471,14 +476,16 @@ function calculateMemberSummary(
 
 function listMembers(campaignId: string, isDm: boolean, viewerUserId: string): CampaignMemberSummary[] {
   const memberRows = getDb().prepare(`
-    SELECT cm.user_id, cm.character_id, u.name AS user_name
+    SELECT cm.user_id, cm.character_id, cm.is_ghost, u.name AS user_name
     FROM campaign_members cm
     JOIN users u ON u.id = cm.user_id
     WHERE cm.campaign_id = ?
     ORDER BY cm.joined_at ASC
-  `).all(campaignId) as Array<{ user_id: string; character_id: string | null; user_name: string }>;
+  `).all(campaignId) as Array<{ user_id: string; character_id: string | null; is_ghost: number; user_name: string }>;
 
-  return memberRows.map((row) => calculateMemberSummary(row.user_id, row.user_name, row.character_id, isDm, viewerUserId));
+  return memberRows
+    .filter((row) => isDm || !row.is_ghost)
+    .map((row) => calculateMemberSummary(row.user_id, row.user_name, row.character_id, isDm, viewerUserId, Boolean(row.is_ghost)));
 }
 
 function getInitiativeRow(campaignId: string) {
@@ -619,8 +626,11 @@ export function getCampaignDetail(campaignId: string, userId: string): CampaignD
   const isDm = campaign.dm_user_id === userId;
   const members = listMembers(campaignId, isDm, userId);
   const rolls = getDb().prepare(
-    "SELECT * FROM campaign_rolls WHERE campaign_id = ? ORDER BY created_at DESC LIMIT 50",
-  ).all(campaignId) as CampaignRollRow[];
+    `SELECT cr.* FROM campaign_rolls cr
+     LEFT JOIN campaign_members cm ON cm.campaign_id = cr.campaign_id AND cm.user_id = cr.user_id
+     WHERE cr.campaign_id = ? AND (? = 1 OR COALESCE(cm.is_ghost, 0) = 0)
+     ORDER BY cr.created_at DESC LIMIT 50`,
+  ).all(campaignId, isDm ? 1 : 0) as CampaignRollRow[];
 
   return {
     id: campaign.id,
@@ -650,11 +660,13 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
     LIMIT 200
   `).all(campaignId, eventCursor.createdAt, eventCursor.createdAt, eventCursor.id, userId) as CampaignEvent[];
   const rolls = getDb().prepare(`
-    SELECT * FROM campaign_rolls
-    WHERE campaign_id = ? AND (created_at > ? OR (created_at = ? AND id > ?))
-    ORDER BY created_at ASC, id ASC
+    SELECT cr.* FROM campaign_rolls cr
+    LEFT JOIN campaign_members cm ON cm.campaign_id = cr.campaign_id AND cm.user_id = cr.user_id
+    WHERE cr.campaign_id = ? AND (? = 1 OR COALESCE(cm.is_ghost, 0) = 0)
+      AND (cr.created_at > ? OR (cr.created_at = ? AND cr.id > ?))
+    ORDER BY cr.created_at ASC, cr.id ASC
     LIMIT 200
-  `).all(campaignId, rollCursor.createdAt, rollCursor.createdAt, rollCursor.id) as CampaignRollRow[];
+  `).all(campaignId, isDm ? 1 : 0, rollCursor.createdAt, rollCursor.createdAt, rollCursor.id) as CampaignRollRow[];
 
   return {
     campaign: {
@@ -797,6 +809,8 @@ export function postCampaignEvent(
     db.exec("ROLLBACK");
     throw e;
   }
+
+  if (targetUserId) scheduleRehearsalEvent(campaignId, id, type, targetUserId, payload);
 
   return { id, campaign_id: campaignId, target_user_id: target, type, payload: payloadJson, created_by: userId, created_at: createdAt };
 }

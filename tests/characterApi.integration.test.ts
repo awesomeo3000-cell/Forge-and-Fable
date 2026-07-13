@@ -92,7 +92,7 @@ describe("character API persistence", () => {
     const db = getDb();
     const columns = db.prepare("PRAGMA table_info(characters)").all() as Array<{ name: string }>;
     expect(columns.some((column) => column.name === "revision")).toBe(true);
-    expect(db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get()).toMatchObject({ version: 12 });
+    expect(db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get()).toMatchObject({ version: 13 });
   });
 
   it("creates, lists, advances, reloads, and deletes through route handlers", async () => {
@@ -136,7 +136,7 @@ describe("character API persistence", () => {
   it("reports database write health", async () => {
     const response = await HEALTH();
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ ok: true, database: { writable: true, schemaVersion: 12 } });
+    expect(await response.json()).toMatchObject({ ok: true, database: { writable: true, schemaVersion: 13 } });
   });
 
   it("persists subclass choices and rejects incomplete progression patches", async () => {

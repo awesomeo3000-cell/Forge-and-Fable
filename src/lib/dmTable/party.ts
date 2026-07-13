@@ -1,7 +1,6 @@
 import type { CampaignMemberSummary } from "@/types/campaign";
 import { progressionChoiceLabel } from "@/lib/progression/choiceOptions";
 
-export type DmLayoutPreset = "combat" | "roleplay" | "preparation" | "compact";
 export type DmWorkspaceMode = "scene" | "encounter" | "preparation" | "review";
 
 export type ImportantResource = {
@@ -94,10 +93,4 @@ export function memberHpState(member: CampaignMemberSummary) {
   if (ratio <= 0.25) return "critical" as const;
   if (ratio < 0.5) return "wounded" as const;
   return "healthy" as const;
-}
-
-export function presetMode(preset: DmLayoutPreset): DmWorkspaceMode {
-  if (preset === "combat") return "encounter";
-  if (preset === "preparation") return "preparation";
-  return "scene";
 }

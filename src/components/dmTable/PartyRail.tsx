@@ -30,6 +30,7 @@ export default memo(function PartyRail({ members, dmUserId, selectedUserId, curr
       <header>
         <span>Party</span>
         <strong>{players.length} adventurer{players.length === 1 ? "" : "s"}</strong>
+        {players.some((member) => member.isGhost) ? <em className="dm-rehearsal-mark">Rehearsal party</em> : null}
         <small>{concerns ? `${concerns} need attention` : "Party state is steady"}{concentrating ? ` · ${concentrating} concentrating` : ""}</small>
       </header>
       {alerts.length ? <section className="dm-party-alerts" aria-label="Party alerts"><h4><AlertTriangle size={13}/> Needs attention</h4>{alerts.slice(0, 4).map((alert) => <button key={alert.id} type="button" data-severity={alert.severity} onClick={() => { const member = players.find((item) => item.userId === alert.userId); if (member) onSelect(member); }}><strong>{alert.title}</strong>{alert.detail ? <small>{alert.detail}</small> : null}</button>)}</section> : null}
@@ -43,12 +44,12 @@ export default memo(function PartyRail({ members, dmUserId, selectedUserId, curr
           const presenceState = presence.find((item) => item.userId === member.userId)?.state ?? "disconnected";
           const name = member.characterName ?? member.userName;
           return (
-            <div key={member.userId} className={`dm-command-member is-${state}${selected ? " is-selected" : ""}${current ? " is-current" : ""}`}>
+            <div key={member.userId} className={`dm-command-member is-${state}${selected ? " is-selected" : ""}${current ? " is-current" : ""}${member.isGhost ? " is-rehearsal" : ""}`}>
               <button type="button" role="option" aria-selected={selected} onClick={() => onSelect(member)}>
                 <span className="dm-member-primary">
                   <CharacterPortrait member={member} />
                   <span className="dm-command-member-name">
-                    <strong>{name}</strong>
+                    <strong>{name}{member.isGhost ? <em className="dm-rehearsal-mark">rehearsal</em> : null}</strong>
                     <small>{member.characterClass ? `${member.characterClass} ${member.characterLevel ?? ""}` : "Character not loaded"} · {presenceState}</small>
                     <span className="dm-command-hp-copy">HP {member.currentHp ?? "—"} / {member.maxHp ?? "—"}{member.tempHp ? ` · +${member.tempHp} temp` : ""}</span>
                     <span className="dm-command-hp" role="progressbar" aria-label={`${name} hit points`} aria-valuemin={0} aria-valuemax={member.maxHp ?? 0} aria-valuenow={member.currentHp ?? 0}>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { conditionTone, deriveImportantResources, memberHpState, presetMode } from "@/lib/dmTable/party";
+import { conditionTone, deriveImportantResources, memberHpState } from "@/lib/dmTable/party";
 import { derivePartyAlerts } from "@/lib/dmTable/alerts";
 import type { CampaignMemberSummary } from "@/types/campaign";
 
@@ -65,11 +65,6 @@ describe("DM party command center derivation", () => {
     expect(conditionTone("Mage Armor")).toBe("magic");
   });
 
-  it("maps view presets to their primary workspace mode", () => {
-    expect(presetMode("combat")).toBe("encounter");
-    expect(presetMode("roleplay")).toBe("scene");
-    expect(presetMode("preparation")).toBe("preparation");
-  });
 
   it("deduplicates deterministic critical, condition, and presence alerts", () => {
     const alerts = derivePartyAlerts([member], [{ userId: "player", characterId: "hero", state: "disconnected", lastSeenAt: null }], "dm");
