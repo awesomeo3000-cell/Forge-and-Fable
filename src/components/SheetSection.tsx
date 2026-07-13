@@ -14,7 +14,6 @@ export default memo(function SheetSection({
   collapsed,
   onToggle,
   editMode,
-  onHide,
   onRename,
   children,
 }: {
@@ -23,7 +22,6 @@ export default memo(function SheetSection({
   collapsed: boolean;
   onToggle: () => void;
   editMode: boolean;
-  onHide?: () => void;
   onRename?: (title: string) => void;
   children: ReactNode;
 }) {
@@ -79,11 +77,6 @@ export default memo(function SheetSection({
             maxLength={60}
             onChange={(event) => onRename(event.target.value)}
           />
-        ) : null}
-        {editMode && onHide ? (
-          <button type="button" className="cs-section-hide" onClick={onHide} title={`Hide ${title} from the sheet`}>
-            Hide
-          </button>
         ) : null}
       </div>
       <div

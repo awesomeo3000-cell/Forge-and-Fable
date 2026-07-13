@@ -1,0 +1,412 @@
+[
+  {
+    "auditId": "universal.attack",
+    "name": "Attack",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": "Extra Attack class features grant additional attacks per Attack action",
+    "resolutionKind": "attack",
+    "mechanicalSummary": "Make one melee or ranged weapon attack, or an unarmed strike. Characters with Extra Attack can make multiple attacks when taking this action.",
+    "evidence": [
+      {
+        "kind": "repository",
+        "location": "src/lib/ruleset.ts",
+        "pointer": "CombatAction definitions per class; Extra Attack features in level progression"
+      },
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Attack action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Replaces one weapon attack when used for grapple or shove (see grapple and shove entries)."]
+  },
+  {
+    "auditId": "universal.cast-a-spell",
+    "name": "Cast a Spell",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": "spell-slots",
+    "resourceCostSummary": "Expends a spell slot of the spell's level or higher (cantrips cost no slot)",
+    "rechargeSummary": "Spell slots recharge on a long rest (pact magic on short rest; Arcane Recovery on short rest)",
+    "scalingSummary": "Many spells can be cast using a higher-level slot for increased effect",
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Cast a spell with a casting time of 1 action. Requires any verbal, somatic, or material components. If the casting time is a bonus action or reaction, the appropriate classification applies instead.",
+    "evidence": [
+      {
+        "kind": "repository",
+        "location": "src/lib/ruleset.ts",
+        "pointer": "Spellcasting feature descriptions and spell definitions"
+      },
+      {
+        "kind": "repository",
+        "location": "src/data/spells.json",
+        "pointer": "Spell entries with castingTime fields"
+      },
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 10",
+        "pointer": "Spellcasting — Casting Time"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Casting-time classification: most spells are 1 action; bonus-action spells and reaction spells have their own entries. Spells with longer casting times (1 minute+) use long-activation.", "Bonus-action spell rule: if you cast a spell as a bonus action, you cannot cast another spell during the same turn except a cantrip with a casting time of 1 action."]
+  },
+  {
+    "auditId": "universal.dash",
+    "name": "Dash",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "movement",
+    "mechanicalSummary": "Gain extra movement equal to your speed for the current turn, after applying any modifiers.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Dash action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Cunning Action (Rogue L2) allows Dash as a bonus action. Monk's Step of the Wind allows Dash as a bonus action by spending 1 ki point."]
+  },
+  {
+    "auditId": "universal.disengage",
+    "name": "Disengage",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "movement",
+    "mechanicalSummary": "Your movement does not provoke opportunity attacks for the rest of the turn.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Disengage action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Cunning Action (Rogue L2) allows Disengage as a bonus action. Monk's Step of the Wind allows Disengage as a bonus action by spending 1 ki point."]
+  },
+  {
+    "auditId": "universal.dodge",
+    "name": "Dodge",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "saving-throw",
+    "mechanicalSummary": "Until the start of your next turn, attack rolls against you have disadvantage and you have advantage on Dexterity saving throws. You lose this benefit if incapacitated or your speed drops to 0.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Dodge action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Monks can Dodge as a bonus action by spending 1 ki point (Patient Defense)."]
+  },
+  {
+    "auditId": "universal.help",
+    "name": "Help",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "Choose an ally within 5 feet. That ally gains advantage on the next ability check it makes before your next turn, or on the next attack roll against a creature within 5 feet of you.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Help action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["The ally must be within 5 feet of you when you take the Help action.", "For attack-roll help: the target creature must be within 5 feet of you."]
+  },
+  {
+    "auditId": "universal.hide",
+    "name": "Hide",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "Make a Dexterity (Stealth) check to attempt to hide. You must be heavily obscured or have cover, and cannot be clearly seen. On success, you are hidden until discovered or you stop hiding.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 7",
+        "pointer": "Using Ability Scores — Dexterity — Stealth / Hiding"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Cunning Action (Rogue L2) allows Hide as a bonus action."]
+  },
+  {
+    "auditId": "universal.ready",
+    "name": "Ready",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": "Player specifies a perceivable circumstance that will trigger the readied reaction",
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Choose an action to ready and a perceivable trigger. When the trigger occurs, you can use your reaction to take the readied action or move up to your speed. A readied spell requires concentration and expends the slot when readied, not when released.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Ready action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Uses your reaction to execute. The readied action occurs after the trigger completes, unless otherwise stated.", "Readied spells require concentration; the slot is lost if not released before the start of your next turn."]
+  },
+  {
+    "auditId": "universal.search",
+    "name": "Search",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "Devote your action to searching for something. Typically requires a Wisdom (Perception) or Intelligence (Investigation) check.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Search action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Inquisitive Rogue's Eye for Detail allows Search as a bonus action."]
+  },
+  {
+    "auditId": "universal.use-an-object",
+    "name": "Use an Object",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Interact with an object that requires your action to use. This includes administering a potion, applying a poison, activating a magic item, or any other object interaction beyond the free object interaction.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Use an Object action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Thief Rogue's Fast Hands allows Use an Object as a bonus action.", "Most magic items use this action. Each item specifies if it requires an action, bonus action, or other activation."]
+  },
+  {
+    "auditId": "universal.grapple",
+    "name": "Grapple",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "special",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "When you take the Attack action, you can replace one of your weapon attacks with a grapple attempt. Make a Strength (Athletics) check contested by the target's Strength (Athletics) or Dexterity (Acrobatics). On success, the target is grappled: its speed becomes 0. The grapple ends if the grappler is incapacitated or an effect moves the grappled creature out of reach.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Grappling"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Grapple is NOT an independent action; it replaces one attack within the Attack action.", "Requires a free hand. Size restriction: target must be no more than one size larger than you.", "Grappler feat grants advantage on attacks against grappled targets and allows restraining a grappled creature."]
+  },
+  {
+    "auditId": "universal.shove",
+    "name": "Shove",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "special",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "When you take the Attack action, you can replace one of your weapon attacks with a shove attempt. Make a Strength (Athletics) check contested by the target's Strength (Athletics) or Dexterity (Acrobatics). On success, either knock the target prone or push it 5 feet away from you.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Shoving a Creature"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Shove is NOT an independent action; it replaces one attack within the Attack action.", "Size restriction: target must be no more than one size larger than you.", "Shield Master feat allows a shove as a bonus action after taking the Attack action."]
+  },
+  {
+    "auditId": "universal.improvised-action",
+    "name": "Improvised Action",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Declare any action not covered by the standard actions. The DM adjudicates the outcome, potentially calling for an ability check, attack roll, or saving throw as appropriate.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Improvising an Action"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Catch-all for DM-adjudicated actions. Examples from the rules: intimidating an enemy, calling for a parley, interacting with environment features."]
+  },
+  {
+    "auditId": "universal.opportunity-attack",
+    "name": "Opportunity Attack",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "reaction",
+    "trigger": "A hostile creature that you can see moves out of your reach",
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "attack",
+    "mechanicalSummary": "Use your reaction to make one melee weapon attack against the triggering creature. The attack occurs right before the creature leaves your reach.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Actions in Combat — Opportunity Attacks"
+      },
+      {
+        "kind": "repository",
+        "location": "src/lib/ruleset.ts",
+        "pointer": "Sentinel feat (in feats.json) modifies Opportunity Attack behavior"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Uses your reaction for the round. You get one reaction per round, regained at the start of your turn.", "Disengage action prevents opportunity attacks for the rest of the turn.", "Sentinel feat: hitting with an OA reduces the target's speed to 0, and you can make OAs even against creatures that Disengage.", "War Caster feat allows casting a spell instead of making a weapon attack for an OA.", "Polearm Master feat grants an OA when a creature enters your reach."]
+  },
+  {
+    "auditId": "universal.two-weapon-fighting",
+    "name": "Two-Weapon Fighting",
+    "sourceKind": "universal",
+    "sourceId": "2014-rules",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "bonus-action",
+    "trigger": "You take the Attack action and attack with a light melee weapon you are holding in one hand",
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "attack",
+    "mechanicalSummary": "When you take the Attack action and attack with a light melee weapon in one hand, you can use a bonus action to attack with a different light melee weapon held in your other hand. You do not add your ability modifier to the damage of the bonus attack unless that modifier is negative.",
+    "evidence": [
+      {
+        "kind": "rules-reference",
+        "location": "2014 PHB Chapter 9",
+        "pointer": "Making an Attack — Two-Weapon Fighting"
+      }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Both weapons must have the Light property unless you have the Dual Wielder feat.", "The Two-Weapon Fighting style (Fighter L1, Ranger L2) allows adding ability modifier to the bonus attack's damage.", "Dual Wielder feat: +1 AC while dual wielding, can use non-light weapons, and can draw/stow two weapons."]
+  }
+]

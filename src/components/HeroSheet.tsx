@@ -27,12 +27,13 @@ import {
   abilityKeys,
   abilityLabels,
   abilityModifier,
+  defaultCharacterSettings,
   proficiencyBonus,
   signed,
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
-import { DEFAULT_LAYOUT, mergeWithDefaults, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
+import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
@@ -46,6 +47,7 @@ import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/li
 import { classActionsAtLevel } from "@/lib/ruleset";
 import { progressionChoiceLabel } from "@/lib/progression/choiceOptions";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
+import { capabilitiesForCharacter, capabilityResourceCost, type CharacterCapability, type CapabilityLane } from "@/lib/capabilities";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import AppearancePanel from "@/components/AppearancePanel";
@@ -149,6 +151,11 @@ function DroppableColumn({ index, className, style, children }: { index: number;
   return <div ref={setNodeRef} className={`${className}${isOver ? " cs-column-drop-target" : ""}`} style={style}>{children}</div>;
 }
 
+function TabExtractionZone({ index }: { index: number }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `extract:${index}` });
+  return <div ref={setNodeRef} className={`cs-tab-extract-zone${isOver ? " is-over" : ""}`}>New module · Column {index + 1}</div>;
+}
+
 function armorProficienciesFromFeatures(features: { name: string; description: string }[]) {
   const proficiencies = new Set<string>();
   for (const feature of features) {
@@ -196,7 +203,11 @@ export default memo(function HeroSheet(props: {
   const pb = proficiencyBonus(props.character.level);
   const dexMod = abilityModifier(props.finalAbilities.dexterity);
   const equipment = props.character.equipment ?? {};
-  const inventoryItems = props.character.inventory.map(catalogBackedInventoryItem);
+  const inventory = props.character.inventory ?? [];
+  const customRules = props.character.customRules ?? [];
+  const spellsKnownIds = props.character.spellsKnown ?? [];
+  const settings = { ...defaultCharacterSettings(), ...(props.character.settings ?? {}) };
+  const inventoryItems = inventory.map(catalogBackedInventoryItem);
   const equipmentItemBonuses = getEquippedItemBonuses(inventoryItems, equipment, { includeAc: false });
 
   const effectsList = props.character.effects ?? [];
@@ -220,7 +231,7 @@ export default memo(function HeroSheet(props: {
     }
   };
 
-  const ruleAc = props.character.customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
+  const ruleAc = customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
   const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, inventoryItems);
   const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, inventoryItems);
   const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" or ")}` : "";
@@ -231,12 +242,12 @@ export default memo(function HeroSheet(props: {
   const rollD20ForAbility = (label: string, modifier: number, ability?: AbilityKey) => rollD20(label, modifier, d20OptionsForAbility(ability));
   const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
   const currency = props.character.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
-  const carriedWeight = totalCarriedWeight(inventoryItems, equipment, currency, props.character.settings.ignoreCoinWeight);
-  const capacity = carryCapacity(props.finalAbilities.strength, props.character.settings.encumbranceType);
-  const ruleInit = props.character.customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
+  const carriedWeight = totalCarriedWeight(inventoryItems, equipment, currency, settings.ignoreCoinWeight);
+  const capacity = carryCapacity(props.finalAbilities.strength, settings.encumbranceType);
+  const ruleInit = customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
   const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
-  const ruleAttack = props.character.customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack;
-  const ruleSaveAll = props.character.customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
+  const ruleAttack = customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack;
+  const ruleSaveAll = customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
   const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves + effSaves;
 
   const proficientSaves: AbilityKey[] =
@@ -303,16 +314,16 @@ export default memo(function HeroSheet(props: {
   const _maxSpellLvl = maxSlots(casterType, props.character.level, heroClass.id).reduce((m, c, i) => (c > 0 ? i + 1 : m), 0);
   const knownSpells: SpellData[] = _isPrepared
     ? heroClass.id === "wizard"
-      ? (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[])
+      ? (spellsKnownIds.map((id) => getSpell(id)).filter(Boolean) as SpellData[])
       : [
-          ...(props.character.spellsKnown.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
+          ...(spellsKnownIds.map((id) => getSpell(id)).filter((s): s is SpellData => !!s && s.level === 0)),
           ...classSpellList.filter((s) => s.level >= 1 && s.level <= _maxSpellLvl),
         ]
-    : (props.character.spellsKnown.map((id) => getSpell(id)).filter(Boolean) as SpellData[]);
+    : (spellsKnownIds.map((id) => getSpell(id)).filter(Boolean) as SpellData[]);
   const spellbookChoices = canManageSpellbook
     ? classSpellList
         .filter((spell) => spell.level === 0 || spell.level <= _maxSpellLvl)
-        .filter((spell) => !props.character.spellsKnown.includes(spell.id))
+        .filter((spell) => !spellsKnownIds.includes(spell.id))
         .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
     : [];
   // Cumulative max of leveled (non-cantrip) spells a known caster can know at their current level.
@@ -419,7 +430,7 @@ export default memo(function HeroSheet(props: {
   };
   const acBreakdown: { label: string; value: number }[] = [
     { label: acInfo.label, value: acInfo.total },
-    ...props.character.customRules.filter((r) => r.type === "ac").map((r) => ({ label: r.label, value: r.value })),
+    ...customRules.filter((r) => r.type === "ac").map((r) => ({ label: r.label, value: r.value })),
     ...((props.featAcBonus ?? 0) !== 0 ? [{ label: "Feats", value: props.featAcBonus ?? 0 }] : []),
     ...activeEffects.filter((e) => e.ac).map((e) => ({ label: e.label, value: e.ac ?? 0 })),
   ];
@@ -484,18 +495,18 @@ export default memo(function HeroSheet(props: {
       notes: invNotes.trim(),
       weight: invWeight && Number.isFinite(parsedWeight) && parsedWeight >= 0 ? parsedWeight : undefined,
     };
-    props.onUpdate({ inventory: [...props.character.inventory, item] });
+    props.onUpdate({ inventory: [...inventory, item] });
     setInvName("");
     setInvNotes("");
     setInvWeight("");
     setShowInvForm(false);
   };
   const addCatalogItem = (catalogItem: CatalogItem) => {
-    props.onUpdate({ inventory: [...props.character.inventory, catalogItemToInventory(catalogItem)] });
+    props.onUpdate({ inventory: [...inventory, catalogItemToInventory(catalogItem)] });
   };
   const removeItem = (id: string) => {
     props.onUpdate({
-      inventory: props.character.inventory.filter((item) => item.id !== id),
+      inventory: inventory.filter((item) => item.id !== id),
       equipment: cleanEquipmentForRemovedItem(id),
     });
   };
@@ -600,6 +611,8 @@ export default memo(function HeroSheet(props: {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeModuleTabs, setActiveModuleTabs] = useState<Partial<Record<string, SheetSectionId>>>({});
+  const [reactionUsed, setReactionUsed] = useState(false);
+  const [layOnHandsSpend, setLayOnHandsSpend] = useState(1);
 
   // Layout lives in local state so drag/collapse update the UI instantly.
   // It re-syncs from props whenever the saved value changes AND we're not
@@ -634,7 +647,7 @@ export default memo(function HeroSheet(props: {
     filteredSpellsByLevel[Number(lv)] = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
   }
   const spellbookSearchLower = spellbookSearch.trim().toLowerCase();
-  const spellbookSpells = props.character.spellsKnown
+  const spellbookSpells = spellsKnownIds
     .map((id) => getSpell(id))
     .filter((spell): spell is SpellData => !!spell);
   const filteredSpellbookByLevel: Record<number, SpellData[]> = {};
@@ -778,6 +791,9 @@ export default memo(function HeroSheet(props: {
 
   /* ── Spell preparation & casting ── */
   const preparedIds = props.character.preparedSpells ?? [];
+  const effectiveFeatureResources = props.character.ruleset === "2014"
+    ? progressionPatchForCharacter(props.character).featureResources ?? props.character.featureResources ?? {}
+    : props.character.featureResources ?? {};
   const prepLimit = _isPrepared && spellAbility
     ? preparedSpellLimit(casterType, props.character.level, abilityModifier(props.finalAbilities[spellAbility]))
     : 0;
@@ -789,15 +805,23 @@ export default memo(function HeroSheet(props: {
     }
   };
   const adjustFeatureResource = (resourceId: string, delta: number) => {
-    const resource = props.character.featureResources?.[resourceId];
+    const resource = effectiveFeatureResources[resourceId];
     if (!resource || typeof resource.maximum !== "number" || resource.current === undefined) return;
     const nextCurrent = Math.max(0, Math.min(resource.maximum, resource.current + delta));
-    props.onUpdate({ featureResources: { ...props.character.featureResources, [resourceId]: { ...resource, current: nextCurrent } } });
+    props.onUpdate({ featureResources: { ...effectiveFeatureResources, [resourceId]: { ...resource, current: nextCurrent } } });
   };
+  const capabilitySpellIds = _isPrepared
+    ? new Set([
+        ...knownSpells.filter((spell) => spell.level === 0).map((spell) => spell.id),
+        ...preparedIds,
+        ...(props.character.alwaysPreparedSpells ?? []),
+      ])
+    : new Set([...spellsKnownIds, ...(props.character.alwaysPreparedSpells ?? [])]);
+  const characterCapabilities = capabilitiesForCharacter({ ...props.character, featureResources: effectiveFeatureResources }, capabilitySpellIds);
   const learnSpell = (spellId: string) => {
-    if (!spellId || props.character.spellsKnown.includes(spellId)) return;
+    if (!spellId || spellsKnownIds.includes(spellId)) return;
     if (!spellbookChoices.some((spell) => spell.id === spellId)) return;
-    props.onUpdate({ spellsKnown: [...props.character.spellsKnown, spellId] });
+    props.onUpdate({ spellsKnown: [...spellsKnownIds, spellId] });
     setSpellToLearn("");
   };
   // ── Spell casting ─────────────────────────────────────────────────────
@@ -889,6 +913,57 @@ export default memo(function HeroSheet(props: {
     setSpellDetail(null);
   };
 
+  const castCapabilitySpell = (capability: CharacterCapability) => {
+    const spell = capability.spell;
+    if (!spell) return;
+    const status = spellStatuses[spell.id];
+    if (status?.freeUse && !status.freeUsed) {
+      castFreeSpell(spell);
+      if (capability.lane === "reactions") setReactionUsed(true);
+      return;
+    }
+    const pactLevel = slotMax.findIndex((count) => count > 0) + 1;
+    const castLevel = spell.level === 0 ? 0 : isPactCaster ? pactLevel : spell.level;
+    const remaining = spell.level === 0
+      ? Number.POSITIVE_INFINITY
+      : isPactCaster
+        ? pactMax - pactUsed
+        : (slotMax[castLevel - 1] ?? 0) - (slotsUsed[castLevel] ?? 0);
+    if (remaining <= 0) {
+      props.onNotify?.(`No level ${castLevel} spell slots remain.`);
+      return;
+    }
+    castSpell(spell, castLevel);
+    if (capability.lane === "reactions") setReactionUsed(true);
+  };
+
+  const spendCapability = (capability: CharacterCapability) => {
+    if (capability.spell) {
+      castCapabilitySpell(capability);
+      return;
+    }
+    const cost = capabilityResourceCost(capability);
+    if (cost === "choose") return;
+    if (typeof cost === "number" && capability.resourceId && capability.resource?.current !== undefined) {
+      if (capability.resource.current < cost) {
+        props.onNotify?.(`${capability.name} has no uses remaining.`);
+        return;
+      }
+      adjustFeatureResource(capability.resourceId, -cost);
+      props.onNotify?.(`${capability.name} used${cost > 1 ? ` (${cost} uses)` : ""}.`);
+    }
+    if (capability.lane === "reactions") setReactionUsed(true);
+  };
+
+  const spendLayOnHands = (capability: CharacterCapability) => {
+    const available = capability.resource?.current ?? 0;
+    const amount = Math.max(1, Math.min(available, Math.floor(layOnHandsSpend)));
+    if (!capability.resourceId || available <= 0) return;
+    adjustFeatureResource(capability.resourceId, -amount);
+    props.onNotify?.(`Lay on Hands: spend ${amount} point${amount === 1 ? "" : "s"} on the chosen creature.`);
+    setLayOnHandsSpend(1);
+  };
+
   const handleLevelDown = () => {
     const level = props.character.level;
     if (level <= 1) return;
@@ -900,7 +975,7 @@ export default memo(function HeroSheet(props: {
       props.character.maxHp,
       props.character.currentHp,
       props.character.hpRolls ?? [],
-      props.character.settings.hitPointType,
+      settings.hitPointType,
       heroClass.hitDie,
       conMod,
     );
@@ -937,7 +1012,7 @@ export default memo(function HeroSheet(props: {
     const removedSpellIds = new Set((props.character.progressionState?.spellHistory ?? []).filter((entry) => entry.level > newLevel).flatMap((entry) => entry.spellIds));
     const remainingSpellHistory = (props.character.progressionState?.spellHistory ?? []).filter((entry) => entry.level <= newLevel);
     patch.featureChoices = remainingFeatureChoices;
-    patch.spellsKnown = props.character.spellsKnown.filter((id) => !removedSpellIds.has(id));
+    patch.spellsKnown = spellsKnownIds.filter((id) => !removedSpellIds.has(id));
     if (props.character.spellbookSpells) patch.spellbookSpells = props.character.spellbookSpells.filter((id) => !removedSpellIds.has(id));
     const nextSubclassId = props.character.subclassId && subclassLevel <= newLevel ? props.character.subclassId : undefined;
     const progressionPatch = progressionPatchForCharacter({
@@ -1050,45 +1125,14 @@ export default memo(function HeroSheet(props: {
     return true;
   });
   const moveTab = (sourceId: string, sectionId: SheetSectionId, targetId: string | null, columnIndex?: number, beforeTab?: SheetSectionId) => {
-    if (sourceId === targetId) {
-      if (!beforeTab || beforeTab === sectionId) return;
-      const modules = sheetModules.map((module) => {
-        if (module.id !== sourceId) return module;
-        const tabs = module.tabs.filter((id) => id !== sectionId);
-        const targetIndex = tabs.indexOf(beforeTab);
-        tabs.splice(targetIndex < 0 ? tabs.length : targetIndex, 0, sectionId);
-        return { ...module, tabs };
-      });
-      saveLayout({ ...layout, modules });
-      return;
-    }
-    const source = moduleById(sourceId);
-    if (!source) return;
-    const sourceTitle = source.tabTitles?.[sectionId] || (source.tabs[0] === sectionId ? source.title : undefined);
-    let modules = sheetModules.map((module) => module.id === sourceId
-      ? { ...module, tabs: module.tabs.filter((id) => id !== sectionId) }
-      : module);
-    let columns = layout.columns.map((column) => [...column]);
-    if (source.tabs.length === 1) {
-      modules = modules.filter((module) => module.id !== sourceId);
-      columns = columns.map((column) => column.filter((id) => id !== sourceId));
-    }
-    if (targetId) {
-      modules = modules.map((module) => {
-        if (module.id !== targetId) return module;
-        const tabs = [...module.tabs];
-        const targetIndex = beforeTab ? tabs.indexOf(beforeTab) : -1;
-        tabs.splice(targetIndex < 0 ? tabs.length : targetIndex, 0, sectionId);
-        return { ...module, tabs, tabTitles: { ...(module.tabTitles ?? {}), ...(sourceTitle ? { [sectionId]: sourceTitle } : {}) } };
-      });
-      setActiveModuleTabs((current) => ({ ...current, [targetId]: sectionId }));
-    } else {
-      const id = `module-${sectionId}-${crypto.randomUUID()}`;
-      modules.push({ id, tabs: [sectionId], ...(sourceTitle ? { title: sourceTitle } : {}) });
-      const targetColumn = Math.max(0, Math.min(columnIndex ?? columns.length - 1, columns.length - 1));
-      columns[targetColumn].push(id);
-    }
-    saveLayout({ ...layout, columns, modules });
+    const next = moveSheetTab(layout, sourceId, sectionId, targetId, {
+      columnIndex,
+      beforeTab,
+      ...(targetId ? {} : { newModuleId: `module-${sectionId}-${crypto.randomUUID()}` }),
+    });
+    if (next === layout) return;
+    if (targetId) setActiveModuleTabs((current) => ({ ...current, [targetId]: sectionId }));
+    saveLayout(next);
   };
   const mergeModuleByDrop = (sourceId: string, targetId: string) => {
     if (sourceId === targetId) return;
@@ -1171,6 +1215,10 @@ export default memo(function HeroSheet(props: {
     const overKey = String(over.id);
     if (activeKey.startsWith("tab:")) {
       const [, groupRoot, sectionId] = activeKey.split(":") as [string, string, SheetSectionId];
+      if (overKey.startsWith("extract:")) {
+        moveTab(groupRoot, sectionId, null, Number(overKey.split(":")[1]));
+        return;
+      }
       if (overKey.startsWith("column:")) {
         moveTab(groupRoot, sectionId, null, Number(overKey.split(":")[1]));
         return;
@@ -1229,6 +1277,72 @@ export default memo(function HeroSheet(props: {
 
     saveLayout({ ...current, columns: next });
   }
+
+  const renderCapabilityLane = (lane: CapabilityLane) => {
+    const entries = characterCapabilities.filter((capability) => capability.lane === lane);
+    const groups = [
+      { label: "Character", entries: entries.filter((capability) => capability.sourceKind !== "universal" && !capability.spell) },
+      { label: "Spells", entries: entries.filter((capability) => Boolean(capability.spell)) },
+      { label: "Universal", entries: entries.filter((capability) => capability.sourceKind === "universal") },
+    ].filter((group) => group.entries.length > 0);
+
+    return (
+      <section className="cs-capability-panel">
+        {lane === "reactions" ? (
+          <div className={`cs-reaction-status${reactionUsed ? " is-used" : ""}`}>
+            <span><strong>{reactionUsed ? "Reaction used" : "Reaction ready"}</strong><small>Regain it at the start of your turn.</small></span>
+            <button type="button" className="cs-glass-btn" onClick={() => setReactionUsed((used) => !used)}>{reactionUsed ? "Reset" : "Mark used"}</button>
+          </div>
+        ) : null}
+        {groups.map((group) => (
+          <div className="cs-capability-group" key={group.label}>
+            <span className="cs-spell-level-head">{group.label}</span>
+            <div className="cs-capability-list">
+              {group.entries.map((capability) => {
+                const cost = capabilityResourceCost(capability);
+                const resource = capability.resource;
+                const reactionBlocked = lane === "reactions" && reactionUsed;
+                const canSpendResource = typeof cost === "number" && resource?.current !== undefined;
+                return (
+                  <details className="cs-capability-card" key={capability.id}>
+                    <summary>
+                      <span><strong>{capability.name}</strong><small>{capability.sourceLabel}</small></span>
+                      <span className="cs-capability-badges">
+                        <em>{capability.activation.replaceAll("-", " ")}</em>
+                        {resource?.current !== undefined ? <em className={resource.current > 0 ? "is-ready" : "is-empty"}>{resource.current}{typeof resource.maximum === "number" ? `/${resource.maximum}` : ""}</em> : null}
+                      </span>
+                    </summary>
+                    <div className="cs-capability-body">
+                      <p>{capability.summary}</p>
+                      {capability.trigger ? <p className="cs-capability-meta"><strong>Trigger:</strong> {capability.trigger}</p> : null}
+                      {capability.scalingSummary ? <p className="cs-capability-meta"><strong>Scaling:</strong> {capability.scalingSummary}</p> : null}
+                      {capability.resourceCostSummary ? <p className="cs-capability-meta"><strong>Cost:</strong> {capability.resourceCostSummary}</p> : null}
+                      {capability.rechargeSummary || resource?.recharge ? <p className="cs-capability-meta"><strong>Recharge:</strong> {capability.rechargeSummary ?? progressionChoiceLabel(resource?.recharge ?? "")}</p> : null}
+                      <div className="cs-capability-actions">
+                        {capability.id === "paladin.lay-on-hands" && resource?.current !== undefined ? (
+                          <>
+                            <label><span>Points</span><input type="number" min={1} max={Math.max(1, resource.current)} value={layOnHandsSpend} onChange={(event) => setLayOnHandsSpend(Math.max(1, Number(event.target.value) || 1))} /></label>
+                            <button type="button" className="cs-glass-btn" disabled={resource.current <= 0} onClick={() => spendLayOnHands(capability)}>Spend</button>
+                          </>
+                        ) : capability.spell ? (
+                          <button type="button" className="cs-glass-btn" disabled={reactionBlocked || spellcastingBlockedByArmor} onClick={() => spendCapability(capability)}>Cast</button>
+                        ) : canSpendResource ? (
+                          <button type="button" className="cs-glass-btn" disabled={reactionBlocked || (resource?.current ?? 0) < (cost as number)} onClick={() => spendCapability(capability)}>Use</button>
+                        ) : lane === "reactions" ? (
+                          <button type="button" className="cs-glass-btn" disabled={reactionBlocked} onClick={() => spendCapability(capability)}>Mark used</button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {entries.length === 0 ? <p className="cs-muted">No capabilities in this category at the current level.</p> : null}
+      </section>
+    );
+  };
 
   /* ── Section content renderers (same as before) ── */
 
@@ -1422,7 +1536,7 @@ export default memo(function HeroSheet(props: {
                   </label>
                 );
               })}
-              {!armor && !equipment.shield && (equipment.weaponIds ?? []).length === 0 && props.character.inventory.length === 0 ? <p className="cs-muted">No equipment added yet.</p> : null}
+              {!armor && !equipment.shield && (equipment.weaponIds ?? []).length === 0 && inventory.length === 0 ? <p className="cs-muted">No equipment added yet.</p> : null}
             </div>
             <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
             {armorProficiencyIssue.hasIssue ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: STR/DEX checks, saves, and attacks roll with disadvantage; spellcasting is blocked.</p> : null}
@@ -1499,6 +1613,10 @@ export default memo(function HeroSheet(props: {
           </section>
         );
       }
+      case "actions": return renderCapabilityLane("actions");
+      case "bonus-actions": return renderCapabilityLane("bonus-actions");
+      case "reactions": return renderCapabilityLane("reactions");
+      case "passives": return renderCapabilityLane("passives");
       case "attacks": {
         const staticWeaponDefs = (equipment.weaponIds ?? []).map((wid) => getWeapon(wid)).filter((w): w is WeaponDef => !!w);
         const inventoryWeaponDefs = (equipment.weaponItemIds ?? [])
@@ -1526,34 +1644,7 @@ export default memo(function HeroSheet(props: {
               const hasDice = dice.length > 0;
               return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
-        const actionSpellIds = _isPrepared
-          ? new Set([
-              ...knownSpells.filter((spell) => spell.level === 0).map((spell) => spell.id),
-              ...preparedIds,
-              ...(props.character.alwaysPreparedSpells ?? []),
-            ])
-          : new Set(props.character.spellsKnown);
-        const spellRows = Array.from(actionSpellIds)
-          .map((id) => getSpell(id))
-          .filter((spell): spell is SpellData => Boolean(spell))
-          .map((spell) => ({ spell, effects: resolveSpellEffects(spell, Math.max(1, spell.level)) }))
-          .filter(({ effects }) => effects.some((effect) => effect.type === "damage"))
-          .map(({ spell, effects }) => ({
-            id: `spell-${spell.id}`,
-            name: spell.name,
-            ability: (spellAbility ?? "intelligence") as AbilityKey,
-            toHit: spellAttack,
-            mod: 0,
-            dice: [],
-            hasDice: false,
-            versatileDice: null,
-            damageLabel: effects.filter((effect) => effect.type === "damage").map((effect) => `${effect.dice} ${effect.damageType}`).join(" + "),
-            spell,
-          }));
-        const rows = [
-          ...baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined })),
-          ...spellRows,
-        ];
+        const rows = baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined }));
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
@@ -1648,7 +1739,7 @@ export default memo(function HeroSheet(props: {
                   <div className="cs-spellbook-head">
                     <span className="cs-spell-level-head">Spells Known</span>
                     <small>
-                      {props.character.spellsKnown.length} known
+                      {spellsKnownIds.length} known
                       {knownSpellsCumulativeMax > 0 ? ` (max ${knownSpellsCumulativeMax} at this level)` : ""}
                     </small>
                   </div>
@@ -1815,7 +1906,7 @@ export default memo(function HeroSheet(props: {
                   </p>
                 ) : null}
               </div>
-              {props.character.inventory.length > 0 ? (
+              {inventory.length > 0 ? (
                 <div className="cs-inv-list">{inventoryItems.map((item) => {
                   const equippedAsArmor = equipment.armorItemId === item.id;
                   const equippedAsShield = equipment.shieldItemId === item.id;
@@ -2141,6 +2232,12 @@ export default memo(function HeroSheet(props: {
             ))}
           </div>
         </SortableContext>
+        {editMode && activeId?.startsWith("tab:") ? (
+          <div className="cs-tab-extract-tray" aria-label="Create a standalone module">
+            <span>Pull tab out</span>
+            <div>{layout.columns.map((_, index) => <TabExtractionZone index={index} key={index} />)}</div>
+          </div>
+        ) : null}
         <DragOverlay dropAnimation={null}>
           {activeId ? (
             <div className="cs-drag-overlay-card">
@@ -2319,8 +2416,8 @@ export default memo(function HeroSheet(props: {
           casterType={heroClass.casterType}
           raceName={race.name}
           proficiencies={heroClass.proficiencies}
-          useFeatPrerequisites={props.character.settings.useFeatPrerequisites}
-          hitPointType={props.character.settings.hitPointType}
+          useFeatPrerequisites={settings.useFeatPrerequisites}
+          hitPointType={settings.hitPointType}
           onHpRoll={({ label, sides, modifier, onResult }) => {
             props.onRoll(label, sides, 1, modifier, ({ rolls, total }) => {
               onResult({ roll: rolls[0] ?? 1, total });

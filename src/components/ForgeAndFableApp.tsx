@@ -545,7 +545,7 @@ export default function ForgeAndFableApp() {
   }, [selected]);
   const selectedInitiative = useMemo(() => {
     if (!selected || !selectedFinalAbilities) return undefined;
-    const ruleInit = selected.customRules
+    const ruleInit = (selected.customRules ?? [])
       .filter((rule) => rule.type === "initiative")
       .reduce((sum, rule) => sum + rule.value, 0);
     return (
@@ -1017,6 +1017,7 @@ export default function ForgeAndFableApp() {
         classId: payload.classId,
         subclassId: payload.subclassId,
         level: draft.level,
+        abilities: payload.abilities,
         featureChoices: payload.featureChoices,
       }));
 

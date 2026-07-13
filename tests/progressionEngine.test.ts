@@ -93,6 +93,15 @@ describe("class progression engine", () => {
     expect(plan.automaticFeatures.find((feature) => feature.featureId === "combat-superiority")?.parentInteractions).toContain("maneuver-uses-superiority-die");
   });
 
+  it("builds a production plan for descriptive-catalog subclasses", () => {
+    const plan = buildLevelUpPlan({ ruleset: "2014", classId: "bard", subclassId: "college-of-spirits", fromLevel: 2, toLevel: 3 });
+    expect(plan.automaticFeatures.filter((feature) => feature.source === "subclass").map((feature) => feature.featureId)).toEqual([
+      "guiding-whispers",
+      "spiritual-focus",
+      "tales-from-beyond",
+    ]);
+  });
+
   it("resolves automatic and choice-dependent subclass spells across level ranges", () => {
     const life = buildLevelUpPlan({ ruleset: "2014", classId: "cleric", subclassId: "life-domain", fromLevel: 2, toLevel: 5 });
     expect(life.spellChanges.flatMap((change) => change.spells ?? [])).toEqual(expect.arrayContaining(["lesser-restoration", "spiritual-weapon", "beacon-of-hope", "revivify"]));

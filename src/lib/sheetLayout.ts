@@ -3,14 +3,19 @@ import type { SheetLayout, SheetModule, SheetSectionId } from "@/types/game";
 export const SECTION_TITLES: Record<SheetSectionId, string> = {
   identity: "Character", vitals: "Vitals", abilities: "Abilities", saves: "Saves", skills: "Skills",
   senses: "Senses", profs: "Proficiencies & Training", equipment: "Equipment", effects: "Effects & Conditions",
-  attacks: "Attacks", features: "Features & Traits", traits: "Traits", spells: "Spells", spellbook: "Spellbook",
+  attacks: "Attacks", actions: "Actions", "bonus-actions": "Bonus Actions", reactions: "Reactions", passives: "Passive & Triggered",
+  features: "Features & Traits", traits: "Traits", spells: "Spells", spellbook: "Spellbook",
   inventory: "Inventory", notes: "Notes", background: "Background", pages: "Pages", console: "Console",
 };
 
 export const PINNED_TOP: SheetSectionId[] = ["identity", "vitals"];
 export const PINNED_BOTTOM: SheetSectionId[] = ["console"];
 const PINNED = new Set<SheetSectionId>([...PINNED_TOP, ...PINNED_BOTTOM]);
-const OPTIONAL_TABS: SheetSectionId[] = ["traits", "spells", "spellbook", "inventory"];
+const PREFERRED_TABS: Partial<Record<SheetSectionId, SheetSectionId[]>> = {
+  attacks: ["attacks", "actions", "bonus-actions", "reactions"],
+  features: ["features", "passives", "traits", "spells", "spellbook", "inventory"],
+};
+const OPTIONAL_TABS: SheetSectionId[] = ["actions", "bonus-actions", "reactions", "passives", "traits", "spells", "spellbook", "inventory"];
 const DEFAULT_COLUMNS: SheetSectionId[][] = [
   ["abilities", "saves", "senses"],
   ["skills", "background", "notes"],
@@ -19,15 +24,19 @@ const DEFAULT_COLUMNS: SheetSectionId[][] = [
 const DEFAULT_SECTIONS = DEFAULT_COLUMNS.flat();
 const KNOWN_SECTIONS = new Set<SheetSectionId>([...DEFAULT_SECTIONS, ...OPTIONAL_TABS]);
 
+function tabsForRoot(id: SheetSectionId) {
+  return [...(PREFERRED_TABS[id] ?? [id])];
+}
+
 function defaultModules(): SheetModule[] {
-  return DEFAULT_SECTIONS.map((id) => ({ id, tabs: id === "features" ? ["features", ...OPTIONAL_TABS] : [id] }));
+  return DEFAULT_SECTIONS.map((id) => ({ id, tabs: tabsForRoot(id) }));
 }
 
 export const DEFAULT_LAYOUT: SheetLayout = {
   columns: DEFAULT_COLUMNS.map((column) => [...column]),
   modules: defaultModules(),
   collapsed: [],
-  version: 3,
+  version: 4,
 };
 
 function cleanWidths(widths: number[] | undefined) {
@@ -46,7 +55,7 @@ function migrateLegacy(saved: SheetLayout): SheetLayout {
   for (const sectionId of DEFAULT_SECTIONS) if (!assignedSections.has(sectionId)) { columns[columns.length - 1].push(sectionId); present.add(sectionId); assignedSections.add(sectionId); }
   const modules = columns.flat().map((moduleId) => {
     const root = moduleId as SheetSectionId;
-    const tabs = Array.from(new Set([root, ...(saved.mergedSections?.[root] ?? []), ...(root === "features" ? OPTIONAL_TABS.filter((id) => !assignedSections.has(id) || id === root) : [])]))
+    const tabs = Array.from(new Set([root, ...(saved.mergedSections?.[root] ?? []), ...tabsForRoot(root).filter((id) => !assignedSections.has(id) || id === root)]))
       .filter((id): id is SheetSectionId => KNOWN_SECTIONS.has(id) && !PINNED.has(id));
     return { id: moduleId, tabs, title: saved.customTitles?.[moduleId] };
   });
@@ -56,7 +65,7 @@ function migrateLegacy(saved: SheetLayout): SheetLayout {
     collapsed: saved.collapsed.filter((id) => present.has(id)),
     hidden: (saved.hidden ?? []).filter((id) => present.has(id)),
     columnWidths: cleanWidths(saved.columnWidths),
-    version: 3,
+    version: 4,
   };
 }
 
@@ -81,6 +90,17 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
     return [{ id: module.id, tabs, ...(module.title?.trim() ? { title: module.title.trim().slice(0, 60) } : {}), ...(Object.keys(tabTitles ?? {}).length ? { tabTitles } : {}) }];
   });
 
+  for (const [preferredRoot, preferredTabs] of Object.entries(PREFERRED_TABS) as Array<[SheetSectionId, SheetSectionId[]]>) {
+    const host = modules.find((module) => module.tabs.includes(preferredRoot));
+    if (!host) continue;
+    for (const tab of preferredTabs) {
+      if (!seenTabs.has(tab)) {
+        host.tabs.push(tab);
+        seenTabs.add(tab);
+      }
+    }
+  }
+
   const columns = saved.columns.map((column) => column.filter((id) => seenModules.has(id)));
   while (columns.length < DEFAULT_COLUMNS.length) columns.push([]);
   const placedModules = new Set(columns.flat());
@@ -88,7 +108,7 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
 
   for (const sectionId of DEFAULT_SECTIONS) {
     if (seenTabs.has(sectionId)) continue;
-    const sheetModule: SheetModule = { id: sectionId, tabs: sectionId === "features" ? ["features", ...OPTIONAL_TABS.filter((id) => !seenTabs.has(id))] : [sectionId] };
+    const sheetModule: SheetModule = { id: sectionId, tabs: tabsForRoot(sectionId).filter((id) => !seenTabs.has(id)) };
     modules.push(sheetModule);
     columns[columns.length - 1].push(sheetModule.id);
     sheetModule.tabs.forEach((id) => seenTabs.add(id));
@@ -101,10 +121,62 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
     collapsed: saved.collapsed.filter((id) => moduleIds.has(id)),
     hidden: (saved.hidden ?? []).filter((id) => moduleIds.has(id)),
     columnWidths: cleanWidths(saved.columnWidths),
-    version: 3,
+    version: 4,
   };
 }
 
 export function flattenForMobile(layout: SheetLayout): string[] {
   return layout.columns.flat().filter((id, index, all) => all.indexOf(id) === index);
+}
+
+export function moveSheetTab(
+  layout: SheetLayout,
+  sourceId: string,
+  sectionId: SheetSectionId,
+  targetId: string | null,
+  options: { columnIndex?: number; beforeTab?: SheetSectionId; newModuleId?: string } = {},
+): SheetLayout {
+  const source = layout.modules?.find((module) => module.id === sourceId);
+  if (!source || !source.tabs.includes(sectionId)) return layout;
+
+  if (sourceId === targetId) {
+    if (!options.beforeTab || options.beforeTab === sectionId || !source.tabs.includes(options.beforeTab)) return layout;
+    const modules = (layout.modules ?? []).map((module) => {
+      if (module.id !== sourceId) return module;
+      const tabs = module.tabs.filter((id) => id !== sectionId);
+      tabs.splice(tabs.indexOf(options.beforeTab!), 0, sectionId);
+      return { ...module, tabs };
+    });
+    return { ...layout, modules };
+  }
+
+  if (targetId && !(layout.modules ?? []).some((module) => module.id === targetId)) return layout;
+
+  const sourceTitle = source.tabTitles?.[sectionId] || (source.tabs[0] === sectionId ? source.title : undefined);
+  let modules = (layout.modules ?? []).map((module) => module.id === sourceId
+    ? { ...module, tabs: module.tabs.filter((id) => id !== sectionId) }
+    : module);
+  let columns = layout.columns.map((column) => [...column]);
+  if (source.tabs.length === 1) {
+    modules = modules.filter((module) => module.id !== sourceId);
+    columns = columns.map((column) => column.filter((id) => id !== sourceId));
+  }
+
+  if (targetId) {
+    modules = modules.map((module) => {
+      if (module.id !== targetId) return module;
+      const tabs = [...module.tabs];
+      const targetIndex = options.beforeTab ? tabs.indexOf(options.beforeTab) : -1;
+      tabs.splice(targetIndex < 0 ? tabs.length : targetIndex, 0, sectionId);
+      return { ...module, tabs, tabTitles: { ...(module.tabTitles ?? {}), ...(sourceTitle ? { [sectionId]: sourceTitle } : {}) } };
+    });
+  } else {
+    const id = options.newModuleId ?? `module-${sectionId}`;
+    if (modules.some((module) => module.id === id)) return layout;
+    modules.push({ id, tabs: [sectionId], ...(sourceTitle ? { title: sourceTitle } : {}) });
+    const targetColumn = Math.max(0, Math.min(options.columnIndex ?? columns.length - 1, columns.length - 1));
+    columns[targetColumn].push(id);
+  }
+
+  return { ...layout, columns, modules };
 }

@@ -1,0 +1,471 @@
+[
+  {
+    "auditId": "druid.wild-shape",
+    "name": "Wild Shape",
+    "sourceKind": "class",
+    "sourceId": "druid",
+    "subclassId": null,
+    "minimumLevel": 2,
+    "classification": "action",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "1 use per transformation",
+    "rechargeSummary": "Short or long rest",
+    "scalingSummary": "2 uses per rest at L2. CR limits: CR 1/4 (no fly/swim) at L2, CR 1/2 (no fly) at L4, CR 1 at L8. Swim speed at L4, fly speed at L8. Unlimited uses at L20 (Archdruid).",
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "As an action, assume the form of a beast you've seen before. Gain the beast's physical stats, HP as temp buffer, and retain your mental stats. Cannot cast spells in beast form (until Beast Spells at L18). Duration: hours equal to half druid level.",
+    "evidence": [
+      { "kind": "repository", "location": "src/lib/ruleset.ts", "pointer": "Druid L2: Wild Shape; L4/L8: Wild Shape improvement; L20: Archdruid; featureDescriptions" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["CR limits are a critical mechanical constraint. L20 Archdruid removes use limit but is described generically in the app.", "Moon Druid changes activation to bonus action and expands CR limits."]
+  },
+  {
+    "auditId": "druid.spellcasting",
+    "name": "Spellcasting (Druid)",
+    "sourceKind": "class",
+    "sourceId": "druid",
+    "subclassId": null,
+    "minimumLevel": 1,
+    "classification": "action",
+    "trigger": null,
+    "resource": "spell-slots",
+    "resourceCostSummary": "Expends a spell slot of the spell's level or higher",
+    "rechargeSummary": "Long rest",
+    "scalingSummary": "Full caster progression; prepared caster (Wisdom-based)",
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Prepare and cast druid spells using Wisdom. Full caster slot progression. Cantrips: 2 at L1, 3 at L4, 4 at L10.",
+    "evidence": [
+      { "kind": "repository", "location": "src/lib/ruleset.ts", "pointer": "Druid casterType=full, spellcastingAbility=wisdom" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Prepared caster. Cannot cast spells in Wild Shape until L18 Beast Spells."]
+  },
+  {
+    "auditId": "druid.beast-spells",
+    "name": "Beast Spells",
+    "sourceKind": "class",
+    "sourceId": "druid",
+    "subclassId": null,
+    "minimumLevel": 18,
+    "classification": "passive",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "reference-only",
+    "mechanicalSummary": "Can cast many druid spells while in Wild Shape form (verbal and somatic components become available, material components still required).",
+    "evidence": [
+      { "kind": "repository", "location": "src/lib/ruleset.ts", "pointer": "Druid L18: Beast Spells; featureDescriptions" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Removes the 'no spellcasting in beast form' restriction."]
+  },
+
+  {
+    "auditId": "druid.land.natural-recovery",
+    "name": "Natural Recovery (Circle of the Land)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-land",
+    "minimumLevel": 2,
+    "classification": "long-activation",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": "No resource cost; recovers spell slots",
+    "rechargeSummary": "Once per long rest; used during a short rest",
+    "scalingSummary": "Recover combined spell levels equal to half druid level (rounded up), max 5th-level slots",
+    "resolutionKind": "resource-conversion",
+    "mechanicalSummary": "During a short rest, recover expended spell slots totaling up to half your druid level (rounded up). No slot recovered can be 6th level or higher.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-land L2: Natural Recovery" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Similar to Wizard's Arcane Recovery. Once per long rest."]
+  },
+
+  {
+    "auditId": "druid.moon.combat-wild-shape",
+    "name": "Combat Wild Shape (Circle of the Moon)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-moon",
+    "minimumLevel": 2,
+    "classification": "replacement",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "1 Wild Shape use",
+    "rechargeSummary": "Wild Shape recharges on short or long rest",
+    "scalingSummary": "Healing: expend spell slot as bonus action for 1d8 per spell level while in beast form",
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "Wild Shape activation changes from action to bonus action. While in Wild Shape, can use bonus action to expend a spell slot to heal 1d8 per spell slot level.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-moon L2: Combat Wild Shape" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Bonus-action WS is a significant action economy improvement.", "Self-healing while transformed is a unique Moon Druid capability."]
+  },
+  {
+    "auditId": "druid.moon.circle-forms",
+    "name": "Circle Forms (Circle of the Moon)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-moon",
+    "minimumLevel": 2,
+    "classification": "passive",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": "CR 1 at L2, CR 2 at L6 (druid level ÷ 3), CR 3 at L9, CR 4 at L12, CR 5 at L15, CR 6 at L18",
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "Wild Shape CR limit increases to 1 (ignoring usual restriction) and scales to druid level ÷ 3 at higher levels.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-moon L2: Circle Forms" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Moon Druid CR progression is a separate scaling track from the base Wild Shape CR limits."]
+  },
+  {
+    "auditId": "druid.moon.elemental-wild-shape",
+    "name": "Elemental Wild Shape (Circle of the Moon)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-moon",
+    "minimumLevel": 10,
+    "classification": "action",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "2 Wild Shape uses",
+    "rechargeSummary": "Wild Shape recharges on short or long rest",
+    "scalingSummary": null,
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "Expend two uses of Wild Shape to transform into an air, earth, fire, or water elemental.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-moon L10: Elemental Wild Shape" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Costs double Wild Shape uses."]
+  },
+
+  {
+    "auditId": "druid.dreams.balm-of-the-summer-court",
+    "name": "Balm of the Summer Court (Circle of Dreams)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-dreams",
+    "minimumLevel": 2,
+    "classification": "bonus-action",
+    "trigger": null,
+    "resource": "balm-dice",
+    "resourceCostSummary": "Spend any number of dice from the pool",
+    "rechargeSummary": "Long rest",
+    "scalingSummary": "Dice pool = druid level; each die is d6",
+    "resolutionKind": "healing",
+    "mechanicalSummary": "As a bonus action, choose a creature within 120 ft and spend any number of Balm dice up to half your druid level. Target regains HP equal to the rolled total. Also grants 1 temp HP per die spent.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-dreams L2: Balm of the Summer Court" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": []
+  },
+  {
+    "auditId": "druid.dreams.hidden-paths",
+    "name": "Hidden Paths (Circle of Dreams)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-dreams",
+    "minimumLevel": 10,
+    "classification": "bonus-action",
+    "trigger": null,
+    "resource": "hidden-paths-uses",
+    "resourceCostSummary": "1 use",
+    "rechargeSummary": "Long rest (or expend a spell slot to use again)",
+    "scalingSummary": null,
+    "resolutionKind": "movement",
+    "mechanicalSummary": "As a bonus action, teleport up to 60 ft to an unoccupied space you can see. Alternatively, use an action to teleport a willing creature you touch up to 30 ft.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-dreams L10: Hidden Paths" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": []
+  },
+
+  {
+    "auditId": "druid.shepherd.spirit-totem",
+    "name": "Spirit Totem (Circle of the Shepherd)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-shepherd",
+    "minimumLevel": 2,
+    "classification": "bonus-action",
+    "trigger": null,
+    "resource": "spirit-totem-uses",
+    "resourceCostSummary": "1 use",
+    "rechargeSummary": "Short or long rest",
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Summon a spirit totem to a point within 60 ft for 1 minute. Choose Bear (temp HP + advantage on Str checks/saves), Hawk (reaction to grant advantage on attack), or Unicorn (bonus healing on spell casts). Moveable as bonus action.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-shepherd L2: Spirit Totem" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Three distinct modes with different mechanical effects. 1/short or long rest."]
+  },
+  {
+    "auditId": "druid.shepherd.faithful-summons",
+    "name": "Faithful Summons (Circle of the Shepherd)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-the-shepherd",
+    "minimumLevel": 14,
+    "classification": "triggered",
+    "trigger": "When reduced to 0 HP or incapacitated against your will",
+    "resource": null,
+    "resourceCostSummary": "No resource cost (automatic trigger)",
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Immediately gain the benefits of conjure animals cast at 9th level. The conjured beasts protect you and attack your foes if given no commands.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-the-shepherd L14: Faithful Summons" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Automatic trigger — no action required."]
+  },
+
+  {
+    "auditId": "druid.spores.halo-of-spores",
+    "name": "Halo of Spores (Circle of Spores)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-spores",
+    "minimumLevel": 2,
+    "classification": "reaction",
+    "trigger": "When a creature moves within 10 ft of you or starts its turn there",
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": "Damage: 1d4 at L2, 1d6 at L6, 1d8 at L10, 1d10 at L14; necrotic; Con save for none",
+    "resolutionKind": "damage",
+    "mechanicalSummary": "Use reaction to deal scaling necrotic damage to a creature within 10 ft; Con save negates.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-spores L2: Halo of Spores" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["At-will reaction; no resource cost."]
+  },
+  {
+    "auditId": "druid.spores.symbiotic-entity",
+    "name": "Symbiotic Entity (Circle of Spores)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-spores",
+    "minimumLevel": 2,
+    "classification": "action",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "1 Wild Shape use (does not transform into a beast)",
+    "rechargeSummary": "Wild Shape recharges on short or long rest",
+    "scalingSummary": "Temp HP = 4 × druid level; extra melee damage = 1d6 poison",
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "Expend a Wild Shape use to awaken spores instead of transforming. Gain 4×druid level temp HP. While active: Halo of Spores damage doubles, melee weapon attacks deal extra 1d6 poison. Lasts 10 minutes or until temp HP is lost.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-spores L2: Symbiotic Entity" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Alternative use of Wild Shape resource — competes with beast transformation."]
+  },
+  {
+    "auditId": "druid.spores.fungal-infestation",
+    "name": "Fungal Infestation (Circle of Spores)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-spores",
+    "minimumLevel": 6,
+    "classification": "reaction",
+    "trigger": "When a Small or Medium beast or humanoid dies within 10 ft of you",
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "Use reaction to animate the corpse as a zombie with 1 HP. It takes its turn immediately after yours and lasts 1 hour. Only one fungal zombie at a time.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-spores L6: Fungal Infestation" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": []
+  },
+  {
+    "auditId": "druid.spores.spreading-spores",
+    "name": "Spreading Spores (Circle of Spores)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-spores",
+    "minimumLevel": 10,
+    "classification": "bonus-action",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": "No resource cost (requires Symbiotic Entity active)",
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "damage",
+    "mechanicalSummary": "While Symbiotic Entity is active, hurl spores up to 30 ft creating a 10-ft cube. Halo of Spores damage applies to any creature entering or starting turn there for 1 minute.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-spores L10: Spreading Spores" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": []
+  },
+  {
+    "auditId": "druid.spores.fungal-body",
+    "name": "Fungal Body (Circle of Spores)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-spores",
+    "minimumLevel": 14,
+    "classification": "passive",
+    "trigger": null,
+    "resource": null,
+    "resourceCostSummary": null,
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "reference-only",
+    "mechanicalSummary": "Cannot be blinded, deafened, frightened, or poisoned. Critical hits against you become normal hits unless incapacitated.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-spores L14: Fungal Body" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Crit immunity while not incapacitated is a significant defensive passive."]
+  },
+
+  {
+    "auditId": "druid.stars.starry-form",
+    "name": "Starry Form (Circle of Stars)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-stars",
+    "minimumLevel": 2,
+    "classification": "bonus-action",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "1 Wild Shape use",
+    "rechargeSummary": "Wild Shape recharges on short or long rest",
+    "scalingSummary": "Duration 10 minutes; constellation effects scale at L10 (2d8 for Archer/Chalice, fly 20 ft for Dragon)",
+    "resolutionKind": "state-toggle",
+    "mechanicalSummary": "Expend a Wild Shape use to take on a starry form. Choose Archer (bonus action ranged spell attack 1d8+Wis radiant), Chalice (bonus 1d8+Wis healing when casting healing spells), or Dragon (treat Int/Wis checks and Con saves for concentration as min 10 on d20).",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-stars L2: Starry Form, Archer, Chalice, Dragon" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Alternative use of Wild Shape — competes with beast transformation. Three distinct modes.", "Archer grants a repeatable bonus-action spell attack."]
+  },
+  {
+    "auditId": "druid.stars.cosmic-omen",
+    "name": "Cosmic Omen (Circle of Stars)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-stars",
+    "minimumLevel": 6,
+    "classification": "reaction",
+    "trigger": "When a creature you can see within 30 ft makes an attack roll, saving throw, or ability check",
+    "resource": "cosmic-omen-uses",
+    "resourceCostSummary": "1 use",
+    "rechargeSummary": "Long rest (or expend a spell slot to use again)",
+    "scalingSummary": "Gain either Weal (1d6 bonus) or Woe (1d6 penalty) after each long rest",
+    "resolutionKind": "ability-check",
+    "mechanicalSummary": "After each long rest, roll a die: on even, gain Weal (use reaction to add 1d6 to a roll); on odd, gain Woe (use reaction to subtract 1d6 from an enemy's roll).",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-stars L6: Cosmic Omen" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Reaction-based buff/debuff with random availability."]
+  },
+
+  {
+    "auditId": "druid.wildfire.summon-wildfire-spirit",
+    "name": "Summon Wildfire Spirit (Circle of Wildfire)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-wildfire",
+    "minimumLevel": 2,
+    "classification": "action",
+    "trigger": null,
+    "resource": "wild-shape-uses",
+    "resourceCostSummary": "1 Wild Shape use",
+    "rechargeSummary": "Wild Shape recharges on short or long rest",
+    "scalingSummary": "Spirit stats scale with PB",
+    "resolutionKind": "damage",
+    "mechanicalSummary": "Expend a Wild Shape use to summon a wildfire spirit. Creatures within 10 ft (except you) make Dex save or take 2d6 fire damage. Spirit acts in combat and can use Flame Seed (ranged spell attack) or Fiery Teleportation (teleport allies, damage enemies).",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-wildfire L2: Summon Wildfire Spirit" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Alternative use of Wild Shape. Spirit has its own actions in combat.", "Spirit's Fiery Teleportation is a notable tactical ability."]
+  },
+  {
+    "auditId": "druid.wildfire.cauterizing-flames",
+    "name": "Cauterizing Flames (Circle of Wildfire)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-wildfire",
+    "minimumLevel": 10,
+    "classification": "reaction",
+    "trigger": "When a Small or larger creature dies within 30 ft of you or your wildfire spirit",
+    "resource": "cauterizing-flames-uses",
+    "resourceCostSummary": "1 use",
+    "rechargeSummary": "Long rest",
+    "scalingSummary": "Uses = PB",
+    "resolutionKind": "mixed",
+    "mechanicalSummary": "When a creature dies nearby, a spectral flame appears in its space for 1 minute. When a creature enters or starts turn there: either heal 2d10+Wis or take 2d10+Wis fire damage (Dex save half).",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-wildfire L10: Cauterizing Flames" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["Reaction trigger; choice of heal or harm."]
+  },
+  {
+    "auditId": "druid.wildfire.blazing-revival",
+    "name": "Blazing Revival (Circle of Wildfire)",
+    "sourceKind": "subclass",
+    "sourceId": "druid",
+    "subclassId": "circle-of-wildfire",
+    "minimumLevel": 14,
+    "classification": "triggered",
+    "trigger": "When reduced to 0 HP while wildfire spirit is within 120 ft",
+    "resource": null,
+    "resourceCostSummary": "Destroys wildfire spirit (drops to 0 HP)",
+    "rechargeSummary": null,
+    "scalingSummary": null,
+    "resolutionKind": "healing",
+    "mechanicalSummary": "If your wildfire spirit is within 120 ft when you drop to 0 HP, you can cause the spirit to drop to 0 HP instead. You regain half your max HP and immediately rise to your feet.",
+    "evidence": [
+      { "kind": "repository", "location": "src/data/subclasses.json", "pointer": "circle-of-wildfire L14: Blazing Revival" }
+    ],
+    "confidence": "high",
+    "reviewStatus": "unreviewed",
+    "notes": ["No action cost — automatic trigger. Destroys the spirit in exchange for revival."]
+  }
+]

@@ -27,6 +27,7 @@ import subclass2014Basic from "../../../rules-research/subclasses/2014/basic-rul
 import subclass2014Remaining from "../../../rules-research/subclasses/2014/remaining.json";
 import subclass2024Basic from "../../../rules-research/subclasses/2024/basic-rules.json";
 import sourceLedger from "../../../rules-research/sources.json";
+import legacySubclassCatalog from "@/data/subclasses.json";
 
 import { isSupportedRuleset } from "@/lib/characterRuleset";
 import type {
@@ -66,6 +67,53 @@ const SUBCLASS_ID_ALIASES: Record<string, string> = {
   "draconic-sorcery": "draconic-bloodline",
   evoker: "school-of-evocation",
 };
+
+type LegacySubclassCatalog = Array<{
+  id: string;
+  subclassLevel: number;
+  subclasses: Array<{
+    id: string;
+    name: string;
+    features: Array<{ level: number; name: string }>;
+  }>;
+}>;
+
+function featureId(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+const LEGACY_SUBCLASS_PACKETS = new Map<string, SubclassProgressionPacket>(
+  (legacySubclassCatalog as LegacySubclassCatalog).flatMap((classEntry) => classEntry.subclasses.map((subclass) => {
+    const featuresByLevel = new Map<number, string[]>();
+    for (const feature of subclass.features) {
+      const existing = featuresByLevel.get(feature.level) ?? [];
+      const id = featureId(feature.name);
+      if (id && !existing.includes(id)) existing.push(id);
+      featuresByLevel.set(feature.level, existing);
+    }
+    const packet: SubclassProgressionPacket = {
+      id: subclass.id,
+      sourceSubclassId: `${subclass.id}-2014-legacy`,
+      classId: classEntry.id,
+      sourceClassId: `${classEntry.id}-2014`,
+      ruleset: "2014",
+      name: subclass.name,
+      sourceId: "legacy-subclass-catalog",
+      selectionLevel: classEntry.subclassLevel,
+      featureLevels: Array.from(featuresByLevel.entries()).sort(([a], [b]) => a - b).map(([level, automaticFeatures]) => ({
+        level,
+        automaticFeatures,
+        choices: [],
+        resourceChanges: [],
+        spellChanges: [],
+        scaling: [],
+        parentInteractions: ["legacy-subclass-catalog"],
+        sourceReferences: [],
+      })),
+    };
+    return [subclass.id, packet] as const;
+  })),
+);
 
 type SourceRecord = { id: string; ruleset: ProgressionRulesetId };
 type LoaderInput = { classPackets: unknown[]; subclassCollections: unknown[]; sources: unknown[] };
@@ -269,11 +317,22 @@ export function loadProgressionCatalog(input: LoaderInput): ProgressionCatalog {
   return { classes, subclasses };
 }
 
-export const progressionCatalog = loadProgressionCatalog({
+const reviewedProgressionCatalog = loadProgressionCatalog({
   classPackets: CLASS_PACKETS,
   subclassCollections: SUBCLASS_COLLECTIONS,
   sources: sourceLedger,
 });
+
+const productionSubclassPackets = new Map(reviewedProgressionCatalog.subclasses);
+for (const [subclassId, packet] of LEGACY_SUBCLASS_PACKETS) {
+  const key = catalogKey("2014", subclassId);
+  if (!productionSubclassPackets.has(key)) productionSubclassPackets.set(key, packet);
+}
+
+export const progressionCatalog: ProgressionCatalog = {
+  classes: reviewedProgressionCatalog.classes,
+  subclasses: productionSubclassPackets,
+};
 
 export function getProgressionPacket(ruleset: ProgressionRulesetId, classId: string, subclassId?: string): ProgressionPacket {
   if (!isSupportedRuleset(ruleset)) {
@@ -282,7 +341,8 @@ export function getProgressionPacket(ruleset: ProgressionRulesetId, classId: str
   const classPacket = progressionCatalog.classes.get(catalogKey(ruleset, classId));
   if (!classPacket) throw new Error(`No ${ruleset} progression packet exists for class "${classId}".`);
   if (!subclassId) return { ruleset, classId, class: classPacket };
-  const subclassPacket = progressionCatalog.subclasses.get(catalogKey(ruleset, subclassId));
+  const subclassPacket = progressionCatalog.subclasses.get(catalogKey(ruleset, subclassId))
+    ?? (ruleset === "2014" ? LEGACY_SUBCLASS_PACKETS.get(subclassId) : undefined);
   if (!subclassPacket) throw new Error(`No ${ruleset} progression packet exists for subclass "${subclassId}".`);
   if (subclassPacket.classId !== classId) {
     throw new Error(`Subclass "${subclassId}" belongs to class "${subclassPacket.classId}", not "${classId}" in ruleset ${ruleset}.`);

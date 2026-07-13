@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { getProgressionPacket, loadProgressionCatalog, progressionCatalog } from "@/lib/progression/packets";
+import subclasses from "@/data/subclasses.json";
 
 describe("production progression packet loader", () => {
-  it("loads the complete reviewed catalog with canonical and edition-scoped IDs", () => {
+  it("loads reviewed packets and fills every production subclass from the descriptive catalog", () => {
     expect(progressionCatalog.classes.size).toBe(25);
-    expect(progressionCatalog.subclasses.size).toBe(44);
+    expect(progressionCatalog.subclasses.size).toBeGreaterThan(44);
 
     const barbarian = progressionCatalog.classes.get("2014:barbarian");
     expect(barbarian).toMatchObject({ id: "barbarian", sourceClassId: "barbarian-2014", ruleset: "2014" });
@@ -17,6 +18,27 @@ describe("production progression packet loader", () => {
   it("returns a class-only or class-and-subclass production packet", () => {
     expect(getProgressionPacket("2014", "fighter").subclass).toBeUndefined();
     expect(getProgressionPacket("2014", "fighter", "battle-master").subclass?.sourceClassId).toBe("fighter-2014");
+  });
+
+  it("provides a safe production packet for every selectable 2014 subclass", () => {
+    for (const classEntry of subclasses) {
+      for (const subclass of classEntry.subclasses) {
+        const packet = getProgressionPacket("2014", classEntry.id, subclass.id).subclass;
+        expect(packet, `${classEntry.id}:${subclass.id}`).toMatchObject({
+          id: subclass.id,
+          classId: classEntry.id,
+          selectionLevel: classEntry.subclassLevel,
+        });
+        expect(packet?.featureLevels.length, `${classEntry.id}:${subclass.id} feature levels`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("falls back to the descriptive catalog for College of Spirits", () => {
+    const packet = getProgressionPacket("2014", "bard", "college-of-spirits").subclass;
+    expect(packet?.name).toBe("College of Spirits");
+    expect(packet?.featureLevels.map((entry) => entry.level)).toEqual([3, 6, 14]);
+    expect(packet?.featureLevels[0].automaticFeatures).toContain("guiding-whispers");
   });
 
   it("rejects wrong-parent, missing, and research-only production lookups", () => {

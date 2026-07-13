@@ -65,7 +65,7 @@ export default memo(function LevelUpModal({
   characterName,
   gainedFeatures = [],
 }: {
-  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
+  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; abilities?: AbilityScores; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
