@@ -469,98 +469,10 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   ];
   const paletteItems: Array<{kind:string;label:string;detail?:string;disabled:boolean;run:()=>void}>=[...commands.map((command)=>({kind:"Command",...command,disabled:command.disabled??false})),...RULE_REFERENCES.map(([label,detail])=>({kind:"Rule",label,detail,disabled:false,run:()=>setCommandQuery(label)}))].filter((item)=>!commandQuery.trim()||fuzzyMatch(`${item.label} ${String("detail" in item?item.detail:"")}`,commandQuery.trim()));
 
-  return (
-    <section className="dm-table" style={({ "--doc-accent": theme?.accent ?? "#8c5a2b" } as React.CSSProperties)}>
-      <header className="dm-table-head">
-        <div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}{activeSession ? ` · ${Math.max(0, Math.floor((clockNow - Date.parse(activeSession.startedAt)) / 60000))}m${sessionOnBreak ? " · On break" : ""}` : ""}</span><h2>{campaign.campaign.name}</h2></div>
-        <nav className="dm-workspace-modes" aria-label="Table mode">
-          {(["scene", "encounter", "preparation", "review"] as DmWorkspaceMode[]).map((mode) => (
-            <button key={mode} type="button" className={workspaceMode === mode ? "is-active" : ""} aria-pressed={workspaceMode === mode} onClick={() => setWorkspaceMode(mode)}>{mode === "review" ? "Session review" : mode}{mode === "encounter" && activeEncounter ? <i className="dm-live-dot" aria-hidden="true" /> : null}</button>
-          ))}
-        </nav>
-        {/* Session controls live on the header line (Round Two) — the strip is gone. */}
-        <div className="dm-head-session">
-          {activeSession ? <>
-            <button type="button" className="dm-btn" onClick={() => { const note = window.prompt("Session note"); if (note) void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note }); }}>Note</button>
-            <button type="button" className="dm-btn" disabled={!records[0]} onClick={() => records[0] && void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: records[0].text, eventId: records[0].id })}>Pin latest</button>
-            <button type="button" className="dm-btn" onClick={() => setSessionOnBreak((value) => !value)}>{sessionOnBreak ? "Resume" : "Break"}</button>
-            <button type="button" className="dm-btn" onClick={() => { if (window.confirm("End this session and prepare its summary draft?")) void dmToolsApi.endSession(campaign.campaign.id, activeSession.id).then(() => { setPrepOpen(true); return refreshWorkspace(); }); }}>End session</button>
-          </> : <>
-            <input placeholder="Session title" aria-label="Session title" value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} />
-            <button type="button" className="dm-btn dm-btn-primary" onClick={() => void dmToolsApi.startSession(campaign.campaign.id, { title: sessionTitle || undefined }).then(() => { setSessionTitle(""); return refreshWorkspace(); })}>Start session</button>
-          </>}
-        </div>
-        <div>
-          <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact}>Compact</button>
-          <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
-          <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
-          <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
-          <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
-        </div>
-      </header>
-      {commandOpen ? <div className="dm-command-palette" role="dialog" aria-label="DM command palette"><div><input autoFocus aria-label="Search commands and rules" placeholder="Type a command or rule…" value={commandQuery} onChange={(event)=>{setCommandQuery(event.target.value);setCommandIndex(0);}} onKeyDown={(event)=>{if(event.key==="ArrowDown"){event.preventDefault();setCommandIndex((index)=>Math.min(paletteItems.length-1,index+1));}if(event.key==="ArrowUp"){event.preventDefault();setCommandIndex((index)=>Math.max(0,index-1));}if(event.key==="Enter"){const item=paletteItems[commandIndex];if(item&&!item.disabled){item.run();setCommandOpen(false);setCommandQuery("");}}}}/><small>Commands and rules · ↑↓ navigate · Enter run · Esc close</small><ul>{paletteItems.slice(0,12).map((item,index)=><li key={`${item.kind}-${item.label}`}><button type="button" className={index===commandIndex?"is-active":""} disabled={item.disabled} onMouseEnter={()=>setCommandIndex(index)} onClick={()=>{item.run();setCommandOpen(false);setCommandQuery("");}}><span>{item.kind}</span><strong>{item.label}</strong>{"detail" in item?<small>{item.detail}</small>:item.disabled?<small>Unavailable in the current context</small>:null}</button></li>)}</ul></div></div> : null}
-      {error ? <p className="dm-table-error">{error}</p> : null}
-      {tourOpen ? <aside className="dm-first-tour" aria-label="DM Table quick tour"><strong>Your Table workspace</strong><ol><li>Party state stays in the left command rail.</li><li>The center changes between Scene, Encounter, Preparation, and Review.</li><li>Select a character to open the right inspector.</li><li>Tools and Ctrl/Cmd+K expose the full command set.</li></ol><button type="button" className="dm-btn dm-btn-primary" onClick={()=>{window.localStorage.setItem("forge-dm-table-tour","done");setTourOpen(false);}}>Got it</button></aside> : null}
-      <div className="dm-table-grid">
-        <PartyRail
-          members={campaign.members}
-          dmUserId={campaign.campaign.dmUserId}
-          selectedUserId={selectedUserId}
-          currentTurnUserId={sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId ?? null}
-          presence={campaign.presence}
-          compact={compactTable}
-          rehearsalBusy={rehearsalBusy}
-          onSeatRehearsal={rehearsalActive ? undefined : () => void seatRehearsal()}
-          onClearRehearsal={rehearsalActive ? () => void clearRehearsal() : undefined}
-          onSelect={(member) => setSelectedUserId(member.userId)}
-          onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
-        />
-        <section className="dm-table-region dm-encounter">
-          {workspaceMode === "preparation" ? (
-            <div className="dm-workspace-empty"><span>Preparation</span><h3>Prepare the next beat</h3><p>Choose saved encounters, creatures, handouts, reminders, and session notes in the campaign workshop.</p><button type="button" className="dm-btn dm-btn-primary" onClick={() => setPrepOpen(true)}>Open campaign workshop</button></div>
-          ) : workspaceMode === "review" ? (
-            <div className="dm-workspace-review"><div className="dm-region-head"><h3>Session record</h3><span>{activeSession?.title ?? "No active session"}</span></div><div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div><div className="dm-record-list">{records.length ? records.map((record) => <p key={record.id}><time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{record.text}{activeSession ? <button type="button" className="dm-pin" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: record.text, eventId: record.id })}>Pin for summary</button> : null}</p>) : <p className="dm-empty">Nothing has been recorded yet.</p>}</div></div>
-          ) : workspaceMode === "scene" ? (
-            <div className="dm-scene-workspace"><div className="dm-region-head"><div><span>Current scene</span><h3>{activeScene?.title ?? activeEncounter?.snapshot.name ?? "The table is ready"}</h3></div>{scenes.length ? <select aria-label="Current scene" value={activeScene?.id ?? ""} onChange={(event) => { const scene=scenes.find((item)=>item.id===event.target.value); if(scene) void dmToolsApi.updateScene(campaign.campaign.id,scene.id,{active:true}).then(()=>refreshWorkspace()); }}>{scenes.map((scene)=><option key={scene.id} value={scene.id}>{scene.title}</option>)}</select> : null}</div>{activeScene ? <><p>{activeScene.description ?? "Set the scene, reveal a clue, request a check, or launch the linked encounter."}</p>{activeScene.readAloud ? <blockquote>{activeScene.readAloud}</blockquote> : null}<div className="dm-scene-columns"><section><h4>Present</h4>{players.map((member)=><label key={member.userId}><input type="checkbox" checked={activeScene.presentUserIds.includes(member.userId)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{presentUserIds:event.target.checked?[...new Set([...activeScene.presentUserIds,member.userId])]:activeScene.presentUserIds.filter((id)=>id!==member.userId)}).then(()=>refreshWorkspace())}/>{member.characterName??member.userName}</label>)}</section><section><h4>Objectives</h4>{activeScene.objectives.map((objective)=><label key={objective}><input type="checkbox" checked={activeScene.completedObjectives.includes(objective)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{completedObjectives:event.target.checked?[...new Set([...activeScene.completedObjectives,objective])]:activeScene.completedObjectives.filter((item)=>item!==objective)}).then(()=>refreshWorkspace())}/>{objective}</label>)}</section><section><h4>Clues</h4>{activeScene.clues.map((clue)=><label key={clue}><input type="checkbox" checked={activeScene.revealedClues.includes(clue)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{revealedClues:event.target.checked?[...new Set([...activeScene.revealedClues,clue])]:activeScene.revealedClues.filter((item)=>item!==clue)}).then(()=>refreshWorkspace())}/>{clue}</label>)}</section></div><section className="dm-capability-matrix"><h4>Party references</h4><table><thead><tr><th>Character</th><th>Perception</th><th>Insight</th><th>Investigation</th><th>Languages</th><th>Tools & skills</th></tr></thead><tbody>{players.map((member)=><tr key={member.userId}><th>{member.characterName??member.userName}</th><td>{member.passivePerception??"—"}</td><td>{member.passiveInsight??"—"}</td><td>{member.passiveInvestigation??"—"}</td><td>{member.characterJson?.languages?.join(", ")||"—"}</td><td>{[...(member.characterJson?.toolProficiencies??[]),...(member.characterJson?.skillProficiencies??[])].join(", ")||"—"}</td></tr>)}</tbody></table></section><section className="dm-npc-drawer"><h4>Scene NPCs</h4>{npcs.filter((npc)=>activeScene.npcIds.includes(npc.id)||npc.currentSceneId===activeScene.id).map((npc)=><article key={npc.id}><header><strong>{npc.name}</strong><span>{npc.attitude} · {npc.status}</span></header><p>{npc.goal??npc.knows??"No public-facing goal recorded."}</p><small>AC {npc.armorClass??"—"} · HP {npc.currentHp??"—"}/{npc.maxHp??"—"} · Insight DC {npc.insightDc??"—"}</small><div><select aria-label={`${npc.name} disposition`} value={npc.disposition} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{disposition:event.target.value}).then(()=>refreshWorkspace())}><option value="neutral">Neutral</option><option value="allied">Allied</option><option value="hostile">Hostile</option></select><select aria-label={`${npc.name} status`} value={npc.status} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{status:event.target.value}).then(()=>refreshWorkspace())}><option value="alive">Alive</option><option value="dead">Dead</option><option value="missing">Missing</option></select><button type="button" className="dm-btn" onClick={()=>void replaceInitiative([...campaign.initiative.data.combatants,{id:crypto.randomUUID(),name:npc.name,initiative:Math.floor(Math.random()*20)+1,kind:npc.disposition==="allied"?"ally":"enemy",currentHp:npc.currentHp,maxHp:npc.maxHp,ac:npc.armorClass,privateNote:npc.goal}])}>Add to initiative</button>{npc.portraitUrl?<button type="button" className="dm-btn" onClick={()=>void onPostEvent("handout",{title:npc.name,url:npc.portraitUrl!})}>Share portrait</button>:null}</div></article>)}<div className="dm-inline-form"><input placeholder="NPC name" value={npcDraft.name} onChange={(event)=>setNpcDraft({...npcDraft,name:event.target.value})}/><input placeholder="Attitude" value={npcDraft.attitude} onChange={(event)=>setNpcDraft({...npcDraft,attitude:event.target.value})}/><input placeholder="Goal" value={npcDraft.goal} onChange={(event)=>setNpcDraft({...npcDraft,goal:event.target.value})}/><input placeholder="AC" type="number" value={npcDraft.armorClass} onChange={(event)=>setNpcDraft({...npcDraft,armorClass:event.target.value})}/><input placeholder="HP" type="number" value={npcDraft.hitPoints} onChange={(event)=>setNpcDraft({...npcDraft,hitPoints:event.target.value})}/><button type="button" className="dm-btn" onClick={createQuickNpc}>Add NPC</button></div></section><div><button type="button" className="dm-btn" onClick={()=>{setWorkspaceMode("encounter");setActiveCommand("roll");}}>Request likely check</button>{activeScene.linkedEncounterId?<button type="button" className="dm-btn dm-btn-primary" onClick={()=>void dmToolsApi.startEncounter(activeScene.linkedEncounterId!).then(()=>{setWorkspaceMode("encounter");return refreshWorkspace();})}>Launch linked encounter</button>:null}<button type="button" className="dm-btn" onClick={()=>setPrepOpen(true)}>Full scene tools</button></div></> : <div className="dm-workspace-empty"><strong>No scene yet</strong><span>Create a lightweight current scene, then add details in Preparation.</span><div className="dm-inline-form"><input placeholder="Scene title" value={sceneTitle} onChange={(event)=>setSceneTitle(event.target.value)}/><button type="button" className="dm-btn dm-btn-primary" onClick={createQuickScene}>Create scene</button></div></div>}</div>
-          ) : (
-          <>
-          <div className="dm-region-head">
-            <h3>{sortedCombatants[campaign.initiative.data.turnIndex]?.name ?? "Encounter"}</h3>
-            <span className="dm-round">Round {campaign.initiative.data.round}</span>
-            <button type="button" className="dm-btn" onClick={previousTurn} disabled={sortedCombatants.length === 0}>Previous</button>
-            <button type="button" className="dm-btn dm-btn-primary" onClick={nextTurn} disabled={sortedCombatants.length === 0}>Next turn</button>
-          </div>
-          {/* Round Two: the active-encounter band lives inside Encounter mode, not above the whole table. */}
-          {activeEncounter ? <section className="dm-live-encounter">
-            <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
-            <div className="dm-pacing-facts" aria-label="Encounter status"><span>Round <strong>{campaign.initiative.data.round}</strong></span><span>Elapsed <strong>{encounterFacts.elapsedMinutes}m</strong></span><span>Enemies <strong>{encounterFacts.activeEnemies} active · {encounterFacts.defeatedEnemies} defeated</strong></span><span>Party <strong>{encounterFacts.critical} critical · {encounterFacts.concentrating} concentrating</strong></span><span>Pending <strong>{encounterFacts.pendingRequests}</strong></span></div>
-            <details><summary>Scene notes</summary>{activeEncounter.snapshot.readAloud ? <><p><b>Read aloud:</b> {activeEncounter.snapshot.readAloud}</p><button type="button" className="dm-btn" onClick={() => navigator.clipboard.writeText(activeEncounter.snapshot.readAloud ?? "").catch(() => {})}>Copy</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { readAloudRead: !activeEncounter.readAloudRead }).then(() => refreshWorkspace())}>{activeEncounter.readAloudRead ? "Reset read status" : "Mark as read"}</button></> : null}{activeEncounter.snapshot.tactics ? <p><b>Tactics:</b> {activeEncounter.snapshot.tactics}</p> : null}{activeEncounter.snapshot.environmentNotes ? <p><b>Environment:</b> {activeEncounter.snapshot.environmentNotes}</p> : null}{activeEncounter.snapshot.developments ? <p><b>Developments:</b> {activeEncounter.snapshot.developments}</p> : null}{activeSession ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: `${activeEncounter.snapshot.name}: ${activeEncounter.snapshot.developments ?? activeEncounter.snapshot.objective ?? "Scene note"}` })}>Pin scene note</button> : null}</details>
-            <div className="dm-wave-list">{activeEncounter.snapshot.waves.filter((wave) => !activeEncounter.activatedWaveIds?.includes(wave.id) && !activeEncounter.cancelledWaveIds?.includes(wave.id)).map((wave) => { const ready = waveIsReady(wave); const postponed = activeEncounter.postponedWaveIds?.includes(wave.id); return <article key={wave.id} data-ready={ready}><span>{ready ? "READY" : postponed ? "POSTPONED" : "UPCOMING"}</span><strong>{wave.name}</strong><small>{wave.combatantIds.length} combatant templates</small><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "activate-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Deploy now</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "postpone-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Postpone</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "cancel-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Cancel</button></article>; })}</div>
-            <div>{activeEncounter.snapshot.handoutIds.map((id) => savedHandouts.find((item) => item.id === id)).filter((item): item is CampaignHandout => Boolean(item)).map((handout) => <button key={handout.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, handout.id)}>Reveal {handout.title}</button>)}<button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: activeEncounter.status === "paused" ? "resume" : "pause" }).then(() => refreshWorkspace())}>{activeEncounter.status === "paused" ? "Resume" : "Pause"}</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "end" }).then(() => refreshWorkspace())}>End encounter</button></div>
-          </section> : null}
-          {activeEncounter && (dueReminders.length || endTurnReminders.length) ? <section className="dm-turn-checklist"><strong>{sortedCombatants[campaign.initiative.data.turnIndex]?.name}&apos;s turn</strong>{[...dueReminders.map((item) => ({ item, phase: "Start" })), ...endTurnReminders.map((item) => ({ item, phase: "End" }))].map(({ item, phase }) => <div key={`${phase}-${item.id}`}><label><input type="checkbox" checked={item.completed} onChange={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, completed: true } : row) }).then(() => refreshWorkspace())}/><span><small>{phase}</small>{item.label}</span></label><button type="button" className="dm-icon-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, snoozedUntilRound: campaign.initiative.data.round + 1 } : row) }).then(() => refreshWorkspace())}>Snooze</button>{activeSession ? <button type="button" className="dm-icon-btn" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: item.label })}>Record</button> : null}</div>)}</section> : null}
-          {(() => { const liveRequests = campaign.requests.filter((request) => !dismissedRequests.includes(request.id) && (request.status === "open" || !request.resolvedAt || clockNow - Date.parse(request.resolvedAt) < 120_000)).slice(0, 4); return liveRequests.length ? <section className="dm-request-center" aria-label="Recent player requests">
-            {liveRequests.map((request) => {
-              const dc = typeof request.payload.dc === "number" ? request.payload.dc : undefined;
-              const responses = request.responses;
-              const passes = responses.filter((response) => response.passed).length;
-              const totals = responses.flatMap((response) => typeof response.total === "number" ? [response.total] : []);
-              const groupPassed = request.resolution === "group" && dc !== undefined ? passes >= Math.ceil(request.targetUserIds.length / 2) : undefined;
-              const bestPassed = request.resolution === "best" && dc !== undefined && totals.length ? Math.max(...totals) >= dc : undefined;
-              const title = request.kind === "roll" ? summarizeRollRequest(request.payload) : request.kind === "rest-long" ? "Long rest" : "Short rest";
-              return <article key={request.id} className="dm-request-card" data-status={request.status}>
-                <header><strong>{title}</strong><span>{responses.length}/{request.targetUserIds.length} responded</span><button type="button" className="dm-request-dismiss" aria-label="Dismiss this request card" onClick={() => setDismissedRequests((current) => [...current, request.id])}><X size={12} /></button></header>
-                <div>{request.targetUserIds.map((userId) => {
-                  const member = campaign.members.find((item) => item.userId === userId);
-                  const response = responses.find((item) => item.userId === userId);
-                  return <p key={userId}><span>{member?.characterName ?? member?.userName ?? "Player"}</span><em>{response ? `${response.total ?? "✓"}${response.passed === true ? " Pass" : response.passed === false ? " Fail" : ""}` : "Waiting"}</em></p>;
-                })}</div>
-                {groupPassed !== undefined ? <footer>Group result: {groupPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
-                {bestPassed !== undefined ? <footer>Best result: {bestPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
-                {request.status !== "open" ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.createRequest(campaign.campaign.id, { kind: request.kind, resolution: request.resolution, targetUserIds: request.targetUserIds, payload: request.payload }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not repeat request."))}>Request again</button> : null}
-              </article>;
-            })}
-          </section> : null; })()}
+  // AO-9: in Encounter mode the initiative order is the LEFT column (the
+  // mockup's initiative rail); other modes keep the party rail there. The
+  // list is hoisted so the JSX lives once.
+  const initiativeList = (
           <div className={`dm-initiative${rowDensity === "compact" ? " is-compact" : ""}`}>
             {sortedCombatants.map((item, rowIndex) => {
               const isPlayer = item.kind === "player";
@@ -652,7 +564,195 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             )})}
             {sortedCombatants.length === 0 ? <p className="dm-empty">No combatants yet — add one below, or let the party roll in.</p> : null}
           </div>
+  );
 
+  return (
+    <section className="dm-table" style={({ "--doc-accent": theme?.accent ?? "#8c5a2b" } as React.CSSProperties)}>
+      <header className="dm-table-head">
+        <div><span>THE TABLE{activeSession?.title ? ` · ${activeSession.title}` : ""}{activeSession ? ` · ${Math.max(0, Math.floor((clockNow - Date.parse(activeSession.startedAt)) / 60000))}m${sessionOnBreak ? " · On break" : ""}` : ""}</span><h2>{campaign.campaign.name}</h2></div>
+        <nav className="dm-workspace-modes" aria-label="Table mode">
+          {(["scene", "encounter", "preparation", "review"] as DmWorkspaceMode[]).map((mode) => (
+            <button key={mode} type="button" className={workspaceMode === mode ? "is-active" : ""} aria-pressed={workspaceMode === mode} onClick={() => setWorkspaceMode(mode)}>{mode === "review" ? "Session review" : mode}{mode === "encounter" && activeEncounter ? <i className="dm-live-dot" aria-hidden="true" /> : null}</button>
+          ))}
+        </nav>
+        {/* Session controls live on the header line (Round Two) — the strip is gone. */}
+        <div className="dm-head-session">
+          {activeSession ? <>
+            <button type="button" className="dm-btn" onClick={() => { const note = window.prompt("Session note"); if (note) void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note }); }}>Note</button>
+            <button type="button" className="dm-btn" disabled={!records[0]} onClick={() => records[0] && void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: records[0].text, eventId: records[0].id })}>Pin latest</button>
+            <button type="button" className="dm-btn" onClick={() => setSessionOnBreak((value) => !value)}>{sessionOnBreak ? "Resume" : "Break"}</button>
+            <button type="button" className="dm-btn" onClick={() => { if (window.confirm("End this session and prepare its summary draft?")) void dmToolsApi.endSession(campaign.campaign.id, activeSession.id).then(() => { setPrepOpen(true); return refreshWorkspace(); }); }}>End session</button>
+          </> : <>
+            <input placeholder="Session title" aria-label="Session title" value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} />
+            <button type="button" className="dm-btn dm-btn-primary" onClick={() => void dmToolsApi.startSession(campaign.campaign.id, { title: sessionTitle || undefined }).then(() => { setSessionTitle(""); return refreshWorkspace(); })}>Start session</button>
+          </>}
+        </div>
+        <div>
+          <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact}>Compact</button>
+          <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
+          <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
+          <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
+          <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
+        </div>
+      </header>
+      {commandOpen ? <div className="dm-command-palette" role="dialog" aria-label="DM command palette"><div><input autoFocus aria-label="Search commands and rules" placeholder="Type a command or rule…" value={commandQuery} onChange={(event)=>{setCommandQuery(event.target.value);setCommandIndex(0);}} onKeyDown={(event)=>{if(event.key==="ArrowDown"){event.preventDefault();setCommandIndex((index)=>Math.min(paletteItems.length-1,index+1));}if(event.key==="ArrowUp"){event.preventDefault();setCommandIndex((index)=>Math.max(0,index-1));}if(event.key==="Enter"){const item=paletteItems[commandIndex];if(item&&!item.disabled){item.run();setCommandOpen(false);setCommandQuery("");}}}}/><small>Commands and rules · ↑↓ navigate · Enter run · Esc close</small><ul>{paletteItems.slice(0,12).map((item,index)=><li key={`${item.kind}-${item.label}`}><button type="button" className={index===commandIndex?"is-active":""} disabled={item.disabled} onMouseEnter={()=>setCommandIndex(index)} onClick={()=>{item.run();setCommandOpen(false);setCommandQuery("");}}><span>{item.kind}</span><strong>{item.label}</strong>{"detail" in item?<small>{item.detail}</small>:item.disabled?<small>Unavailable in the current context</small>:null}</button></li>)}</ul></div></div> : null}
+      {error ? <p className="dm-table-error">{error}</p> : null}
+      {tourOpen ? <aside className="dm-first-tour" aria-label="DM Table quick tour"><strong>Your Table workspace</strong><ol><li>Party state stays in the left command rail.</li><li>The center changes between Scene, Encounter, Preparation, and Review.</li><li>Select a character to open the right inspector.</li><li>Tools and Ctrl/Cmd+K expose the full command set.</li></ol><button type="button" className="dm-btn dm-btn-primary" onClick={()=>{window.localStorage.setItem("forge-dm-table-tour","done");setTourOpen(false);}}>Got it</button></aside> : null}
+      <div className="dm-table-grid">
+        {workspaceMode === "encounter" ? (
+          <aside className="dm-initiative-rail" aria-label="Initiative order">
+            <header className="dm-initiative-rail-head">
+              <span>Initiative</span>
+              <strong>Round {campaign.initiative.data.round}</strong>
+              <small>{sortedCombatants.length} combatant{sortedCombatants.length === 1 ? "" : "s"}</small>
+            </header>
+            <div className="dm-initiative-rail-scroll">{initiativeList}</div>
+          </aside>
+        ) : (
+        <PartyRail
+          members={campaign.members}
+          dmUserId={campaign.campaign.dmUserId}
+          selectedUserId={selectedUserId}
+          currentTurnUserId={sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId ?? null}
+          presence={campaign.presence}
+          compact={compactTable}
+          rehearsalBusy={rehearsalBusy}
+          onSeatRehearsal={rehearsalActive ? undefined : () => void seatRehearsal()}
+          onClearRehearsal={rehearsalActive ? () => void clearRehearsal() : undefined}
+          onSelect={(member) => setSelectedUserId(member.userId)}
+          onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
+        />
+        )}
+        <section className="dm-table-region dm-encounter">
+          {workspaceMode === "preparation" ? (
+            <div className="dm-workspace-empty"><span>Preparation</span><h3>Prepare the next beat</h3><p>Choose saved encounters, creatures, handouts, reminders, and session notes in the campaign workshop.</p><button type="button" className="dm-btn dm-btn-primary" onClick={() => setPrepOpen(true)}>Open campaign workshop</button></div>
+          ) : workspaceMode === "review" ? (
+            <div className="dm-workspace-review"><div className="dm-region-head"><h3>Session record</h3><span>{activeSession?.title ?? "No active session"}</span></div><div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div><div className="dm-record-list">{records.length ? records.map((record) => <p key={record.id}><time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{record.text}{activeSession ? <button type="button" className="dm-pin" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: record.text, eventId: record.id })}>Pin for summary</button> : null}</p>) : <p className="dm-empty">Nothing has been recorded yet.</p>}</div></div>
+          ) : workspaceMode === "scene" ? (
+            <div className="dm-scene-workspace"><div className="dm-region-head"><div><span>Current scene</span><h3>{activeScene?.title ?? activeEncounter?.snapshot.name ?? "The table is ready"}</h3></div>{scenes.length ? <select aria-label="Current scene" value={activeScene?.id ?? ""} onChange={(event) => { const scene=scenes.find((item)=>item.id===event.target.value); if(scene) void dmToolsApi.updateScene(campaign.campaign.id,scene.id,{active:true}).then(()=>refreshWorkspace()); }}>{scenes.map((scene)=><option key={scene.id} value={scene.id}>{scene.title}</option>)}</select> : null}</div>{activeScene ? <><p>{activeScene.description ?? "Set the scene, reveal a clue, request a check, or launch the linked encounter."}</p>{activeScene.readAloud ? <blockquote>{activeScene.readAloud}</blockquote> : null}<div className="dm-scene-columns"><section><h4>Present</h4>{players.map((member)=><label key={member.userId}><input type="checkbox" checked={activeScene.presentUserIds.includes(member.userId)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{presentUserIds:event.target.checked?[...new Set([...activeScene.presentUserIds,member.userId])]:activeScene.presentUserIds.filter((id)=>id!==member.userId)}).then(()=>refreshWorkspace())}/>{member.characterName??member.userName}</label>)}</section><section><h4>Objectives</h4>{activeScene.objectives.map((objective)=><label key={objective}><input type="checkbox" checked={activeScene.completedObjectives.includes(objective)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{completedObjectives:event.target.checked?[...new Set([...activeScene.completedObjectives,objective])]:activeScene.completedObjectives.filter((item)=>item!==objective)}).then(()=>refreshWorkspace())}/>{objective}</label>)}</section><section><h4>Clues</h4>{activeScene.clues.map((clue)=><label key={clue}><input type="checkbox" checked={activeScene.revealedClues.includes(clue)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{revealedClues:event.target.checked?[...new Set([...activeScene.revealedClues,clue])]:activeScene.revealedClues.filter((item)=>item!==clue)}).then(()=>refreshWorkspace())}/>{clue}</label>)}</section></div><section className="dm-capability-matrix"><h4>Party references</h4><table><thead><tr><th>Character</th><th>Perception</th><th>Insight</th><th>Investigation</th><th>Languages</th><th>Tools & skills</th></tr></thead><tbody>{players.map((member)=><tr key={member.userId}><th>{member.characterName??member.userName}</th><td>{member.passivePerception??"—"}</td><td>{member.passiveInsight??"—"}</td><td>{member.passiveInvestigation??"—"}</td><td>{member.characterJson?.languages?.join(", ")||"—"}</td><td>{[...(member.characterJson?.toolProficiencies??[]),...(member.characterJson?.skillProficiencies??[])].join(", ")||"—"}</td></tr>)}</tbody></table></section><section className="dm-npc-drawer"><h4>Scene NPCs</h4>{npcs.filter((npc)=>activeScene.npcIds.includes(npc.id)||npc.currentSceneId===activeScene.id).map((npc)=><article key={npc.id}><header><strong>{npc.name}</strong><span>{npc.attitude} · {npc.status}</span></header><p>{npc.goal??npc.knows??"No public-facing goal recorded."}</p><small>AC {npc.armorClass??"—"} · HP {npc.currentHp??"—"}/{npc.maxHp??"—"} · Insight DC {npc.insightDc??"—"}</small><div><select aria-label={`${npc.name} disposition`} value={npc.disposition} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{disposition:event.target.value}).then(()=>refreshWorkspace())}><option value="neutral">Neutral</option><option value="allied">Allied</option><option value="hostile">Hostile</option></select><select aria-label={`${npc.name} status`} value={npc.status} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{status:event.target.value}).then(()=>refreshWorkspace())}><option value="alive">Alive</option><option value="dead">Dead</option><option value="missing">Missing</option></select><button type="button" className="dm-btn" onClick={()=>void replaceInitiative([...campaign.initiative.data.combatants,{id:crypto.randomUUID(),name:npc.name,initiative:Math.floor(Math.random()*20)+1,kind:npc.disposition==="allied"?"ally":"enemy",currentHp:npc.currentHp,maxHp:npc.maxHp,ac:npc.armorClass,privateNote:npc.goal}])}>Add to initiative</button>{npc.portraitUrl?<button type="button" className="dm-btn" onClick={()=>void onPostEvent("handout",{title:npc.name,url:npc.portraitUrl!})}>Share portrait</button>:null}</div></article>)}<div className="dm-inline-form"><input placeholder="NPC name" value={npcDraft.name} onChange={(event)=>setNpcDraft({...npcDraft,name:event.target.value})}/><input placeholder="Attitude" value={npcDraft.attitude} onChange={(event)=>setNpcDraft({...npcDraft,attitude:event.target.value})}/><input placeholder="Goal" value={npcDraft.goal} onChange={(event)=>setNpcDraft({...npcDraft,goal:event.target.value})}/><input placeholder="AC" type="number" value={npcDraft.armorClass} onChange={(event)=>setNpcDraft({...npcDraft,armorClass:event.target.value})}/><input placeholder="HP" type="number" value={npcDraft.hitPoints} onChange={(event)=>setNpcDraft({...npcDraft,hitPoints:event.target.value})}/><button type="button" className="dm-btn" onClick={createQuickNpc}>Add NPC</button></div></section><div><button type="button" className="dm-btn" onClick={()=>{setWorkspaceMode("encounter");setActiveCommand("roll");}}>Request likely check</button>{activeScene.linkedEncounterId?<button type="button" className="dm-btn dm-btn-primary" onClick={()=>void dmToolsApi.startEncounter(activeScene.linkedEncounterId!).then(()=>{setWorkspaceMode("encounter");return refreshWorkspace();})}>Launch linked encounter</button>:null}<button type="button" className="dm-btn" onClick={()=>setPrepOpen(true)}>Full scene tools</button></div></> : <div className="dm-workspace-empty"><strong>No scene yet</strong><span>Create a lightweight current scene, then add details in Preparation.</span><div className="dm-inline-form"><input placeholder="Scene title" value={sceneTitle} onChange={(event)=>setSceneTitle(event.target.value)}/><button type="button" className="dm-btn dm-btn-primary" onClick={createQuickScene}>Create scene</button></div></div>}</div>
+          ) : (
+          <>
+          {/* AO-9: the acting stage — the current creature owns the center. */}
+          {(() => {
+            const current = sortedCombatants[campaign.initiative.data.turnIndex];
+            if (!current) {
+              return (
+                <section className="dm-stage is-empty" aria-label="Encounter stage">
+                  <div className="dm-stage-content">
+                    <span className="dm-stage-eyebrow">Encounter · Round {campaign.initiative.data.round}</span>
+                    <h2 className="dm-stage-name">The stage is empty</h2>
+                    <p className="dm-stage-sub">Add a combatant below, seat the rehearsal party, or let the party roll initiative.</p>
+                  </div>
+                </section>
+              );
+            }
+            const isPlayer = current.kind === "player";
+            const member = isPlayer && current.memberUserId ? campaign.members.find((m) => m.userId === current.memberUserId) : null;
+            const hp = isPlayer && member
+              ? { current: member.currentHp ?? 0, max: member.maxHp ?? 0 }
+              : current.currentHp !== undefined ? { current: current.currentHp, max: current.maxHp ?? current.currentHp } : null;
+            const ac = isPlayer && member ? member.ac : current.ac;
+            const portraitId = isPlayer && member
+              ? member.characterJson?.portraitUrl?.trim() || null
+              : npcs.find((npc) => npc.portraitUrl && npc.name === current.name)?.portraitUrl ?? null;
+            const kindLabel = current.kind === "player" ? `Player character${member ? ` · ${member.userName}` : ""}`
+              : current.kind === "enemy" ? "Hostile creature"
+              : current.kind === "ally" ? "Allied creature" : "Neutral combatant";
+            const glyph = current.kind === "enemy" ? "⚔" : current.kind === "ally" ? "✦" : "●";
+            return (
+              <section className="dm-stage" aria-label={`Acting now: ${current.name}`}>
+                <div className="dm-stage-visual">
+                  {portraitId ? (
+                    <CharacterPortraitBase portraitId={portraitId} characterName={current.name} size={148} shape="circle" decorative className="dm-stage-portrait" />
+                  ) : (
+                    <span className="dm-stage-glyph" aria-hidden="true">{glyph}</span>
+                  )}
+                </div>
+                <div className="dm-stage-content">
+                  <span className="dm-stage-eyebrow">Acting now · Initiative {current.initiative} · Round {campaign.initiative.data.round}</span>
+                  <h2 className="dm-stage-name">{current.name}{current.hidden ? <em className="dm-hidden-label">HIDDEN</em> : null}</h2>
+                  <p className="dm-stage-sub">{kindLabel}{current.privateNote ? ` — ${current.privateNote}` : ""}</p>
+                  <div className="dm-stage-vitals">
+                    {hp ? (
+                      <div className="dm-stage-vital">
+                        <small>Hit points</small>
+                        <strong>
+                          {isPlayer ? hp.current : (
+                            <input
+                              aria-label={`${current.name} current hit points`}
+                              type="number"
+                              value={hp.current}
+                              onChange={(event) => updateCombatant(current.id, { currentHp: Math.max(0, Number(event.target.value) || 0) })}
+                            />
+                          )}
+                          <span>/ {hp.max}</span>
+                        </strong>
+                      </div>
+                    ) : null}
+                    {ac !== undefined ? <div className="dm-stage-vital"><small>Armor</small><strong>{ac}</strong></div> : null}
+                    <button
+                      type="button"
+                      className="dm-stage-vital"
+                      data-tone={current.reactionUsed ? "warning" : "ready"}
+                      aria-pressed={current.reactionUsed ?? false}
+                      onClick={() => updateCombatant(current.id, { reactionUsed: !current.reactionUsed })}
+                    >
+                      <small>Reaction</small>
+                      <strong>{current.reactionUsed ? "Used" : "Ready"}</strong>
+                    </button>
+                    <div className="dm-stage-vital"><small>Status</small><strong>{current.defeated ? "Defeated" : current.turnStatus ?? "Normal"}</strong></div>
+                  </div>
+                  {current.concentratingOn || (current.conditions ?? []).length > 0 ? (
+                    <div className="dm-stage-chips">
+                      {current.concentratingOn ? <ConditionChip label={`Concentrating · ${current.concentratingOn}`} concentration /> : null}
+                      {(current.conditions ?? []).map((c) => <ConditionChip key={c.id} label={`${c.label}${c.stack ? ` ${c.stack}` : ""}`} />)}
+                    </div>
+                  ) : null}
+                  <div className="dm-stage-actions">
+                    <button type="button" className="dm-btn" aria-pressed={current.turnStatus === "readied"} onClick={() => updateCombatant(current.id, { turnStatus: current.turnStatus === "readied" ? undefined : "readied" })}>Ready</button>
+                    <button type="button" className="dm-btn" aria-pressed={current.turnStatus === "delayed"} onClick={() => updateCombatant(current.id, { turnStatus: current.turnStatus === "delayed" ? undefined : "delayed" })}>Delay</button>
+                    {isPlayer && member?.characterJson ? (
+                      <button type="button" className="dm-btn" onClick={() => onOpenSheet(member.characterJson!)}>Open sheet</button>
+                    ) : null}
+                    <span className="dm-stage-spacer" aria-hidden="true" />
+                    <button type="button" className="dm-btn" onClick={previousTurn}>Previous</button>
+                    <button type="button" className="dm-btn dm-btn-danger" onClick={nextTurn}>End turn</button>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+          {/* Round Two: the active-encounter band lives inside Encounter mode, not above the whole table. */}
+          {activeEncounter ? <section className="dm-live-encounter">
+            <div><span>ACTIVE ENCOUNTER</span><strong>{activeEncounter.snapshot.name}</strong><small>{activeEncounter.snapshot.objective}</small></div>
+            <div className="dm-pacing-facts" aria-label="Encounter status"><span>Round <strong>{campaign.initiative.data.round}</strong></span><span>Elapsed <strong>{encounterFacts.elapsedMinutes}m</strong></span><span>Enemies <strong>{encounterFacts.activeEnemies} active · {encounterFacts.defeatedEnemies} defeated</strong></span><span>Party <strong>{encounterFacts.critical} critical · {encounterFacts.concentrating} concentrating</strong></span><span>Pending <strong>{encounterFacts.pendingRequests}</strong></span></div>
+            <details><summary>Scene notes</summary>{activeEncounter.snapshot.readAloud ? <><p><b>Read aloud:</b> {activeEncounter.snapshot.readAloud}</p><button type="button" className="dm-btn" onClick={() => navigator.clipboard.writeText(activeEncounter.snapshot.readAloud ?? "").catch(() => {})}>Copy</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { readAloudRead: !activeEncounter.readAloudRead }).then(() => refreshWorkspace())}>{activeEncounter.readAloudRead ? "Reset read status" : "Mark as read"}</button></> : null}{activeEncounter.snapshot.tactics ? <p><b>Tactics:</b> {activeEncounter.snapshot.tactics}</p> : null}{activeEncounter.snapshot.environmentNotes ? <p><b>Environment:</b> {activeEncounter.snapshot.environmentNotes}</p> : null}{activeEncounter.snapshot.developments ? <p><b>Developments:</b> {activeEncounter.snapshot.developments}</p> : null}{activeSession ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: `${activeEncounter.snapshot.name}: ${activeEncounter.snapshot.developments ?? activeEncounter.snapshot.objective ?? "Scene note"}` })}>Pin scene note</button> : null}</details>
+            <div className="dm-wave-list">{activeEncounter.snapshot.waves.filter((wave) => !activeEncounter.activatedWaveIds?.includes(wave.id) && !activeEncounter.cancelledWaveIds?.includes(wave.id)).map((wave) => { const ready = waveIsReady(wave); const postponed = activeEncounter.postponedWaveIds?.includes(wave.id); return <article key={wave.id} data-ready={ready}><span>{ready ? "READY" : postponed ? "POSTPONED" : "UPCOMING"}</span><strong>{wave.name}</strong><small>{wave.combatantIds.length} combatant templates</small><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "activate-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Deploy now</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "postpone-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Postpone</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "cancel-wave", waveId: wave.id }).then(() => refreshWorkspace())}>Cancel</button></article>; })}</div>
+            <div>{activeEncounter.snapshot.handoutIds.map((id) => savedHandouts.find((item) => item.id === id)).filter((item): item is CampaignHandout => Boolean(item)).map((handout) => <button key={handout.id} type="button" className="dm-btn" onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, handout.id)}>Reveal {handout.title}</button>)}<button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: activeEncounter.status === "paused" ? "resume" : "pause" }).then(() => refreshWorkspace())}>{activeEncounter.status === "paused" ? "Resume" : "Pause"}</button><button type="button" className="dm-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { action: "end" }).then(() => refreshWorkspace())}>End encounter</button></div>
+          </section> : null}
+          {activeEncounter && (dueReminders.length || endTurnReminders.length) ? <section className="dm-turn-checklist"><strong>{sortedCombatants[campaign.initiative.data.turnIndex]?.name}&apos;s turn</strong>{[...dueReminders.map((item) => ({ item, phase: "Start" })), ...endTurnReminders.map((item) => ({ item, phase: "End" }))].map(({ item, phase }) => <div key={`${phase}-${item.id}`}><label><input type="checkbox" checked={item.completed} onChange={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, completed: true } : row) }).then(() => refreshWorkspace())}/><span><small>{phase}</small>{item.label}</span></label><button type="button" className="dm-icon-btn" onClick={() => void dmToolsApi.updateRun(campaign.campaign.id, activeEncounter.id, { reminders: activeEncounter.reminders.map((row) => row.id === item.id ? { ...row, snoozedUntilRound: campaign.initiative.data.round + 1 } : row) }).then(() => refreshWorkspace())}>Snooze</button>{activeSession ? <button type="button" className="dm-icon-btn" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: item.label })}>Record</button> : null}</div>)}</section> : null}
+          {(() => { const liveRequests = campaign.requests.filter((request) => !dismissedRequests.includes(request.id) && (request.status === "open" || !request.resolvedAt || clockNow - Date.parse(request.resolvedAt) < 120_000)).slice(0, 4); return liveRequests.length ? <section className="dm-request-center" aria-label="Recent player requests">
+            {liveRequests.map((request) => {
+              const dc = typeof request.payload.dc === "number" ? request.payload.dc : undefined;
+              const responses = request.responses;
+              const passes = responses.filter((response) => response.passed).length;
+              const totals = responses.flatMap((response) => typeof response.total === "number" ? [response.total] : []);
+              const groupPassed = request.resolution === "group" && dc !== undefined ? passes >= Math.ceil(request.targetUserIds.length / 2) : undefined;
+              const bestPassed = request.resolution === "best" && dc !== undefined && totals.length ? Math.max(...totals) >= dc : undefined;
+              const title = request.kind === "roll" ? summarizeRollRequest(request.payload) : request.kind === "rest-long" ? "Long rest" : "Short rest";
+              return <article key={request.id} className="dm-request-card" data-status={request.status}>
+                <header><strong>{title}</strong><span>{responses.length}/{request.targetUserIds.length} responded</span><button type="button" className="dm-request-dismiss" aria-label="Dismiss this request card" onClick={() => setDismissedRequests((current) => [...current, request.id])}><X size={12} /></button></header>
+                <div>{request.targetUserIds.map((userId) => {
+                  const member = campaign.members.find((item) => item.userId === userId);
+                  const response = responses.find((item) => item.userId === userId);
+                  return <p key={userId}><span>{member?.characterName ?? member?.userName ?? "Player"}</span><em>{response ? `${response.total ?? "✓"}${response.passed === true ? " Pass" : response.passed === false ? " Fail" : ""}` : "Waiting"}</em></p>;
+                })}</div>
+                {groupPassed !== undefined ? <footer>Group result: {groupPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
+                {bestPassed !== undefined ? <footer>Best result: {bestPassed ? "Success" : responses.length === request.targetUserIds.length ? "Failure" : "Pending"}</footer> : null}
+                {request.status !== "open" ? <button type="button" className="dm-btn" onClick={() => void dmToolsApi.createRequest(campaign.campaign.id, { kind: request.kind, resolution: request.resolution, targetUserIds: request.targetUserIds, payload: request.payload }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not repeat request."))}>Request again</button> : null}
+              </article>;
+            })}
+          </section> : null; })()}
           {/* The toolkit: one row of commands, one open form at a time. */}
           <div className="dm-command-row">
             {([["announce", "Announce"], ["roll", "Request a roll"], ["condition", "Condition"], ["handout", "Handout"], ["loot", "Loot"], ["combatant", "Add combatant"]] as const).map(([id, label]) => (

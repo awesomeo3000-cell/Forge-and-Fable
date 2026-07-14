@@ -2555,3 +2555,395 @@
   [data-theme="arcane-observatory"] .character-stat:nth-child(2) { border-right: 0; }
   [data-theme="arcane-observatory"] .character-stat:nth-child(-n + 2) { border-bottom: 1px solid var(--doc-rule); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-9 — the Table: DM encounter screen (CHANGES-AO-9, plan 4D)
+   The live table already has the approved anatomy (party rail | encounter
+   stage | inspector) and derives every color from --dm-* semantics, so
+   this phase re-points those semantics at Observatory tokens and applies
+   the command-surface treatments: matte floating panels on the void,
+   seal-red acting state, brass mode marks, flat meters, 3px controls.
+   All encounter logic (initiative sync, requests, waves) is untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .dm-table {
+  --dm-surface: var(--surface-panel);
+  --dm-ink: var(--text-primary);
+  /* Acting = seal red, everywhere and always (state grammar). The campaign
+     skin accent survives in region eyebrows via --doc-accent. */
+  --dm-accent: var(--state-active);
+  --dm-rule: var(--border-subtle);
+  --dm-muted: var(--text-muted);
+  --dm-ready: var(--state-success);
+  --dm-magic: var(--state-selected);
+  --dm-focus: #8d81b5;
+  --dm-warning: var(--state-warning);
+  --dm-danger: var(--state-danger);
+  padding: 16px 20px 20px;
+  border: 0;
+  background-color: var(--surface-app);
+  background-image:
+    linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
+  background-size: 48px 48px;
+  color: var(--text-primary);
+}
+
+/* Masthead: engraved lower edge; mode marks in brass, not seal red. */
+[data-theme="arcane-observatory"] .dm-table-head {
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .dm-workspace-modes button.is-active {
+  box-shadow: inset 0 -2px 0 var(--border-brass);
+}
+
+/* The three regions become matte panels floating on the field. */
+[data-theme="arcane-observatory"] .dm-table-grid {
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 0;
+}
+[data-theme="arcane-observatory"] .dm-command-party,
+[data-theme="arcane-observatory"] .dm-command-inspector,
+[data-theme="arcane-observatory"] .dm-table-region,
+[data-theme="arcane-observatory"] .dm-table-region:last-child {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Buttons: the ao-btn recipe. */
+[data-theme="arcane-observatory"] .dm-btn {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-btn:hover:not(:disabled) {
+  background: #21334a;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-btn.is-active,
+[data-theme="arcane-observatory"] .dm-btn.is-active:hover {
+  background: rgba(179, 146, 74, 0.12);
+  border-color: var(--border-brass);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .dm-btn-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .dm-btn-primary:hover:not(:disabled) {
+  background: #6ba3d4;
+  border-color: #93bee2;
+  color: var(--text-on-accent);
+}
+[data-theme="arcane-observatory"] .dm-btn:focus-visible,
+[data-theme="arcane-observatory"] .dm-icon-btn:focus-visible,
+[data-theme="arcane-observatory"] .dm-init-chip:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+
+/* Initiative: engraved numeric roundels; acting rows carry the seal. */
+[data-theme="arcane-observatory"] .dm-init-chip {
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-family: var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .dm-combatant.is-current,
+[data-theme="arcane-observatory"] .dm-combatant.is-acting {
+  border-left-color: var(--state-active);
+  background: linear-gradient(90deg, var(--state-active-soft), transparent 62%);
+}
+[data-theme="arcane-observatory"] .dm-combatant.is-current .dm-init-chip,
+[data-theme="arcane-observatory"] .dm-combatant.is-acting .dm-init-chip {
+  border-color: var(--state-active);
+  color: #dfa39d;
+}
+[data-theme="arcane-observatory"] .dm-combatant.is-selected:not(.is-acting):not(.is-current) {
+  border-left-color: var(--state-selected);
+  background: rgba(92, 148, 200, 0.07);
+}
+[data-theme="arcane-observatory"] .dm-visibility {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+  background: var(--surface-input);
+  color: var(--text-secondary);
+}
+
+/* Party rail HP: flat engraved meter, no pill, no inner shadow. */
+[data-theme="arcane-observatory"] .dm-command-hp {
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  background: var(--surface-panel-recessed);
+  box-shadow: none;
+}
+[data-theme="arcane-observatory"] .dm-command-hp i { border-radius: 0; }
+
+/* Request cards: structured matte cards with a state rule. */
+[data-theme="arcane-observatory"] .dm-request-card {
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--state-selected);
+  border-radius: var(--radius-sm);
+}
+[data-theme="arcane-observatory"] .dm-request-card[data-status="completed"] {
+  border-left-color: var(--state-success);
+}
+
+/* Command palette: opaque overlay panel, never translucent. */
+[data-theme="arcane-observatory"] .dm-command-palette > div {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-top: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* ── Initiative rail (Encounter mode's left column) ── */
+[data-theme="arcane-observatory"] .dm-table-grid:has(.dm-initiative-rail) {
+  grid-template-columns: minmax(280px, 330px) minmax(480px, 1fr) minmax(300px, 350px);
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 14px 14px 11px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail-head span {
+  color: var(--doc-accent, #b3924a);
+  font: 700 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail-head strong {
+  font: 600 0.95rem/1.2 var(--font-role-section);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail-head small {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail-scroll {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 8px 10px;
+  scrollbar-color: var(--border-default) transparent;
+}
+/* Rows reflow for the narrow rail: identity line first, instruments wrap
+   beneath it. */
+[data-theme="arcane-observatory"] .dm-initiative-rail .dm-combatant {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 8px;
+  padding: 9px 6px;
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail .dm-combatant-name {
+  flex: 1 1 55%;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .dm-initiative-rail .dm-visibility { max-width: 110px; }
+[data-theme="arcane-observatory"] .dm-initiative-rail .dm-turn-actions { margin-left: auto; }
+
+/* ── The acting stage: the current creature owns the center ── */
+[data-theme="arcane-observatory"] .dm-stage {
+  display: grid;
+  grid-template-columns: 188px minmax(0, 1fr);
+  margin: 0 0 14px;
+  overflow: hidden;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .dm-stage.is-empty {
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface-panel);
+  border-style: dashed;
+  border-color: var(--border-default);
+}
+[data-theme="arcane-observatory"] .dm-stage-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 208px;
+  background-color: var(--surface-panel-recessed);
+  background-image:
+    linear-gradient(rgba(179, 146, 74, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(179, 146, 74, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-right: 1px solid var(--border-default);
+}
+[data-theme="arcane-observatory"] .dm-stage-portrait {
+  border: 2px solid var(--border-strong);
+  background: #0d1826;
+  box-shadow: inset 0 0 0 2px rgba(3, 8, 14, 0.55), 0 10px 24px rgba(0, 0, 0, 0.34);
+}
+[data-theme="arcane-observatory"] .dm-stage-glyph {
+  font-size: 3rem;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .dm-stage-content {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px 18px 14px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .dm-stage-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--state-active);
+  font: 700 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-stage-eyebrow::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--state-active);
+}
+[data-theme="arcane-observatory"] .dm-stage.is-empty .dm-stage-eyebrow { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-stage.is-empty .dm-stage-eyebrow::before { border-left-color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-stage-name {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 1.9rem/1.05 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .dm-stage-sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+[data-theme="arcane-observatory"] .dm-stage-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital {
+  min-width: 96px;
+  display: grid;
+  gap: 3px;
+  padding: 8px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  text-align: left;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital small {
+  color: var(--text-muted);
+  font: 700 0.56rem/1.2 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital strong {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--text-primary);
+  font: 700 1.15rem/1 var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .dm-stage-vital strong > span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital input {
+  width: 54px;
+  padding: 0 2px 1px;
+  border: 0;
+  border-bottom: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-primary);
+  font: 700 1.05rem/1 var(--font-role-numeric);
+  text-align: right;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital input:focus {
+  outline: none;
+  border-bottom-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] button.dm-stage-vital { cursor: pointer; }
+[data-theme="arcane-observatory"] button.dm-stage-vital:hover { border-color: var(--border-strong); }
+[data-theme="arcane-observatory"] button.dm-stage-vital:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] button.dm-stage-vital[data-tone="ready"] strong { color: var(--state-success); }
+[data-theme="arcane-observatory"] button.dm-stage-vital[data-tone="warning"] strong { color: var(--state-warning); }
+[data-theme="arcane-observatory"] .dm-stage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+[data-theme="arcane-observatory"] .dm-stage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+[data-theme="arcane-observatory"] .dm-stage-spacer { flex: 1; }
+[data-theme="arcane-observatory"] .dm-btn.dm-btn-danger {
+  background: var(--state-active);
+  border-color: #c47b72;
+  color: #f2e6e0;
+}
+[data-theme="arcane-observatory"] .dm-btn.dm-btn-danger:hover:not(:disabled) {
+  background: #b45a54;
+  border-color: #d08b83;
+  color: #f2e6e0;
+}
+@media (max-width: 1100px) {
+  [data-theme="arcane-observatory"] .dm-stage { grid-template-columns: minmax(0, 1fr); }
+  [data-theme="arcane-observatory"] .dm-stage-visual {
+    min-height: 150px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-default);
+  }
+}
+
+/* The campaign workshop (.dm-prep) reads --paper/--ink, which the dark
+   table remaps to its own foreground roles — re-point the document
+   palette locally so the workshop renders as an ink document (and stays
+   coherent with the Phase 4 parchment retirement). */
+[data-theme="arcane-observatory"] .dm-prep {
+  --paper: #152438;
+  --paper-raised: #1c2e46;
+  --ink: #e9eef4;
+  --ink-2: #b6c1cd;
+  --ink-3: #91a0b0;
+  --doc-rule: #33465f;
+  --doc-rule-soft: #253850;
+  background: var(--paper);
+  border-color: var(--doc-rule);
+  color: var(--ink);
+}

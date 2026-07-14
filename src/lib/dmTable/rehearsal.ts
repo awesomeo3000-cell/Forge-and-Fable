@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
+import { PORTRAITS, suggestPortraitAncestry } from "@/data/portraits";
 import { buildQuickDraft, PREMADE_ARCHETYPES } from "@/lib/quickbuild";
 import { ruleset } from "@/lib/ruleset";
 import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
@@ -47,11 +48,18 @@ export function seatRehearsalParty(campaignId: string, dmUserId: string) {
   const created: GhostRow[] = [];
   db.exec("BEGIN IMMEDIATE");
   try {
-    for (const archetype of PREMADE_ARCHETYPES.slice(0, REHEARSAL_SIZE)) {
+    for (const [index, archetype] of PREMADE_ARCHETYPES.slice(0, REHEARSAL_SIZE).entries()) {
       const userId = `rehearsal-user-${randomUUID()}`;
       const characterId = `rehearsal-character-${randomUUID()}`;
       const draft = buildQuickDraft(ruleset, archetype.classId, archetype.raceId, `Rehearsal ${archetype.label}`);
-      const character: Character = { ...draft, id: characterId, userId, revision: 0, createdAt: now };
+      // Ghosts get a catalog portrait matched to their archetype's ancestry
+      // so the rail, initiative, and stage rehearse with real faces.
+      const ancestry = suggestPortraitAncestry(archetype.raceId);
+      const portraitPool = ancestry
+        ? PORTRAITS.filter((portrait) => portrait.suggestedAncestries.includes(ancestry))
+        : PORTRAITS;
+      const portraitUrl = portraitPool.length ? portraitPool[index % portraitPool.length].id : undefined;
+      const character: Character = { ...draft, ...(portraitUrl ? { portraitUrl } : {}), id: characterId, userId, revision: 0, createdAt: now };
       db.prepare("INSERT INTO users(id,name,email,password_hash,created_at) VALUES(?,?,?,?,?)")
         .run(userId, `Rehearsal ${archetype.label}`, `${userId}@rehearsal.invalid`, "rehearsal-only", now);
       db.prepare("INSERT INTO characters(id,user_id,data,revision,created_at,updated_at) VALUES(?,?,?,?,?,?)")
