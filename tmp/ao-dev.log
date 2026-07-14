@@ -1,0 +1,14 @@
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3010
+- Network:       http://192.168.1.142:3010
+- Environments: .env.local
+✓ Ready in 729ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3005
+- PID:          53036
+- Dir:          E:\forge-and-fable
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 53036 /F to stop it.
+[?25h
