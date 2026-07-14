@@ -9,6 +9,9 @@ import {
   Space_Mono,
 } from "next/font/google";
 import "./globals.css";
+// Arcane Observatory semantic theme layer — must stay after globals.css so
+// it wins ties by cascade order (docs/ai-project-proposal-34 §3).
+import "./arcane-observatory.css";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -58,7 +61,9 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${newsreader.variable} ${archivo.variable} ${baloo.variable} ${dancing.variable} ${unifraktur.variable} ${spaceMono.variable}`}
     >
-      <body>{children}</body>
+      {/* data-theme flips the Arcane Observatory shell (CHANGES-AO-3);
+          removing the attribute restores the legacy shell wholesale. */}
+      <body data-theme="arcane-observatory">{children}</body>
     </html>
   );
 }

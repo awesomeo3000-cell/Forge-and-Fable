@@ -1,0 +1,2106 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ARCANE OBSERVATORY — semantic theme layer
+   Plan: docs/arcane-observatory-implementation-plan.md
+   Adaptations: docs/ai-project-proposal-34-arcane-observatory.md
+   Changelog: docs/CHANGES-AO-1.md (tokens), CHANGES-AO-2.md (primitives)
+
+   This file is imported AFTER globals.css (see src/app/layout.tsx) so it
+   wins ties by cascade order — it is the append-only "fourth era, but the
+   last one". Rules for everything added here:
+   - Components request a semantic ROLE (--surface-panel), never a material.
+   - No `backdrop-filter`, no translucent panel backgrounds, no neon glow,
+     no starfields, no decorative animation. Panels are opaque; borders do
+     the separation; shadows are broad and restrained.
+   - Nothing in this file activates outside [data-theme="arcane-observatory"]
+     until the Phase 3 shell migration flips the attribute on.
+   - Values below started from the plan's palette, leaned matte per the
+     prototype's override layer; final values are settled at Gate 2.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] {
+  color-scheme: dark;
+
+  /* ── Surfaces ── */
+  --surface-app: #070d16;             /* deep matte midnight — the void the shell sits in */
+  --surface-shell: #0d1724;           /* application frame: nav, toolbars */
+  --surface-panel: #142235;           /* primary work surface */
+  --surface-panel-raised: #1a2b40;    /* hover targets, raised cards */
+  --surface-panel-recessed: #0f1b2a;  /* wells, insets, quiet regions */
+  --surface-document: #152438;        /* documents = distinct ink panel (owner
+                                         amendment 2026-07-14: parchment retired) */
+  --surface-document-muted: #112031;  /* quieter document surface */
+  --surface-input: #101c2b;
+  --surface-overlay: #0a111c;         /* opaque modal/drawer surface — never translucent */
+
+  /* ── Text ── */
+  --text-primary: #edf1f4;
+  --text-secondary: #b8c2cc;
+  --text-muted: #8391a0;
+  --text-disabled: #5f6a75;
+  --text-document: #e9eef4;           /* warm white on ink documents */
+  --text-document-muted: #91a0b0;
+  --text-on-accent: #081018;
+
+  /* ── Borders and rules ── */
+  --border-subtle: rgba(176, 193, 207, 0.12);
+  --border-default: rgba(176, 193, 207, 0.22);
+  --border-strong: rgba(176, 193, 207, 0.34);
+  --border-brass: #b3924a;            /* OLD GOLD — owner-picked at Gate 2 (option 2 of 10).
+                                         Structure + earned emphasis, not every edge. */
+  --border-brass-bright: #d9b967;     /* gold catch-light, e.g. active section marker */
+  --rule-engraved-dark: rgba(3, 8, 14, 0.65);   /* engraved rule = dark line… */
+  --rule-engraved-light: rgba(176, 193, 207, 0.10); /* …with a light return under it */
+
+  /* ── State ── */
+  --state-active: #a84f49;            /* seal red — acting now, urgent */
+  --state-active-soft: rgba(168, 79, 73, 0.16);
+  --state-selected: #5c94c8;          /* arcane blue — selection and focus */
+  --state-selected-soft: rgba(92, 148, 200, 0.16);
+  --state-success: #6e9d82;           /* restrained verdigris */
+  --state-success-soft: rgba(110, 157, 130, 0.14);
+  --state-warning: #bd9654;
+  --state-warning-soft: rgba(189, 150, 84, 0.14);
+  --state-danger: #bb5b5b;
+  --state-danger-soft: rgba(187, 91, 91, 0.14);
+  --state-disabled: #3d4854;
+
+  /* ── Depth (broad, restrained; borders do most separation) ── */
+  --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-document: 0 8px 18px rgba(0, 0, 0, 0.24);
+  --inset-recessed: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+
+  /* ── Geometry (restrained; circles reserved for tokens/portraits/seals) ── */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+
+  /* ── Spacing scale ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  /* ── Typography roles (existing project fonts mapped to roles; never
+        redefine the next/font variables themselves — cycle landmine) ── */
+  --font-role-display: var(--font-fraunces), Georgia, serif;
+  --font-role-section: var(--font-fraunces), Georgia, serif;
+  --font-role-label: var(--font-archivo), system-ui, sans-serif;
+  --font-role-body: var(--font-newsreader), Georgia, serif;
+  --font-role-numeric: var(--font-space-mono), ui-monospace, monospace;
+  --label-tracking: 0.08em;           /* caps label letter-spacing */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 2 — shared interface primitives (CHANGES-AO-2)
+   Class-based (`.ao-*`), scoped under the theme attribute. State grammar
+   uses data-state="acting|selected" per the DM-11 precedent. Every control
+   has hover / focus-visible / active / disabled states; focus is always
+   visible; state never relies on color alone (labels, markers, weight).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Surfaces ── */
+[data-theme="arcane-observatory"] .ao-panel,
+[data-theme="arcane-observatory"] .ao-panel-raised,
+[data-theme="arcane-observatory"] .ao-panel-recessed {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-panel { box-shadow: var(--shadow-panel); }
+[data-theme="arcane-observatory"] .ao-panel-raised {
+  background: var(--surface-panel-raised);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-panel-recessed {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+  box-shadow: var(--inset-recessed);
+}
+[data-theme="arcane-observatory"] .ao-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-panel-header > h2,
+[data-theme="arcane-observatory"] .ao-panel-header > h3 {
+  margin: 0;
+  font: 600 1.05rem/1.2 var(--font-role-section);
+}
+[data-theme="arcane-observatory"] .ao-document {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  color: var(--text-document);
+  font-family: var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-rule {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-rule-brass {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--border-brass);
+  opacity: 0.75;
+}
+[data-theme="arcane-observatory"] .ao-eyebrow {
+  font: 600 0.68rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+
+/* ── Buttons ── */
+[data-theme="arcane-observatory"] .ao-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 7px 14px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: 600 0.78rem/1.2 var(--font-role-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-btn:hover {
+  background: #21334a;
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-btn:active { transform: translateY(1px); }
+[data-theme="arcane-observatory"] .ao-btn:focus-visible,
+[data-theme="arcane-observatory"] .ao-input:focus-visible,
+[data-theme="arcane-observatory"] .ao-select:focus-visible,
+[data-theme="arcane-observatory"] .ao-textarea:focus-visible,
+[data-theme="arcane-observatory"] .ao-tab:focus-visible,
+[data-theme="arcane-observatory"] .ao-segmented button:focus-visible,
+[data-theme="arcane-observatory"] .ao-checkline input:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-btn:disabled {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+[data-theme="arcane-observatory"] .ao-btn-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-btn-primary:hover {
+  background: #6ba3d4;
+  border-color: #93bee2;
+}
+[data-theme="arcane-observatory"] .ao-btn-brass {
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-btn-brass:hover { background: #ad9159; }
+[data-theme="arcane-observatory"] .ao-btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-btn-quiet:hover {
+  background: rgba(176, 193, 207, 0.07);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-btn-danger {
+  background: #7e3f3a;
+  border-color: #a35e58;
+  color: #f2e6e0;
+}
+[data-theme="arcane-observatory"] .ao-btn-danger:hover { background: #8f4742; }
+[data-theme="arcane-observatory"] .ao-btn-icon {
+  min-width: 36px;
+  padding: 7px;
+}
+
+/* ── Inputs ── */
+[data-theme="arcane-observatory"] .ao-field {
+  display: grid;
+  gap: var(--space-2);
+}
+[data-theme="arcane-observatory"] .ao-field > label {
+  font: 600 0.7rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-input,
+[data-theme="arcane-observatory"] .ao-select,
+[data-theme="arcane-observatory"] .ao-textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  background: var(--surface-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: 400 0.95rem/1.4 var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-input::placeholder,
+[data-theme="arcane-observatory"] .ao-textarea::placeholder { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-input:hover,
+[data-theme="arcane-observatory"] .ao-select:hover,
+[data-theme="arcane-observatory"] .ao-textarea:hover { border-color: var(--border-strong); }
+[data-theme="arcane-observatory"] .ao-input[aria-invalid="true"],
+[data-theme="arcane-observatory"] .ao-textarea[aria-invalid="true"] {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
+[data-theme="arcane-observatory"] .ao-field-error {
+  font-size: 0.8rem;
+  color: #d99090;
+}
+[data-theme="arcane-observatory"] .ao-input:disabled,
+[data-theme="arcane-observatory"] .ao-select:disabled,
+[data-theme="arcane-observatory"] .ao-textarea:disabled {
+  color: var(--text-disabled);
+  background: var(--surface-panel-recessed);
+  cursor: not-allowed;
+}
+[data-theme="arcane-observatory"] .ao-checkline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-checkline input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--state-selected);
+}
+
+/* ── Segmented control and tabs ── */
+[data-theme="arcane-observatory"] .ao-segmented {
+  display: inline-flex;
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+[data-theme="arcane-observatory"] .ao-segmented button {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  font: 600 0.72rem/1.2 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-segmented button:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-segmented button[aria-pressed="true"],
+[data-theme="arcane-observatory"] .ao-segmented button[aria-selected="true"] {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-tab {
+  border: 0;
+  background: transparent;
+  padding: 9px 13px 10px;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  font: 600 0.76rem/1.2 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-tab:hover { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .ao-tab[aria-selected="true"] {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-brass);
+}
+
+/* ── Chips, banners, log entries ── */
+[data-theme="arcane-observatory"] .ao-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 600 0.7rem/1.4 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-chip[data-tone="active"] { color: #dfa39d; border-color: #70413d; background: var(--state-active-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="active"]::before { background: var(--state-active); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="selected"] { color: #a9c7e4; border-color: #3d5a77; background: var(--state-selected-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="selected"]::before { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="success"] { color: #a7c9b5; border-color: #405447; background: var(--state-success-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="success"]::before { background: var(--state-success); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="warning"] { color: #d9bc84; border-color: #625738; background: var(--state-warning-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="warning"]::before { background: var(--state-warning); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="danger"] { color: #d99090; border-color: #6e4141; background: var(--state-danger-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="danger"]::before { background: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-banner[data-tone="danger"] { border-left-color: var(--state-danger); background: var(--state-danger-soft); }
+[data-theme="arcane-observatory"] .ao-banner[data-tone="warning"] { border-left-color: var(--state-warning); background: var(--state-warning-soft); }
+[data-theme="arcane-observatory"] .ao-banner[data-tone="success"] { border-left-color: var(--state-success); background: var(--state-success-soft); }
+[data-theme="arcane-observatory"] .ao-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+[data-theme="arcane-observatory"] .ao-log > li {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: var(--space-3);
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-log time {
+  font: 400 0.72rem/1.6 var(--font-role-numeric);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-log > li[data-tone="critical"] {
+  background: var(--state-active-soft);
+  border-left: 2px solid var(--state-active);
+  padding-left: var(--space-2);
+}
+[data-theme="arcane-observatory"] .ao-log > li[data-tone="announce"] {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* ── Stats, meters, tokens ── */
+[data-theme="arcane-observatory"] .ao-stat {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-stat > span {
+  font: 600 0.62rem/1.2 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-stat > strong {
+  font: 700 1.45rem/1 var(--font-role-numeric);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-meter {
+  position: relative;
+  height: 10px;
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-meter[data-tone="hp-low"] > span { background: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-meter[data-tone="resource"] > span { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .ao-token-disc {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 2px var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 700 0.85rem/1 var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .ao-index-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-strong);
+  font: 700 0.68rem/1 var(--font-role-numeric);
+  color: var(--text-secondary);
+}
+
+/* ── State grammar: acting / selected rows ──
+   Acting: 3px seal rule + filled marker + warm wash + text label.
+   Selected: 1px arcane rule + hollow marker, no wash.
+   Combined: acting styling wins; never stack rules or markers. ── */
+[data-theme="arcane-observatory"] .ao-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-row[data-state="selected"] {
+  border-color: var(--border-default);
+  border-left: 3px solid var(--state-selected);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-row[data-state="acting"] {
+  border-color: rgba(168, 79, 73, 0.4);
+  border-left: 3px solid var(--state-active);
+  background: linear-gradient(90deg, var(--state-active-soft), transparent 62%), var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-marker {
+  flex: none;
+  width: 10px;
+  height: 10px;
+}
+[data-theme="arcane-observatory"] .ao-marker[data-state="acting"] {
+  background: var(--state-active);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+[data-theme="arcane-observatory"] .ao-marker[data-state="selected"] {
+  background: transparent;
+  border: 2px solid var(--state-selected);
+  border-radius: 50%;
+}
+[data-theme="arcane-observatory"] .ao-acting-label {
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--state-active);
+}
+
+/* ── Empty state ── */
+[data-theme="arcane-observatory"] .ao-empty {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-7) var(--space-5);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  text-align: center;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-empty > strong {
+  font: 600 1rem/1.3 var(--font-role-section);
+  color: var(--text-secondary);
+}
+
+/* ── Overlay shells (modal / drawer) — opaque, no blur, broad shadow ── */
+[data-theme="arcane-observatory"] .ao-modal {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-top: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-modal-scrim {
+  background: rgba(4, 8, 13, 0.72); /* scrim only — the dialog itself is opaque */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 3 — global shell migration (CHANGES-AO-3)
+   Scoped overrides of the legacy shell chrome. The theme attribute lives on
+   <body> (src/app/layout.tsx); removing it restores the legacy shell whole.
+   The central work surfaces (paper panels, sheet, creator) are deliberately
+   untouched — they migrate in Phase 4. Splash/auth untouched (Gate 3 Q).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* App field: matte void + faint engraved grid instead of the photo backdrop. */
+[data-theme="arcane-observatory"] .builder-shell {
+  background: var(--surface-app);
+}
+[data-theme="arcane-observatory"] .builder-shell::before {
+  background-image:
+    linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0, 0 0;
+  background-repeat: repeat, repeat;
+}
+/* The grain pass (::after) stays — fine matte texture is within the art
+   direction; only the photograph and its washes are gone. */
+
+/* Top bar: mounted into the frame, engraved lower edge, gold masthead. */
+[data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+  background: var(--surface-shell);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ledger-masthead span {
+  color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ledger-masthead strong {
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action {
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action:hover {
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .account-chip.ledger-account,
+[data-theme="arcane-observatory"] .builder-topbar .system-status {
+  color: var(--text-muted);
+}
+
+/* Roster rail: shell furniture now — the character skin themes the SHEET,
+   not the frame (plan: parchment/skins only inside documents). The rail's
+   entire legacy rule-set reads the --ledger-* locals, so re-pointing them
+   at shell tokens re-materializes every row, rule and edge in dark. */
+[data-theme="arcane-observatory"] .vault-rail.ledger-rail {
+  --ledger-paper: var(--surface-shell);
+  --ledger-tint: var(--surface-panel-recessed);
+  --ledger-ink: var(--text-primary);
+  --ledger-faded: var(--text-secondary);
+  --ledger-ghost: var(--text-muted);
+  --ledger-rule: var(--border-subtle);
+  --ledger-edge: var(--border-default);
+  --ledger-seal: var(--state-selected); /* roster selection = arcane blue */
+}
+
+/* Main plate frame: recessed well in the dark frame; interiors are Phase 4. */
+[data-theme="arcane-observatory"] .studio-surface {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+}
+
+/* Toasts: shell surfaces. The active character's accent survives as the
+   seal rule; the paper body does not. */
+[data-theme="arcane-observatory"] .ff-toast {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-default);
+  border-left: 5px solid var(--toast-accent, var(--border-brass));
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 4 — ink interiors (CHANGES-AO-4)
+   OWNER AMENDMENT AT GATE 3 (2026-07-14): parchment is retired ENTIRELY —
+   interiors build on the ink-blue palette. This supersedes the plan's
+   "parchment for documents" rule. Document surfaces stay a distinct,
+   slightly raised ink panel so "document" remains a readable role.
+
+   Mechanism: every paper interior (.cs-sheet, .paper-surface,
+   .campaign-panel, .feedback-modal) derives ALL of its color from the doc
+   palette (--paper/--ink/--doc-*), so one scoped re-point flips the whole
+   subtree coherently. Character skins apply these same variables INLINE,
+   so a user-chosen skin still wins — the skins feature keeps working; only
+   the DEFAULT presentation becomes Observatory ink.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .cs-sheet,
+[data-theme="arcane-observatory"] .paper-surface,
+[data-theme="arcane-observatory"] .campaign-panel,
+[data-theme="arcane-observatory"] .feedback-modal {
+  --paper: #152438;          /* document ink-blue, a step warmer than the shell */
+  --paper-raised: #1c2e46;
+  --ink: #e9eef4;
+  --ink-2: #b6c1cd;
+  --ink-3: #91a0b0;
+  --doc-rule: #33465f;
+  --doc-rule-soft: #253850;
+  --doc-accent: #a84f49;     /* seal red keeps its role on the sheet */
+  --doc-accent-deep: #8f423d;
+  --doc-select: #b3924a;     /* old gold for selection marks in documents */
+}
+
+/* The Ledger "daylight" palette (R18, :root) drives .ledger-page surfaces:
+   start panel, onboarding, quickbuilder, learn modals, admin. Re-pointed to
+   ink here — the seal brightens for small-text contrast on dark. */
+[data-theme="arcane-observatory"] {
+  --ledger-paper: #152438;
+  --ledger-tint: #1c2e46;
+  --ledger-ink: #e9eef4;
+  --ledger-faded: #b6c1cd;
+  --ledger-ghost: #91a0b0;
+  --ledger-rule: #2b3d55;
+  --ledger-edge: #3c5068;
+  --ledger-seal: #c47b72;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Dashboard phase (CHANGES-AO-5) — production plan Phase 2 remainder.
+   Campaign list becomes a small dashboard: the current campaign is the
+   dominant feature with THE primary action; other campaigns stay
+   supporting cards; the empty state is intentional.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .ao-dash-feature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  background:
+    linear-gradient(90deg, rgba(179, 146, 74, 0.05), transparent 55%),
+    var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-top: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-dash-eyebrow {
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-main { display: grid; gap: 4px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-dash-feature-main h3 {
+  margin: 0;
+  font: 600 1.6rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+[data-theme="arcane-observatory"] .ao-dash-role-chip {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-panel-recessed);
+  font: 700 0.64rem/1.4 var(--font-role-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-dash-role-chip[data-role="dm"] {
+  border-color: rgba(168, 79, 73, 0.55);
+  color: #dfa39d;
+  background: var(--state-active-soft);
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-actions {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: end;
+  flex: none;
+}
+[data-theme="arcane-observatory"] .ao-dash-resume {
+  min-height: 42px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+}
+[data-theme="arcane-observatory"] .ao-dash-empty {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-8) var(--space-5);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-dash-empty strong {
+  font: 600 1.05rem/1.3 var(--font-role-section);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-dash-empty p {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* dj-btn is the shared workflow button (campaigns, creator footers). Its
+   legacy skin is paper-era; align it with the .ao-btn recipe app-wide. */
+[data-theme="arcane-observatory"] .dj-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  box-shadow: none;
+  text-decoration: none;
+}
+[data-theme="arcane-observatory"] .dj-btn:hover:not(:disabled) {
+  background: #21334a;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dj-btn:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .dj-btn-primary,
+[data-theme="arcane-observatory"] .dj-btn.dj-btn-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .dj-btn.dj-btn-primary:hover:not(:disabled) {
+  background: #6ba3d4;
+  border-color: #93bee2;
+  color: var(--text-on-accent);
+}
+
+/* Supporting campaign cards: structured panel rows, not shrink-wrapped text. */
+[data-theme="arcane-observatory"] .campaign-list { display: grid; gap: var(--space-4); }
+[data-theme="arcane-observatory"] .campaign-group { display: grid; gap: var(--space-2); }
+[data-theme="arcane-observatory"] .campaign-group-heading {
+  margin: var(--space-2) 0 2px;
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .campaign-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .campaign-card:hover {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .campaign-card:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .campaign-card-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .campaign-card-main strong {
+  font: 600 1rem/1.25 var(--font-role-section);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .campaign-card-main small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .campaign-code-badge {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  background: var(--surface-panel-recessed);
+  color: var(--text-muted);
+  font: 400 0.72rem/1.5 var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .campaign-actions-bar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Phase 1 token showcase (/theme-observatory) — review surface only.
+      ao-sc-* classes are never used by the product. ─────────────────── */
+
+.ao-sc-root {
+  min-height: 100vh;
+  padding: var(--space-8) clamp(20px, 6vw, 72px) var(--space-9);
+  background:
+    linear-gradient(rgba(120, 150, 177, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.02) 1px, transparent 1px),
+    var(--surface-app);
+  background-size: 48px 48px, 48px 48px, auto;
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+}
+.ao-sc-eyebrow {
+  margin: 0 0 var(--space-2);
+  font: 600 0.7rem/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+.ao-sc-masthead { max-width: 860px; }
+.ao-sc-masthead h1 {
+  margin: 0 0 var(--space-3);
+  font: 600 2.4rem/1.1 var(--font-role-display);
+}
+.ao-sc-lede { margin: 0; color: var(--text-secondary); }
+.ao-sc-section { margin-top: var(--space-9); }
+.ao-sc-section > h2 {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  font: 600 1.15rem/1.2 var(--font-role-section);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+.ao-sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--space-3);
+}
+.ao-sc-swatch {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.ao-sc-swatch-chip {
+  height: 52px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+.ao-sc-swatch-meta { display: grid; gap: 2px; }
+.ao-sc-swatch-meta code { font: 400 0.72rem/1.3 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-swatch-meta span { font-size: 0.78rem; color: var(--text-muted); }
+.ao-sc-swatch-meta strong { font: 600 0.85rem/1.2 var(--font-role-label); }
+.ao-sc-panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+.ao-sc-panel p { margin: 0; }
+.ao-sc-document {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface-document);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+}
+.ao-sc-document p { margin: 0; }
+.ao-sc-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.ao-sc-state-chip {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.ao-sc-borderbox {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-4);
+  background: var(--surface-panel-recessed);
+  border: 2px solid;
+  border-radius: var(--radius-md);
+}
+.ao-sc-borderbox code { font: 400 0.72rem/1.3 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-borderbox span { font-size: 0.78rem; color: var(--text-muted); }
+.ao-sc-rule-demo { margin-top: var(--space-5); color: var(--text-secondary); }
+.ao-sc-rule-demo p { margin: 0 0 var(--space-3); }
+.ao-sc-engraved {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+.ao-sc-depth-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+.ao-sc-depth {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 90px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font: 600 0.75rem/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ao-sc-depth-recessed { background: var(--surface-panel-recessed); }
+.ao-sc-radius {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 72px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+}
+.ao-sc-radius code { font: 400 0.75rem/1 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-spacing { margin-top: var(--space-5); display: grid; gap: var(--space-2); max-width: 420px; }
+.ao-sc-space-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ao-sc-space-row code {
+  width: 90px;
+  flex: none;
+  font: 400 0.72rem/1.3 var(--font-role-numeric);
+  color: var(--text-secondary);
+}
+.ao-sc-space-row span {
+  height: 14px;
+  background: var(--state-selected);
+  border-radius: 1px;
+}
+.ao-sc-typestack { max-width: 860px; }
+.ao-sc-footer {
+  margin-top: var(--space-9);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.ao-sc-footer p { margin: 0; }
+.ao-sc-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ao-sc-stack { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+.ao-sc-fieldgrid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.ao-sc-span2 { grid-column: 1 / -1; }
+.ao-sc-splitrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.ao-sc-splitrow .ao-modal { max-width: 420px; }
+
+/* ── Accent palette comparison (/theme-observatory/palettes) ─────────── */
+.ao-pal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(430px, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+.ao-pal-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+.ao-pal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ao-pal-head h2 {
+  margin: 0;
+  font: 600 1.1rem/1.2 var(--font-role-section);
+}
+.ao-pal-hexes {
+  margin: 3px 0 0;
+  font: 400 0.72rem/1.4 var(--font-role-numeric);
+  color: var(--text-muted);
+}
+.ao-pal-chipset { display: inline-flex; gap: 4px; }
+.ao-pal-chipset i {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.ao-pal-navdemo {
+  display: flex;
+  gap: var(--space-2);
+}
+.ao-pal-navitem {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-muted);
+  font: 600 0.7rem/1.2 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+.ao-pal-navitem[data-active="true"] {
+  border-color: var(--border-default);
+  border-left: 3px solid var(--border-brass);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+.ao-pal-buttons,
+.ao-pal-staterow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ao-pal-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-6 — observatory shell + home dashboard (CHANGES-AO-6)
+   The approved prototype's frame: a fixed 76px icon rail on the left, a
+   62px topbar across the top of the work field, and the field itself as
+   the only scroll container. Geometry comes from the mockup's matte
+   revision; every color is an existing AO token — the prototype palette
+   itself was NOT adopted (owner direction 2026-07-14).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Shell frame: rail | (topbar / field). Modals and toasts are fixed and
+   out of flow, so they are unaffected by the grid. */
+[data-theme="arcane-observatory"] .builder-shell {
+  height: 100dvh;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+/* Field backdrop: engraved grid plus a brass instrument ring sunk into the
+   lower-right corner. Supersedes the Phase 3 ::before backdrop. */
+[data-theme="arcane-observatory"] .builder-shell::before {
+  background-image:
+    radial-gradient(circle at calc(100% - 40px) calc(100% + 80px),
+      transparent 258px,
+      rgba(179, 146, 74, 0.15) 259px 260px,
+      transparent 261px 306px,
+      rgba(179, 146, 74, 0.09) 307px 308px,
+      transparent 309px 366px,
+      rgba(179, 146, 74, 0.05) 367px 368px,
+      transparent 369px),
+    linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-position: 0 0, 0 0, 0 0;
+  background-repeat: no-repeat, repeat, repeat;
+}
+
+/* ── Global nav rail ── */
+[data-theme="arcane-observatory"] .ao-nav-rail {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 9px 12px;
+  background: var(--surface-shell);
+  border-right: 1px solid var(--border-default);
+  box-shadow: inset -1px 0 rgba(3, 8, 14, 0.6);
+}
+[data-theme="arcane-observatory"] .ao-nav-brand {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-brass);
+  background: var(--surface-panel-recessed);
+  box-shadow: inset 0 0 0 2px var(--surface-app);
+  color: var(--border-brass-bright);
+  font: 700 1.25rem/1 var(--font-role-display);
+  margin-bottom: 18px;
+}
+[data-theme="arcane-observatory"] .ao-nav-stack {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+[data-theme="arcane-observatory"] .ao-nav-item {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  padding: 7px 4px;
+  font: 700 0.56rem/1 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(176, 193, 207, 0.06);
+}
+[data-theme="arcane-observatory"] .ao-nav-item:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-nav-item.active {
+  color: var(--text-primary);
+  background: var(--surface-panel-raised);
+  border-color: var(--border-strong);
+  box-shadow: inset 3px 0 var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-nav-spacer { flex: 1; }
+[data-theme="arcane-observatory"] .ao-nav-user {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--border-brass);
+  border: 1px solid var(--border-brass-bright);
+  color: #14110a;
+  font: 700 0.78rem/1 var(--font-role-label);
+}
+
+/* ── Topbar: mounted across the field, eyebrow + screen title ── */
+[data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+  grid-column: 2;
+  max-width: none;
+  margin: 0;
+  min-height: 62px;
+  padding: 0 20px;
+}
+[data-theme="arcane-observatory"] .ledger-masthead div { gap: 3px; }
+[data-theme="arcane-observatory"] .ledger-masthead span {
+  font: 600 0.6rem/1 var(--font-role-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ledger-masthead strong {
+  font: 600 1.2rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+
+/* ── Work field: the only scroll container ── */
+[data-theme="arcane-observatory"] .builder-layout {
+  grid-column: 2;
+  max-width: none;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  padding: 20px 22px 28px;
+}
+[data-theme="arcane-observatory"] .vault-rail { top: 0; }
+[data-theme="arcane-observatory"] .ao-home-main {
+  grid-column: 2;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px 26px 32px;
+}
+
+/* ── Home dashboard (AO-6 landing screen) ── */
+[data-theme="arcane-observatory"] .ao-home {
+  display: grid;
+  gap: 18px;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+[data-theme="arcane-observatory"] .ao-home-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+[data-theme="arcane-observatory"] .ao-home-heading h1 {
+  margin: 4px 0 0;
+  font: 600 2rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-home-heading p {
+  margin: 8px 0 0;
+  max-width: 64ch;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-home-heading-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+/* Hero: matte slate with the engraved brass meridian instrument. */
+[data-theme="arcane-observatory"] .ao-home-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 250px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(90deg, var(--surface-panel) 0 46%, rgba(20, 34, 53, 0.82) 68%, rgba(20, 34, 53, 0.2) 100%),
+    repeating-linear-gradient(0deg, rgba(179, 146, 74, 0.02) 0 1px, transparent 1px 8px),
+    var(--surface-panel-recessed);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel), inset 0 0 0 1px rgba(3, 8, 14, 0.5);
+}
+[data-theme="arcane-observatory"] .ao-home-orrery {
+  position: absolute;
+  right: 84px;
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  margin-top: -125px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 185, 103, 0.5);
+  box-shadow:
+    0 0 0 26px rgba(179, 146, 74, 0.09),
+    0 0 0 27px rgba(179, 146, 74, 0.3),
+    0 0 0 64px rgba(179, 146, 74, 0.03),
+    0 0 0 65px rgba(179, 146, 74, 0.18);
+  pointer-events: none;
+}
+[data-theme="arcane-observatory"] .ao-home-orrery::before {
+  content: "";
+  position: absolute;
+  inset: 38px;
+  border: 1px dashed rgba(179, 146, 74, 0.3);
+  border-radius: 50%;
+}
+[data-theme="arcane-observatory"] .ao-home-orrery::after {
+  content: "";
+  position: absolute;
+  left: -18%;
+  top: 50%;
+  width: 136%;
+  height: 1px;
+  background: rgba(179, 146, 74, 0.32);
+  transform: rotate(-18deg);
+}
+[data-theme="arcane-observatory"] .ao-home-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-copy h2 {
+  margin: 0;
+  font: 600 2.1rem/1.05 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 6px;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-quiet {
+  margin: 0;
+  font: 600 1.4rem/1.2 var(--font-role-display);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-home-hero-blurb {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-secondary);
+}
+
+/* Lower band: three matte panels. */
+[data-theme="arcane-observatory"] .ao-home-lower {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .ao-home-panel {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: 16px 17px;
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header h2 {
+  margin: 0;
+  font: 600 1.02rem/1.2 var(--font-role-section);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header small { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-home-panel-action {
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+}
+
+[data-theme="arcane-observatory"] .ao-home-party {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+[data-theme="arcane-observatory"] .ao-home-party button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-home-party button:hover {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-home-party button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-home-avatar {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 2px var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 700 0.9rem/1 var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy strong {
+  font: 600 0.95rem/1.2 var(--font-role-section);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy small {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+[data-theme="arcane-observatory"] .ao-home-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick button {
+  min-height: 84px;
+  text-align: left;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel-recessed);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-home-quick button:hover {
+  background: var(--state-selected-soft);
+  border-color: rgba(92, 148, 200, 0.4);
+}
+[data-theme="arcane-observatory"] .ao-home-quick button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick-icon {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick strong {
+  display: block;
+  font: 700 0.7rem/1.25 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-home-quick span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  margin-top: 4px;
+}
+
+[data-theme="arcane-observatory"] .ao-home-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+[data-theme="arcane-observatory"] .ao-home-activity li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .ao-home-activity li:last-child { border-bottom: 0; }
+[data-theme="arcane-observatory"] .ao-home-activity-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="announce"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="handout"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="loot-offer"] {
+  background: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="rest-short"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="rest-long"] {
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-home-quiet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Narrow viewports: the rail becomes a strip across the top ── */
+@media (max-width: 1180px) {
+  [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr 1fr; }
+  [data-theme="arcane-observatory"] .ao-home-lower > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 980px) {
+  [data-theme="arcane-observatory"] .ao-home-orrery { display: none; }
+}
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .builder-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-nav-rail {
+    grid-row: 1;
+    grid-column: 1;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-default);
+    box-shadow: none;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-brand {
+    width: 36px;
+    height: 36px;
+    margin: 0 10px 0 0;
+    font-size: 1rem;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-stack {
+    display: flex;
+    flex: 1;
+    width: auto;
+    gap: 4px;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-item { flex: 1; min-height: 44px; }
+  [data-theme="arcane-observatory"] .ao-nav-item.active { box-shadow: inset 0 -3px var(--state-selected); }
+  [data-theme="arcane-observatory"] .ao-nav-spacer { display: none; }
+  [data-theme="arcane-observatory"] .ao-nav-user { margin-left: 10px; }
+  [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar,
+  [data-theme="arcane-observatory"] .builder-layout,
+  [data-theme="arcane-observatory"] .ao-home-main {
+    grid-column: 1;
+  }
+  [data-theme="arcane-observatory"] .ao-home-main { padding: 16px 14px 24px; }
+  [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-home-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-7 — the Forge: character creation migration (CHANGES-AO-7, plan 4B)
+   The prototype's creator spread: step rail | choice document | persistent
+   preview. Layout changes are guarded with :has(.ao-forge-preview) so the
+   quickbuilder and start panel (.ledger-page surfaces) are untouched;
+   shared controls (options, chips, buttons) harmonize app-wide. All
+   behavior, steps and validation live in CreatorPanel logic — untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* The dossier stops being one paper sheet and becomes three floating
+   panels on the observatory field. */
+[data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+  grid-template-columns: 218px minmax(0, 1fr) 296px;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  min-height: 0;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview)::before {
+  display: none; /* the paper grain pass — panels carry their own material */
+}
+
+/* Step rail: a quiet instrument panel with the commission's progress. */
+[data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail.ledger-toc {
+  position: sticky;
+  top: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  padding: 16px 8px 12px;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-label {
+  color: var(--border-brass);
+  font-family: var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+}
+[data-theme="arcane-observatory"] .ao-forge-progress {
+  display: grid;
+  gap: 6px;
+  margin: 2px 6px 12px;
+  padding: 0 8px 12px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-forge-progress strong {
+  font: 600 0.86rem/1.2 var(--font-role-section);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-forge-meter {
+  display: block;
+  height: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  background: var(--surface-panel-recessed);
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-forge-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step {
+  margin: 0 6px 3px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step:hover {
+  background: rgba(176, 193, 207, 0.05);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step.complete {
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step.active {
+  border-color: var(--border-strong);
+  background: var(--surface-panel-raised);
+  box-shadow: inset 3px 0 var(--state-selected);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-toc-decided {
+  color: var(--state-success);
+}
+
+/* Choice document: the working panel. */
+[data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-document {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: 22px clamp(18px, 3vw, 30px) 18px;
+}
+[data-theme="arcane-observatory"] .ledger-spread .dj-document-header h2 {
+  font-family: var(--font-role-display);
+  font-size: 1.7rem;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .dj-document-header {
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ledger-chapter-title {
+  font-family: var(--font-role-display);
+  color: var(--text-primary);
+}
+
+/* Persistent preview: the adventurer takes shape while you choose. */
+[data-theme="arcane-observatory"] .ao-forge-preview {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: start;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-forge-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 252px;
+  background-color: var(--surface-panel-recessed);
+  background-image:
+    linear-gradient(rgba(179, 146, 74, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(179, 146, 74, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-bottom: 1px solid var(--border-default);
+}
+/* The likeness itself is the container: a circular portrait on the same
+   rim recipe as the library, sized to command the panel. */
+[data-theme="arcane-observatory"] .ao-forge-portrait {
+  position: relative;
+  z-index: 1;
+  border: 2px solid var(--border-strong);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 10px 24px rgba(0, 0, 0, 0.34);
+  background: #0d1826;
+}
+[data-theme="arcane-observatory"] .ao-forge-title {
+  display: grid;
+  gap: 4px;
+  padding: 15px 17px 13px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-forge-title strong {
+  font: 600 1.4rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-forge-title p {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .ao-forge-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px 16px;
+}
+[data-theme="arcane-observatory"] .ao-forge-fact {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-forge-fact small {
+  font: 600 0.58rem/1.2 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-forge-fact strong {
+  font: 600 0.86rem/1.25 var(--font-role-section);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  padding: 0 16px 16px;
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities > span {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 7px 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities small {
+  font: 600 0.55rem/1 var(--font-role-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities b {
+  font: 700 0.95rem/1 var(--font-role-numeric);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities i {
+  font: 400 0.62rem/1 var(--font-role-numeric);
+  font-style: normal;
+  color: var(--state-selected);
+}
+
+/* ── Shared creator controls, harmonized app-wide ── */
+
+/* Option rows: structured matte rows; selection = arcane rule, never color
+   alone (the "Chosen" state label is markup and stays). */
+[data-theme="arcane-observatory"] .ledger-option {
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  background: transparent;
+}
+[data-theme="arcane-observatory"] .ledger-option:hover:not(.active) {
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ledger-option.active {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ledger-option:focus-visible,
+[data-theme="arcane-observatory"] .ledger-option .dj-card-select:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+
+/* Pick chips (skills, tools, languages). */
+[data-theme="arcane-observatory"] .dj-skill-chip {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .dj-skill-chip:hover:not([disabled]) {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dj-skill-chip.picked {
+  background: var(--state-selected-soft);
+  border-color: #3d5a77;
+  color: #a9c7e4;
+}
+[data-theme="arcane-observatory"] .dj-skill-chip[disabled] {
+  opacity: 0.45;
+}
+[data-theme="arcane-observatory"] .dj-skill-chip:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+
+/* Ability method row, points pill, attribute cards. */
+[data-theme="arcane-observatory"] .ledger-spread .method-row button {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .method-row button:hover:not(.active) {
+  border-color: var(--border-strong);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .method-row button.active {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+}
+[data-theme="arcane-observatory"] .ledger-spread .points-pill {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  font-family: var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .ledger-spread .attribute-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+
+/* The seal (final review): the one document surface in the flow. */
+[data-theme="arcane-observatory"] .ledger-certificate {
+  padding: 20px 22px 22px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+}
+
+/* Workflow buttons: align the ledger recipe with .ao-btn. */
+[data-theme="arcane-observatory"] .ledger-button {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font-family: var(--font-role-label);
+  letter-spacing: 0.05em;
+}
+[data-theme="arcane-observatory"] .ledger-button:hover:not(:disabled) {
+  background: #21334a;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ledger-button.ledger-button-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ledger-button.ledger-button-primary:hover:not(:disabled) {
+  background: #6ba3d4;
+  border-color: #93bee2;
+  color: var(--text-on-accent);
+}
+
+/* Footer: engraved rule above the chapter actions. */
+[data-theme="arcane-observatory"] .creator-footer.dj-footer {
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+
+/* ── The Likeness (chapter II): full-page portrait library ── */
+[data-theme="arcane-observatory"] .ao-portrait-step {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+[data-theme="arcane-observatory"] .ao-portrait-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+[data-theme="arcane-observatory"] .ao-portrait-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+[data-theme="arcane-observatory"] .ao-portrait-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 11px;
+}
+/* The portrait IS the control: a circular likeness with the selection ring
+   on the circle itself — no card chrome around it. */
+[data-theme="arcane-observatory"] .ao-portrait-choice {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 6px 2px 8px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-portrait-art {
+  position: relative;
+  display: block;
+  width: min(100%, 148px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background-color: #0d1826;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 2px rgba(3, 8, 14, 0.55), 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:hover .ao-portrait-art {
+  border-color: var(--border-brass);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 0 0 4px rgba(179, 146, 74, 0.14),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible {
+  outline: none;
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible .ao-portrait-art {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 3px;
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-art {
+  border-color: var(--state-selected);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 0 0 4px var(--state-selected-soft),
+    0 0 0 5px rgba(92, 148, 200, 0.45),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="arcane-observatory"] .ao-portrait-mark {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--surface-app);
+  border-radius: 50%;
+  background: var(--state-selected);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.8);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Forge responsive ── */
+@media (max-width: 1280px) {
+  [data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+    grid-template-columns: 204px minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-forge-preview { display: none; }
+}
+@media (max-width: 860px) {
+  [data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail.ledger-toc {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 10px;
+  }
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail-label,
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .ao-forge-progress {
+    flex: 1 1 100%;
+  }
+  [data-theme="arcane-observatory"] .ledger-toc .dj-rail-step {
+    margin: 0;
+    flex: 1 1 auto;
+  }
+}

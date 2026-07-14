@@ -29,8 +29,9 @@ import SourceSettingsPanel from "@/components/SourceSettingsPanel";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
-import PortraitField from "@/components/PortraitField";
-import { suggestPortraitAncestry } from "@/data/portraits";
+import CharacterPortrait from "@/components/portraits/CharacterPortrait";
+import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
+import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
 
 import { CHAPTERS, classDescriptor, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
 import {
@@ -50,7 +51,7 @@ const ALL_BACKGROUND_TOOL_OPTIONS = new Set(Object.values(BACKGROUND_TOOL_CHOICE
 
 type AssignmentMap = Record<AbilityKey, number>;
 
-const steps = ["Setup", "Class", "Origin", "Species", "Attributes", "Finalize"];
+const steps = ["Setup", "Portrait", "Class", "Origin", "Species", "Attributes", "Finalize"];
 const levelOptions = Array.from({ length: 20 }, (_, index) => index + 1);
 
 function casterLabel(heroClass: HeroClass) {
@@ -179,6 +180,9 @@ export default memo(function CreatorPanel(props: {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
   const [inspectedSpeciesId, setInspectedSpeciesId] = useState<string | null>(null);
   const [forgeError, setForgeError] = useState<string | null>(null);
+  // "Use an image link" fallback on the Likeness step (AO-7b) — reuses the
+  // selector modal, which owns link validation.
+  const [portraitLinkOpen, setPortraitLinkOpen] = useState(false);
 
   const selectedClass = props.draft.classId
     ? props.ruleset.classes.find((item) => item.id === props.draft.classId) ?? null
@@ -301,6 +305,7 @@ export default memo(function CreatorPanel(props: {
 
   const stepComplete = [
     Boolean(props.draft.name.trim()) && props.draft.sourceIds.length > 0,
+    Boolean(props.draft.portraitUrl),
     classStepComplete,
     Boolean(props.draft.background),
     Boolean(props.draft.raceId),
@@ -319,8 +324,17 @@ export default memo(function CreatorPanel(props: {
     roll: "rolled",
     manual: "manual",
   };
+  const portraitIndex = props.draft.portraitUrl
+    ? PORTRAITS.findIndex((item) => item.id === props.draft.portraitUrl)
+    : -1;
+  const portraitLabel = props.draft.portraitUrl
+    ? portraitIndex >= 0
+      ? `Portrait ${String(portraitIndex + 1).padStart(2, "0")}`
+      : "custom image"
+    : "";
   const decidedValues = [
     props.draft.name.trim(),
+    portraitLabel,
     selectedClass?.name ?? "",
     props.draft.background,
     race ? parseSpeciesName(race.name).displayName : "",
@@ -328,16 +342,22 @@ export default memo(function CreatorPanel(props: {
     "",
   ];
 
+  // Observatory preview column (AO-7): count of the six decisions made so
+  // far — the seventh chapter is the seal, not a decision.
+  const decidedCount = stepComplete.slice(0, 6).filter(Boolean).length;
+
   const canContinue =
     props.step === 0
       ? stepComplete[0]
       : props.step === 1
-        ? stepComplete[1]
+        ? true // the likeness is optional — never blocks the commission
         : props.step === 2
           ? stepComplete[2]
           : props.step === 3
             ? stepComplete[3]
-            : true;
+            : props.step === 4
+              ? stepComplete[4]
+              : true;
 
   const toggleSource = (sourceId: string) => {
     const exists = props.draft.sourceIds.includes(sourceId);
@@ -364,6 +384,19 @@ export default memo(function CreatorPanel(props: {
       <div className="creator-panel paper-surface dj-dossier ledger-spread">
         <nav className="dj-rail ledger-toc" aria-label="Character builder steps">
           <span className="dj-rail-label">The Commission</span>
+          <div className="ao-forge-progress">
+            <strong>{decidedCount} of 6 decided</strong>
+            <span
+              className="ao-forge-meter"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={6}
+              aria-valuenow={decidedCount}
+              aria-label="Commission progress"
+            >
+              <span style={{ width: `${(decidedCount / 6) * 100}%` }} />
+            </span>
+          </div>
           {steps.map((step, index) => {
             const active = index === props.step;
             const complete = stepComplete[index];
@@ -401,7 +434,7 @@ export default memo(function CreatorPanel(props: {
           </header>
 
           <section className="dj-section" aria-labelledby="dj-section-title">
-            {props.step !== 5 ? (
+            {props.step !== 6 ? (
               <div className="ledger-chapter-head">
                 <h3 className="ledger-chapter-title" id="dj-section-title">
                   {`Chapter ${CHAPTERS[props.step].numeral} · ${CHAPTERS[props.step].name}`}
@@ -420,12 +453,6 @@ export default memo(function CreatorPanel(props: {
                     onChange={(event) => props.onDraftChange({ ...props.draft, name: event.target.value })}
                   />
                 </label>
-                <PortraitField
-                  value={props.draft.portraitUrl}
-                  characterName={props.draft.name || "Adventurer"}
-                  suggestedAncestry={props.draft.raceId ? suggestPortraitAncestry(props.draft.raceId) : undefined}
-                  onChange={(portraitUrl) => props.onDraftChange({ ...props.draft, portraitUrl })}
-                />
                 <div className="dj-settings-panel">
                   <SourceSettingsPanel
                     selectedSourceIds={props.draft.sourceIds}
@@ -438,6 +465,68 @@ export default memo(function CreatorPanel(props: {
             ) : null}
 
             {props.step === 1 ? (
+              <div className="ao-portrait-step">
+                <div className="ao-portrait-toolbar">
+                  <p className="ao-portrait-hint">
+                    {portraitLabel
+                      ? `${portraitLabel} · private until the character joins a campaign`
+                      : "The likeness is optional — you can return to this chapter any time."}
+                  </p>
+                  <button
+                    type="button"
+                    className="ledger-button small"
+                    onClick={() => setPortraitLinkOpen(true)}
+                  >
+                    Use an image link
+                  </button>
+                </div>
+                <div className="ao-portrait-grid" role="radiogroup" aria-label="Portrait library">
+                  {PORTRAITS.map((portrait, index) => {
+                    const chosen = props.draft.portraitUrl === portrait.id;
+                    const label = `Portrait ${String(index + 1).padStart(2, "0")}`;
+                    return (
+                      <button
+                        key={portrait.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={chosen}
+                        aria-label={label}
+                        className={`ao-portrait-choice${chosen ? " selected" : ""}`}
+                        onClick={() => props.onDraftChange({ ...props.draft, portraitUrl: portrait.id })}
+                      >
+                        <span className="ao-portrait-art" style={portraitFrameCss(portrait.id)} aria-hidden="true">
+                          <span className="ao-portrait-mark" aria-hidden="true">✓</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {props.draft.portraitUrl && !isCatalogPortrait(props.draft.portraitUrl) ? (
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={true}
+                      aria-label="Custom image"
+                      className="ao-portrait-choice selected"
+                      onClick={() => setPortraitLinkOpen(true)}
+                    >
+                      <span
+                        className="ao-portrait-art"
+                        style={{
+                          backgroundImage: `url("${props.draft.portraitUrl}")`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                        aria-hidden="true"
+                      >
+                        <span className="ao-portrait-mark" aria-hidden="true">✓</span>
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {props.step === 2 ? (
               <div className="dj-option-stack">
                 {selectedClass ? (
                   <DossierStamp
@@ -623,7 +712,7 @@ export default memo(function CreatorPanel(props: {
               </div>
             ) : null}
 
-            {props.step === 2 ? (
+            {props.step === 3 ? (
               <div className="dj-option-stack">
                 {props.draft.background ? (
                   <>
@@ -816,7 +905,7 @@ export default memo(function CreatorPanel(props: {
               </div>
             ) : null}
 
-            {props.step === 3 ? (
+            {props.step === 4 ? (
               <div className="dj-option-stack">
                 {race ? (
                   <DossierStamp
@@ -878,7 +967,7 @@ export default memo(function CreatorPanel(props: {
               </div>
             ) : null}
 
-            {props.step === 4 ? (
+            {props.step === 5 ? (
               <div className="attribute-builder dj-attribute-builder">
                 <div className="dj-stat-strip">
                   {abilityKeys.map((key) => (
@@ -1027,11 +1116,11 @@ export default memo(function CreatorPanel(props: {
                 })() : null}
               </div>
             ) : null}
-            {props.step === 5 ? (
+            {props.step === 6 ? (
               <div className="ledger-certificate">
                 <div className="ledger-cert-mast">
                   <span className="ledger-cert-chapter" id="dj-section-title">
-                    {`Chapter VI · The Seal`}
+                    {`Chapter ${CHAPTERS[6].numeral} · ${CHAPTERS[6].name}`}
                   </span>
                   <h3 className="ledger-cert-name">{props.draft.name.trim() || "Unwritten"}</h3>
                   {selectedClass ? (
@@ -1073,7 +1162,7 @@ export default memo(function CreatorPanel(props: {
                           : ""}
                       </span>
                     ) : (
-                      <span className="ledger-cert-value missing">undecided — return to Chapter II</span>
+                      <span className="ledger-cert-value missing">undecided — return to Chapter III</span>
                     )}
                   </div>
                   <div className="ledger-cert-row">
@@ -1081,7 +1170,7 @@ export default memo(function CreatorPanel(props: {
                     {props.draft.background ? (
                       <span className="ledger-cert-value">{props.draft.background}</span>
                     ) : (
-                      <span className="ledger-cert-value missing">undecided — return to Chapter III</span>
+                      <span className="ledger-cert-value missing">undecided — return to Chapter IV</span>
                     )}
                   </div>
                   <div className="ledger-cert-row">
@@ -1091,7 +1180,7 @@ export default memo(function CreatorPanel(props: {
                         {parseSpeciesName(race.name).displayName} — {speciesDetailLine(race)}
                       </span>
                     ) : (
-                      <span className="ledger-cert-value missing">undecided — return to Chapter IV</span>
+                      <span className="ledger-cert-value missing">undecided — return to Chapter V</span>
                     )}
                   </div>
                   {selectedClass && selectedClass.startingGear.length > 0 ? (
@@ -1161,15 +1250,76 @@ export default memo(function CreatorPanel(props: {
                     props.onCreate();
                   }}
                 >
-                  {CHAPTERS[5].action}
+                  {CHAPTERS[6].action}
                 </button>
                 {forgeError ? <p className="forge-error">{forgeError}</p> : null}
               </>
             )}
           </div>
         </section>
+
+        <aside className="ao-forge-preview" aria-label="Character preview">
+          <div className="ao-forge-art">
+            <CharacterPortrait
+              portraitId={props.draft.portraitUrl || null}
+              characterName={props.draft.name || "Adventurer"}
+              size={176}
+              shape="circle"
+              decorative
+              className="ao-forge-portrait"
+            />
+          </div>
+          <div className="ao-forge-title">
+            <span className="dj-eyebrow">The adventurer</span>
+            <strong>{props.draft.name.trim() || "Unwritten"}</strong>
+            <p>
+              {[
+                race ? parseSpeciesName(race.name).displayName : null,
+                selectedClass?.name,
+                props.draft.background || null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "The forge awaits its commission."}
+            </p>
+          </div>
+          <div className="ao-forge-facts">
+            <div className="ao-forge-fact">
+              <small>Class</small>
+              <strong>{selectedClass?.name ?? "—"}</strong>
+            </div>
+            <div className="ao-forge-fact">
+              <small>Species</small>
+              <strong>{race ? parseSpeciesName(race.name).displayName : "—"}</strong>
+            </div>
+            <div className="ao-forge-fact">
+              <small>Origin</small>
+              <strong>{props.draft.background || "—"}</strong>
+            </div>
+            <div className="ao-forge-fact">
+              <small>Level</small>
+              <strong>{props.draft.level}</strong>
+            </div>
+          </div>
+          <div className="ao-forge-abilities" aria-label="Ability scores">
+            {abilityKeys.map((key) => (
+              <span key={key}>
+                <small>{abilityLabels[key]}</small>
+                <b>{props.finalAbilities[key]}</b>
+                <i>{signed(abilityModifier(props.finalAbilities[key]))}</i>
+              </span>
+            ))}
+          </div>
+        </aside>
       </div>
 
+      <PortraitSelectorModal
+        open={portraitLinkOpen}
+        value={props.draft.portraitUrl || null}
+        suggestedAncestry={props.draft.raceId ? suggestPortraitAncestry(props.draft.raceId) : undefined}
+        characterName={props.draft.name || "Adventurer"}
+        onSave={(portraitUrl) => props.onDraftChange({ ...props.draft, portraitUrl })}
+        onClose={() => setPortraitLinkOpen(false)}
+      />
       {inspectedClass ? (
         <ClassLearnModal
           heroClass={inspectedClass}

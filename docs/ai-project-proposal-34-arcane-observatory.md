@@ -3,6 +3,14 @@
 Author: Fable, 2026-07-13. Status: direction approved by owner (supersedes the
 parchment-everywhere "Printed Tome" presentation as the site-wide direction).
 
+> **AMENDMENT 2026-07-14 (owner, at Gate 3):** parchment is retired
+> ENTIRELY — no paper surfaces anywhere; interiors build on the ink-blue
+> palette with old gold (`#b3924a`) as the structural accent. This
+> supersedes every "parchment for documents" statement below and in the
+> implementation plan. "Document" survives as a semantic role (distinct
+> ink panel). Character skins remain a working feature — they override the
+> defaults inline. See CHANGES-AO-4.
+
 This document does NOT restate the redesign plan. The canonical plan is:
 
 - `docs/arcane-observatory-implementation-plan.md` — phases, tokens, gates,

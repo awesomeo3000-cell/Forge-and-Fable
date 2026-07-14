@@ -354,22 +354,49 @@ export default memo(function CampaignPanel({
         {view === "list" ? (
           <div className="campaign-body">
             <div className="campaign-actions-bar">
-              <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setNewName(""); setCreatedCode(""); setError(""); setView("create"); }}>
+              <button className="dj-btn" type="button" onClick={() => { setNewName(""); setCreatedCode(""); setError(""); setView("create"); }}>
                 <Plus size={16} /> New Campaign
               </button>
-              <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
+              <button className="dj-btn" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
                 <Users size={16} /> Join a Campaign
               </button>
             </div>
             {campaigns.length === 0 ? (
-              <p className="cs-muted campaign-empty">No campaigns yet. Create one or join with a code.</p>
+              <div className="ao-dash-empty campaign-empty">
+                <strong>No campaigns in the ledger</strong>
+                <p>Create a campaign to run as DM, or join a table with a code from your Dungeon Master.</p>
+              </div>
             ) : (
               <div className="campaign-list">
                 {(() => {
-                  const running = campaigns.filter((c) => c.myRole === "dm");
-                  const playing = campaigns.filter((c) => c.myRole === "player");
+                  // Dashboard hierarchy (AO-5): the current campaign gets the
+                  // dominant treatment + the resume action; everything else
+                  // stays a supporting card. Falls back to the first campaign
+                  // when none is active. Same handleSelect for all.
+                  const featured = campaigns.find((c) => c.id === activeCampaignId) ?? campaigns[0];
+                  const running = campaigns.filter((c) => c.myRole === "dm" && c.id !== featured.id);
+                  const playing = campaigns.filter((c) => c.myRole === "player" && c.id !== featured.id);
+                  const featuredMeta = featured.myRole === "dm"
+                    ? `You run this table · ${featured.memberCount} member${featured.memberCount === 1 ? "" : "s"}`
+                    : `${featured.myCharacterName ? `Playing as ${featured.myCharacterName}` : "Player"} · ${featured.memberCount} member${featured.memberCount === 1 ? "" : "s"}`;
                   return (
                     <>
+                      <section className="ao-dash-feature" aria-labelledby="ao-dash-feature-name">
+                        <div className="ao-dash-feature-main">
+                          <span className="ao-dash-eyebrow">{featured.id === activeCampaignId ? "Current campaign" : "Most recent campaign"}</span>
+                          <h3 id="ao-dash-feature-name">{featured.name}</h3>
+                          <p className="ao-dash-feature-meta">
+                            <span className="ao-dash-role-chip" data-role={featured.myRole}>{featured.myRole === "dm" ? "DM" : "Player"}</span>
+                            {featuredMeta}
+                          </p>
+                        </div>
+                        <div className="ao-dash-feature-actions">
+                          <button className="dj-btn dj-btn-primary ao-dash-resume" type="button" onClick={() => handleSelect(featured.id)}>
+                            {featured.myRole === "dm" ? "Open the Table" : "Resume campaign"}
+                          </button>
+                          <span className="campaign-code-badge">Code: {featured.code}</span>
+                        </div>
+                      </section>
                       {running.length > 0 ? (
                         <div className="campaign-group">
                           <h4 className="campaign-group-heading">CAMPAIGNS I RUN</h4>
