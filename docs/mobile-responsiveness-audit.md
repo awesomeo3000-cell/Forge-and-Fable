@@ -15,7 +15,7 @@ Evidence came from:
 
 ## Executive result
 
-The home, Forge start, and Hero empty states fit within the viewport without page-level horizontal overflow. After pass 1, the live DM Table also fits as a single-column surface at both audited widths: the document reports no horizontal overflow at 390px or 320px, and the encounter controls remain inside the available content column. The shared mobile shell now uses a 62px header at both widths, with 40px action targets and a compact 320px navigation row.
+The home, Forge start, and Hero empty states fit within the viewport without page-level horizontal overflow. After pass 1, the live DM Table also fits as a single-column surface at 320px, 360px, 390px, and 430px: the document reports no horizontal overflow at every audited width, and the encounter controls remain inside the available content column. The shared mobile shell now uses a 62px header at both widths, with 40px action targets and a compact 320px navigation row.
 
 ## P0/P1 remediation pass 1
 
@@ -56,7 +56,11 @@ Post-remediation evidence:
 
 - At 390px, the document was exactly 390px wide, the Table content column was 366px, and the grid resolved to one `366px` column. No descendant extended beyond the document viewport.
 - At 320px, the document was exactly 320px wide, the Table content column was 281px, and the grid resolved to one `281px` column. No page-level overflow remained.
+- At 360px, the document was exactly 360px wide, the Table content column was 336px, and the grid resolved to one `336px` column. No page-level overflow remained.
+- At 430px, the document was exactly 430px wide, the Table content column was 406px, and the grid resolved to one `406px` column. No page-level overflow remained.
 - The only remaining overflow was the intentional `.dm-workspace-modes` inner rail: its 350px scroll width is contained inside the 281px column so all four mode buttons remain reachable without widening the page.
+
+The 360px pass also confirmed that the only descendant extending past the viewport is the `Session review` button inside that same intentional horizontal mode rail; the document itself remains exactly 360px wide.
 
 ### P1 — Shared mobile shell consumes too much vertical space
 
@@ -111,7 +115,7 @@ Recommended fix: make each major surface own one responsive section, remove dupl
 | Forge start | 390px | Fits; same shared-shell cost; small Import/New controls | Exercise Standard, Quickbuilder, Premade flows at 320/390px |
 | Character builder | Static CSS plus existing 380px screenshots | Responsive rules exist for rail, document, and preview; full live flow still needs a clean isolated pass | Complete every step, modal, choice grid, and sticky preview |
 | Hero sheet | Empty state at 390px | Fits in empty state | Verify populated sheet, tabs, editable controls, drag/reorder, and console |
-| DM Table | 390/320px in clean DM session | No page-level horizontal overflow; one-column grid fits at both widths; mode rail is intentionally scrollable inside the column | Extend to 360/430px and verify populated party, inspector, and all modes |
+| DM Table | 320/360/390/430px in clean DM session | No page-level horizontal overflow; one-column grid fits at all four widths; mode rail is intentionally scrollable inside the column | Verify populated party, inspector, and all modes |
 | Roll drawer | Trigger visible at 390/320px | Handle is small; open/resized state still needs a focused pass | Verify open, history, initiative, resize, keyboard, and narrow-height behavior |
 | Modals | Static CSS only | Several breakpoint rules exist | Verify feedback, import, snapshots, level-up, portrait picker, and DM prep |
 
@@ -123,11 +127,13 @@ Recommended fix: make each major surface own one responsive section, remove dupl
 - `npm run lint:ci`: failed on three existing `@next/next/no-img-element` warnings in `DMTablePanel.tsx`, `dmTable/PartyRail.tsx`, and `portraits/CharacterPortrait.tsx`.
 - Post-change live shell check: 390px and 320px both reported page `scrollWidth === clientWidth`; the compact home header measured 62px high, with 40px square action buttons.
 - Post-change live DM Table check: 390px and 320px both reported page `scrollWidth === clientWidth`; the grid resolved to 366px and 281px single columns respectively. The temporary audit campaign and account were removed after verification.
+- Extended live route check: DM Table measured clean at 360px (336px content/grid column) and 430px (406px content/grid column); Forge start and Hero empty states also reported page `scrollWidth === clientWidth` at both widths. The only contained overflow was the intentional 360px mode rail.
+- The temporary audit campaign and account were removed after verification; existing campaign data was not modified.
 - No repeatable Playwright/Cypress responsive harness was found. The repository contains manual mobile screenshots under `docs/round-6-screenshots/`.
 
 ## Recommended implementation batches
 
-1. Extend the DM Table width-contract verification to 360px and 430px, including populated party, inspector, and all four modes.
+1. Extend the DM Table verification with a populated party, inspector, and all four modes.
 2. Verify the compact shared mobile shell across all four primary routes and populated states.
 3. Run the complete character-builder flow at 320/390px, including class/species modals and the persistent preview.
 4. Run the populated Hero sheet and Roll Drawer interaction audit.
