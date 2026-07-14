@@ -23,3 +23,14 @@ Entry template:
 
 No surfaces migrated. Branch `feature/arcane-observatory-redesign`; baseline
 and audit in CHANGES-AO-0.md.
+
+## Phase 1 (2026-07-14) — token foundation
+
+- Old component/route: none (additive).
+- New component / token dependency: `src/app/arcane-observatory.css`
+  (`[data-theme="arcane-observatory"]` scope), `/theme-observatory` showcase.
+- Behavior preserved: all — no product surface reads the new tokens yet.
+- Known visual differences: none anywhere in the product.
+- Test coverage: build/test/lint gate (CHANGES-AO-1).
+- Remaining legacy styles: all of globals.css, untouched by design.
+- Rollback commit: the AO-1 commit is self-contained.

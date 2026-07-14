@@ -1,0 +1,261 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ARCANE OBSERVATORY — semantic theme layer
+   Plan: docs/arcane-observatory-implementation-plan.md
+   Adaptations: docs/ai-project-proposal-34-arcane-observatory.md
+   Changelog: docs/CHANGES-AO-1.md (tokens), CHANGES-AO-2.md (primitives)
+
+   This file is imported AFTER globals.css (see src/app/layout.tsx) so it
+   wins ties by cascade order — it is the append-only "fourth era, but the
+   last one". Rules for everything added here:
+   - Components request a semantic ROLE (--surface-panel), never a material.
+   - No `backdrop-filter`, no translucent panel backgrounds, no neon glow,
+     no starfields, no decorative animation. Panels are opaque; borders do
+     the separation; shadows are broad and restrained.
+   - Nothing in this file activates outside [data-theme="arcane-observatory"]
+     until the Phase 3 shell migration flips the attribute on.
+   - Values below started from the plan's palette, leaned matte per the
+     prototype's override layer; final values are settled at Gate 2.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] {
+  color-scheme: dark;
+
+  /* ── Surfaces ── */
+  --surface-app: #070d16;             /* deep matte midnight — the void the shell sits in */
+  --surface-shell: #0d1724;           /* application frame: nav, toolbars */
+  --surface-panel: #142235;           /* primary work surface */
+  --surface-panel-raised: #1a2b40;    /* hover targets, raised cards */
+  --surface-panel-recessed: #0f1b2a;  /* wells, insets, quiet regions */
+  --surface-document: #e5dccb;        /* parchment — DOCUMENTS ONLY */
+  --surface-document-muted: #d3c7b3;  /* aged parchment, secondary sheets */
+  --surface-input: #101c2b;
+  --surface-overlay: #0a111c;         /* opaque modal/drawer surface — never translucent */
+
+  /* ── Text ── */
+  --text-primary: #edf1f4;
+  --text-secondary: #b8c2cc;
+  --text-muted: #8391a0;
+  --text-disabled: #5f6a75;
+  --text-document: #222a34;           /* ink on parchment */
+  --text-document-muted: #5a5f57;
+  --text-on-accent: #081018;
+
+  /* ── Borders and rules ── */
+  --border-subtle: rgba(176, 193, 207, 0.12);
+  --border-default: rgba(176, 193, 207, 0.22);
+  --border-strong: rgba(176, 193, 207, 0.34);
+  --border-brass: #9e8452;            /* structure + earned emphasis, not every edge */
+  --border-brass-bright: #c0a86f;     /* brass catch-light, e.g. active section marker */
+  --rule-engraved-dark: rgba(3, 8, 14, 0.65);   /* engraved rule = dark line… */
+  --rule-engraved-light: rgba(176, 193, 207, 0.10); /* …with a light return under it */
+
+  /* ── State ── */
+  --state-active: #a84f49;            /* seal red — acting now, urgent */
+  --state-active-soft: rgba(168, 79, 73, 0.16);
+  --state-selected: #5c94c8;          /* arcane blue — selection and focus */
+  --state-selected-soft: rgba(92, 148, 200, 0.16);
+  --state-success: #6e9d82;           /* restrained verdigris */
+  --state-success-soft: rgba(110, 157, 130, 0.14);
+  --state-warning: #bd9654;
+  --state-warning-soft: rgba(189, 150, 84, 0.14);
+  --state-danger: #bb5b5b;
+  --state-danger-soft: rgba(187, 91, 91, 0.14);
+  --state-disabled: #3d4854;
+
+  /* ── Depth (broad, restrained; borders do most separation) ── */
+  --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-document: 0 8px 18px rgba(0, 0, 0, 0.24);
+  --inset-recessed: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+
+  /* ── Geometry (restrained; circles reserved for tokens/portraits/seals) ── */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+
+  /* ── Spacing scale ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  /* ── Typography roles (existing project fonts mapped to roles; never
+        redefine the next/font variables themselves — cycle landmine) ── */
+  --font-role-display: var(--font-fraunces), Georgia, serif;
+  --font-role-section: var(--font-fraunces), Georgia, serif;
+  --font-role-label: var(--font-archivo), system-ui, sans-serif;
+  --font-role-body: var(--font-newsreader), Georgia, serif;
+  --font-role-numeric: var(--font-space-mono), ui-monospace, monospace;
+  --label-tracking: 0.08em;           /* caps label letter-spacing */
+}
+
+/* ── Phase 1 token showcase (/theme-observatory) — review surface only.
+      ao-sc-* classes are never used by the product. ─────────────────── */
+
+.ao-sc-root {
+  min-height: 100vh;
+  padding: var(--space-8) clamp(20px, 6vw, 72px) var(--space-9);
+  background:
+    linear-gradient(rgba(120, 150, 177, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.02) 1px, transparent 1px),
+    var(--surface-app);
+  background-size: 48px 48px, 48px 48px, auto;
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+}
+.ao-sc-eyebrow {
+  margin: 0 0 var(--space-2);
+  font: 600 0.7rem/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+.ao-sc-masthead { max-width: 860px; }
+.ao-sc-masthead h1 {
+  margin: 0 0 var(--space-3);
+  font: 600 2.4rem/1.1 var(--font-role-display);
+}
+.ao-sc-lede { margin: 0; color: var(--text-secondary); }
+.ao-sc-section { margin-top: var(--space-9); }
+.ao-sc-section > h2 {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  font: 600 1.15rem/1.2 var(--font-role-section);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+.ao-sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--space-3);
+}
+.ao-sc-swatch {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.ao-sc-swatch-chip {
+  height: 52px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+.ao-sc-swatch-meta { display: grid; gap: 2px; }
+.ao-sc-swatch-meta code { font: 400 0.72rem/1.3 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-swatch-meta span { font-size: 0.78rem; color: var(--text-muted); }
+.ao-sc-swatch-meta strong { font: 600 0.85rem/1.2 var(--font-role-label); }
+.ao-sc-panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+.ao-sc-panel p { margin: 0; }
+.ao-sc-document {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface-document);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+}
+.ao-sc-document p { margin: 0; }
+.ao-sc-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.ao-sc-state-chip {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.ao-sc-borderbox {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-4);
+  background: var(--surface-panel-recessed);
+  border: 2px solid;
+  border-radius: var(--radius-md);
+}
+.ao-sc-borderbox code { font: 400 0.72rem/1.3 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-borderbox span { font-size: 0.78rem; color: var(--text-muted); }
+.ao-sc-rule-demo { margin-top: var(--space-5); color: var(--text-secondary); }
+.ao-sc-rule-demo p { margin: 0 0 var(--space-3); }
+.ao-sc-engraved {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+.ao-sc-depth-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+.ao-sc-depth {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 90px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font: 600 0.75rem/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ao-sc-depth-recessed { background: var(--surface-panel-recessed); }
+.ao-sc-radius {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 72px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+}
+.ao-sc-radius code { font: 400 0.75rem/1 var(--font-role-numeric); color: var(--text-secondary); }
+.ao-sc-spacing { margin-top: var(--space-5); display: grid; gap: var(--space-2); max-width: 420px; }
+.ao-sc-space-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ao-sc-space-row code {
+  width: 90px;
+  flex: none;
+  font: 400 0.72rem/1.3 var(--font-role-numeric);
+  color: var(--text-secondary);
+}
+.ao-sc-space-row span {
+  height: 14px;
+  background: var(--state-selected);
+  border-radius: 1px;
+}
+.ao-sc-typestack { max-width: 860px; }
+.ao-sc-footer {
+  margin-top: var(--space-9);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.ao-sc-footer p { margin: 0; }
