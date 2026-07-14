@@ -1633,3 +1633,474 @@
     align-items: flex-start;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-7 — the Forge: character creation migration (CHANGES-AO-7, plan 4B)
+   The prototype's creator spread: step rail | choice document | persistent
+   preview. Layout changes are guarded with :has(.ao-forge-preview) so the
+   quickbuilder and start panel (.ledger-page surfaces) are untouched;
+   shared controls (options, chips, buttons) harmonize app-wide. All
+   behavior, steps and validation live in CreatorPanel logic — untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* The dossier stops being one paper sheet and becomes three floating
+   panels on the observatory field. */
+[data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+  grid-template-columns: 218px minmax(0, 1fr) 296px;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  min-height: 0;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview)::before {
+  display: none; /* the paper grain pass — panels carry their own material */
+}
+
+/* Step rail: a quiet instrument panel with the commission's progress. */
+[data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail.ledger-toc {
+  position: sticky;
+  top: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  padding: 16px 8px 12px;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-label {
+  color: var(--border-brass);
+  font-family: var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+}
+[data-theme="arcane-observatory"] .ao-forge-progress {
+  display: grid;
+  gap: 6px;
+  margin: 2px 6px 12px;
+  padding: 0 8px 12px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-forge-progress strong {
+  font: 600 0.86rem/1.2 var(--font-role-section);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-forge-meter {
+  display: block;
+  height: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  background: var(--surface-panel-recessed);
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-forge-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step {
+  margin: 0 6px 3px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step:hover {
+  background: rgba(176, 193, 207, 0.05);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step.complete {
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ledger-toc .dj-rail-step.active {
+  border-color: var(--border-strong);
+  background: var(--surface-panel-raised);
+  box-shadow: inset 3px 0 var(--state-selected);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-toc-decided {
+  color: var(--state-success);
+}
+
+/* Choice document: the working panel. */
+[data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-document {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: 22px clamp(18px, 3vw, 30px) 18px;
+}
+[data-theme="arcane-observatory"] .ledger-spread .dj-document-header h2 {
+  font-family: var(--font-role-display);
+  font-size: 1.7rem;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .dj-document-header {
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ledger-chapter-title {
+  font-family: var(--font-role-display);
+  color: var(--text-primary);
+}
+
+/* Persistent preview: the adventurer takes shape while you choose. */
+[data-theme="arcane-observatory"] .ao-forge-preview {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: start;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-forge-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 252px;
+  background-color: var(--surface-panel-recessed);
+  background-image:
+    linear-gradient(rgba(179, 146, 74, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(179, 146, 74, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-bottom: 1px solid var(--border-default);
+}
+/* The likeness itself is the container: a circular portrait on the same
+   rim recipe as the library, sized to command the panel. */
+[data-theme="arcane-observatory"] .ao-forge-portrait {
+  position: relative;
+  z-index: 1;
+  border: 2px solid var(--border-strong);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 10px 24px rgba(0, 0, 0, 0.34);
+  background: #0d1826;
+}
+[data-theme="arcane-observatory"] .ao-forge-title {
+  display: grid;
+  gap: 4px;
+  padding: 15px 17px 13px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-forge-title strong {
+  font: 600 1.4rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-forge-title p {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .ao-forge-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px 16px;
+}
+[data-theme="arcane-observatory"] .ao-forge-fact {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-forge-fact small {
+  font: 600 0.58rem/1.2 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-forge-fact strong {
+  font: 600 0.86rem/1.25 var(--font-role-section);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  padding: 0 16px 16px;
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities > span {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 7px 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities small {
+  font: 600 0.55rem/1 var(--font-role-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities b {
+  font: 700 0.95rem/1 var(--font-role-numeric);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-forge-abilities i {
+  font: 400 0.62rem/1 var(--font-role-numeric);
+  font-style: normal;
+  color: var(--state-selected);
+}
+
+/* ── Shared creator controls, harmonized app-wide ── */
+
+/* Option rows: structured matte rows; selection = arcane rule, never color
+   alone (the "Chosen" state label is markup and stays). */
+[data-theme="arcane-observatory"] .ledger-option {
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  background: transparent;
+}
+[data-theme="arcane-observatory"] .ledger-option:hover:not(.active) {
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ledger-option.active {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ledger-option:focus-visible,
+[data-theme="arcane-observatory"] .ledger-option .dj-card-select:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+
+/* Pick chips (skills, tools, languages). */
+[data-theme="arcane-observatory"] .dj-skill-chip {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .dj-skill-chip:hover:not([disabled]) {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dj-skill-chip.picked {
+  background: var(--state-selected-soft);
+  border-color: #3d5a77;
+  color: #a9c7e4;
+}
+[data-theme="arcane-observatory"] .dj-skill-chip[disabled] {
+  opacity: 0.45;
+}
+[data-theme="arcane-observatory"] .dj-skill-chip:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+
+/* Ability method row, points pill, attribute cards. */
+[data-theme="arcane-observatory"] .ledger-spread .method-row button {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .method-row button:hover:not(.active) {
+  border-color: var(--border-strong);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-spread .method-row button.active {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+}
+[data-theme="arcane-observatory"] .ledger-spread .points-pill {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  font-family: var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .ledger-spread .attribute-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+
+/* The seal (final review): the one document surface in the flow. */
+[data-theme="arcane-observatory"] .ledger-certificate {
+  padding: 20px 22px 22px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+}
+
+/* Workflow buttons: align the ledger recipe with .ao-btn. */
+[data-theme="arcane-observatory"] .ledger-button {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font-family: var(--font-role-label);
+  letter-spacing: 0.05em;
+}
+[data-theme="arcane-observatory"] .ledger-button:hover:not(:disabled) {
+  background: #21334a;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ledger-button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ledger-button.ledger-button-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ledger-button.ledger-button-primary:hover:not(:disabled) {
+  background: #6ba3d4;
+  border-color: #93bee2;
+  color: var(--text-on-accent);
+}
+
+/* Footer: engraved rule above the chapter actions. */
+[data-theme="arcane-observatory"] .creator-footer.dj-footer {
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+
+/* ── The Likeness (chapter II): full-page portrait library ── */
+[data-theme="arcane-observatory"] .ao-portrait-step {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+[data-theme="arcane-observatory"] .ao-portrait-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+[data-theme="arcane-observatory"] .ao-portrait-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+[data-theme="arcane-observatory"] .ao-portrait-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 11px;
+}
+/* The portrait IS the control: a circular likeness with the selection ring
+   on the circle itself — no card chrome around it. */
+[data-theme="arcane-observatory"] .ao-portrait-choice {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 6px 2px 8px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-portrait-art {
+  position: relative;
+  display: block;
+  width: min(100%, 148px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background-color: #0d1826;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 2px rgba(3, 8, 14, 0.55), 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:hover .ao-portrait-art {
+  border-color: var(--border-brass);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 0 0 4px rgba(179, 146, 74, 0.14),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible {
+  outline: none;
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible .ao-portrait-art {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 3px;
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-art {
+  border-color: var(--state-selected);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
+    0 0 0 4px var(--state-selected-soft),
+    0 0 0 5px rgba(92, 148, 200, 0.45),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+[data-theme="arcane-observatory"] .ao-portrait-mark {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--surface-app);
+  border-radius: 50%;
+  background: var(--state-selected);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.8);
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Forge responsive ── */
+@media (max-width: 1280px) {
+  [data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+    grid-template-columns: 204px minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-forge-preview { display: none; }
+}
+@media (max-width: 860px) {
+  [data-theme="arcane-observatory"] .dj-dossier.ledger-spread:has(.ao-forge-preview) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail.ledger-toc {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 10px;
+  }
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .dj-rail-label,
+  [data-theme="arcane-observatory"] .ledger-spread:has(.ao-forge-preview) .ao-forge-progress {
+    flex: 1 1 100%;
+  }
+  [data-theme="arcane-observatory"] .ledger-toc .dj-rail-step {
+    margin: 0;
+    flex: 1 1 auto;
+  }
+}

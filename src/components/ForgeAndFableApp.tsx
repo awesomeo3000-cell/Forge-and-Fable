@@ -773,7 +773,7 @@ export default function ForgeAndFableApp() {
 
   function handleQuickbuildComplete(draft: DraftCharacter) {
     setDraft(draft);
-    setCreatorStep(5); // Finalize step
+    setCreatorStep(6); // Finalize step (The Seal — after the Likeness chapter was added)
     setCreatorOpen(true);
     setBuildMode("standard");
   }
