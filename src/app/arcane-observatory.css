@@ -693,6 +693,197 @@
   --ledger-seal: #c47b72;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Dashboard phase (CHANGES-AO-5) — production plan Phase 2 remainder.
+   Campaign list becomes a small dashboard: the current campaign is the
+   dominant feature with THE primary action; other campaigns stay
+   supporting cards; the empty state is intentional.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .ao-dash-feature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
+  background:
+    linear-gradient(90deg, rgba(179, 146, 74, 0.05), transparent 55%),
+    var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-top: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-dash-eyebrow {
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-main { display: grid; gap: 4px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-dash-feature-main h3 {
+  margin: 0;
+  font: 600 1.6rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+[data-theme="arcane-observatory"] .ao-dash-role-chip {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-panel-recessed);
+  font: 700 0.64rem/1.4 var(--font-role-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-dash-role-chip[data-role="dm"] {
+  border-color: rgba(168, 79, 73, 0.55);
+  color: #dfa39d;
+  background: var(--state-active-soft);
+}
+[data-theme="arcane-observatory"] .ao-dash-feature-actions {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: end;
+  flex: none;
+}
+[data-theme="arcane-observatory"] .ao-dash-resume {
+  min-height: 42px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+}
+[data-theme="arcane-observatory"] .ao-dash-empty {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-8) var(--space-5);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-dash-empty strong {
+  font: 600 1.05rem/1.3 var(--font-role-section);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-dash-empty p {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* dj-btn is the shared workflow button (campaigns, creator footers). Its
+   legacy skin is paper-era; align it with the .ao-btn recipe app-wide. */
+[data-theme="arcane-observatory"] .dj-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  box-shadow: none;
+  text-decoration: none;
+}
+[data-theme="arcane-observatory"] .dj-btn:hover:not(:disabled) {
+  background: #21334a;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dj-btn:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .dj-btn-primary,
+[data-theme="arcane-observatory"] .dj-btn.dj-btn-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .dj-btn.dj-btn-primary:hover:not(:disabled) {
+  background: #6ba3d4;
+  border-color: #93bee2;
+  color: var(--text-on-accent);
+}
+
+/* Supporting campaign cards: structured panel rows, not shrink-wrapped text. */
+[data-theme="arcane-observatory"] .campaign-list { display: grid; gap: var(--space-4); }
+[data-theme="arcane-observatory"] .campaign-group { display: grid; gap: var(--space-2); }
+[data-theme="arcane-observatory"] .campaign-group-heading {
+  margin: var(--space-2) 0 2px;
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .campaign-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .campaign-card:hover {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .campaign-card:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .campaign-card-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .campaign-card-main strong {
+  font: 600 1rem/1.25 var(--font-role-section);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .campaign-card-main small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .campaign-code-badge {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  background: var(--surface-panel-recessed);
+  color: var(--text-muted);
+  font: 400 0.72rem/1.5 var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .campaign-actions-bar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
 /* ── Phase 1 token showcase (/theme-observatory) — review surface only.
       ao-sc-* classes are never used by the product. ─────────────────── */
 

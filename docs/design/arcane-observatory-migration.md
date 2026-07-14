@@ -81,3 +81,17 @@ and audit in CHANGES-AO-0.md.
 - Remaining legacy styles: layout/structure rules (Phase 4A–4F proper),
   splash/auth photo, dice drawer, DM table (own scope, 4D).
 - Rollback commit: revert AO-4.
+
+## Dashboard phase (2026-07-14) — CHANGES-AO-5
+
+- Old component/route: CampaignPanel list view (grouped cards only).
+- New component / token dependency: `ao-dash-*` + restyled `.campaign-card`
+  / `dj-btn` recipe in arcane-observatory.css; TSX restructure of the list
+  view only.
+- Behavior preserved: selection/create/join/active-view flows unchanged.
+- Known visual differences: featured current campaign; New/Join demoted to
+  secondary; structured supporting cards; intentional empty state.
+- Test coverage: build/test/lint; screenshots (desktop+mobile, populated
+  + empty).
+- Remaining legacy styles: campaign active-view (detail) interior, forms.
+- Rollback commit: revert AO-5.
