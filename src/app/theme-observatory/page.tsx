@@ -181,10 +181,198 @@ export default function ThemeObservatoryPage() {
         </div>
       </section>
 
+      <section className="ao-sc-section" aria-labelledby="sc-buttons">
+        <h2 id="sc-buttons">Primitives — buttons</h2>
+        <div className="ao-sc-panel">
+          <div className="ao-sc-cluster">
+            <button className="ao-btn ao-btn-primary">Next turn</button>
+            <button className="ao-btn ao-btn-brass">Open the table</button>
+            <button className="ao-btn">Short rest</button>
+            <button className="ao-btn ao-btn-quiet">Cancel</button>
+            <button className="ao-btn ao-btn-danger">End encounter</button>
+            <button className="ao-btn ao-btn-icon" aria-label="Roll dice">⚄</button>
+            <button className="ao-btn" disabled>Disabled</button>
+            <button className="ao-btn ao-btn-primary" disabled>Disabled primary</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-fields">
+        <h2 id="sc-fields">Primitives — fields</h2>
+        <div className="ao-sc-panel ao-sc-fieldgrid">
+          <div className="ao-field">
+            <label htmlFor="sc-name">Character name</label>
+            <input id="sc-name" className="ao-input" placeholder="Isolde Vance" />
+          </div>
+          <div className="ao-field">
+            <label htmlFor="sc-class">Class</label>
+            <select id="sc-class" className="ao-select" defaultValue="wizard">
+              <option value="wizard">Wizard</option>
+              <option value="rogue">Rogue</option>
+            </select>
+          </div>
+          <div className="ao-field">
+            <label htmlFor="sc-bad">Level (error state)</label>
+            <input id="sc-bad" className="ao-input" aria-invalid="true" defaultValue="23" aria-describedby="sc-bad-msg" />
+            <p id="sc-bad-msg" className="ao-field-error">Level must be between 1 and 20.</p>
+          </div>
+          <div className="ao-field">
+            <label htmlFor="sc-off">Disabled</label>
+            <input id="sc-off" className="ao-input" disabled value="Sealed by the DM" readOnly />
+          </div>
+          <div className="ao-field ao-sc-span2">
+            <label htmlFor="sc-notes">Notes</label>
+            <textarea id="sc-notes" className="ao-textarea" rows={2} placeholder="The orrery turned once, then stopped…" />
+          </div>
+          <label className="ao-checkline"><input type="checkbox" defaultChecked /> Concentration held</label>
+          <label className="ao-checkline"><input type="radio" name="sc-adv" defaultChecked /> Advantage</label>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-nav">
+        <h2 id="sc-nav">Primitives — segmented control and tabs</h2>
+        <div className="ao-sc-panel">
+          <div className="ao-sc-cluster">
+            <div className="ao-segmented" role="group" aria-label="Workspace mode">
+              <button aria-pressed="true">Encounter</button>
+              <button aria-pressed="false">Party</button>
+              <button aria-pressed="false">Tools</button>
+            </div>
+          </div>
+          <div className="ao-tabs" role="tablist" aria-label="Sheet sections">
+            <button className="ao-tab" role="tab" aria-selected="true">Attacks</button>
+            <button className="ao-tab" role="tab" aria-selected="false">Spells</button>
+            <button className="ao-tab" role="tab" aria-selected="false">Inventory</button>
+            <button className="ao-tab" role="tab" aria-selected="false">Notes</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-chips">
+        <h2 id="sc-chips">Primitives — chips and banners</h2>
+        <div className="ao-sc-panel">
+          <div className="ao-sc-cluster">
+            <span className="ao-chip">Neutral</span>
+            <span className="ao-chip" data-tone="active">Acting now</span>
+            <span className="ao-chip" data-tone="selected">Selected</span>
+            <span className="ao-chip" data-tone="success">Ready</span>
+            <span className="ao-chip" data-tone="warning">Concentrating</span>
+            <span className="ao-chip" data-tone="danger">Poisoned</span>
+          </div>
+          <div className="ao-sc-stack">
+            <div className="ao-banner">A quiet note — the session resumes at the vault door.</div>
+            <div className="ao-banner" data-tone="success">Long rest complete. Resources restored.</div>
+            <div className="ao-banner" data-tone="warning">Two players have not answered the roll request.</div>
+            <div className="ao-banner" data-tone="danger">Merric is dying — two failed death saves.</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-stats">
+        <h2 id="sc-stats">Primitives — stats, meters, tokens</h2>
+        <div className="ao-sc-panel">
+          <div className="ao-sc-cluster">
+            <div className="ao-stat"><span>Armor class</span><strong>15</strong></div>
+            <div className="ao-stat"><span>Initiative</span><strong>+3</strong></div>
+            <div className="ao-stat"><span>Speed</span><strong>30 ft</strong></div>
+            <div className="ao-stat"><span>Prof</span><strong>+3</strong></div>
+            <span className="ao-token-disc">IV</span>
+            <span className="ao-token-disc">MU</span>
+            <span className="ao-index-badge">2</span>
+            <span className="ao-index-badge">11</span>
+          </div>
+          <div className="ao-sc-stack" style={{ maxWidth: 380 }}>
+            <div className="ao-meter" role="meter" aria-label="Hit points" aria-valuenow={21} aria-valuemin={0} aria-valuemax={28}>
+              <span style={{ width: "75%" }} />
+            </div>
+            <div className="ao-meter" data-tone="hp-low" role="meter" aria-label="Hit points low" aria-valuenow={4} aria-valuemin={0} aria-valuemax={28}>
+              <span style={{ width: "14%" }} />
+            </div>
+            <div className="ao-meter" data-tone="resource" role="meter" aria-label="Spell slots" aria-valuenow={3} aria-valuemin={0} aria-valuemax={4}>
+              <span style={{ width: "60%" }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-stategrammar">
+        <h2 id="sc-stategrammar">State grammar — acting, selected, combined</h2>
+        <div className="ao-sc-panel ao-sc-stack">
+          <div className="ao-row" data-state="acting">
+            <span className="ao-marker" data-state="acting" aria-hidden="true" />
+            <span className="ao-token-disc">GR</span>
+            <strong>Grask the Render</strong>
+            <span className="ao-acting-label">Acting now</span>
+            <span className="ao-chip" data-tone="danger">Bloodied</span>
+          </div>
+          <div className="ao-row" data-state="selected">
+            <span className="ao-marker" data-state="selected" aria-hidden="true" />
+            <span className="ao-token-disc">IV</span>
+            <strong>Isolde Vance</strong>
+            <span className="ao-chip" data-tone="selected">Selected</span>
+          </div>
+          <div className="ao-row" data-state="acting" aria-label="Selected and acting — acting styling wins">
+            <span className="ao-marker" data-state="acting" aria-hidden="true" />
+            <span className="ao-token-disc">MU</span>
+            <strong>Merric Underbough</strong>
+            <span className="ao-acting-label">Acting now</span>
+            <span className="ao-chip" data-tone="selected">Selected</span>
+          </div>
+          <div className="ao-row">
+            <span className="ao-marker" aria-hidden="true" />
+            <span className="ao-index-badge">3</span>
+            <span>Skeleton</span>
+            <span className="ao-chip">Waiting</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-log">
+        <h2 id="sc-log">Primitives — event log and empty state</h2>
+        <div className="ao-sc-panel">
+          <ul className="ao-log">
+            <li data-tone="critical"><time>21:42</time><span>Grask crits Merric for 19 slashing — Merric falls.</span></li>
+            <li><time>21:41</time><span>Isolde casts Shield; attack misses.</span></li>
+            <li data-tone="announce"><time>21:40</time><span>The DM whispers something to the wizard.</span></li>
+            <li><time>21:39</time><span>Round 3 begins.</span></li>
+          </ul>
+        </div>
+        <div className="ao-empty" style={{ marginTop: "var(--space-4)" }}>
+          <strong>No encounter running</strong>
+          <span>Seat the party and roll initiative to open the table.</span>
+          <button className="ao-btn ao-btn-primary" style={{ marginTop: "var(--space-2)" }}>Roll initiative</button>
+        </div>
+      </section>
+
+      <section className="ao-sc-section" aria-labelledby="sc-doc">
+        <h2 id="sc-doc">Document surface and modal shell</h2>
+        <div className="ao-sc-splitrow">
+          <div className="ao-document" style={{ padding: "var(--space-5)" }}>
+            <p style={{ margin: 0, fontStyle: "italic" }}>
+              &ldquo;The eighth lens is not missing. It was ground into the mortar of the
+              observatory&rsquo;s foundation, and it is still watching.&rdquo;
+            </p>
+            <p style={{ margin: "var(--space-3) 0 0", color: "var(--text-document-muted)", fontSize: "0.85rem" }}>
+              — recovered handout, session four
+            </p>
+          </div>
+          <div className="ao-modal" style={{ padding: "var(--space-5)" }} role="dialog" aria-label="Example dialog">
+            <div className="ao-panel-header"><h3>Withdraw request?</h3></div>
+            <p style={{ margin: "0 0 var(--space-4)", color: "var(--text-secondary)", fontSize: "0.92rem" }}>
+              The open roll request will be closed for all players.
+            </p>
+            <div className="ao-sc-cluster">
+              <button className="ao-btn ao-btn-danger">Withdraw</button>
+              <button className="ao-btn ao-btn-quiet">Keep waiting</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer className="ao-sc-footer">
         <p>
-          CHANGES-AO-1 · tokens only, nothing here is wired into the app shell ·
-          values final at Gate 2
+          CHANGES-AO-1 tokens + CHANGES-AO-2 primitives · nothing here is wired
+          into the app shell · values final at Gate 2
         </p>
       </footer>
     </div>

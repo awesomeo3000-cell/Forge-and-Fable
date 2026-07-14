@@ -94,6 +94,474 @@
   --label-tracking: 0.08em;           /* caps label letter-spacing */
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 2 — shared interface primitives (CHANGES-AO-2)
+   Class-based (`.ao-*`), scoped under the theme attribute. State grammar
+   uses data-state="acting|selected" per the DM-11 precedent. Every control
+   has hover / focus-visible / active / disabled states; focus is always
+   visible; state never relies on color alone (labels, markers, weight).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Surfaces ── */
+[data-theme="arcane-observatory"] .ao-panel,
+[data-theme="arcane-observatory"] .ao-panel-raised,
+[data-theme="arcane-observatory"] .ao-panel-recessed {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-panel { box-shadow: var(--shadow-panel); }
+[data-theme="arcane-observatory"] .ao-panel-raised {
+  background: var(--surface-panel-raised);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-panel-recessed {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+  box-shadow: var(--inset-recessed);
+}
+[data-theme="arcane-observatory"] .ao-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-panel-header > h2,
+[data-theme="arcane-observatory"] .ao-panel-header > h3 {
+  margin: 0;
+  font: 600 1.05rem/1.2 var(--font-role-section);
+}
+[data-theme="arcane-observatory"] .ao-document {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(55, 68, 85, 0.05) 27px 28px),
+    var(--surface-document);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  color: var(--text-document);
+  font-family: var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-rule {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-rule-brass {
+  border: 0;
+  height: 0;
+  border-top: 1px solid var(--border-brass);
+  opacity: 0.75;
+}
+[data-theme="arcane-observatory"] .ao-eyebrow {
+  font: 600 0.68rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+
+/* ── Buttons ── */
+[data-theme="arcane-observatory"] .ao-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 7px 14px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: 600 0.78rem/1.2 var(--font-role-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-btn:hover {
+  background: #21334a;
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-btn:active { transform: translateY(1px); }
+[data-theme="arcane-observatory"] .ao-btn:focus-visible,
+[data-theme="arcane-observatory"] .ao-input:focus-visible,
+[data-theme="arcane-observatory"] .ao-select:focus-visible,
+[data-theme="arcane-observatory"] .ao-textarea:focus-visible,
+[data-theme="arcane-observatory"] .ao-tab:focus-visible,
+[data-theme="arcane-observatory"] .ao-segmented button:focus-visible,
+[data-theme="arcane-observatory"] .ao-checkline input:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-btn:disabled {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+[data-theme="arcane-observatory"] .ao-btn-primary {
+  background: var(--state-selected);
+  border-color: #7fb0da;
+  color: var(--text-on-accent);
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-btn-primary:hover {
+  background: #6ba3d4;
+  border-color: #93bee2;
+}
+[data-theme="arcane-observatory"] .ao-btn-brass {
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-btn-brass:hover { background: #ad9159; }
+[data-theme="arcane-observatory"] .ao-btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-btn-quiet:hover {
+  background: rgba(176, 193, 207, 0.07);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-btn-danger {
+  background: #7e3f3a;
+  border-color: #a35e58;
+  color: #f2e6e0;
+}
+[data-theme="arcane-observatory"] .ao-btn-danger:hover { background: #8f4742; }
+[data-theme="arcane-observatory"] .ao-btn-icon {
+  min-width: 36px;
+  padding: 7px;
+}
+
+/* ── Inputs ── */
+[data-theme="arcane-observatory"] .ao-field {
+  display: grid;
+  gap: var(--space-2);
+}
+[data-theme="arcane-observatory"] .ao-field > label {
+  font: 600 0.7rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-input,
+[data-theme="arcane-observatory"] .ao-select,
+[data-theme="arcane-observatory"] .ao-textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  background: var(--surface-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: 400 0.95rem/1.4 var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-input::placeholder,
+[data-theme="arcane-observatory"] .ao-textarea::placeholder { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-input:hover,
+[data-theme="arcane-observatory"] .ao-select:hover,
+[data-theme="arcane-observatory"] .ao-textarea:hover { border-color: var(--border-strong); }
+[data-theme="arcane-observatory"] .ao-input[aria-invalid="true"],
+[data-theme="arcane-observatory"] .ao-textarea[aria-invalid="true"] {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+}
+[data-theme="arcane-observatory"] .ao-field-error {
+  font-size: 0.8rem;
+  color: #d99090;
+}
+[data-theme="arcane-observatory"] .ao-input:disabled,
+[data-theme="arcane-observatory"] .ao-select:disabled,
+[data-theme="arcane-observatory"] .ao-textarea:disabled {
+  color: var(--text-disabled);
+  background: var(--surface-panel-recessed);
+  cursor: not-allowed;
+}
+[data-theme="arcane-observatory"] .ao-checkline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-checkline input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--state-selected);
+}
+
+/* ── Segmented control and tabs ── */
+[data-theme="arcane-observatory"] .ao-segmented {
+  display: inline-flex;
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+[data-theme="arcane-observatory"] .ao-segmented button {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  color: var(--text-secondary);
+  font: 600 0.72rem/1.2 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-segmented button:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-segmented button[aria-pressed="true"],
+[data-theme="arcane-observatory"] .ao-segmented button[aria-selected="true"] {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-tab {
+  border: 0;
+  background: transparent;
+  padding: 9px 13px 10px;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  font: 600 0.76rem/1.2 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-tab:hover { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .ao-tab[aria-selected="true"] {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-brass);
+}
+
+/* ── Chips, banners, log entries ── */
+[data-theme="arcane-observatory"] .ao-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 600 0.7rem/1.4 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-chip[data-tone="active"] { color: #dfa39d; border-color: #70413d; background: var(--state-active-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="active"]::before { background: var(--state-active); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="selected"] { color: #a9c7e4; border-color: #3d5a77; background: var(--state-selected-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="selected"]::before { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="success"] { color: #a7c9b5; border-color: #405447; background: var(--state-success-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="success"]::before { background: var(--state-success); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="warning"] { color: #d9bc84; border-color: #625738; background: var(--state-warning-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="warning"]::before { background: var(--state-warning); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="danger"] { color: #d99090; border-color: #6e4141; background: var(--state-danger-soft); }
+[data-theme="arcane-observatory"] .ao-chip[data-tone="danger"]::before { background: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-banner {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-banner[data-tone="danger"] { border-left-color: var(--state-danger); background: var(--state-danger-soft); }
+[data-theme="arcane-observatory"] .ao-banner[data-tone="warning"] { border-left-color: var(--state-warning); background: var(--state-warning-soft); }
+[data-theme="arcane-observatory"] .ao-banner[data-tone="success"] { border-left-color: var(--state-success); background: var(--state-success-soft); }
+[data-theme="arcane-observatory"] .ao-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+[data-theme="arcane-observatory"] .ao-log > li {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: var(--space-3);
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-log time {
+  font: 400 0.72rem/1.6 var(--font-role-numeric);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-log > li[data-tone="critical"] {
+  background: var(--state-active-soft);
+  border-left: 2px solid var(--state-active);
+  padding-left: var(--space-2);
+}
+[data-theme="arcane-observatory"] .ao-log > li[data-tone="announce"] {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* ── Stats, meters, tokens ── */
+[data-theme="arcane-observatory"] .ao-stat {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-stat > span {
+  font: 600 0.62rem/1.2 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-stat > strong {
+  font: 700 1.45rem/1 var(--font-role-numeric);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-meter {
+  position: relative;
+  height: 10px;
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-meter[data-tone="hp-low"] > span { background: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-meter[data-tone="resource"] > span { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .ao-token-disc {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 2px var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 700 0.85rem/1 var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .ao-index-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-strong);
+  font: 700 0.68rem/1 var(--font-role-numeric);
+  color: var(--text-secondary);
+}
+
+/* ── State grammar: acting / selected rows ──
+   Acting: 3px seal rule + filled marker + warm wash + text label.
+   Selected: 1px arcane rule + hollow marker, no wash.
+   Combined: acting styling wins; never stack rules or markers. ── */
+[data-theme="arcane-observatory"] .ao-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-row[data-state="selected"] {
+  border-color: var(--border-default);
+  border-left: 3px solid var(--state-selected);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-row[data-state="acting"] {
+  border-color: rgba(168, 79, 73, 0.4);
+  border-left: 3px solid var(--state-active);
+  background: linear-gradient(90deg, var(--state-active-soft), transparent 62%), var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-marker {
+  flex: none;
+  width: 10px;
+  height: 10px;
+}
+[data-theme="arcane-observatory"] .ao-marker[data-state="acting"] {
+  background: var(--state-active);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+[data-theme="arcane-observatory"] .ao-marker[data-state="selected"] {
+  background: transparent;
+  border: 2px solid var(--state-selected);
+  border-radius: 50%;
+}
+[data-theme="arcane-observatory"] .ao-acting-label {
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--state-active);
+}
+
+/* ── Empty state ── */
+[data-theme="arcane-observatory"] .ao-empty {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-7) var(--space-5);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  text-align: center;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-empty > strong {
+  font: 600 1rem/1.3 var(--font-role-section);
+  color: var(--text-secondary);
+}
+
+/* ── Overlay shells (modal / drawer) — opaque, no blur, broad shadow ── */
+[data-theme="arcane-observatory"] .ao-modal {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-top: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-modal-scrim {
+  background: rgba(4, 8, 13, 0.72); /* scrim only — the dialog itself is opaque */
+}
+
 /* ── Phase 1 token showcase (/theme-observatory) — review surface only.
       ao-sc-* classes are never used by the product. ─────────────────── */
 
@@ -259,3 +727,21 @@
   font-size: 0.8rem;
 }
 .ao-sc-footer p { margin: 0; }
+.ao-sc-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ao-sc-stack { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+.ao-sc-fieldgrid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.ao-sc-span2 { grid-column: 1 / -1; }
+.ao-sc-splitrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.ao-sc-splitrow .ao-modal { max-width: 420px; }

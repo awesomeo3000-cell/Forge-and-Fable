@@ -34,3 +34,15 @@ and audit in CHANGES-AO-0.md.
 - Test coverage: build/test/lint gate (CHANGES-AO-1).
 - Remaining legacy styles: all of globals.css, untouched by design.
 - Rollback commit: the AO-1 commit is self-contained.
+
+## Phase 2 (2026-07-14) — shared primitives
+
+- Old component/route: none (additive).
+- New component / token dependency: `.ao-*` primitive classes in
+  `src/app/arcane-observatory.css`; showcase gallery on `/theme-observatory`.
+- Behavior preserved: all — no product surface uses `.ao-*` yet.
+- Known visual differences: none anywhere in the product.
+- Test coverage: build/test/lint gate (CHANGES-AO-2); a11y sweep deferred
+  to first real migration (Gate 2 checklist).
+- Remaining legacy styles: all of globals.css, untouched by design.
+- Rollback commit: the AO-2 commit is self-contained.
