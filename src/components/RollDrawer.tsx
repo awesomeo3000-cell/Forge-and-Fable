@@ -195,6 +195,15 @@ export default memo(function RollDrawer(props: {
   const canManageInitiative = !isSharedInitiative || props.campaignIsDm;
 
   useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
     const loaded = loadLayout();
     layoutRef.current = loaded;
     setLayout(loaded);
@@ -231,9 +240,11 @@ export default memo(function RollDrawer(props: {
 
   const drawerVars = useMemo(() => {
     const theme = props.theme;
-    const paper = theme?.paper ?? "#15110d";
-    const ink = theme?.ink ?? "#e8dcc2";
-    const accent = theme?.accent ?? "#c9a25a";
+    // Unskinned default is the Observatory shell palette; a character skin
+    // still overrides it (same containment rule as toasts/sheet).
+    const paper = theme?.paper ?? "#0d1724";
+    const ink = theme?.ink ?? "#edf1f4";
+    const accent = theme?.accent ?? "#b3924a";
     return {
       "--roll-paper": paper,
       "--roll-ink": ink,
@@ -477,7 +488,18 @@ export default memo(function RollDrawer(props: {
         <div className="roll-drawer-body" style={bodyStyle}>
           <div className="roll-drawer-titlebar" onPointerDown={startMove} title="Drag dice drawer">
             <span className="roll-drawer-heading">Dice & Combat</span>
-            <GripHorizontal size={16} aria-hidden="true" />
+            <span className="roll-drawer-titlebar-tools">
+              <GripHorizontal size={16} aria-hidden="true" />
+              <button
+                type="button"
+                className="roll-drawer-close"
+                aria-label="Close dice drawer"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => setOpen(false)}
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            </span>
           </div>
 
           <div className="roll-drawer-tabs" role="tablist" aria-label="Roll drawer tabs">

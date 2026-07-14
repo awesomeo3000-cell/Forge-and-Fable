@@ -3406,3 +3406,128 @@
     margin-left: 6px;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Mobile pass 2 (owner audit follow-ups): compact 62px header, roster
+   strip on the Hero screen, and the roll drawer as a real bottom sheet
+   with a visible close. The !important entries override RollDrawer's
+   inline drag/resize layout, which is desktop-only behavior.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Close affordance (all widths): quiet icon button in the drawer titlebar. */
+.roll-drawer-titlebar-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.roll-drawer-close {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.roll-drawer-close:hover {
+  background: color-mix(in srgb, var(--roll-ink, #edf1f4) 10%, transparent);
+}
+.roll-drawer-close:focus-visible {
+  outline: 2px solid var(--state-selected, #5c94c8);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  /* 1 — Shared header: one 62px row. The status line is decorative on
+     mobile; the page title truncates instead of wrapping. */
+  [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+    flex-wrap: nowrap;
+    min-height: 62px;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .system-status {
+    display: none;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .builder-brand,
+  [data-theme="arcane-observatory"] .builder-topbar .builder-brand div:last-child {
+    min-width: 0;
+    overflow: hidden;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .ledger-masthead strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .builder-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  /* 2 — Hero screen roster: a horizontal strip instead of a 280px stack. */
+  [data-theme="arcane-observatory"] .vault-rail.ledger-rail {
+    position: static;
+    padding: 10px 12px;
+  }
+  [data-theme="arcane-observatory"] .vault-rail .vault-list {
+    display: flex;
+    grid-template-columns: none;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-theme="arcane-observatory"] .vault-rail .vault-list > * {
+    flex: 0 0 auto;
+  }
+  [data-theme="arcane-observatory"] .vault-rail .vault-avatar.ledger-row {
+    width: auto;
+    max-width: 220px;
+    min-height: 56px;
+  }
+
+  /* 3 — Roll drawer: bottom sheet. Inline drag/resize coordinates are a
+     desktop affordance; pin the sheet to the bottom edge instead. */
+  [data-theme="arcane-observatory"] .roll-drawer {
+    left: 0 !important;
+    top: auto !important;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+  }
+  [data-theme="arcane-observatory"] .roll-drawer-body {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: min(72vh, 560px) !important;
+    min-width: 0;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    box-shadow: 0 -18px 45px rgba(0, 0, 0, 0.45);
+  }
+  [data-theme="arcane-observatory"] .roll-drawer.open .roll-drawer-tab {
+    display: none;
+  }
+  [data-theme="arcane-observatory"] .roll-drawer-resize {
+    display: none;
+  }
+  /* The closed-state trigger becomes a horizontal pill floating above the
+     bottom navigation instead of a 28px edge tab under the header icons. */
+  [data-theme="arcane-observatory"] .roll-drawer-tab {
+    position: fixed;
+    right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    writing-mode: horizontal-tb;
+    min-height: 44px;
+    min-width: 72px;
+    padding: 10px 16px;
+    border-radius: 22px;
+    border-right: 1px solid color-mix(in srgb, var(--roll-accent, #b3924a) 44%, transparent);
+  }
+}
