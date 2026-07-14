@@ -64,3 +64,10 @@ dev-server.err.log
 *.tsbuildinfo
 next-env.d.ts
 
+
+# transient dev/audit logs (kept locally, never committed)
+audit-dev.*.log
+dev-server.log
+dev-server.err.log
+tmp/*.log
+.codex-*.log

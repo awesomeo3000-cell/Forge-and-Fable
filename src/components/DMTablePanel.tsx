@@ -1071,7 +1071,6 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                 <h4>{chronicleHandout.title}</h4>
                 {chronicleHandout.assetType === "image" && chronicleHandout.assetUrl ? (
                   // Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them.
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={chronicleHandout.assetUrl} alt={chronicleHandout.title} />
                 ) : null}
                 {chronicleHandout.body ? <p>{chronicleHandout.body}</p> : chronicleHandout.description ? <p>{chronicleHandout.description}</p> : null}

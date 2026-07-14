@@ -91,7 +91,6 @@ export default memo(function OnboardingPanel({
                 onClick={key === "character" ? onStartBuilding : () => setMode("run-campaign")}
               >
                 <span className="onboard-card-art" aria-hidden="true">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={art}
                     alt=""

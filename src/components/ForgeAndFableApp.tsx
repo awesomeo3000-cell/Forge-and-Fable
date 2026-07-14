@@ -2098,7 +2098,6 @@ export default function ForgeAndFableApp() {
         <figure className="campaign-handout" onMouseDown={(event) => event.stopPropagation()}>
           <button type="button" className="glass-icon modal-close" onClick={() => setCampaignHandout(null)} aria-label="Close handout"><X size={18}/></button>
           {/* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={campaignHandout.url} alt={campaignHandout.title}/>
           <figcaption>{campaignHandout.title}</figcaption>
         </figure>
