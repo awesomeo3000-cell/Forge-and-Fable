@@ -2947,3 +2947,139 @@
   border-color: var(--doc-rule);
   color: var(--ink);
 }
+
+/* Mobile contracts: the Observatory layer is loaded after globals.css, so it
+   must repeat the Table collapse here instead of letting its desktop grid
+   minima win the cascade. Every child surface is allowed to shrink to the
+   available column; wide control groups wrap or keep their own scroll. */
+@media (max-width: 800px) {
+  [data-theme="arcane-observatory"] .dm-table {
+    overflow-x: hidden;
+    padding-inline: 12px;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-head > div,
+  [data-theme="arcane-observatory"] .dm-table-head > div:last-child {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-head > div:first-child,
+  [data-theme="arcane-observatory"] .dm-table-head .dm-workspace-modes,
+  [data-theme="arcane-observatory"] .dm-table-head > div:last-child {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-head .dm-workspace-modes {
+    order: 3;
+    margin-inline: 0;
+    justify-content: flex-start;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  /* The encounter layout adds :has(.dm-initiative-rail) specificity after
+     the shared grid rule; collapse that variant explicitly on narrow screens. */
+  [data-theme="arcane-observatory"] .dm-table-grid:has(.dm-initiative-rail) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-grid > *,
+  [data-theme="arcane-observatory"] .dm-table-region,
+  [data-theme="arcane-observatory"] .dm-initiative-rail,
+  [data-theme="arcane-observatory"] .dm-command-party,
+  [data-theme="arcane-observatory"] .dm-command-inspector,
+  [data-theme="arcane-observatory"] .dm-soundboard,
+  [data-theme="arcane-observatory"] .dm-stage,
+  [data-theme="arcane-observatory"] .dm-stage-visual,
+  [data-theme="arcane-observatory"] .dm-stage-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  [data-theme="arcane-observatory"] .dm-table-region,
+  [data-theme="arcane-observatory"] .dm-command-party,
+  [data-theme="arcane-observatory"] .dm-command-party-list {
+    overflow: visible;
+  }
+
+  [data-theme="arcane-observatory"] .dm-command-row,
+  [data-theme="arcane-observatory"] .dm-stage-actions {
+    min-width: 0;
+  }
+}
+
+/* Mobile shell: keep the Observatory masthead and action language, but do not
+   turn the account/action cluster into a 200px-tall column. */
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    min-height: 62px;
+    padding-block: 10px;
+  }
+
+  [data-theme="arcane-observatory"] .builder-topbar .builder-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  [data-theme="arcane-observatory"] .builder-topbar .builder-actions {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  [data-theme="arcane-observatory"] .builder-topbar .account-chip.ledger-account {
+    display: none;
+  }
+
+  [data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 400px) {
+  [data-theme="arcane-observatory"] .ao-nav-brand {
+    margin-right: 6px;
+  }
+
+  [data-theme="arcane-observatory"] .ao-nav-stack {
+    gap: 2px;
+  }
+
+  [data-theme="arcane-observatory"] .ao-nav-item {
+    min-height: 44px;
+    padding-inline: 2px;
+    font-size: 0.52rem;
+  }
+
+  [data-theme="arcane-observatory"] .ao-nav-user {
+    margin-left: 6px;
+  }
+}
