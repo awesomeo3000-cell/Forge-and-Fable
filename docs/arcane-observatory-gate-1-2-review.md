@@ -1,5 +1,12 @@
 # Arcane Observatory — morning review packet (Gates 1 + 2)
 
+> **OUTCOME (2026-07-14): Gates 1 and 2 PASSED by owner.** Decisions:
+> arcane blue approved; structural accent = **old gold** `#b3924a` /
+> `#d9b967` (option 2 of the 10-palette comparison at
+> `/theme-observatory/palettes`; brass rejected). Token name
+> `--border-brass` retained (still a brass-family metal). Phase 3
+> authorized. Splash/auth backdrop question (Q3) deferred to Gate 3.
+
 Overnight run, 2026-07-13 → 07-14. Author: Fable.
 Branch: `feature/arcane-observatory-redesign` (main untouched after `303e8a8`).
 

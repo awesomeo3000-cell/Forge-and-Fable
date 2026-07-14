@@ -46,3 +46,19 @@ and audit in CHANGES-AO-0.md.
   to first real migration (Gate 2 checklist).
 - Remaining legacy styles: all of globals.css, untouched by design.
 - Rollback commit: the AO-2 commit is self-contained.
+
+## Phase 3 (2026-07-14) — global shell
+
+- Old component/route: shell chrome in ForgeAndFableApp (`.builder-shell`,
+  `.builder-topbar.ledger-topbar`, `.vault-rail.ledger-rail`,
+  `.studio-surface`, `.ff-toast`) — legacy CSS untouched, overridden by the
+  scoped Phase 3 block in arcane-observatory.css.
+- New component / token dependency: semantic surface/text/border/state
+  tokens + old-gold accent; attribute flip on `<body>`.
+- Behavior preserved: all TSX logic; auth/creation/sheet/campaign flows.
+- Known visual differences: photo backdrop removed from logged-in shell
+  (splash/auth keep it pending Gate 3); roster rail no longer skin-tinted
+  (skins = sheet + toast seal only); toasts dark with skin-accent rule.
+- Test coverage: build/test/lint; recaptured screenshot set (passes 1/2/5).
+- Remaining legacy styles: all interiors (Phase 4A–4C), splash/auth.
+- Rollback commit: remove body attribute or revert AO-3.

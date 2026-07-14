@@ -44,8 +44,9 @@
   --border-subtle: rgba(176, 193, 207, 0.12);
   --border-default: rgba(176, 193, 207, 0.22);
   --border-strong: rgba(176, 193, 207, 0.34);
-  --border-brass: #9e8452;            /* structure + earned emphasis, not every edge */
-  --border-brass-bright: #c0a86f;     /* brass catch-light, e.g. active section marker */
+  --border-brass: #b3924a;            /* OLD GOLD — owner-picked at Gate 2 (option 2 of 10).
+                                         Structure + earned emphasis, not every edge. */
+  --border-brass-bright: #d9b967;     /* gold catch-light, e.g. active section marker */
   --rule-engraved-dark: rgba(3, 8, 14, 0.65);   /* engraved rule = dark line… */
   --rule-engraved-light: rgba(176, 193, 207, 0.10); /* …with a light return under it */
 
@@ -560,6 +561,88 @@
 }
 [data-theme="arcane-observatory"] .ao-modal-scrim {
   background: rgba(4, 8, 13, 0.72); /* scrim only — the dialog itself is opaque */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 3 — global shell migration (CHANGES-AO-3)
+   Scoped overrides of the legacy shell chrome. The theme attribute lives on
+   <body> (src/app/layout.tsx); removing it restores the legacy shell whole.
+   The central work surfaces (paper panels, sheet, creator) are deliberately
+   untouched — they migrate in Phase 4. Splash/auth untouched (Gate 3 Q).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* App field: matte void + faint engraved grid instead of the photo backdrop. */
+[data-theme="arcane-observatory"] .builder-shell {
+  background: var(--surface-app);
+}
+[data-theme="arcane-observatory"] .builder-shell::before {
+  background-image:
+    linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0, 0 0;
+  background-repeat: repeat, repeat;
+}
+/* The grain pass (::after) stays — fine matte texture is within the art
+   direction; only the photograph and its washes are gone. */
+
+/* Top bar: mounted into the frame, engraved lower edge, gold masthead. */
+[data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+  background: var(--surface-shell);
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ledger-masthead span {
+  color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ledger-masthead strong {
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action {
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action:hover {
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .account-chip.ledger-account,
+[data-theme="arcane-observatory"] .builder-topbar .system-status {
+  color: var(--text-muted);
+}
+
+/* Roster rail: shell furniture now — the character skin themes the SHEET,
+   not the frame (plan: parchment/skins only inside documents). The rail's
+   entire legacy rule-set reads the --ledger-* locals, so re-pointing them
+   at shell tokens re-materializes every row, rule and edge in dark. */
+[data-theme="arcane-observatory"] .vault-rail.ledger-rail {
+  --ledger-paper: var(--surface-shell);
+  --ledger-tint: var(--surface-panel-recessed);
+  --ledger-ink: var(--text-primary);
+  --ledger-faded: var(--text-secondary);
+  --ledger-ghost: var(--text-muted);
+  --ledger-rule: var(--border-subtle);
+  --ledger-edge: var(--border-default);
+  --ledger-seal: var(--state-selected); /* roster selection = arcane blue */
+}
+
+/* Main plate frame: recessed well in the dark frame; interiors are Phase 4. */
+[data-theme="arcane-observatory"] .studio-surface {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-subtle);
+}
+
+/* Toasts: shell surfaces. The active character's accent survives as the
+   seal rule; the paper body does not. */
+[data-theme="arcane-observatory"] .ff-toast {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-default);
+  border-left: 5px solid var(--toast-accent, var(--border-brass));
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  box-shadow: var(--shadow-overlay);
 }
 
 /* ── Phase 1 token showcase (/theme-observatory) — review surface only.

@@ -2,7 +2,7 @@
   {
     "step": "register player",
     "status": "ok",
-    "detail": "ao_b2_player_1784000479945@forge.test"
+    "detail": "ao_b2_player_1784024997769@forge.test"
   },
   {
     "step": "shot 06-start-modes @ 1440x900",
@@ -100,4 +100,3 @@
     "detail": ""
   }
 ]
-// pass 3 complete
