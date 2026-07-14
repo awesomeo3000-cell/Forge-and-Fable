@@ -1,13 +1,17 @@
 "use client";
 
 import {
+  Hammer,
+  Home,
   LogOut,
   MessageSquare,
   RotateCcw,
   ShieldCheck,
   Swords,
+  User as UserIcon,
   X,
 } from "lucide-react";
+import HomeDashboard from "@/components/HomeDashboard";
 import dynamic from "next/dynamic";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
@@ -510,6 +514,10 @@ export default function ForgeAndFableApp() {
       "--doc-accent": theme.accent,
     } as CSSProperties;
   }, [selected?.theme]);
+
+  // Observatory landing (AO-6): Home is the default screen; the roster/sheet
+  // cascade is the "Hero" screen. Pure view state — no flow logic moved here.
+  const [homeOpen, setHomeOpen] = useState(true);
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   // Onboarding panel replaces forced character creation when the roster is empty
@@ -2096,11 +2104,56 @@ export default function ForgeAndFableApp() {
       </div>
     ) : null}
     <main className="builder-shell">
+      <nav className="ao-nav-rail" aria-label="Primary">
+        <div className="ao-nav-brand" aria-hidden="true">F</div>
+        <div className="ao-nav-stack">
+          <button
+            type="button"
+            className={`ao-nav-item${homeOpen && !campaignOpen ? " active" : ""}`}
+            aria-current={homeOpen && !campaignOpen ? "page" : undefined}
+            onClick={() => { setHomeOpen(true); setCampaignOpen(false); }}
+          >
+            <Home size={19} /><span>Home</span>
+          </button>
+          <button
+            type="button"
+            className={`ao-nav-item${!homeOpen && !campaignOpen && (creationPromptOpen || creatorOpen) ? " active" : ""}`}
+            aria-current={!homeOpen && !campaignOpen && (creationPromptOpen || creatorOpen) ? "page" : undefined}
+            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setCreationPromptOpen(true); setCreatorOpen(false); }}
+          >
+            <Hammer size={19} /><span>Forge</span>
+          </button>
+          <button
+            type="button"
+            className={`ao-nav-item${!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen ? " active" : ""}`}
+            aria-current={!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen ? "page" : undefined}
+            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setCreationPromptOpen(false); setCreatorOpen(false); }}
+          >
+            <UserIcon size={19} /><span>Hero</span>
+          </button>
+          <button
+            type="button"
+            className={`ao-nav-item${campaignOpen ? " active" : ""}`}
+            aria-current={campaignOpen ? "page" : undefined}
+            onClick={() => setCampaignOpen(true)}
+          >
+            <Swords size={19} /><span>Table</span>
+          </button>
+        </div>
+        <div className="ao-nav-spacer" />
+        <div className="ao-nav-user" title={user.name} aria-hidden="true">{user.name.trim().charAt(0).toUpperCase() || "?"}</div>
+      </nav>
       <header className="builder-topbar ledger-topbar">
         <div className="builder-brand ledger-masthead">
           <div>
             <span>Forge & Fable</span>
-            <strong>Character Ledger</strong>
+            <strong>
+              {campaignOpen ? "The Table"
+                : homeOpen ? "Campaign Observatory"
+                : creationPromptOpen || creatorOpen ? "The Forge"
+                : selected ? selected.name
+                : "Character Ledger"}
+            </strong>
           </div>
         </div>
         <div className="builder-actions">
@@ -2129,6 +2182,31 @@ export default function ForgeAndFableApp() {
         </div>
       </header>
 
+      {homeOpen ? (
+      <section className="ao-home-main">
+        <HomeDashboard
+          userName={user.name}
+          characters={characters}
+          ruleset={ruleset}
+          activeCampaignId={activeCampaignId}
+          campaignSync={campaignSync}
+          campaignEvents={campaignEvents}
+          onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignOpen(true); }}
+          onOpenCampaigns={() => setCampaignOpen(true)}
+          onOpenCharacter={(characterId) => {
+            setSelectedId(characterId);
+            setHomeOpen(false);
+            setCreationPromptOpen(false);
+            setCreatorOpen(false);
+          }}
+          onCreateCharacter={() => {
+            setHomeOpen(false);
+            setCreationPromptOpen(true);
+            setCreatorOpen(false);
+          }}
+        />
+      </section>
+      ) : (
       <section className="builder-layout">
         <aside className="vault-rail ledger-rail" style={vaultThemeVars}>
           <div className="rail-heading">
@@ -2287,6 +2365,7 @@ export default function ForgeAndFableApp() {
           ) : null}
         </section>
       </section>
+      )}
 
       {/* Snapshots Panel */}
       {snapshotsOpen && selected ? (

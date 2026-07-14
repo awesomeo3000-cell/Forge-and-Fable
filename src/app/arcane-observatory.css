@@ -1137,3 +1137,499 @@
   color: var(--text-secondary);
   font-size: 0.88rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-6 — observatory shell + home dashboard (CHANGES-AO-6)
+   The approved prototype's frame: a fixed 76px icon rail on the left, a
+   62px topbar across the top of the work field, and the field itself as
+   the only scroll container. Geometry comes from the mockup's matte
+   revision; every color is an existing AO token — the prototype palette
+   itself was NOT adopted (owner direction 2026-07-14).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Shell frame: rail | (topbar / field). Modals and toasts are fixed and
+   out of flow, so they are unaffected by the grid. */
+[data-theme="arcane-observatory"] .builder-shell {
+  height: 100dvh;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+/* Field backdrop: engraved grid plus a brass instrument ring sunk into the
+   lower-right corner. Supersedes the Phase 3 ::before backdrop. */
+[data-theme="arcane-observatory"] .builder-shell::before {
+  background-image:
+    radial-gradient(circle at calc(100% - 40px) calc(100% + 80px),
+      transparent 258px,
+      rgba(179, 146, 74, 0.15) 259px 260px,
+      transparent 261px 306px,
+      rgba(179, 146, 74, 0.09) 307px 308px,
+      transparent 309px 366px,
+      rgba(179, 146, 74, 0.05) 367px 368px,
+      transparent 369px),
+    linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-position: 0 0, 0 0, 0 0;
+  background-repeat: no-repeat, repeat, repeat;
+}
+
+/* ── Global nav rail ── */
+[data-theme="arcane-observatory"] .ao-nav-rail {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 9px 12px;
+  background: var(--surface-shell);
+  border-right: 1px solid var(--border-default);
+  box-shadow: inset -1px 0 rgba(3, 8, 14, 0.6);
+}
+[data-theme="arcane-observatory"] .ao-nav-brand {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-brass);
+  background: var(--surface-panel-recessed);
+  box-shadow: inset 0 0 0 2px var(--surface-app);
+  color: var(--border-brass-bright);
+  font: 700 1.25rem/1 var(--font-role-display);
+  margin-bottom: 18px;
+}
+[data-theme="arcane-observatory"] .ao-nav-stack {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+[data-theme="arcane-observatory"] .ao-nav-item {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  padding: 7px 4px;
+  font: 700 0.56rem/1 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(176, 193, 207, 0.06);
+}
+[data-theme="arcane-observatory"] .ao-nav-item:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-nav-item.active {
+  color: var(--text-primary);
+  background: var(--surface-panel-raised);
+  border-color: var(--border-strong);
+  box-shadow: inset 3px 0 var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-nav-spacer { flex: 1; }
+[data-theme="arcane-observatory"] .ao-nav-user {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--border-brass);
+  border: 1px solid var(--border-brass-bright);
+  color: #14110a;
+  font: 700 0.78rem/1 var(--font-role-label);
+}
+
+/* ── Topbar: mounted across the field, eyebrow + screen title ── */
+[data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+  grid-column: 2;
+  max-width: none;
+  margin: 0;
+  min-height: 62px;
+  padding: 0 20px;
+}
+[data-theme="arcane-observatory"] .ledger-masthead div { gap: 3px; }
+[data-theme="arcane-observatory"] .ledger-masthead span {
+  font: 600 0.6rem/1 var(--font-role-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ledger-masthead strong {
+  font: 600 1.2rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+
+/* ── Work field: the only scroll container ── */
+[data-theme="arcane-observatory"] .builder-layout {
+  grid-column: 2;
+  max-width: none;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  padding: 20px 22px 28px;
+}
+[data-theme="arcane-observatory"] .vault-rail { top: 0; }
+[data-theme="arcane-observatory"] .ao-home-main {
+  grid-column: 2;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px 26px 32px;
+}
+
+/* ── Home dashboard (AO-6 landing screen) ── */
+[data-theme="arcane-observatory"] .ao-home {
+  display: grid;
+  gap: 18px;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+[data-theme="arcane-observatory"] .ao-home-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+[data-theme="arcane-observatory"] .ao-home-heading h1 {
+  margin: 4px 0 0;
+  font: 600 2rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-home-heading p {
+  margin: 8px 0 0;
+  max-width: 64ch;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+[data-theme="arcane-observatory"] .ao-home-heading-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+/* Hero: matte slate with the engraved brass meridian instrument. */
+[data-theme="arcane-observatory"] .ao-home-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 250px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(90deg, var(--surface-panel) 0 46%, rgba(20, 34, 53, 0.82) 68%, rgba(20, 34, 53, 0.2) 100%),
+    repeating-linear-gradient(0deg, rgba(179, 146, 74, 0.02) 0 1px, transparent 1px 8px),
+    var(--surface-panel-recessed);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel), inset 0 0 0 1px rgba(3, 8, 14, 0.5);
+}
+[data-theme="arcane-observatory"] .ao-home-orrery {
+  position: absolute;
+  right: 84px;
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  margin-top: -125px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 185, 103, 0.5);
+  box-shadow:
+    0 0 0 26px rgba(179, 146, 74, 0.09),
+    0 0 0 27px rgba(179, 146, 74, 0.3),
+    0 0 0 64px rgba(179, 146, 74, 0.03),
+    0 0 0 65px rgba(179, 146, 74, 0.18);
+  pointer-events: none;
+}
+[data-theme="arcane-observatory"] .ao-home-orrery::before {
+  content: "";
+  position: absolute;
+  inset: 38px;
+  border: 1px dashed rgba(179, 146, 74, 0.3);
+  border-radius: 50%;
+}
+[data-theme="arcane-observatory"] .ao-home-orrery::after {
+  content: "";
+  position: absolute;
+  left: -18%;
+  top: 50%;
+  width: 136%;
+  height: 1px;
+  background: rgba(179, 146, 74, 0.32);
+  transform: rotate(-18deg);
+}
+[data-theme="arcane-observatory"] .ao-home-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-copy h2 {
+  margin: 0;
+  font: 600 2.1rem/1.05 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 6px;
+}
+[data-theme="arcane-observatory"] .ao-home-hero-quiet {
+  margin: 0;
+  font: 600 1.4rem/1.2 var(--font-role-display);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-home-hero-blurb {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-secondary);
+}
+
+/* Lower band: three matte panels. */
+[data-theme="arcane-observatory"] .ao-home-lower {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .ao-home-panel {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: 16px 17px;
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header h2 {
+  margin: 0;
+  font: 600 1.02rem/1.2 var(--font-role-section);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-home-panel-header small { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-home-panel-action {
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+}
+
+[data-theme="arcane-observatory"] .ao-home-party {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+[data-theme="arcane-observatory"] .ao-home-party button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-home-party button:hover {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-home-party button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-home-avatar {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 0 0 2px var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 700 0.9rem/1 var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy strong {
+  font: 600 0.95rem/1.2 var(--font-role-section);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme="arcane-observatory"] .ao-home-party-copy small {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+[data-theme="arcane-observatory"] .ao-home-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick button {
+  min-height: 84px;
+  text-align: left;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel-recessed);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-home-quick button:hover {
+  background: var(--state-selected-soft);
+  border-color: rgba(92, 148, 200, 0.4);
+}
+[data-theme="arcane-observatory"] .ao-home-quick button:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick-icon {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+[data-theme="arcane-observatory"] .ao-home-quick strong {
+  display: block;
+  font: 700 0.7rem/1.25 var(--font-role-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-home-quick span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  margin-top: 4px;
+}
+
+[data-theme="arcane-observatory"] .ao-home-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+[data-theme="arcane-observatory"] .ao-home-activity li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .ao-home-activity li:last-child { border-bottom: 0; }
+[data-theme="arcane-observatory"] .ao-home-activity-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--state-selected);
+}
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="announce"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="handout"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="loot-offer"] {
+  background: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="rest-short"],
+[data-theme="arcane-observatory"] .ao-home-activity-dot[data-type="rest-long"] {
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-home-quiet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Narrow viewports: the rail becomes a strip across the top ── */
+@media (max-width: 1180px) {
+  [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr 1fr; }
+  [data-theme="arcane-observatory"] .ao-home-lower > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 980px) {
+  [data-theme="arcane-observatory"] .ao-home-orrery { display: none; }
+}
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .builder-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-nav-rail {
+    grid-row: 1;
+    grid-column: 1;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-default);
+    box-shadow: none;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-brand {
+    width: 36px;
+    height: 36px;
+    margin: 0 10px 0 0;
+    font-size: 1rem;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-stack {
+    display: flex;
+    flex: 1;
+    width: auto;
+    gap: 4px;
+  }
+  [data-theme="arcane-observatory"] .ao-nav-item { flex: 1; min-height: 44px; }
+  [data-theme="arcane-observatory"] .ao-nav-item.active { box-shadow: inset 0 -3px var(--state-selected); }
+  [data-theme="arcane-observatory"] .ao-nav-spacer { display: none; }
+  [data-theme="arcane-observatory"] .ao-nav-user { margin-left: 10px; }
+  [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar,
+  [data-theme="arcane-observatory"] .builder-layout,
+  [data-theme="arcane-observatory"] .ao-home-main {
+    grid-column: 1;
+  }
+  [data-theme="arcane-observatory"] .ao-home-main { padding: 16px 14px 24px; }
+  [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-home-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
