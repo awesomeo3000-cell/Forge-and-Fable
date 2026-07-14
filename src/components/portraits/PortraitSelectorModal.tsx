@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { X, CircleUser, Link } from "lucide-react";
+import { X, CircleUser, Link, Upload } from "lucide-react";
 import { PORTRAITS, portraitFrameCss } from "@/data/portraits";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
@@ -24,6 +24,10 @@ function isValidImageLink(value: string): boolean {
   return /^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value);
 }
 
+/* Client-side mirror of the /api/portraits limits — the server re-validates. */
+const UPLOAD_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
+
 /**
  * Modal portrait selector: scene backdrop, image-only tiles, a labeled
  * selection column, and an in-modal image-link fallback. Never exposes
@@ -42,6 +46,9 @@ export default memo(function PortraitSelectorModal({
   const [tab, setTab] = useState<TabId>(suggestedAncestry ? "suggested" : "all");
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const panelRef = useFocusTrap(open);
 
@@ -53,8 +60,38 @@ export default memo(function PortraitSelectorModal({
       setTab(suggestedAncestry ? "suggested" : "all");
       setLinkOpen(false);
       setLinkDraft("");
+      setUploading(false);
+      setUploadError(null);
     }
   }, [open, value, suggestedAncestry]);
+
+  const handleUpload = useCallback(async (file: File) => {
+    setUploadError(null);
+    if (!UPLOAD_MIME_TYPES.has(file.type)) {
+      setUploadError("Only PNG, JPEG, WebP, or GIF images are accepted.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setUploadError(`Image too large (max ${MAX_UPLOAD_SIZE / 1024 / 1024} MB).`);
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/portraits", { method: "POST", body: formData });
+      const data = (await response.json()) as { portraitUrl?: string; error?: string };
+      if (!response.ok || !data.portraitUrl) {
+        setUploadError(data.error ?? "The upload failed. Try again.");
+        return;
+      }
+      setPendingId(data.portraitUrl);
+    } catch {
+      setUploadError("The upload failed. Check your connection and try again.");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
 
   // Escape → Cancel.
   useEffect(() => {
@@ -210,6 +247,27 @@ export default memo(function PortraitSelectorModal({
                 : "Choose a portrait from the library, or use your own image link."}
             </p>
             <hr className="portrait-modal-divider" />
+            <button
+              type="button"
+              className="portrait-modal-link-toggle"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={13} aria-hidden="true" /> {uploading ? "Uploading…" : "Upload your own image"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              hidden
+              aria-label="Upload portrait image"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleUpload(file);
+                e.target.value = "";
+              }}
+            />
+            {uploadError ? <p className="portrait-modal-link-warn">{uploadError}</p> : null}
             <button
               type="button"
               className="portrait-modal-link-toggle"

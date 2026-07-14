@@ -174,6 +174,37 @@ export function portraitFrameCss(portraitId: string): PortraitFrameCss | undefin
   };
 }
 
+/**
+ * Background-image CSS that fills a rectangular panel edge-to-edge with paint
+ * from INSIDE the portrait's painted circle — the largest inscribed rectangle
+ * of the given aspect ratio (panel width / height). Unlike portraitFrameCss
+ * (a square crop of the whole circle), this never exposes the sheet around
+ * the circle, at the cost of a deeper zoom into the face.
+ *
+ * Width-based background-size keeps the image undistorted; the position
+ * mapping is exact when the element matches `aspect` and degrades gently
+ * as the real aspect drifts (responsive layouts).
+ */
+export function portraitPanelCss(portraitId: string, aspect = 0.8): PortraitFrameCss | undefined {
+  const portrait = PORTRAIT_BY_ID.get(portraitId);
+  if (!portrait) return undefined;
+  const base = { backgroundImage: `url("${portrait.src}")` };
+  if (!portrait.frame) {
+    return { ...base, backgroundSize: "cover", backgroundPosition: "center" };
+  }
+  const { cx, cy, r } = portrait.frame;
+  const cropH = (2 * r) / Math.sqrt(aspect * aspect + 1);
+  const cropW = aspect * cropH;
+  const sizeX = (PORTRAIT_IMG_SIZE / cropW) * 100;
+  const px = ((cx - cropW / 2) / (PORTRAIT_IMG_SIZE - cropW)) * 100;
+  const py = ((cy - cropH / 2) / (PORTRAIT_IMG_SIZE - cropH)) * 100;
+  return {
+    ...base,
+    backgroundSize: `${sizeX.toFixed(2)}%`,
+    backgroundPosition: `${px.toFixed(2)}% ${py.toFixed(2)}%`,
+  };
+}
+
 /** Check whether a portrait ID exists in the approved catalog. */
 export function isCatalogPortrait(portraitId: string): boolean {
   return PORTRAIT_BY_ID.has(portraitId);

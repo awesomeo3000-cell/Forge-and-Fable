@@ -87,8 +87,90 @@ spell_freq = defaultdict(list)
 for dt in damage_templates:
     spell_freq[dt['spell_name']].append(dt)
 
-# Generate organic events
-target_total = 32_200_000
+# Compute per-player damage scale factors for realistic distribution
+player_dmg_raw = defaultdict(int)
+for l in fight:
+    parts = l.split(',')
+    if len(parts) < 2: continue
+    src = parts[1].strip()
+    if not src.startswith('Player-'): continue
+    evt = get_evt(l)
+    if 'DAMAGE' not in evt: continue
+    amt, _ = get_dmg(l)
+    if amt: player_dmg_raw[src] += amt
+
+# Spec-specific WCL targets (from page 3 median, ~45-55th percentile)
+# Converted to raw DPS using Murraydeek calibration (85.5k raw → 149.8k WCL = 1.75x)
+# Accurate spec targets from WCL API (45-65th percentile midpoints, Murraydeek-calibrated)
+# Ratio: 1.76x for no-pet specs, 2.5x for pet-heavy specs (Survival, Demo)
+SPEC_TARGETS = {
+    # 99-parsers: cut further (pet scaling imperfect)
+    "Player-57-0DAA87FA": 20600,   # Tyeasy - Survival Hunter
+    "Player-57-0E258249": 29300,   # Evelindorys - Survival Hunter
+    "Player-57-0E29757B": 22200,   # Tetsuya - Demo Warlock (72% pet dmg)
+    
+    # Durimar: close to target (94th, keep)
+    "Player-57-0E23350A": 49000,   # Durimar - Unholy DK
+    
+    # Middle range: kept as-is (working well)
+    "Player-57-0DF0D2DF": 70841,   # Tarelkax - Ret Paladin (56th %)
+    "Player-57-0E25A64C": 70841,   # Podguznik - Ret Paladin (53rd %)
+    "Player-57-0E272303": 65680,   # Ifritfire - Arms Warrior (51st %)
+    "Player-57-0E2579A5": 75659,   # Aironlynx - Shadow Priest (67th %)
+    "Player-57-0E286FB7": 45767,   # Furryfemboi - Feral Druid (51st %)
+    
+    # 0-DPS players: boost significantly
+    "Player-3725-0C484F7D": 55000, # Itadaki - Arms Warrior
+    "Player-11-0E9F8D65": 65000,   # Glaivetosser - Devourer DH
+    "Player-11-0EA1B511": 45000,   # Angelserena
+    "Player-3725-0C0E9AC3": 55000, # Ultralimited - Balance Druid
+    
+    # Tanks/healers
+    "Player-57-0E286FAF": 8000,    # Ventilyator - Brewmaster (TANK)
+    "Player-60-0FF22D79": 8000,    # Strugglerino - Blood DK (TANK)
+    "Player-76-0BF71F3A": 8000,    # Gripthese - Blood DK (TANK)
+    "Player-57-0E28B63D": 3000,    # Bradrayice - Holy Priest (HEALER)
+    "Player-57-0E25823B": 3000,    # Pycckuu - Disc Priest (HEALER)
+    "Player-3676-0EE82CE1": 50000, # Niralletalan - Aug Evoker
+}
+
+# Compute per-player scale factors
+player_scales = {}
+for guid, dmg in player_dmg_raw.items():
+    if guid == MURRAY_GUID: continue
+    if guid in SPEC_TARGETS:
+        target_raw_dps = SPEC_TARGETS[guid]
+        current_dps = dmg / dur_s
+        scale = target_raw_dps / current_dps if current_dps > 0 else 1.0
+        player_scales[guid] = min(scale, 1.0)
+    else:
+        # Unknown player - cap at 50k
+        current_dps = dmg / dur_s
+        player_scales[guid] = min(50000 / current_dps, 1.0) if current_dps > 0 else 1.0
+
+# Also scale pets/guardians - find pet GUIDs and map to owner scales
+pet_owner_map = {}
+for l in fight:
+    if 'SPELL_SUMMON' not in l: continue
+    parts = l.split(',')
+    if len(parts) < 7: continue
+    src = parts[1].strip()
+    if not src.startswith('Player-'): continue
+    dest_guid = parts[5].strip()
+    if dest_guid.startswith('Creature-') or dest_guid.startswith('Pet-'):
+        pet_owner_map[dest_guid] = src
+
+# Extend player_scales to include pet GUIDs
+for pet_guid, owner_guid in pet_owner_map.items():
+    if owner_guid in player_scales:
+        player_scales[pet_guid] = player_scales[owner_guid]
+
+print(f"Pet GUIDs added to scaling: {sum(1 for g in player_scales if not g.startswith('Player-'))}")
+for guid, scale in sorted(player_scales.items(), key=lambda x: x[1]):
+    dps = player_dmg_raw[guid] / dur_s
+    if scale < 0.95:
+        print(f"  {guid[-20:]:20s}: {dps:>8,.0f} -> {dps*scale:>8,.0f} DPS (scale={scale:.2f})")
+target_total = 29_500_000  # 90th percentile Frost DK (~135.5k WCL)
 active_dur = dur_s - 20
 total_events = int(active_dur * 2.2)
 avg_per_event = target_total / total_events if total_events > 0 else 0
@@ -129,26 +211,19 @@ for l in fight:
     
     nl = shift_ts(l, new_base, orig_dt)
     if evt == 'ENCOUNTER_START': nl = nl.replace(',15,25,', ',16,20,')
+    
+    # Scale non-Murraydeek player damage
+    if src in player_scales and 'DAMAGE' in evt:
+        amt, idx = get_dmg(l)
+        if amt:
+            nl = set_dmg(nl, max(50, int(amt * player_scales[src])), idx)
+    
     out.append(nl)
 
-# Sort ALL events (fight events + generated) by timestamp before encounter end
-def extract_ts(line):
-    m = re.match(r'(\d+)/(\d+)/(\d+)\s+(\d+):(\d+):(\d+)\.(\d+)', line)
-    if m: return (int(m.group(4)), int(m.group(5)), int(m.group(6)), int(m.group(7)))
-    return (0,0,0,0)
-
-# Separate header from events
-header = out[:3]  # COMBAT_LOG_VERSION, ZONE_CHANGE, MAP_CHANGE
-events_to_sort = out[3:] + gen_events
-events_to_sort.sort(key=extract_ts)
-
-out = header + events_to_sort
-
-# Generate Murraydeek damage
+# === GENERATE MURRAYDEEK DAMAGE ===
 t = 10.0
 gen_count = 0
 gen_dmg = 0
-gen_events = []  # Collect and sort later
 while t < dur_s - 10 and gen_count < total_events:
     burst = random.randint(1, 3)
     for _ in range(burst):
@@ -175,13 +250,25 @@ while t < dur_s - 10 and gen_count < total_events:
         gen_events.append(nl)
     t += random.uniform(0.2, 1.0)
 
-# Sort generated events by timestamp
+print(f"Generated: {gen_count} events, {gen_dmg:,.0f} damage")
+
+# === SORT ALL EVENTS CHRONOLOGICALLY ===
 def extract_ts(line):
     m = re.match(r'(\d+)/(\d+)/(\d+)\s+(\d+):(\d+):(\d+)\.(\d+)', line)
     if m: return (int(m.group(4)), int(m.group(5)), int(m.group(6)), int(m.group(7)))
     return (0,0,0,0)
 
-gen_events.sort(key=extract_ts)
+header = out[:3]
+events_to_sort = out[3:] + gen_events
+print(f"Merging: {len(out[3:])} fight + {len(gen_events)} generated = {len(events_to_sort)} total")
+events_to_sort.sort(key=extract_ts)
+out = header + events_to_sort
+
+# Sort generated events by timestamp
+def extract_ts(line):
+    m = re.match(r'(\d+)/(\d+)/(\d+)\s+(\d+):(\d+):(\d+)\.(\d+)', line)
+    if m: return (int(m.group(4)), int(m.group(5)), int(m.group(6)), int(m.group(7)))
+    return (0,0,0,0)
 
 # Add encounter end LAST
 

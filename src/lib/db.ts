@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 13;
+const SCHEMA_REVISION = 14;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -328,6 +328,17 @@ function createSchema(db: DatabaseSync) {
       revoked INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS user_portraits (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mime TEXT NOT NULL,
+      bytes BLOB NOT NULL,
+      size INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_user_portraits_user ON user_portraits(user_id);
+
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -398,6 +409,7 @@ function migrateSchema(db: DatabaseSync) {
       db.exec("ALTER TABLE campaign_members ADD COLUMN is_ghost INTEGER NOT NULL DEFAULT 0");
     }
     recordMigration(db, 13, "DM rehearsal party ghost members");
+    recordMigration(db, 14, "user-uploaded portrait images");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {
