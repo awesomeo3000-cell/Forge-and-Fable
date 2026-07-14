@@ -896,6 +896,35 @@ export function leaveCampaign(campaignId: string, userId: string): void {
   getDb().prepare("DELETE FROM campaign_members WHERE campaign_id = ? AND user_id = ?").run(campaignId, userId);
 }
 
+/** DM removes a player from the campaign; their initiative rows go with them. */
+export function removeCampaignMember(campaignId: string, dmUserId: string, targetUserId: string): void {
+  const campaign = getCampaignOrThrow(campaignId);
+  if (campaign.dm_user_id !== dmUserId) throw new Error("Only the DM can remove a player.");
+  if (targetUserId === dmUserId) throw new Error("The DM cannot remove themselves. Delete the campaign instead.");
+  const db = getDb();
+  const member = db.prepare("SELECT 1 FROM campaign_members WHERE campaign_id = ? AND user_id = ?").get(campaignId, targetUserId);
+  if (!member) throw new Error("That player is not in this campaign.");
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("DELETE FROM campaign_members WHERE campaign_id = ? AND user_id = ?").run(campaignId, targetUserId);
+    db.prepare("DELETE FROM campaign_presence WHERE campaign_id = ? AND user_id = ?").run(campaignId, targetUserId);
+    const initiative = db.prepare("SELECT data FROM campaign_initiative WHERE campaign_id = ?").get(campaignId) as { data: string } | undefined;
+    if (initiative) {
+      try {
+        const parsed = JSON.parse(initiative.data) as { combatants?: Array<{ memberUserId?: string }>; turnIndex?: number };
+        const combatants = (parsed.combatants ?? []).filter((combatant) => combatant.memberUserId !== targetUserId);
+        db.prepare("UPDATE campaign_initiative SET data = ?, version = version + 1, updated_at = ? WHERE campaign_id = ?")
+          .run(JSON.stringify({ ...parsed, combatants, turnIndex: Math.min(parsed.turnIndex ?? 0, Math.max(0, combatants.length - 1)) }), nowIso(), campaignId);
+      } catch { /* malformed initiative is left untouched; the membership still clears */ }
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function switchCampaignCharacter(campaignId: string, userId: string, characterId: string): void {
   requireMembership(campaignId, userId);
 

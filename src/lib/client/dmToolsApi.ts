@@ -1,4 +1,4 @@
-import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionSummary } from "@/types/dmTools";
+import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionPin, SessionSummary } from "@/types/dmTools";
 import type { CampaignCharacterNote, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 async function api<T>(url:string,init?:RequestInit):Promise<T>{const response=await fetch(url,{...init,headers:{"Content-Type":"application/json",...(init?.headers??{})}});const data=await response.json().catch(()=>({})) as T&{error?:string};if(!response.ok)throw new Error(data.error??"Request failed.");return data;}
@@ -31,6 +31,7 @@ export const dmToolsApi={
   saveSummary:(campaignId:string,id:string,summary:SessionSummary)=>api<{summary:SessionSummary}>(`/api/campaigns/${campaignId}/sessions/${id}/summary`,{method:"PUT",body:body(summary)}),
   publishSummary:(campaignId:string,id:string)=>api<{entry:CampaignJournalEntry}>(`/api/campaigns/${campaignId}/sessions/${id}/summary`,{method:"POST",body:"{}"}),
   pin:(campaignId:string,sessionId:string,input:unknown)=>api<{pin:unknown}>(`/api/campaigns/${campaignId}/sessions/${sessionId}/pins`,{method:"POST",body:body(input)}),
+  listPins:(campaignId:string,sessionId:string)=>api<{pins:SessionPin[]}>(`/api/campaigns/${campaignId}/sessions/${sessionId}/pins`),
   workspace:(campaignId:string)=>api<{activeSession:CampaignSession|null;activeEncounter:EncounterRun|null}>(`/api/campaigns/${campaignId}/workspace`),
   updateRun:(campaignId:string,runId:string,input:unknown)=>api<{ok:true;reminders?:EncounterRun["reminders"]}>(`/api/campaigns/${campaignId}/encounter-runs/${runId}`,{method:"PATCH",body:body(input)}),
   listCharacterNotes:(campaignId:string,characterId?:string)=>api<{notes:CampaignCharacterNote[]}>(`/api/campaigns/${campaignId}/notes${characterId?`?characterId=${encodeURIComponent(characterId)}`:""}`),

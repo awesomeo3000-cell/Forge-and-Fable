@@ -134,6 +134,16 @@ export async function addCampaignTrack(campaignId: string, track: Pick<CampaignT
   return payload.track;
 }
 
+export async function removeCampaignMember(campaignId: string, userId: string) {
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/members/${encodeURIComponent(userId)}`, {
+    method: "DELETE", headers: jsonHeaders, credentials: "include",
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(payload.error ?? "Could not remove the player.");
+  }
+}
+
 export async function deleteCampaignTrack(campaignId: string, trackId: string) {
   const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/tracks?trackId=${encodeURIComponent(trackId)}`, {
     method: "DELETE", headers: jsonHeaders, credentials: "include",

@@ -1088,6 +1088,16 @@ export function pinSessionItem(
   return pin;
 }
 
+export function listSessionPins(campaignId: string, userId: string, sessionId: string) {
+  requireDm(campaignId, userId);
+  if (!getDb().prepare("SELECT 1 FROM campaign_sessions WHERE id=? AND campaign_id=?").get(sessionId, campaignId))
+    throw new Error("Session not found.");
+  const rows = getDb()
+    .prepare("SELECT id,session_id,event_id,note,created_at FROM session_pins WHERE session_id=? ORDER BY created_at")
+    .all(sessionId) as Array<{ id: string; session_id: string; event_id: string | null; note: string | null; created_at: string }>;
+  return rows.map((row) => ({ id: row.id, sessionId: row.session_id, eventId: row.event_id, note: row.note, createdAt: row.created_at }));
+}
+
 export function activeWorkspace(campaignId: string, userId: string) {
   requireMember(campaignId, userId);
   const dm = isDm(campaignId, userId);
