@@ -2922,6 +2922,46 @@
   border-color: #d08b83;
   color: #f2e6e0;
 }
+[data-theme="arcane-observatory"] .dm-inspector-remove {
+  display: grid;
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+
+/* ── Stage/ledger balance: the acting creature owns the vertical space;
+      the ledger is a dense strip beneath it with readable entries. ── */
+[data-theme="arcane-observatory"] .dm-stage {
+  grid-template-columns: 244px minmax(0, 1fr);
+}
+[data-theme="arcane-observatory"] .dm-stage-visual { min-height: 302px; }
+[data-theme="arcane-observatory"] .dm-stage-content {
+  gap: 10px;
+  padding: 20px 22px 18px;
+}
+[data-theme="arcane-observatory"] .dm-stage-name { font-size: 2.35rem; }
+[data-theme="arcane-observatory"] .dm-stage-sub { font-size: 0.92rem; }
+[data-theme="arcane-observatory"] .dm-stage-vital {
+  min-width: 118px;
+  gap: 4px;
+  padding: 10px 13px;
+}
+[data-theme="arcane-observatory"] .dm-stage-vital strong { font-size: 1.4rem; }
+[data-theme="arcane-observatory"] .dm-stage-vital input {
+  width: 64px;
+  font-size: 1.3rem;
+}
+[data-theme="arcane-observatory"] .dm-log-scroll { max-height: 22vh; }
+[data-theme="arcane-observatory"] .dm-log-entry,
+[data-theme="arcane-observatory"] .dm-log-group summary {
+  padding: 8px 2px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+[data-theme="arcane-observatory"] .dm-log-entry time,
+[data-theme="arcane-observatory"] .dm-log-group summary time {
+  font-size: 11px;
+}
 @media (max-width: 1100px) {
   [data-theme="arcane-observatory"] .dm-stage { grid-template-columns: minmax(0, 1fr); }
   [data-theme="arcane-observatory"] .dm-stage-visual {

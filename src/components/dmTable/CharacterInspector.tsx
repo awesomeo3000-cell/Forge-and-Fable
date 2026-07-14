@@ -19,9 +19,11 @@ type Props = {
   onAddNote?: (member: CampaignMemberSummary) => void;
   onCreateNote?: (member: CampaignMemberSummary, input: { category: CampaignCharacterNoteCategory; title: string; body: string }) => Promise<boolean>;
   onCharacterAction?: (member: CampaignMemberSummary, action: "concentration-check" | "concentration-end" | "death-success" | "death-failure" | "death-natural-20" | "death-natural-1" | "death-stabilize" | "death-reset" | "death-dead" | "heal", amount?: number) => void;
+  /** DM-only: remove this player from the campaign entirely. */
+  onRemoveMember?: (member: CampaignMemberSummary) => void;
 };
 
-export default memo(function CharacterInspector({ member, acting = false, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote, onCharacterAction }: Props) {
+export default memo(function CharacterInspector({ member, acting = false, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote, onCharacterAction, onRemoveMember }: Props) {
   const [tab, setTab] = useState<InspectorTab>("overview");
   const [noteDraft, setNoteDraft] = useState({ category: "general" as CampaignCharacterNoteCategory, title: "", body: "" });
   const [noteBusy, setNoteBusy] = useState(false);
@@ -48,6 +50,11 @@ export default memo(function CharacterInspector({ member, acting = false, notes 
         {tab === "history" ? <div>{history.length ? history.map((entry) => <article key={entry.id}><time>{new Date(entry.createdAt).toLocaleString()}</time><p>{entry.summary}</p></article>) : <div className="dm-command-empty"><BookOpen size={20}/><strong>No recent history</strong><span>Meaningful character events will collect here.</span></div>}</div> : null}
       </div>
       <footer><button type="button" className="dm-btn dm-btn-primary" onClick={() => onRequestRoll(member)}><Dices size={14}/> Request roll</button>{onAddNote ? <button type="button" className="dm-btn" onClick={() => onAddNote(member)}><StickyNote size={14}/> Add note</button> : null}<button type="button" className="dm-btn" onClick={() => onOpenSheet(member)}><Eye size={14}/> Full sheet</button></footer>
+      {onRemoveMember && !member.isGhost ? (
+        <div className="dm-inspector-remove">
+          <button type="button" className="dm-btn dm-btn-danger" onClick={() => onRemoveMember(member)}>Remove from campaign</button>
+        </div>
+      ) : null}
     </aside>
   );
 });

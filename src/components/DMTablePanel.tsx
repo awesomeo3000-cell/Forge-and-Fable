@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
-import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, updateCampaignAudio } from "@/lib/client/campaignApi";
+import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, removeCampaignMember, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import DMPrepPanel from "@/components/DMPrepPanel";
 import { D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
@@ -48,6 +48,8 @@ type Props = {
   onOpenSheet: (character: Character) => void;
   onPostEvent: (type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) => Promise<boolean>;
   onInitiativeUpdate: (data: InitiativeState, version: number) => Promise<void> | void;
+  /** Open the campaign list (create, join, delete, switch) without closing the session. */
+  onOpenCampaigns?: () => void;
 };
 
 function parsePayload(event: CampaignEvent) {
@@ -76,7 +78,7 @@ function eventLine(event: CampaignEvent) {
   return "Table event.";
 }
 
-export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate }: Props) {
+export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate, onOpenCampaigns }: Props) {
   const [tracks, setTracks] = useState<CampaignTrack[]>([]);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackUrl, setTrackUrl] = useState("");
@@ -590,6 +592,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         <div>
           <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact}>Compact</button>
           <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
+          {onOpenCampaigns ? <button type="button" className="dm-btn" onClick={onOpenCampaigns}>Campaigns</button> : null}
           <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
           <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
           <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
@@ -663,7 +666,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               <section className="dm-stage" aria-label={`Acting now: ${current.name}`}>
                 <div className="dm-stage-visual">
                   {portraitId ? (
-                    <CharacterPortraitBase portraitId={portraitId} characterName={current.name} size={148} shape="circle" decorative className="dm-stage-portrait" />
+                    <CharacterPortraitBase portraitId={portraitId} characterName={current.name} size={184} shape="circle" decorative className="dm-stage-portrait" />
                   ) : (
                     <span className="dm-stage-glyph" aria-hidden="true">{glyph}</span>
                   )}
@@ -923,6 +926,13 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             if (action === "concentration-end") { void onPostEvent("concentration-end", {}, member.userId); return; }
             const deathAction = action === "heal" ? "heal" : action.replace("death-", "");
             void onPostEvent("death-save-update", { action: deathAction, ...(action === "heal" ? { amount: Math.max(1, Math.floor(amount ?? 1)) } : {}) }, member.userId);
+          }}
+          onRemoveMember={(member) => {
+            const label = member.characterName ?? member.userName;
+            if (!window.confirm(`Remove ${label} from the campaign? Their character stays with the player; only the enrollment, presence, and initiative rows are removed.`)) return;
+            void removeCampaignMember(campaign.campaign.id, member.userId)
+              .then(() => { setSelectedUserId(null); setError(""); })
+              .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not remove the player."));
           }}
         />
       </div>
