@@ -15,8 +15,11 @@ import type { CampaignCharacterNote, CampaignCombatant, CampaignEvent, CampaignS
 import type { CampaignHandout, CampaignNpc, CampaignScene, CampaignSession, EncounterRun, LootParcel } from "@/types/dmTools";
 import PartyRail from "@/components/dmTable/PartyRail";
 import CharacterInspector from "@/components/dmTable/CharacterInspector";
-import { ConditionChip } from "@/components/dmTable/CharacterStateVisuals";
+import { ConditionChip, StateMarker } from "@/components/dmTable/CharacterStateVisuals";
+import CharacterPortraitBase from "@/components/portraits/CharacterPortrait";
 import type { DmWorkspaceMode } from "@/lib/dmTable/party";
+import { duplicateNameBadges, initiativeDensity } from "@/lib/dmTable/initiative";
+import { groupEncounterLog, logEntryVoice } from "@/lib/dmTable/encounterLog";
 
 /** Condition presets that a DM can apply. Matches the player-facing CampaignPanel dropdown. */
 const CONDITION_PRESETS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
@@ -64,6 +67,11 @@ function eventLine(event: CampaignEvent) {
   if (event.type === "handout") return `Handout shared: ${payload.title ?? "Untitled"}.`;
   if (event.type === "audio-cue") return `Cue played: ${payload.title ?? "Untitled"}.`;
   if (event.type === "roll-request") return `Roll requested: ${summarizeRollRequest(payload)}.`;
+  if (event.type === "death-save-update") {
+    const action = String(payload.action ?? "update");
+    return action === "heal" ? "Healing applied at 0 HP." : `Death save: ${action.replaceAll("-", " ")}.`;
+  }
+  if (event.type === "concentration-end") return "Concentration ended.";
   if (event.type === "campaign-audit") return `${String(payload.action ?? "Campaign update").replaceAll("-", " ")}: ${payload.name ?? payload.title ?? ""}`.trim();
   return "Table event.";
 }
@@ -108,8 +116,9 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [savedHandouts, setSavedHandouts] = useState<CampaignHandout[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   // Round Two: the view-preset axis is gone. The only layout switch is the
-  // Compact rail toggle; a legacy "compact" preset migrates on first read.
-  const [compactRail, setCompactRail] = useState<boolean>(() => {
+  // Compact toggle — global compact presentation since Round Four A1 (rail
+  // cards AND initiative rows); a legacy "compact" preset migrates on first read.
+  const [compactTable, setCompactTable] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     const saved = window.localStorage.getItem("forge-and-fable-dm-compact");
     if (saved !== null) return saved === "1";
@@ -249,15 +258,28 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   }, [campaign.campaign.id, selectedMember?.characterId]);
 
   const toggleCompact = () => {
-    const next = !compactRail;
-    setCompactRail(next);
+    const next = !compactTable;
+    setCompactTable(next);
     window.localStorage.setItem("forge-and-fable-dm-compact", next ? "1" : "0");
   };
+  // 9+ combatants render the initiative rows compact on their own; the
+  // Compact button reflects only the user's explicit choice.
+  const rowDensity = initiativeDensity(sortedCombatants.length, compactTable);
+  const dupBadges = useMemo(() => duplicateNameBadges(sortedCombatants.map((item) => item.name)), [sortedCombatants]);
 
+  const ghostUserIds = useMemo(() => new Set(campaign.members.filter((member) => member.isGhost).map((member) => member.userId)), [campaign.members]);
   const records = useMemo(() => [
-    ...campaign.rolls.map((roll) => ({ id: `roll-${roll.id}`, kind: "rolls" as const, at: roll.created_at, text: `${roll.character_name} — ${roll.label} ${roll.total}` })),
-    ...events.map((event) => ({ id: event.id, kind: "table" as const, at: event.created_at, text: eventLine(event) })),
-  ].filter((entry) => recordFilter === "all" || entry.kind === recordFilter).sort((a, b) => b.at.localeCompare(a.at)), [campaign.rolls, events, recordFilter]);
+    ...campaign.rolls.map((roll) => ({ id: `roll-${roll.id}`, kind: "rolls" as const, at: roll.created_at, text: `${roll.character_name} — ${roll.label} ${roll.total}`, ghost: ghostUserIds.has(roll.user_id), roll: { characterName: roll.character_name, label: roll.label, total: roll.total } })),
+    ...events.map((event) => ({ id: event.id, kind: "table" as const, at: event.created_at, text: eventLine(event), eventType: event.type })),
+  ].filter((entry) => recordFilter === "all" || entry.kind === recordFilter).sort((a, b) => b.at.localeCompare(a.at)), [campaign.rolls, events, ghostUserIds, recordFilter]);
+  // A2: the encounter log is a view over the same feed — scoped to the
+  // active run unless the DM lifts the filter; grouped; capped at 40.
+  const [logShowEarlier, setLogShowEarlier] = useState(false);
+  const encounterLog = useMemo(() => {
+    const startedAt = activeEncounter ? Date.parse(activeEncounter.startedAt) : null;
+    const scoped = startedAt !== null && !logShowEarlier ? records.filter((entry) => Date.parse(entry.at) >= startedAt) : records;
+    return groupEncounterLog(scoped);
+  }, [activeEncounter, logShowEarlier, records]);
   const encounterFacts = useMemo(() => {
     const enemies = sortedCombatants.filter((item) => item.kind === "enemy");
     const critical = players.filter((member) => member.maxHp && (member.currentHp ?? 0) / member.maxHp <= .25).length;
@@ -469,7 +491,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           </>}
         </div>
         <div>
-          <button type="button" className={`dm-btn${compactRail ? " is-active" : ""}`} aria-pressed={compactRail} onClick={toggleCompact}>Compact</button>
+          <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact}>Compact</button>
           <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
           <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
           <button type="button" className={`dm-table-code${codeCopied ? " is-copied" : ""}`} onClick={() => { navigator.clipboard.writeText(campaign.campaign.code).then(() => { setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); }).catch(() => setError("Could not copy the code — copy it by hand.")); }}>{codeCopied ? <>Copied <Check size={13} /></> : <>Code {campaign.campaign.code} <Copy size={13} /></>}</button>
@@ -486,7 +508,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           selectedUserId={selectedUserId}
           currentTurnUserId={sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId ?? null}
           presence={campaign.presence}
-          compact={compactRail}
+          compact={compactTable}
           rehearsalBusy={rehearsalBusy}
           onSeatRehearsal={rehearsalActive ? undefined : () => void seatRehearsal()}
           onClearRehearsal={rehearsalActive ? () => void clearRehearsal() : undefined}
@@ -539,8 +561,8 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               </article>;
             })}
           </section> : null; })()}
-          <div className="dm-initiative">
-            {sortedCombatants.map((item) => {
+          <div className={`dm-initiative${rowDensity === "compact" ? " is-compact" : ""}`}>
+            {sortedCombatants.map((item, rowIndex) => {
               const isPlayer = item.kind === "player";
               const playerMember = isPlayer && item.memberUserId
                 ? campaign.members.find((m) => m.userId === item.memberUserId)
@@ -550,33 +572,82 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                 ? { current: playerMember.currentHp ?? 0, max: playerMember.maxHp ?? 0 }
                 : item.currentHp !== undefined ? { current: item.currentHp, max: item.maxHp ?? item.currentHp } : null;
               const displayAc = isPlayer && playerMember ? playerMember.ac : item.ac;
+              const acting = item.id === currentTurnId;
+              const selected = Boolean(isPlayer && item.memberUserId && item.memberUserId === selectedUserId);
+              const kindGlyph = item.kind === "enemy" ? "⚔" : item.kind === "ally" ? "✦" : item.kind === "player" ? "●" : "○";
+              // A combatant added from the NPC drawer keeps the NPC's name — the
+              // portrait lookup rides that, no new linkage.
+              const npcPortrait = !isPlayer ? npcs.find((npc) => npc.portraitUrl && npc.name === item.name)?.portraitUrl : undefined;
+              const badge = dupBadges[rowIndex];
+              const conditions = item.conditions ?? [];
+              const visibleConditions = rowDensity === "compact" ? conditions.slice(0, 2) : conditions;
+              const overflowConditions = conditions.length - visibleConditions.length;
+              const closeMenu = (event: React.MouseEvent) => (event.currentTarget as HTMLElement).closest("details")?.removeAttribute("open");
+              const readyDelayButtons = <>
+                <button type="button" className="dm-icon-btn" aria-label={`Ready ${item.name}`} onClick={(event) => { closeMenu(event); updateCombatant(item.id, { turnStatus: item.turnStatus === "readied" ? undefined : "readied" }); }}>Ready</button>
+                <button type="button" className="dm-icon-btn" aria-label={`Delay ${item.name}`} onClick={(event) => { closeMenu(event); updateCombatant(item.id, { turnStatus: item.turnStatus === "delayed" ? undefined : "delayed" }); }}>Delay</button>
+              </>;
               return (
-              <div key={item.id} className={`dm-combatant${item.hidden ? " is-hidden" : ""}${item.id === currentTurnId ? " is-current" : ""}${item.defeated ? " is-defeated" : ""}`} data-kind={item.kind}>
+              <div key={item.id} className={`dm-combatant${item.hidden ? " is-hidden" : ""}${acting ? " is-acting" : ""}${selected ? " is-selected" : ""}${item.defeated ? " is-defeated" : ""}`} data-kind={item.kind}>
                 <button
                   type="button"
                   className="dm-init-chip"
                   title={item.hidden ? "Hidden from the players — click to reveal" : "Click to hide from the players"}
+                  aria-label={item.hidden ? `${item.name} is hidden from the players — reveal` : `Hide ${item.name} from the players`}
                   onClick={() => updateCombatant(item.id, { hidden: !item.hidden })}
                 >
                   {item.hidden ? "??" : item.initiative}
                 </button>
+                {rowDensity === "standard" ? (
+                  isPlayer && playerMember ? <span className="dm-identity-disc"><CharacterPortraitBase portraitId={playerMember.characterJson?.portraitUrl?.trim() || null} characterName={item.name} size={34} shape="circle" decorative /></span>
+                  : npcPortrait ? <span className="dm-identity-disc"><img src={npcPortrait} alt="" aria-hidden="true" /></span>
+                  : <span className="dm-identity-disc is-glyph" data-kind={item.kind} aria-hidden="true">{kindGlyph}</span>
+                ) : null}
                 <span className="dm-combatant-name">
-                  <strong className="dm-kind-chip" data-kind={item.kind}>{item.kind === "enemy" ? "⚔" : item.kind === "ally" ? "✦" : item.kind === "player" ? "●" : "○"}</strong>
-                  <strong>{item.name}</strong>
-                  {item.hidden ? <em className="dm-hidden-label">HIDDEN</em> : null}
-                  {item.defeated ? <em className="dm-defeated-label">DEFEATED</em> : null}
+                  <span className="dm-combatant-title">
+                    {acting ? <StateMarker state="acting" /> : null}
+                    {selected ? <StateMarker state="selected" /> : null}
+                    {rowDensity === "compact" ? <strong className="dm-kind-chip" data-kind={item.kind}>{kindGlyph}</strong> : null}
+                    <strong>{item.name}</strong>
+                    {badge ? <sup className="dm-dup-badge">{badge}</sup> : null}
+                    {acting ? <em className="dm-acting-label">Acting now</em> : null}
+                    {item.hidden ? <em className="dm-hidden-label">HIDDEN</em> : null}
+                    {item.defeated ? <em className="dm-defeated-label">DEFEATED</em> : null}
+                  </span>
                   {item.privateNote ? <small>{item.privateNote}</small> : null}
-                  {item.concentratingOn ? <ConditionChip label={`Concentrating · ${item.concentratingOn}`} concentration /> : null}
-                  {item.reactionUsed ? <em className="dm-turn-state" data-tone="warning">Reaction used</em> : <em className="dm-turn-state" data-tone="ready">Reaction ready</em>}{item.turnStatus ? <small>{item.turnStatus}</small> : null}
-                  {item.conditions && item.conditions.length ? <span className="dm-condition-chips">{item.conditions.map((c) => <ConditionChip key={c.id} label={`${c.label}${c.stack ? ` ${c.stack}` : ""}`} />)}</span> : null}
+                  <span className="dm-condition-chips">
+                    <button type="button" className="dm-turn-state dm-reaction-chip" data-tone={item.reactionUsed ? "warning" : "ready"} aria-pressed={item.reactionUsed ?? false} onClick={() => updateCombatant(item.id, { reactionUsed: !item.reactionUsed })}>{item.reactionUsed ? "Reaction used" : "Reaction ready"}</button>
+                    {item.turnStatus ? <em className="dm-turn-state" data-tone={item.turnStatus === "readied" ? "ready" : "warning"}>{item.turnStatus}</em> : null}
+                    {item.concentratingOn ? <ConditionChip label={`Concentrating · ${item.concentratingOn}`} concentration /> : null}
+                    {visibleConditions.map((c) => <ConditionChip key={c.id} label={`${c.label}${c.stack ? ` ${c.stack}` : ""}`} />)}
+                    {overflowConditions > 0 ? <em className="dm-chip-overflow" title={conditions.slice(visibleConditions.length).map((c) => c.label).join(", ")}>+{overflowConditions}</em> : null}
+                  </span>
                 </span>
                 {displayHp ? <span className="dm-combatant-hp">HP <input aria-label={`${item.name} HP`} type="number" value={displayHp.current} onChange={(event) => {
                   if (!isPlayer) updateCombatant(item.id, { currentHp: Math.max(0, Number(event.target.value) || 0) });
                 }} disabled={isPlayer} />/{displayHp.max}</span> : null}
                 {displayAc !== undefined ? <small className="dm-combatant-ac">AC {displayAc}</small> : null}
                 {!isPlayer ? <select className="dm-visibility" aria-label={`${item.name} player visibility`} value={item.visibility ?? (item.hidden ? "hidden" : "name-only")} onChange={(event) => updateCombatant(item.id, { visibility: event.target.value as CampaignCombatant["visibility"], hidden: event.target.value === "hidden" })}><option value="hidden">Hidden</option><option value="name-only">Name only</option><option value="name-and-conditions">Name + conditions</option><option value="approximate-health">Approximate health</option><option value="exact-hp">Exact HP</option><option value="full-public">Full public</option></select> : null}
-                <div className="dm-turn-actions"><button type="button" className="dm-icon-btn" aria-label={`Jump to ${item.name}`} onClick={() => void onInitiativeUpdate({ ...campaign.initiative.data, turnIndex: sortedCombatants.findIndex((row) => row.id === item.id) }, campaign.initiative.version)}>Turn</button><button type="button" className={`dm-icon-btn${item.reactionUsed ? " is-active" : ""}`} aria-label={`Toggle ${item.name} reaction`} onClick={() => updateCombatant(item.id, { reactionUsed: !item.reactionUsed })}>R</button><button type="button" className="dm-icon-btn" aria-label={`Delay ${item.name}`} onClick={() => updateCombatant(item.id, { turnStatus: item.turnStatus === "delayed" ? undefined : "delayed" })}>Delay</button><button type="button" className="dm-icon-btn" aria-label={`Ready ${item.name}`} onClick={() => updateCombatant(item.id, { turnStatus: item.turnStatus === "readied" ? undefined : "readied" })}>Ready</button><button type="button" className="dm-icon-btn" aria-label={`Move ${item.name} earlier`} onClick={() => updateCombatant(item.id, { initiative: item.initiative + 1 })}>↑</button><button type="button" className="dm-icon-btn" aria-label={`Move ${item.name} later`} onClick={() => updateCombatant(item.id, { initiative: item.initiative - 1 })}>↓</button>{!isPlayer ? <><button type="button" className="dm-icon-btn" aria-label={`Reroll ${item.name} initiative`} onClick={() => updateCombatant(item.id, { initiative: Math.floor(Math.random() * 20) + 1 })}>↻</button><button type="button" className="dm-icon-btn" aria-label={`Duplicate ${item.name}`} onClick={() => void replaceInitiative([...campaign.initiative.data.combatants, { ...item, id: crypto.randomUUID(), name: `${item.name} copy` }])}>Copy</button></> : null}</div>
-                <button type="button" className="dm-icon-btn" aria-label={`Remove ${item.name}`} onClick={() => void replaceInitiative(campaign.initiative.data.combatants.filter((row) => row.id !== item.id))}><Trash2 size={13} /></button>
+                <div className="dm-turn-actions">
+                  <button type="button" className="dm-icon-btn" aria-label={`Jump to ${item.name}`} onClick={() => void onInitiativeUpdate({ ...campaign.initiative.data, turnIndex: sortedCombatants.findIndex((row) => row.id === item.id) }, campaign.initiative.version)}>Turn</button>
+                  {acting ? readyDelayButtons : null}
+                  <details className="dm-row-overflow">
+                    <summary aria-haspopup="menu" aria-label={`More actions for ${item.name}`}>⋯</summary>
+                    <div role="menu">
+                      <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); updateCombatant(item.id, { initiative: item.initiative + 1 }); }}>Initiative ↑</button>
+                      <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); updateCombatant(item.id, { initiative: item.initiative - 1 }); }}>Initiative ↓</button>
+                      {!isPlayer ? <>
+                        <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); updateCombatant(item.id, { initiative: Math.floor(Math.random() * 20) + 1 }); }}>Reroll initiative</button>
+                        <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); void replaceInitiative([...campaign.initiative.data.combatants, { ...item, id: crypto.randomUUID(), name: `${item.name} copy` }]); }}>Duplicate</button>
+                      </> : null}
+                      {!acting ? <>
+                        <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); updateCombatant(item.id, { turnStatus: item.turnStatus === "readied" ? undefined : "readied" }); }}>{item.turnStatus === "readied" ? "Clear ready" : "Ready"}</button>
+                        <button type="button" role="menuitem" onClick={(event) => { closeMenu(event); updateCombatant(item.id, { turnStatus: item.turnStatus === "delayed" ? undefined : "delayed" }); }}>{item.turnStatus === "delayed" ? "Clear delay" : "Delay"}</button>
+                      </> : null}
+                      <button type="button" role="menuitem" className="is-danger" onClick={(event) => { closeMenu(event); void replaceInitiative(campaign.initiative.data.combatants.filter((row) => row.id !== item.id)); }}><Trash2 size={12} /> Remove</button>
+                    </div>
+                  </details>
+                </div>
               </div>
             )})}
             {sortedCombatants.length === 0 ? <p className="dm-empty">No combatants yet — add one below, or let the party roll in.</p> : null}
@@ -704,11 +775,32 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               <button type="button" className="dm-btn dm-btn-primary" onClick={addCombatant} disabled={!combatant.name.trim() || !combatant.initiative.trim()}><Plus size={14} /> Add</button>
             </div>
           ) : null}
+          {/* A2: the session's ledger, written in real time. Newest first —
+              the top is always current, no auto-scroll management. */}
+          <section className="dm-encounter-log" aria-label="Encounter log">
+            <div className="dm-log-head">
+              <h4>The ledger</h4>
+              <div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div>
+              {activeEncounter ? <button type="button" className="dm-log-link" onClick={() => setLogShowEarlier((value) => !value)}>{logShowEarlier ? "This encounter only" : "Show earlier"}</button> : null}
+            </div>
+            <div className="dm-log-scroll">
+              {encounterLog.length ? encounterLog.slice(0, 40).map((entry) => entry.type === "roll-group" ? (
+                <details key={entry.id} className="dm-log-group">
+                  <summary><time>{new Date(entry.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time><span>{entry.label} — {entry.rolls.length} responded: {entry.rolls.map((item) => item.roll?.total).join(", ")}</span>{entry.rolls.every((item) => item.ghost) ? <em className="dm-rehearsal-mark">rehearsal</em> : null}</summary>
+                  {entry.rolls.map((item) => <p key={item.id} className="dm-log-entry" data-voice="plain"><time>{new Date(item.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time><span>{item.text}</span>{item.ghost ? <em className="dm-rehearsal-mark">rehearsal</em> : null}</p>)}
+                </details>
+              ) : (
+                <p key={entry.record.id} className="dm-log-entry" data-voice={logEntryVoice(entry.record)}><time>{new Date(entry.record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time><span>{entry.record.text}</span>{entry.record.ghost ? <em className="dm-rehearsal-mark">rehearsal</em> : null}</p>
+              )) : <p className="dm-empty">{activeEncounter && !logShowEarlier ? "Nothing recorded in this encounter yet." : "Nothing has been recorded yet."}</p>}
+              {encounterLog.length > 40 ? <button type="button" className="dm-log-link" onClick={() => setWorkspaceMode("review")}>Session review — the full record</button> : null}
+            </div>
+          </section>
           </>
           )}
         </section>
         <CharacterInspector
           member={selectedMember}
+          acting={Boolean(selectedMember && sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId === selectedMember.userId)}
           notes={characterNotes}
           history={records.filter((record) => !selectedMember?.characterName || record.text.toLowerCase().includes(selectedMember.characterName.toLowerCase())).slice(0, 12).map((record) => ({ id: record.id, summary: record.text, createdAt: record.at }))}
           onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}

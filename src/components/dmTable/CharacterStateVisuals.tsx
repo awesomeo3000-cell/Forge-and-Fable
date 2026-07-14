@@ -24,6 +24,17 @@ export const CharacterPortrait = memo(function CharacterPortrait({
   );
 });
 
+/**
+ * The combatant-state marker primitive (Round Four A1): one markup contract
+ * everywhere a member/combatant can be "acting" or "selected". The marker is
+ * decorative — the container carries the class (`is-acting` / `is-selected`)
+ * and, for acting, the small-caps label; suppression of the selected
+ * treatment under acting is structural in CSS.
+ */
+export function StateMarker({ state }: { state: "acting" | "selected" }) {
+  return <span className="dm-state-marker" data-state={state} aria-hidden="true" />;
+}
+
 export function ConditionChip({ label, concentration = false }: { label: string; concentration?: boolean }) {
   const tone = concentration ? "focus" : conditionTone(label);
   return <em className="dm-state-chip" data-tone={tone}>{label}</em>;

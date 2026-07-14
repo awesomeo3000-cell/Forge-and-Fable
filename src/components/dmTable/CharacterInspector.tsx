@@ -3,13 +3,15 @@
 import { memo, useState } from "react";
 import { BookOpen, Dices, Eye, StickyNote } from "lucide-react";
 import { deriveImportantResources } from "@/lib/dmTable/party";
-import { CharacterPortrait, ConditionChip, ResourceChip, SpellSlotTrack } from "@/components/dmTable/CharacterStateVisuals";
+import { CharacterPortrait, ConditionChip, ResourceChip, SpellSlotTrack, StateMarker } from "@/components/dmTable/CharacterStateVisuals";
 import type { CampaignCharacterNoteCategory, CampaignMemberSummary } from "@/types/campaign";
 
 type InspectorTab = "overview" | "sheet" | "notes" | "history";
 
 type Props = {
   member: CampaignMemberSummary | null;
+  /** True when this character holds the current initiative turn. */
+  acting?: boolean;
   notes?: Array<{ id: string; title: string; body: string; category: string }>;
   history?: Array<{ id: string; summary: string; createdAt: string }>;
   onOpenSheet: (member: CampaignMemberSummary) => void;
@@ -19,7 +21,7 @@ type Props = {
   onCharacterAction?: (member: CampaignMemberSummary, action: "concentration-check" | "concentration-end" | "death-success" | "death-failure" | "death-natural-20" | "death-natural-1" | "death-stabilize" | "death-reset" | "death-dead" | "heal", amount?: number) => void;
 };
 
-export default memo(function CharacterInspector({ member, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote, onCharacterAction }: Props) {
+export default memo(function CharacterInspector({ member, acting = false, notes = [], history = [], onOpenSheet, onRequestRoll, onAddNote, onCreateNote, onCharacterAction }: Props) {
   const [tab, setTab] = useState<InspectorTab>("overview");
   const [noteDraft, setNoteDraft] = useState({ category: "general" as CampaignCharacterNoteCategory, title: "", body: "" });
   const [noteBusy, setNoteBusy] = useState(false);
@@ -29,7 +31,7 @@ export default memo(function CharacterInspector({ member, notes = [], history = 
 
   return (
     <aside className="dm-command-inspector" aria-label={`${member.characterName ?? member.userName} inspector`}>
-      <header className="dm-inspector-identity"><CharacterPortrait member={member} size="inspector"/><div><span>Selected character</span><h3>{member.characterName ?? member.userName}</h3><small>{member.characterClass} {member.characterLevel}</small></div></header>
+      <header className="dm-inspector-identity"><CharacterPortrait member={member} size="inspector"/><div><span>Selected character</span><h3>{member.characterName ?? member.userName}</h3><small>{member.characterClass} {member.characterLevel}</small>{acting ? <em className="dm-acting-label"><StateMarker state="acting" />Acting now</em> : null}</div></header>
       <div className="dm-command-inspector-tabs" role="tablist">{tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
       <div className="dm-command-inspector-body" role="tabpanel">
         {tab === "overview" ? <div className="dm-command-overview">

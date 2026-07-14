@@ -4,7 +4,7 @@ import { memo, useMemo, useState } from "react";
 import { AlertTriangle, Eye, HeartPulse, Wifi, WifiOff, X } from "lucide-react";
 import { deriveImportantResources, memberHpState } from "@/lib/dmTable/party";
 import { derivePartyAlerts } from "@/lib/dmTable/alerts";
-import { CharacterPortrait, ConditionChip, ResourceChip, SpellSlotTrack } from "@/components/dmTable/CharacterStateVisuals";
+import { CharacterPortrait, ConditionChip, ResourceChip, SpellSlotTrack, StateMarker } from "@/components/dmTable/CharacterStateVisuals";
 import type { CampaignMemberSummary, CampaignPresence } from "@/types/campaign";
 
 type Props = {
@@ -49,11 +49,11 @@ export default memo(function PartyRail({ members, dmUserId, selectedUserId, curr
           const percent = member.maxHp ? Math.max(0, Math.min(100, ((member.currentHp ?? 0) / member.maxHp) * 100)) : 0;
           const resources = deriveImportantResources(member).slice(0, 2);
           const selected = selectedUserId === member.userId;
-          const current = currentTurnUserId === member.userId;
+          const acting = currentTurnUserId === member.userId;
           const presenceState = member.isGhost ? "rehearsal" : presence.find((item) => item.userId === member.userId)?.state ?? "disconnected";
           const name = member.characterName ?? member.userName;
           return (
-            <div key={member.userId} className={`dm-command-member is-${state}${selected ? " is-selected" : ""}${current ? " is-current" : ""}${member.isGhost ? " is-rehearsal" : ""}`}>
+            <div key={member.userId} className={`dm-command-member is-${state}${selected ? " is-selected" : ""}${acting ? " is-acting" : ""}${member.isGhost ? " is-rehearsal" : ""}`}>
               <button type="button" role="option" aria-selected={selected} onClick={() => onSelect(member)}>
                 <span className="dm-member-primary">
                   <CharacterPortrait member={member} />
@@ -86,6 +86,12 @@ export default memo(function PartyRail({ members, dmUserId, selectedUserId, curr
                   order irrelevant for layout. */}
               {member.characterClass ? <img className="dm-class-sigil" src={`/class-icons/${member.characterClass}.svg`} alt="" aria-hidden="true" /> : null}
               <button type="button" className="dm-command-open-sheet" onClick={() => onOpenSheet(member)} aria-label={`Open ${name} full sheet`} disabled={!member.characterJson}><Eye size={14}/></button>
+              {/* State markers render after the buttons for the same
+                  first-child reason as the sigil; CSS positions them and
+                  suppresses the selected ring while the card is acting. */}
+              {acting ? <StateMarker state="acting" /> : null}
+              {selected ? <StateMarker state="selected" /> : null}
+              {acting ? <em className="dm-acting-label">Acting now</em> : null}
             </div>
           );
         })}

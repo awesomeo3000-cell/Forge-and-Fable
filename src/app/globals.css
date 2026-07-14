@@ -13314,3 +13314,89 @@ button.dj-card {
 .dm-command-party .dm-command-empty p { margin:0; }
 .dm-command-party .dm-command-empty small { color:var(--dm-muted,#6b5f4e); line-height:1.5; }
 .dm-rehearsal-mark button { border:0; background:transparent; color:inherit; cursor:pointer; padding:0 0 0 4px; vertical-align:middle; }
+
+/* -- DM-11 Round Four A1: combatant state grammar, initiative rows, adaptive density -- */
+
+/* The state marker primitive. One grammar everywhere a combatant/member can
+   be "acting" or "selected": acting = ACTING NOW label + 3px rule + filled
+   pointer + 7% accent wash (seal red); selected = 1px rule + hollow ring
+   (magic blue), no wash. In grayscale, labeled + thick + filled still beats
+   unlabeled + thin + hollow — non-color redundancy is the requirement. */
+.dm-state-marker { display:inline-block; flex:0 0 auto; width:9px; height:10px; }
+.dm-state-marker[data-state="acting"] { background:var(--dm-accent,#8c2f22); clip-path:polygon(0 0,100% 50%,0 100%); }
+.dm-state-marker[data-state="selected"] { height:9px; border:1px solid var(--dm-magic,#2677b8); border-radius:50%; background:transparent; }
+.dm-acting-label { color:var(--dm-accent,#8c2f22); font-family:var(--font-label); font-size:9px; font-style:normal; font-weight:600; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+
+/* Acting beats selected — the suppression is structural: selected treatment
+   only ever applies :not(.is-acting), and the selected ring is hidden on an
+   acting container, so callers cannot produce two rules or two markers. */
+.dm-combatant.is-acting,
+.dm-command-member.is-acting { border-left-color:var(--dm-accent,#8c2f22); background:color-mix(in srgb,var(--dm-accent,#8c2f22) 7%,transparent); }
+.dm-combatant.is-selected:not(.is-acting),
+.dm-command-member.is-selected:not(.is-acting) { border-left-color:transparent; background:transparent; box-shadow:inset 1px 0 0 var(--dm-magic,#2677b8); }
+.dm-combatant.is-acting .dm-state-marker[data-state="selected"],
+.dm-command-member.is-acting .dm-state-marker[data-state="selected"] { display:none; }
+/* Danger still outranks selection on the rail (selection stays on the ring
+   and the open inspector); acting outranks both. */
+.dm-command-member.is-unconscious:not(.is-acting) { border-left-color:var(--dm-danger,#b33b32); background:color-mix(in srgb,var(--dm-danger,#b33b32) 8%,transparent); box-shadow:none; }
+
+/* Rail cards: markers render after the buttons (the first-child landmine)
+   and are positioned into the card's top-left corner; the acting label takes
+   the spot the old CURRENT ::before used. */
+.dm-command-member>.dm-state-marker { position:absolute; top:13px; left:4px; }
+.dm-command-member>.dm-acting-label { position:absolute; top:9px; right:34px; }
+.dm-inspector-identity .dm-acting-label { display:inline-flex; align-items:center; gap:5px; margin-top:3px; }
+
+/* Initiative rows: rhythm from hairlines, padding, and identity discs — not
+   boxes. Die-pip becomes a disc; the identity column exists only at
+   standard density. */
+.dm-initiative .dm-combatant { grid-template-columns:34px 38px minmax(0,1fr) auto auto auto auto; }
+.dm-initiative.is-compact .dm-combatant { grid-template-columns:34px minmax(0,1fr) auto auto auto auto; padding-block:5px; }
+.dm-init-chip { border-radius:50%; }
+.dm-identity-disc { display:grid; place-items:center; overflow:hidden; width:36px; height:36px; border:1px solid var(--dm-rule); border-radius:50%; background:color-mix(in srgb,var(--dm-ink,#2a2018) 4%,transparent); color:var(--dm-ink,#2a2018); font-size:15px; }
+.dm-identity-disc img { display:block; width:100%; height:100%; object-fit:cover; }
+.dm-combatant-title { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+.dm-dup-badge { align-self:flex-start; margin-left:-4px; color:var(--dm-accent,#8c2f22); font-family:var(--font-label); font-size:9px; font-weight:600; line-height:1.4; }
+.dm-chip-overflow { color:var(--dm-muted,#6b5f4e); font-family:var(--font-label); font-size:10px; font-style:normal; align-self:center; }
+.dm-initiative.is-compact .dm-condition-chips { flex-wrap:nowrap; overflow:hidden; }
+
+/* Row actions: the reaction state chip is a real button; rare/destructive
+   actions live behind the ⋯ overflow. */
+.dm-reaction-chip { cursor:pointer; }
+.dm-reaction-chip:focus-visible { outline:2px solid var(--dm-accent,#8c2f22); outline-offset:1px; }
+.dm-row-overflow { position:relative; }
+.dm-row-overflow>summary { display:grid; place-items:center; list-style:none; width:26px; min-height:26px; border:1px solid var(--dm-rule); background:transparent; color:var(--dm-muted,#6b5f4e); font-size:14px; line-height:1; cursor:pointer; }
+.dm-row-overflow>summary::-webkit-details-marker { display:none; }
+.dm-row-overflow>summary:hover,.dm-row-overflow[open]>summary { border-color:var(--dm-ink,#2a2018); color:var(--dm-ink,#2a2018); }
+.dm-row-overflow>summary:focus-visible { outline:2px solid var(--dm-accent,#8c2f22); outline-offset:1px; }
+.dm-row-overflow>div { position:absolute; top:calc(100% + 3px); right:0; z-index:30; display:grid; min-width:158px; padding:4px; border:1px solid var(--dm-rule); background:var(--dm-surface,#e9dfc8); box-shadow:0 8px 18px color-mix(in srgb,var(--dm-ink,#2a2018) 18%,transparent); }
+.dm-row-overflow>div button { display:flex; align-items:center; gap:6px; justify-content:flex-start; padding:6px 8px; border:0; background:transparent; color:var(--dm-ink,#2a2018); font-family:var(--font-label); font-size:11px; text-align:left; cursor:pointer; }
+.dm-row-overflow>div button:hover,.dm-row-overflow>div button:focus-visible { background:color-mix(in srgb,var(--dm-ink,#2a2018) 8%,transparent); outline:none; }
+.dm-row-overflow>div button.is-danger { color:var(--dm-danger,#b33b32); }
+
+/* -- DM-12 Round Four A2: the encounter log -- */
+/* The session's ledger written in real time under the initiative list.
+   Hairlines, not boxes; voice does the separating: announcements are italic
+   marginalia, death saves carry the seal tint, mechanics stay plain ink. */
+.dm-encounter-log { margin-top:16px; padding-top:10px; border-top:1px solid color-mix(in srgb,var(--dm-ink,#2a2018) 32%,transparent); }
+.dm-log-head { display:flex; align-items:center; gap:14px; }
+.dm-log-head h4 { margin:0; color:var(--dm-muted,#6b5f4e); font-family:var(--font-label); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; }
+.dm-log-head .dm-filter { margin:0; }
+.dm-log-link { margin-left:auto; padding:2px 0; border:0; background:transparent; color:var(--dm-accent,#8c2f22); font-family:var(--font-label); font-size:10px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+.dm-log-link:hover,.dm-log-link:focus-visible { text-decoration:underline; outline:none; }
+.dm-log-scroll { max-height:32vh; margin-top:6px; overflow-y:auto; scrollbar-color:color-mix(in srgb,var(--dm-ink,#2a2018) 24%,transparent) transparent; }
+.dm-log-scroll>.dm-log-link { margin:0; padding:7px 2px; }
+.dm-log-entry { display:flex; align-items:baseline; gap:9px; margin:0; padding:5px 2px; border-bottom:1px solid var(--dm-rule); color:var(--dm-ink,#2a2018); font-size:12.5px; }
+.dm-log-entry time,.dm-log-group summary time { flex:0 0 auto; color:var(--dm-muted,#6b5f4e); font-family:var(--font-label); font-size:10px; font-variant-numeric:tabular-nums; }
+.dm-log-entry span { min-width:0; }
+.dm-log-entry[data-voice="announce"] span { color:var(--dm-muted,#6b5f4e); font-style:italic; }
+.dm-log-entry[data-voice="danger"] span { color:var(--dm-danger,#b33b32); }
+.dm-log-group { border-bottom:1px solid var(--dm-rule); }
+.dm-log-group summary { display:flex; align-items:baseline; gap:9px; padding:5px 2px; color:var(--dm-ink,#2a2018); font-size:12.5px; list-style:none; cursor:pointer; }
+.dm-log-group summary::-webkit-details-marker { display:none; }
+.dm-log-group summary::after { content:"▾"; margin-left:auto; color:var(--dm-muted,#6b5f4e); font-size:10px; }
+.dm-log-group[open] summary::after { content:"▴"; }
+.dm-log-group summary:hover span,.dm-log-group summary:focus-visible span { color:var(--dm-accent,#8c2f22); }
+.dm-log-group summary:focus-visible { outline:2px solid var(--dm-accent,#8c2f22); outline-offset:-2px; }
+.dm-log-group>.dm-log-entry { padding-left:14px; }
+.dm-log-group>.dm-log-entry:last-child { border-bottom:0; }
