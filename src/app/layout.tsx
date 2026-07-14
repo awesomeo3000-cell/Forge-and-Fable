@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Fraunces,
   Newsreader,
@@ -51,6 +51,14 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "Forge & Fable",
   description: "A hand-bound D&D 5e character builder and play console.",
+};
+
+// viewport-fit=cover lets the mobile shell pad into the safe areas
+// (bottom navigation clears the home indicator; AO-11, plan 4F).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

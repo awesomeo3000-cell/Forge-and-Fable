@@ -12,7 +12,7 @@ import { SKILLS } from "@/lib/srd";
 import { reminderMatches, type ReminderContext } from "@/lib/encounterGenerator";
 import type { Character, CharacterTheme } from "@/types/game";
 import type { CampaignCharacterNote, CampaignCombatant, CampaignEvent, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
-import type { CampaignHandout, CampaignNpc, CampaignScene, CampaignSession, EncounterRun, LootParcel } from "@/types/dmTools";
+import type { CampaignHandout, CampaignNpc, CampaignScene, CampaignSession, EncounterRun, LootParcel, SessionPin } from "@/types/dmTools";
 import PartyRail from "@/components/dmTable/PartyRail";
 import CharacterInspector from "@/components/dmTable/CharacterInspector";
 import { ConditionChip, StateMarker } from "@/components/dmTable/CharacterStateVisuals";
@@ -116,6 +116,12 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
   const [activeEncounter, setActiveEncounter] = useState<EncounterRun | null>(null);
   const [savedHandouts, setSavedHandouts] = useState<CampaignHandout[]>([]);
+  // The Chronicle (AO-10): sessions rail + timeline + document panel in
+  // Session review mode. Pure view state over existing session/pin APIs.
+  const [sessions, setSessions] = useState<CampaignSession[]>([]);
+  const [chronicleSessionId, setChronicleSessionId] = useState<string | null>(null);
+  const [chroniclePins, setChroniclePins] = useState<SessionPin[]>([]);
+  const [chronicleHandoutId, setChronicleHandoutId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   // Round Two: the view-preset axis is gone. The only layout switch is the
   // Compact toggle — global compact presentation since Round Four A1 (rail
@@ -244,6 +250,29 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     return () => window.clearInterval(interval);
   }, [refreshWorkspace]);
   useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
+  // Chronicle data: the sessions list loads when Review opens; pins follow
+  // the selected session.
+  useEffect(() => {
+    if (workspaceMode !== "review") return;
+    let active = true;
+    void dmToolsApi.listSessions(campaign.campaign.id)
+      .then((result) => {
+        if (!active) return;
+        const sorted = [...result.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+        setSessions(sorted);
+        setChronicleSessionId((current) => current && sorted.some((session) => session.id === current) ? current : sorted[0]?.id ?? null);
+      })
+      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Could not load the session chronicle."); });
+    return () => { active = false; };
+  }, [workspaceMode, campaign.campaign.id]);
+  useEffect(() => {
+    if (workspaceMode !== "review" || !chronicleSessionId) { setChroniclePins([]); return; }
+    let active = true;
+    void dmToolsApi.listPins(campaign.campaign.id, chronicleSessionId)
+      .then((result) => { if (active) setChroniclePins(result.pins); })
+      .catch(() => { if (active) setChroniclePins([]); });
+    return () => { active = false; };
+  }, [workspaceMode, chronicleSessionId, campaign.campaign.id]);
   useEffect(() => {
     if (!selectedUserId) {
       const first = players.find((member) => member.characterId);
@@ -274,6 +303,19 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     ...campaign.rolls.map((roll) => ({ id: `roll-${roll.id}`, kind: "rolls" as const, at: roll.created_at, text: `${roll.character_name} — ${roll.label} ${roll.total}`, ghost: ghostUserIds.has(roll.user_id), roll: { characterName: roll.character_name, label: roll.label, total: roll.total } })),
     ...events.map((event) => ({ id: event.id, kind: "table" as const, at: event.created_at, text: eventLine(event), eventType: event.type })),
   ].filter((entry) => recordFilter === "all" || entry.kind === recordFilter).sort((a, b) => b.at.localeCompare(a.at)), [campaign.rolls, events, ghostUserIds, recordFilter]);
+  // Chronicle derivations: the selected session scopes the record feed by
+  // its time window; the document panel follows the selected handout.
+  const chronicleSession = sessions.find((session) => session.id === chronicleSessionId) ?? null;
+  const chronicleRecords = useMemo(() => {
+    if (!chronicleSession) return records;
+    return records.filter((entry) => entry.at >= chronicleSession.startedAt && (!chronicleSession.endedAt || entry.at <= chronicleSession.endedAt));
+  }, [records, chronicleSession]);
+  const chronicleHandout = savedHandouts.find((handout) => handout.id === chronicleHandoutId)
+    ?? savedHandouts.find((handout) => handout.shared)
+    ?? savedHandouts[0]
+    ?? null;
+  const sessionMinutes = (session: CampaignSession) =>
+    Math.max(0, Math.round((Date.parse(session.endedAt ?? new Date(clockNow).toISOString()) - Date.parse(session.startedAt)) / 60_000));
   // A2: the encounter log is a view over the same feed — scoped to the
   // active run unless the DM lifts the filter; grouped; capped at 40.
   const [logShowEarlier, setLogShowEarlier] = useState(false);
@@ -611,6 +653,32 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             </header>
             <div className="dm-initiative-rail-scroll">{initiativeList}</div>
           </aside>
+        ) : workspaceMode === "review" ? (
+          <aside className="dm-initiative-rail dm-chronicle-rail" aria-label="Session chronicle">
+            <header className="dm-initiative-rail-head">
+              <span>Chronicle</span>
+              <strong>Sessions</strong>
+              <small>{sessions.length} recorded</small>
+            </header>
+            <div className="dm-initiative-rail-scroll">
+              {sessions.map((session) => (
+                <button
+                  key={session.id}
+                  type="button"
+                  className={`dm-session-row${session.id === chronicleSessionId ? " is-selected" : ""}`}
+                  aria-pressed={session.id === chronicleSessionId}
+                  onClick={() => setChronicleSessionId(session.id)}
+                >
+                  <small>
+                    {session.number ? `Session ${session.number}` : "Session"} · {new Date(session.startedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                  </small>
+                  <strong>{session.title || "Untitled session"}</strong>
+                  <span>{session.status === "active" ? "In progress" : `${Math.floor(sessionMinutes(session) / 60)}h ${sessionMinutes(session) % 60}m`}</span>
+                </button>
+              ))}
+              {sessions.length === 0 ? <p className="dm-empty">No sessions recorded yet — Start session begins the first chapter.</p> : null}
+            </div>
+          </aside>
         ) : (
         <PartyRail
           members={campaign.members}
@@ -630,7 +698,79 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           {workspaceMode === "preparation" ? (
             <div className="dm-workspace-empty"><span>Preparation</span><h3>Prepare the next beat</h3><p>Choose saved encounters, creatures, handouts, reminders, and session notes in the campaign workshop.</p><button type="button" className="dm-btn dm-btn-primary" onClick={() => setPrepOpen(true)}>Open campaign workshop</button></div>
           ) : workspaceMode === "review" ? (
-            <div className="dm-workspace-review"><div className="dm-region-head"><h3>Session record</h3><span>{activeSession?.title ?? "No active session"}</span></div><div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div><div className="dm-record-list">{records.length ? records.map((record) => <p key={record.id}><time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>{record.text}{activeSession ? <button type="button" className="dm-pin" onClick={() => void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: record.text, eventId: record.id })}>Pin for summary</button> : null}</p>) : <p className="dm-empty">Nothing has been recorded yet.</p>}</div></div>
+            <div className="dm-chronicle">
+              <div className="dm-chronicle-head">
+                <div>
+                  <span className="dm-chronicle-eyebrow">
+                    {chronicleSession
+                      ? `${chronicleSession.number ? `Session ${chronicleSession.number}` : "Session"} · ${new Date(chronicleSession.startedAt).toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}`
+                      : "The campaign record"}
+                  </span>
+                  <h3>{chronicleSession?.title || (chronicleSession ? "Untitled session" : "All recent activity")}</h3>
+                  <small>
+                    {chronicleSession
+                      ? `${new Date(chronicleSession.startedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}${chronicleSession.endedAt ? `–${new Date(chronicleSession.endedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : " — in progress"} · ${chroniclePins.length} pinned`
+                      : "Select a session in the chronicle rail to scope the record."}
+                  </small>
+                </div>
+                <div className="dm-chronicle-actions">
+                  {chronicleSession ? (
+                    <span className="dm-turn-state" data-tone={chronicleSession.status === "active" ? "ready" : undefined}>
+                      {chronicleSession.status === "active" ? "In progress" : "Complete"}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="dm-btn"
+                    disabled={!chronicleSession}
+                    onClick={() => {
+                      if (!chronicleSession) return;
+                      const note = window.prompt("Pin a note to this session");
+                      if (note) void dmToolsApi.pin(campaign.campaign.id, chronicleSession.id, { note })
+                        .then(() => dmToolsApi.listPins(campaign.campaign.id, chronicleSession.id))
+                        .then((result) => setChroniclePins(result.pins))
+                        .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not pin the note."));
+                    }}
+                  >
+                    Pin note
+                  </button>
+                  <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Summary &amp; tools</button>
+                </div>
+              </div>
+              <div className="dm-filter">{(["all", "rolls", "table"] as const).map((filter) => <button key={filter} type="button" className={recordFilter === filter ? "is-active" : ""} aria-pressed={recordFilter === filter} onClick={() => setRecordFilter(filter)}>{filter === "all" ? "All" : filter === "rolls" ? "Rolls" : "Table"}</button>)}</div>
+              {chroniclePins.length ? (
+                <section className="dm-chronicle-pins" aria-label="Pinned moments">
+                  {chroniclePins.map((pin) => (
+                    <article key={pin.id} className="dm-chronicle-item is-pinned">
+                      <time>{new Date(pin.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+                      <span className="dm-chronicle-marker" aria-hidden="true" />
+                      <p><em>Pinned</em>{pin.note ?? "A recorded table event."}</p>
+                    </article>
+                  ))}
+                </section>
+              ) : null}
+              <div className="dm-chronicle-body">
+                {chronicleRecords.length ? chronicleRecords.slice(0, 60).map((record) => (
+                  <article key={record.id} className="dm-chronicle-item" data-voice={logEntryVoice(record)}>
+                    <time>{new Date(record.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+                    <span className="dm-chronicle-marker" aria-hidden="true" />
+                    <p>{record.text}{"ghost" in record && record.ghost ? <em className="dm-rehearsal-mark">rehearsal</em> : null}</p>
+                    {chronicleSession ? (
+                      <button
+                        type="button"
+                        className="dm-pin"
+                        onClick={() => void dmToolsApi.pin(campaign.campaign.id, chronicleSession.id, { note: record.text, eventId: record.id })
+                          .then(() => dmToolsApi.listPins(campaign.campaign.id, chronicleSession.id))
+                          .then((result) => setChroniclePins(result.pins))
+                          .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not pin the record."))}
+                      >
+                        Pin
+                      </button>
+                    ) : null}
+                  </article>
+                )) : <p className="dm-empty">{chronicleSession ? "Nothing was recorded during this session window." : "Nothing has been recorded yet."}</p>}
+              </div>
+            </div>
           ) : workspaceMode === "scene" ? (
             <div className="dm-scene-workspace"><div className="dm-region-head"><div><span>Current scene</span><h3>{activeScene?.title ?? activeEncounter?.snapshot.name ?? "The table is ready"}</h3></div>{scenes.length ? <select aria-label="Current scene" value={activeScene?.id ?? ""} onChange={(event) => { const scene=scenes.find((item)=>item.id===event.target.value); if(scene) void dmToolsApi.updateScene(campaign.campaign.id,scene.id,{active:true}).then(()=>refreshWorkspace()); }}>{scenes.map((scene)=><option key={scene.id} value={scene.id}>{scene.title}</option>)}</select> : null}</div>{activeScene ? <><p>{activeScene.description ?? "Set the scene, reveal a clue, request a check, or launch the linked encounter."}</p>{activeScene.readAloud ? <blockquote>{activeScene.readAloud}</blockquote> : null}<div className="dm-scene-columns"><section><h4>Present</h4>{players.map((member)=><label key={member.userId}><input type="checkbox" checked={activeScene.presentUserIds.includes(member.userId)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{presentUserIds:event.target.checked?[...new Set([...activeScene.presentUserIds,member.userId])]:activeScene.presentUserIds.filter((id)=>id!==member.userId)}).then(()=>refreshWorkspace())}/>{member.characterName??member.userName}</label>)}</section><section><h4>Objectives</h4>{activeScene.objectives.map((objective)=><label key={objective}><input type="checkbox" checked={activeScene.completedObjectives.includes(objective)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{completedObjectives:event.target.checked?[...new Set([...activeScene.completedObjectives,objective])]:activeScene.completedObjectives.filter((item)=>item!==objective)}).then(()=>refreshWorkspace())}/>{objective}</label>)}</section><section><h4>Clues</h4>{activeScene.clues.map((clue)=><label key={clue}><input type="checkbox" checked={activeScene.revealedClues.includes(clue)} onChange={(event)=>void dmToolsApi.updateScene(campaign.campaign.id,activeScene.id,{revealedClues:event.target.checked?[...new Set([...activeScene.revealedClues,clue])]:activeScene.revealedClues.filter((item)=>item!==clue)}).then(()=>refreshWorkspace())}/>{clue}</label>)}</section></div><section className="dm-capability-matrix"><h4>Party references</h4><table><thead><tr><th>Character</th><th>Perception</th><th>Insight</th><th>Investigation</th><th>Languages</th><th>Tools & skills</th></tr></thead><tbody>{players.map((member)=><tr key={member.userId}><th>{member.characterName??member.userName}</th><td>{member.passivePerception??"—"}</td><td>{member.passiveInsight??"—"}</td><td>{member.passiveInvestigation??"—"}</td><td>{member.characterJson?.languages?.join(", ")||"—"}</td><td>{[...(member.characterJson?.toolProficiencies??[]),...(member.characterJson?.skillProficiencies??[])].join(", ")||"—"}</td></tr>)}</tbody></table></section><section className="dm-npc-drawer"><h4>Scene NPCs</h4>{npcs.filter((npc)=>activeScene.npcIds.includes(npc.id)||npc.currentSceneId===activeScene.id).map((npc)=><article key={npc.id}><header><strong>{npc.name}</strong><span>{npc.attitude} · {npc.status}</span></header><p>{npc.goal??npc.knows??"No public-facing goal recorded."}</p><small>AC {npc.armorClass??"—"} · HP {npc.currentHp??"—"}/{npc.maxHp??"—"} · Insight DC {npc.insightDc??"—"}</small><div><select aria-label={`${npc.name} disposition`} value={npc.disposition} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{disposition:event.target.value}).then(()=>refreshWorkspace())}><option value="neutral">Neutral</option><option value="allied">Allied</option><option value="hostile">Hostile</option></select><select aria-label={`${npc.name} status`} value={npc.status} onChange={(event)=>void dmToolsApi.updateNpc(campaign.campaign.id,npc.id,{status:event.target.value}).then(()=>refreshWorkspace())}><option value="alive">Alive</option><option value="dead">Dead</option><option value="missing">Missing</option></select><button type="button" className="dm-btn" onClick={()=>void replaceInitiative([...campaign.initiative.data.combatants,{id:crypto.randomUUID(),name:npc.name,initiative:Math.floor(Math.random()*20)+1,kind:npc.disposition==="allied"?"ally":"enemy",currentHp:npc.currentHp,maxHp:npc.maxHp,ac:npc.armorClass,privateNote:npc.goal}])}>Add to initiative</button>{npc.portraitUrl?<button type="button" className="dm-btn" onClick={()=>void onPostEvent("handout",{title:npc.name,url:npc.portraitUrl!})}>Share portrait</button>:null}</div></article>)}<div className="dm-inline-form"><input placeholder="NPC name" value={npcDraft.name} onChange={(event)=>setNpcDraft({...npcDraft,name:event.target.value})}/><input placeholder="Attitude" value={npcDraft.attitude} onChange={(event)=>setNpcDraft({...npcDraft,attitude:event.target.value})}/><input placeholder="Goal" value={npcDraft.goal} onChange={(event)=>setNpcDraft({...npcDraft,goal:event.target.value})}/><input placeholder="AC" type="number" value={npcDraft.armorClass} onChange={(event)=>setNpcDraft({...npcDraft,armorClass:event.target.value})}/><input placeholder="HP" type="number" value={npcDraft.hitPoints} onChange={(event)=>setNpcDraft({...npcDraft,hitPoints:event.target.value})}/><button type="button" className="dm-btn" onClick={createQuickNpc}>Add NPC</button></div></section><div><button type="button" className="dm-btn" onClick={()=>{setWorkspaceMode("encounter");setActiveCommand("roll");}}>Request likely check</button>{activeScene.linkedEncounterId?<button type="button" className="dm-btn dm-btn-primary" onClick={()=>void dmToolsApi.startEncounter(activeScene.linkedEncounterId!).then(()=>{setWorkspaceMode("encounter");return refreshWorkspace();})}>Launch linked encounter</button>:null}<button type="button" className="dm-btn" onClick={()=>setPrepOpen(true)}>Full scene tools</button></div></> : <div className="dm-workspace-empty"><strong>No scene yet</strong><span>Create a lightweight current scene, then add details in Preparation.</span><div className="dm-inline-form"><input placeholder="Scene title" value={sceneTitle} onChange={(event)=>setSceneTitle(event.target.value)}/><button type="button" className="dm-btn dm-btn-primary" onClick={createQuickScene}>Create scene</button></div></div>}</div>
           ) : (
@@ -901,6 +1041,59 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           </>
           )}
         </section>
+        {workspaceMode === "review" ? (
+          <aside className="dm-initiative-rail dm-chronicle-doc" aria-label="Campaign documents">
+            <header className="dm-initiative-rail-head">
+              <span>Documents</span>
+              <strong>Handouts</strong>
+              <small>{savedHandouts.length}</small>
+            </header>
+            <div className="dm-chronicle-doc-list">
+              {savedHandouts.map((handout) => (
+                <button
+                  key={handout.id}
+                  type="button"
+                  className={`dm-session-row${handout.id === chronicleHandout?.id ? " is-selected" : ""}`}
+                  aria-pressed={handout.id === chronicleHandout?.id}
+                  onClick={() => setChronicleHandoutId(handout.id)}
+                >
+                  <small>{handout.category}{handout.shared ? " · shared" : ""}</small>
+                  <strong>{handout.title}</strong>
+                </button>
+              ))}
+              {savedHandouts.length === 0 ? <p className="dm-empty">No handouts yet — prepare them in Tools.</p> : null}
+            </div>
+            {chronicleHandout ? (
+              <article className="dm-chronicle-paper">
+                <span className="dm-chronicle-paper-kicker">
+                  {chronicleHandout.category} · {chronicleHandout.shared ? "shared with players" : "DM only"}
+                </span>
+                <h4>{chronicleHandout.title}</h4>
+                {chronicleHandout.assetType === "image" && chronicleHandout.assetUrl ? (
+                  // Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={chronicleHandout.assetUrl} alt={chronicleHandout.title} />
+                ) : null}
+                {chronicleHandout.body ? <p>{chronicleHandout.body}</p> : chronicleHandout.description ? <p>{chronicleHandout.description}</p> : null}
+                {chronicleHandout.assetType === "url" && chronicleHandout.assetUrl ? (
+                  <a href={chronicleHandout.assetUrl} target="_blank" rel="noreferrer noopener">Open linked document</a>
+                ) : null}
+                <footer>
+                  <button
+                    type="button"
+                    className="dm-btn dm-btn-primary"
+                    onClick={() => void dmToolsApi.shareHandout(campaign.campaign.id, chronicleHandout.id)
+                      .then(() => refreshWorkspace())
+                      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not share the handout."))}
+                  >
+                    {chronicleHandout.shared ? "Share again" : "Share with players"}
+                  </button>
+                  <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Edit in Tools</button>
+                </footer>
+              </article>
+            ) : null}
+          </aside>
+        ) : (
         <CharacterInspector
           member={selectedMember}
           acting={Boolean(selectedMember && sortedCombatants[campaign.initiative.data.turnIndex]?.memberUserId === selectedMember.userId)}
@@ -935,6 +1128,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not remove the player."));
           }}
         />
+        )}
       </div>
       <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input placeholder="Direct audio URL" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || !trackUrl.trim()}><Plus size={14}/> Add track</button></div></section>
       {prepOpen ? <DMPrepPanel campaignId={campaign.campaign.id} onClose={() => { setPrepOpen(false); void refreshWorkspace(); }} onEncounterStarted={() => void refreshWorkspace()}/> : null}

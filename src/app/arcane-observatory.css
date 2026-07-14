@@ -1582,7 +1582,7 @@
   font-size: 0.9rem;
 }
 
-/* ── Narrow viewports: the rail becomes a strip across the top ── */
+/* ── Narrow viewports ── */
 @media (max-width: 1180px) {
   [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr 1fr; }
   [data-theme="arcane-observatory"] .ao-home-lower > :last-child { grid-column: 1 / -1; }
@@ -1590,43 +1590,57 @@
 @media (max-width: 980px) {
   [data-theme="arcane-observatory"] .ao-home-orrery { display: none; }
 }
+/* Phones (AO-11, plan 4F): the shell collapses into a top title bar and a
+   persistent bottom navigation, mockup-style. The rail's brand orb and
+   spacer disappear; the four destinations + user mark share the bar. */
 @media (max-width: 760px) {
   [data-theme="arcane-observatory"] .builder-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
   [data-theme="arcane-observatory"] .ao-nav-rail {
-    grid-row: 1;
-    grid-column: 1;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    grid-row: auto;
     flex-direction: row;
-    align-items: center;
-    padding: 8px 12px;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
     border-right: 0;
-    border-bottom: 1px solid var(--border-default);
-    box-shadow: none;
+    border-top: 1px solid var(--border-default);
+    background: var(--surface-shell);
+    box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.35);
   }
-  [data-theme="arcane-observatory"] .ao-nav-brand {
-    width: 36px;
-    height: 36px;
-    margin: 0 10px 0 0;
-    font-size: 1rem;
-  }
+  [data-theme="arcane-observatory"] .ao-nav-brand { display: none; }
   [data-theme="arcane-observatory"] .ao-nav-stack {
     display: flex;
     flex: 1;
     width: auto;
     gap: 4px;
   }
-  [data-theme="arcane-observatory"] .ao-nav-item { flex: 1; min-height: 44px; }
-  [data-theme="arcane-observatory"] .ao-nav-item.active { box-shadow: inset 0 -3px var(--state-selected); }
+  [data-theme="arcane-observatory"] .ao-nav-item {
+    flex: 1;
+    min-height: 48px;
+    border-radius: var(--radius-sm);
+  }
+  [data-theme="arcane-observatory"] .ao-nav-item.active { box-shadow: inset 0 2px var(--state-selected); }
   [data-theme="arcane-observatory"] .ao-nav-spacer { display: none; }
-  [data-theme="arcane-observatory"] .ao-nav-user { margin-left: 10px; }
+  [data-theme="arcane-observatory"] .ao-nav-user { align-self: center; margin-left: 6px; }
   [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar,
   [data-theme="arcane-observatory"] .builder-layout,
   [data-theme="arcane-observatory"] .ao-home-main {
     grid-column: 1;
   }
-  [data-theme="arcane-observatory"] .ao-home-main { padding: 16px 14px 24px; }
+  /* The scroll containers clear the fixed bottom bar. */
+  [data-theme="arcane-observatory"] .builder-layout {
+    padding: 14px 12px calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+  [data-theme="arcane-observatory"] .ao-home-main {
+    padding: 16px 14px calc(84px + env(safe-area-inset-bottom, 0px));
+  }
   [data-theme="arcane-observatory"] .ao-home-lower { grid-template-columns: 1fr; }
   [data-theme="arcane-observatory"] .ao-home-heading {
     flex-direction: column;
@@ -2986,4 +3000,274 @@
   background: var(--paper);
   border-color: var(--doc-rule);
   color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-10 — the Chronicle (CHANGES-AO-10, plan 4E)
+   Session review becomes the archive: a sessions rail on the left, the
+   session's timeline in the center (pins as brass moments, records with
+   voice-tinted markers), and the handout document panel on the right.
+   Filters stay application controls; the handout preview is the one
+   document surface. All session/pin/handout behavior is the existing API.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Session rows (shared by the chronicle rail and the handout list). */
+[data-theme="arcane-observatory"] .dm-session-row {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .dm-session-row:hover {
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-session-row:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .dm-session-row.is-selected {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  border-left-color: var(--state-selected);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-session-row small {
+  color: var(--text-muted);
+  font: 700 0.6rem/1.3 var(--font-role-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-session-row strong {
+  font: 600 0.92rem/1.25 var(--font-role-section);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .dm-session-row > span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+/* Timeline (center) */
+[data-theme="arcane-observatory"] .dm-chronicle {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-eyebrow {
+  color: var(--doc-accent, #b3924a);
+  font: 700 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-head h3 {
+  margin: 4px 0 3px;
+  font: 600 1.55rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-head small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-pins {
+  display: grid;
+  padding: 4px 0;
+  border: 1px solid rgba(179, 146, 74, 0.28);
+  border-left: 3px solid var(--border-brass);
+  border-radius: var(--radius-sm);
+  background: rgba(179, 146, 74, 0.06);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-item {
+  display: grid;
+  grid-template-columns: 58px 14px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-item:last-child { border-bottom: 0; }
+[data-theme="arcane-observatory"] .dm-chronicle-item time {
+  color: var(--text-muted);
+  font: 400 0.72rem/1.6 var(--font-role-numeric);
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-marker {
+  width: 9px;
+  height: 9px;
+  align-self: center;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-item[data-voice="danger"] .dm-chronicle-marker { background: var(--state-danger); }
+[data-theme="arcane-observatory"] .dm-chronicle-item[data-voice="announce"] .dm-chronicle-marker { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .dm-chronicle-item.is-pinned .dm-chronicle-marker { background: var(--border-brass); }
+[data-theme="arcane-observatory"] .dm-chronicle-item p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-item[data-voice="danger"] p { color: #d9a09a; }
+[data-theme="arcane-observatory"] .dm-chronicle-item[data-voice="announce"] p { font-style: italic; }
+[data-theme="arcane-observatory"] .dm-chronicle-item.is-pinned p em {
+  margin-right: 8px;
+  color: var(--border-brass-bright);
+  font: 700 0.62rem/1 var(--font-role-label);
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-body { display: grid; }
+
+/* Document panel (right) */
+[data-theme="arcane-observatory"] .dm-chronicle-doc {
+  grid-template-rows: auto minmax(0, 0.55fr) auto;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-doc-list {
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 8px;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper {
+  margin: 10px;
+  padding: 16px 17px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  overflow: auto;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper-kicker {
+  color: var(--border-brass);
+  font: 700 0.6rem/1.3 var(--font-role-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper h4 {
+  margin: 7px 0 9px;
+  font: 600 1.3rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper img {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper p {
+  margin: 0 0 10px;
+  color: var(--text-secondary);
+  font-family: var(--font-role-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper a {
+  color: var(--state-selected);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .dm-chronicle-paper footer {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-11 — mobile experience (CHANGES-AO-11, plan 4F)
+   The phone shell (bottom navigation, safe areas) lives in the AO-6
+   media block above. Here: the DM table stacks into readable sections
+   with the stage leading, and coarse pointers get real touch targets.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  [data-theme="arcane-observatory"] .dm-table {
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  [data-theme="arcane-observatory"] .dm-table-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+  }
+  [data-theme="arcane-observatory"] .dm-workspace-modes {
+    order: 3;
+    width: 100%;
+    margin: 0;
+    overflow-x: auto;
+  }
+  /* One column, natural height, page-level scrolling; the acting stage
+     (center region) leads, rails become bounded sections beneath it. */
+  [data-theme="arcane-observatory"] .dm-table-grid,
+  [data-theme="arcane-observatory"] .dm-table-grid:has(.dm-initiative-rail) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    flex: none;
+    overflow: visible;
+  }
+  [data-theme="arcane-observatory"] .dm-encounter { order: -1; }
+  [data-theme="arcane-observatory"] .dm-initiative-rail,
+  [data-theme="arcane-observatory"] .dm-command-party,
+  [data-theme="arcane-observatory"] .dm-command-inspector {
+    max-height: 46vh;
+    overflow: auto;
+  }
+  [data-theme="arcane-observatory"] .dm-chronicle-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Touch targets (plan 4F): coarse pointers get at least 44px on every
+   frequent control; steppers and icon buttons get 36px squares. */
+@media (pointer: coarse) {
+  [data-theme="arcane-observatory"] .ao-btn,
+  [data-theme="arcane-observatory"] .dm-btn,
+  [data-theme="arcane-observatory"] .dj-btn,
+  [data-theme="arcane-observatory"] .ledger-button,
+  [data-theme="arcane-observatory"] .character-header__action,
+  [data-theme="arcane-observatory"] .dm-session-row,
+  [data-theme="arcane-observatory"] .ao-nav-item,
+  [data-theme="arcane-observatory"] .sheet-tab,
+  [data-theme="arcane-observatory"] .dm-filter button {
+    min-height: 44px;
+  }
+  [data-theme="arcane-observatory"] .dm-icon-btn,
+  [data-theme="arcane-observatory"] .character-header__lvl,
+  [data-theme="arcane-observatory"] .character-header__hp-steppers button,
+  [data-theme="arcane-observatory"] .dm-init-chip {
+    min-width: 36px;
+    min-height: 36px;
+  }
 }
