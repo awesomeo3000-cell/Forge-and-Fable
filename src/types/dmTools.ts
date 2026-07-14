@@ -215,6 +215,14 @@ export type CampaignSession = {
   publishedJournalEntryId?: string;
 };
 
+export type SessionPin = {
+  id: string;
+  sessionId: string;
+  eventId: string | null;
+  note: string | null;
+  createdAt: string;
+};
+
 export type EncounterRun = {
   id: string;
   campaignId: string;

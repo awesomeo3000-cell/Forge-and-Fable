@@ -31,6 +31,8 @@ type Props = {
   onCreateCharacter?: () => void;
   onClose: () => void;
   theme?: CharacterTheme | null;
+  /** Force the opening view — "list" lets an enrolled DM reach create/join/manage. */
+  initialView?: "list";
 };
 
 const CONDITION_OPTIONS = EFFECT_PRESETS.filter((preset) => preset.source === "Condition");
@@ -86,8 +88,9 @@ export default memo(function CampaignPanel({
   onCreateCharacter,
   onClose,
   theme,
+  initialView,
 }: Props) {
-  const [view, setView] = useState<PanelView>(activeCampaignId ? "detail" : "list");
+  const [view, setView] = useState<PanelView>(initialView ?? (activeCampaignId ? "detail" : "list"));
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(activeCampaignId);
   const [busy, setBusy] = useState(false);

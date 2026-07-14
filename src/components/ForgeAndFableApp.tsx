@@ -518,6 +518,9 @@ export default function ForgeAndFableApp() {
   // Observatory landing (AO-6): Home is the default screen; the roster/sheet
   // cascade is the "Hero" screen. Pure view state — no flow logic moved here.
   const [homeOpen, setHomeOpen] = useState(true);
+  // Campaign list access while enrolled: forces CampaignPanel's list view so
+  // a DM (or player) can create/join/delete/leave without detaching first.
+  const [campaignListOpen, setCampaignListOpen] = useState(false);
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   // Onboarding panel replaces forced character creation when the roster is empty
@@ -2011,6 +2014,25 @@ export default function ForgeAndFableApp() {
       />
     ) : null}
     {campaignOpen ? (
+      campaignListOpen ? <CampaignPanel
+        characters={characters}
+        currentUserId={user.id}
+        activeCampaignId={activeCampaignId}
+        campaignSync={campaignSync}
+        campaignEvents={campaignEvents}
+        resolvedEventIds={resolvedCampaignEvents}
+        onActiveCampaignChange={(id) => { setActiveCampaign(id); if (id) setCampaignListOpen(false); }}
+        onPostEvent={postCampaignEvent}
+        onRespondRollRequest={handleCampaignRollRequest}
+        onAcceptRest={applyCampaignRest}
+        onRespondLoot={respondToLoot}
+        onResolveEvent={resolveCampaignEvent}
+        onOpenSheet={(character) => setReadOnlyViewChar(character)}
+        onCreateCharacter={() => { setCampaignListOpen(false); setCampaignOpen(false); beginBuild("standard"); }}
+        onClose={() => { setCampaignListOpen(false); setCampaignOpen(false); }}
+        theme={selected?.theme ?? null}
+        initialView="list"
+      /> :
       campaignSync ? (campaignSync.campaign.dmUserId === user.id ? <DMTablePanel
         campaign={campaignSync}
         events={campaignEvents}
@@ -2019,6 +2041,7 @@ export default function ForgeAndFableApp() {
         onOpenSheet={(character) => setReadOnlyViewChar(character)}
         onPostEvent={postCampaignEvent}
         onInitiativeUpdate={updateCampaignInitiative}
+        onOpenCampaigns={() => setCampaignListOpen(true)}
       /> : <CampaignPanel
         characters={characters}
         currentUserId={user.id}
@@ -2191,8 +2214,8 @@ export default function ForgeAndFableApp() {
           activeCampaignId={activeCampaignId}
           campaignSync={campaignSync}
           campaignEvents={campaignEvents}
-          onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignOpen(true); }}
-          onOpenCampaigns={() => setCampaignOpen(true)}
+          onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setCampaignOpen(true); }}
+          onOpenCampaigns={() => { setCampaignListOpen(true); setCampaignOpen(true); }}
           onOpenCharacter={(characterId) => {
             setSelectedId(characterId);
             setHomeOpen(false);
