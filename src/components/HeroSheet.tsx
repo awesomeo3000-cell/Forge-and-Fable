@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Activity,
   BookOpen,
   ChevronDown,
   GripHorizontal,
@@ -16,7 +15,6 @@ import {
   Terminal,
   Trash2,
   UserRound,
-  Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -33,7 +31,7 @@ import {
 } from "@/lib/utils";
 import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
-import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, PINNED_TOP, SECTION_TITLES } from "@/lib/sheetLayout";
+import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
@@ -50,7 +48,8 @@ import { progressionPatchForCharacter } from "@/lib/progression/state";
 import { capabilitiesForCharacter, capabilityResourceCost, type CharacterCapability, type CapabilityLane } from "@/lib/capabilities";
 import type { SpellData, SpellSlots } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
-import CharacterPortrait from "@/components/portraits/CharacterPortrait";
+import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
+import { isCatalogPortrait, portraitPanelCss, suggestPortraitAncestry } from "@/data/portraits";
 import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
@@ -514,7 +513,6 @@ export default memo(function HeroSheet(props: {
 
   const skillsByAbility = abilityKeys.map((k) => ({ ability: k, skills: SKILLS.filter((s) => s.ability === k) }));
 
-  const subtitleParts = [race.name, heroClass.name, props.character.level > 0 ? `Level ${props.character.level}` : null, props.character.background, props.character.alignment].filter(Boolean);
 
   /* ── Reference tabs ── */
   const hasSpellTab = (casterType !== "none" && Boolean(spellAbility) && (knownSpells.length > 0 || spellbookChoices.length > 0))
@@ -694,6 +692,8 @@ export default memo(function HeroSheet(props: {
   const visibleItemMatches = itemMatches.slice(0, 24);
   const [hitDiceRolling, setHitDiceRolling] = useState(false);
   const [showHitDiceRest, setShowHitDiceRest] = useState(false);
+  // Split-panel header (AO-8): the portrait panel doubles as the picker trigger.
+  const [portraitPickerOpen, setPortraitPickerOpen] = useState(false);
   const isPactCaster = casterType === "pact";
   const slotMax = maxSlots(casterType, props.character.level, heroClass.id);
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
@@ -1349,70 +1349,6 @@ export default memo(function HeroSheet(props: {
 
   const sectionContent = (id: SheetSectionId) => {
     switch (id) {
-      case "identity": return (
-        <div className="cs-identity">
-          {props.character.portraitUrl ? (
-            <CharacterPortrait portraitId={props.character.portraitUrl} characterName={props.character.name} size={52} shape="circle" decorative className="cs-identity-portrait" />
-          ) : (
-            <div className="cs-class-icon" data-class={heroClass.id}><ClassIconPlaceholder classId={heroClass.id} size={42} strokeWidth={1.5} /></div>
-          )}
-          <div><h1 className="cs-char-name">{props.character.name}</h1><p className="cs-char-subtitle">{subtitleParts.join(" / ")}</p></div>
-          <span className="cs-level-badge">
-            <button className="cs-lvl-stepper" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={10} /></button>
-            Lv {props.character.level}
-            <button className="cs-lvl-stepper" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={10} /></button>
-          </span>
-          <div className="cs-rest-group">
-            <button className="cs-glass-btn" type="button" onClick={doShortRest} title="Short rest">Short Rest</button>
-            <button className="cs-glass-btn" type="button" onClick={doLongRest} title="Long rest">Long Rest</button>
-          </div>
-          {showHitDiceRest ? (
-            <div className="cs-hd-rest-panel">
-              <span className="cs-hd-rest-info">
-                Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
-              </span>
-              <div className="cs-hd-rest-actions">
-                <button className="cs-glass-btn" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
-                  Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
-                </button>
-                <button className="cs-glass-btn" type="button" onClick={finishShortRest}>Done</button>
-              </div>
-            </div>
-          ) : null}
-          <button className={`cs-glass-btn cs-inspire-btn${props.character.heroicInspiration ? " cs-inspire-on" : ""}`} type="button" aria-pressed={!!props.character.heroicInspiration} title="Heroic Inspiration" onClick={() => props.onUpdate({ heroicInspiration: !props.character.heroicInspiration })}>{props.character.heroicInspiration ? "✦ " : ""}Inspiration</button>
-          <button className="cs-retire-btn" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={12} /></button>
-        </div>
-      );
-      case "vitals": return (
-        <div className="cs-vitals">
-          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}><span className="cs-vital-label"><Shield size={12} />AC</span><strong>{armorClass}</strong><small className="cs-ac-src">{acInfo.label}</small></button>
-          <button type="button" className="cs-vital-cell cs-vital-rollable" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}><span className="cs-vital-label"><Activity size={12} />Init</span><strong>{signed(initiative)}</strong></button>
-          <div className="cs-vital-cell"><span className="cs-vital-label"><Zap size={12} />Speed</span><strong style={acInfo.strengthWarning ? { color: "var(--accent, var(--gold))" } : undefined}>{(() => { const base = parseInt(race.speed, 10) || 30; return acInfo.strengthWarning ? `${Math.max(0, base - 10)} ft.` : race.speed; })()}</strong></div>
-          <div className="cs-vital-cell"><span className="cs-vital-label">Prof</span><strong>{signed(pb)}</strong></div>
-          <div className="cs-vital-cell cs-vital-hp">
-            <span className="cs-vital-label">Hit Points</span>
-            <div className="cs-vital-hp-row"><strong>{props.character.currentHp}</strong><span className="cs-vital-hp-max">/ {props.character.maxHp}</span></div>
-            <span className="sr-only" aria-live="polite">{props.character.currentHp} of {props.character.maxHp} hit points{props.character.tempHp > 0 ? ` plus ${props.character.tempHp} temporary` : ""}</span>
-            {props.character.tempHp > 0 ? <span className="cs-hp-temp">+{props.character.tempHp}</span> : null}
-            <div className="cs-hp-bar"><span style={{ width: `${hpPercent}%` }} /></div>
-            <div className="cs-hp-steppers">
-              <button type="button" aria-label="Decrease HP" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
-              <button type="button" aria-label="Increase HP" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
-            </div>
-          </div>
-          <div className="cs-vital-cell"><span className="cs-vital-label">Hit Dice</span><strong>{props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie}</strong>
-            <button type="button" className="cs-glass-btn cs-hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}>Roll</button>
-          </div>
-          <div className="cs-vital-cell cs-vital-death">
-            <span className="cs-vital-label"><Skull size={12} />Death Saves</span>
-            <div className="cs-vital-death-row">
-              <span>S</span>{[0,1,2].map((i) => (<button key={`s-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.successes ?? 0) ? " dot-success" : ""}`} onClick={() => toggleDeathSave("successes")} aria-pressed={i < (props.character.deathSaves?.successes ?? 0)} aria-label={`Death save success ${i + 1}`} />))}
-              <span>F</span>{[0,1,2].map((i) => (<button key={`f-${i}`} className={`cs-death-dot${i < (props.character.deathSaves?.failures ?? 0) ? " dot-fail" : ""}`} onClick={() => toggleDeathSave("failures")} aria-pressed={i < (props.character.deathSaves?.failures ?? 0)} aria-label={`Death save failure ${i + 1}`} />))}
-              <button className="cs-death-reset" type="button" aria-label="Reset death saves" onClick={resetDeathSaves}>R</button>
-            </div>
-          </div>
-        </div>
-      );
       case "abilities": return (
         <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); const joaTBonus = hasJackOfAllTrades ? halfPb : 0; const totalMod = mod + effChecks + joaTBonus; return (<button type="button" className="cs-ability-cell" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, totalMod, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(totalMod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : undefined}><span className="cs-ability-mod">{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
       );
@@ -2197,14 +2133,145 @@ export default memo(function HeroSheet(props: {
           <button type="button" className="cs-glass-btn" onClick={dismissTour}>Got it</button>
         </div>
       ) : null}
-      {/* Full-width banner: identity + vitals (pinned, not draggable). */}
+      {/* Full-width banner: split-panel character record (pinned, not
+          draggable). Guide: docs mirror of split-panel-character-header. */}
       <div className="cs-sheet-top">
-        {PINNED_TOP.map((id) => (
-          <div className="cs-section cs-pinned" data-section-id={id} key={id}>
-            {sectionContent(id)}
+        <section className="character-header" aria-labelledby="cs-char-name">
+          <button
+            type="button"
+            className="character-header__portrait"
+            onClick={() => setPortraitPickerOpen(true)}
+            disabled={isReadOnly}
+            aria-label={`Change portrait for ${props.character.name}`}
+          >
+            {props.character.portraitUrl ? (
+              isCatalogPortrait(props.character.portraitUrl) ? (
+                <span className="character-header__portrait-art" style={portraitPanelCss(props.character.portraitUrl)} aria-hidden="true" />
+              ) : (
+                // Player-supplied image links are arbitrary URLs; Next image optimization cannot whitelist them.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={props.character.portraitUrl} alt="" />
+              )
+            ) : (
+              <span className="character-header__portrait-empty" aria-hidden="true">
+                <ClassIconPlaceholder classId={heroClass.id} size={72} strokeWidth={1.3} />
+              </span>
+            )}
+            {!isReadOnly ? <span className="character-header__portrait-edit">Change portrait</span> : null}
+          </button>
+
+          <div className="character-header__content">
+            <div className="character-header__top">
+              <header className="character-header__identity">
+                <div className="character-header__eyebrow">
+                  <button className="character-header__lvl" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={11} /></button>
+                  <span>Level {props.character.level} {heroClass.name}</span>
+                  <button className="character-header__lvl" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={11} /></button>
+                </div>
+                <h1 className="character-header__name" id="cs-char-name">{props.character.name}</h1>
+                <p className="character-header__summary">
+                  {[race.name, props.character.background, props.character.alignment].filter(Boolean).join(" · ")}
+                </p>
+              </header>
+              <div className="character-header__actions">
+                <button className="character-header__action" type="button" onClick={doShortRest}>Short Rest</button>
+                <button className="character-header__action" type="button" onClick={doLongRest}>Long Rest</button>
+                <button
+                  className={`character-header__action character-header__inspire${props.character.heroicInspiration ? " is-on" : ""}`}
+                  type="button"
+                  aria-pressed={!!props.character.heroicInspiration}
+                  title="Heroic Inspiration"
+                  onClick={() => props.onUpdate({ heroicInspiration: !props.character.heroicInspiration })}
+                >
+                  {props.character.heroicInspiration ? "✦ Inspired" : "◇ Inspiration"}
+                </button>
+                <button className="character-header__retire" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={13} /></button>
+              </div>
+            </div>
+
+            {showHitDiceRest ? (
+              <div className="cs-hd-rest-panel character-header__hd-rest">
+                <span className="cs-hd-rest-info">
+                  Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
+                </span>
+                <div className="cs-hd-rest-actions">
+                  <button className="character-header__action" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
+                    Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
+                  </button>
+                  <button className="character-header__action" type="button" onClick={finishShortRest}>Done</button>
+                </div>
+              </div>
+            ) : null}
+
+            <section className="character-header__resources" aria-label="Hit points and resources">
+              <div className="character-header__hp">
+                <span className="character-header__label">Hit Points</span>
+                <div className="character-header__hp-row">
+                  <strong>{props.character.currentHp}</strong>
+                  <em>/ {props.character.maxHp}</em>
+                  {props.character.tempHp > 0 ? <span className="character-header__hp-temp">+{props.character.tempHp} temporary</span> : null}
+                  <span className="character-header__hp-steppers">
+                    <button type="button" aria-label="Decrease hit points" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
+                    <button type="button" aria-label="Increase hit points" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
+                  </span>
+                </div>
+                <span className="sr-only" aria-live="polite">{props.character.currentHp} of {props.character.maxHp} hit points{props.character.tempHp > 0 ? ` plus ${props.character.tempHp} temporary` : ""}</span>
+                <div className="character-header__hp-bar"><span style={{ width: `${hpPercent}%` }} /></div>
+                <p className="character-header__hp-meta">
+                  Hit Dice {props.character.level - (props.character.hitDiceSpent ?? 0)} / {props.character.level} d{heroClass.hitDie}
+                  <button type="button" className="character-header__action character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}>Roll</button>
+                </p>
+              </div>
+              <div className="character-header__saves">
+                <span className="character-header__label"><Skull size={12} aria-hidden="true" /> Death Saves</span>
+                <div className="character-header__saves-row">
+                  <span>Successes</span>
+                  {[0, 1, 2].map((i) => (
+                    <button key={`ds-s-${i}`} type="button" className={`character-header__save${i < (props.character.deathSaves?.successes ?? 0) ? " is-success" : ""}`} aria-pressed={i < (props.character.deathSaves?.successes ?? 0)} aria-label={`Death save success ${i + 1}`} onClick={() => toggleDeathSave("successes")} />
+                  ))}
+                </div>
+                <div className="character-header__saves-row">
+                  <span>Failures</span>
+                  {[0, 1, 2].map((i) => (
+                    <button key={`ds-f-${i}`} type="button" className={`character-header__save${i < (props.character.deathSaves?.failures ?? 0) ? " is-fail" : ""}`} aria-pressed={i < (props.character.deathSaves?.failures ?? 0)} aria-label={`Death save failure ${i + 1}`} onClick={() => toggleDeathSave("failures")} />
+                  ))}
+                </div>
+                <button className="character-header__saves-reset" type="button" onClick={resetDeathSaves}>Reset</button>
+              </div>
+            </section>
+
+            <section className="character-header__stats" aria-label="Primary statistics">
+              <button type="button" className="character-stat character-stat--action" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}>
+                <strong>{armorClass}</strong>
+                <span>Armor Class</span>
+                <small>{acInfo.label}</small>
+              </button>
+              <button type="button" className="character-stat character-stat--action" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}>
+                <strong>{signed(initiative)}</strong>
+                <span>Initiative</span>
+              </button>
+              <div className="character-stat">
+                <strong style={acInfo.strengthWarning ? { color: "var(--accent, var(--gold))" } : undefined}>{(() => { const base = parseInt(race.speed, 10) || 30; return acInfo.strengthWarning ? `${Math.max(0, base - 10)} ft.` : race.speed; })()}</strong>
+                <span>Speed</span>
+              </div>
+              <div className="character-stat">
+                <strong>{signed(pb)}</strong>
+                <span>Proficiency</span>
+              </div>
+            </section>
           </div>
-        ))}
+        </section>
       </div>
+      {portraitPickerOpen && !isReadOnly ? (
+        <PortraitSelectorModal
+          open={portraitPickerOpen}
+          value={props.character.portraitUrl || null}
+          suggestedAncestry={suggestPortraitAncestry(race.id)}
+          characterName={props.character.name}
+          onSave={(portraitUrl) => props.onUpdate({ portraitUrl })}
+          onClose={() => setPortraitPickerOpen(false)}
+        />
+      ) : null}
 
       <DndContext
         sensors={sensors}

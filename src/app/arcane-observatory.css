@@ -2104,3 +2104,454 @@
     flex: 1 1 auto;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-8 — split-panel character record header (CHANGES-AO-8)
+   Guide: split-panel-character-header-agent-guide.md. One solid surface,
+   dedicated portrait panel, editorial identity, flat stat row. Every color
+   reads the sheet's document variables (--paper/--ink/--doc-*) so a
+   player-chosen skin — applied inline on .cs-sheet — themes the header the
+   same way it themes the rest of the sheet. No glass, no glow, no gauges.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .cs-sheet-top {
+  display: block;
+  background: transparent;
+}
+
+[data-theme="arcane-observatory"] .character-header {
+  display: grid;
+  grid-template-columns: clamp(220px, 18vw, 280px) minmax(0, 1fr);
+  min-height: 300px;
+  overflow: hidden;
+  background: var(--paper-raised);
+  border: 1px solid var(--doc-rule);
+  border-top: 2px solid var(--doc-select);
+  border-radius: 4px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+/* ── Portrait panel: the picture is the panel ── */
+[data-theme="arcane-observatory"] .character-header__portrait {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  display: block;
+  padding: 0;
+  background: color-mix(in srgb, var(--paper) 55%, #05090f);
+  border: 0;
+  border-right: 1px solid var(--doc-rule);
+  border-radius: 0;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__portrait:disabled { cursor: default; }
+[data-theme="arcane-observatory"] .character-header__portrait:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: -3px;
+}
+[data-theme="arcane-observatory"] .character-header__portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+[data-theme="arcane-observatory"] .character-header__portrait-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-repeat: no-repeat;
+}
+[data-theme="arcane-observatory"] .character-header__portrait-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+[data-theme="arcane-observatory"] .character-header__portrait-edit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 9px 10px;
+  background: rgba(5, 9, 15, 0.85);
+  color: #e8edf2;
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+[data-theme="arcane-observatory"] .character-header__portrait:hover .character-header__portrait-edit,
+[data-theme="arcane-observatory"] .character-header__portrait:focus-visible .character-header__portrait-edit {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .character-header__portrait-edit { transition: none; }
+}
+
+/* ── Content panel: identity / resources / stats ── */
+[data-theme="arcane-observatory"] .character-header__content {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  padding: 22px 26px 0;
+}
+[data-theme="arcane-observatory"] .character-header__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .character-header__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--doc-select);
+  font: 700 0.66rem/1 var(--font-role-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .character-header__lvl {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--doc-select) 55%, transparent);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__lvl:hover {
+  color: var(--ink);
+  border-color: var(--doc-select);
+}
+[data-theme="arcane-observatory"] .character-header__lvl:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .character-header__name {
+  margin: 7px 0 4px;
+  color: var(--ink);
+  font-family: var(--font-role-display);
+  font-size: clamp(2.1rem, 3.2vw, 3.2rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .character-header__summary {
+  margin: 0;
+  color: var(--ink-2);
+  font-family: var(--font-role-display);
+  font-style: italic;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+/* Actions: visually secondary to the name. */
+[data-theme="arcane-observatory"] .character-header__actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+[data-theme="arcane-observatory"] .character-header__action {
+  min-height: 34px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--paper) 72%, #05090f);
+  border: 1px solid var(--doc-rule);
+  border-radius: 3px;
+  color: var(--ink);
+  font: 700 0.68rem/1 var(--font-role-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__action:hover:not(:disabled) {
+  background: var(--paper);
+  border-color: var(--ink-3);
+}
+[data-theme="arcane-observatory"] .character-header__action:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .character-header__action:disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+[data-theme="arcane-observatory"] .character-header__inspire.is-on {
+  background: color-mix(in srgb, var(--doc-select) 16%, var(--paper));
+  border-color: var(--doc-select);
+  color: color-mix(in srgb, var(--doc-select) 62%, var(--ink));
+}
+[data-theme="arcane-observatory"] .character-header__retire {
+  min-height: 34px;
+  min-width: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__retire:hover {
+  color: #d99090;
+  border-color: color-mix(in srgb, #a75f5b 60%, transparent);
+}
+[data-theme="arcane-observatory"] .character-header__retire:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .character-header__hd-rest {
+  align-self: start;
+}
+
+/* ── Resources: HP dominates ── */
+[data-theme="arcane-observatory"] .character-header__resources {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 26px;
+  align-items: end;
+}
+[data-theme="arcane-observatory"] .character-header__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-3);
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .character-header__hp {
+  display: grid;
+  gap: 7px;
+  max-width: 560px;
+}
+[data-theme="arcane-observatory"] .character-header__hp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+[data-theme="arcane-observatory"] .character-header__hp-row strong {
+  color: var(--ink);
+  font-family: var(--font-role-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+[data-theme="arcane-observatory"] .character-header__hp-row em {
+  color: var(--ink-3);
+  font-family: var(--font-role-display);
+  font-style: normal;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+[data-theme="arcane-observatory"] .character-header__hp-temp {
+  color: color-mix(in srgb, var(--doc-select) 70%, var(--ink));
+  font: 700 0.78rem/1 var(--font-role-label);
+  letter-spacing: 0.04em;
+}
+[data-theme="arcane-observatory"] .character-header__hp-steppers {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 4px;
+}
+[data-theme="arcane-observatory"] .character-header__hp-steppers button {
+  width: 30px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--doc-rule);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__hp-steppers button:hover {
+  color: var(--ink);
+  border-color: var(--ink-3);
+}
+[data-theme="arcane-observatory"] .character-header__hp-steppers button:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .character-header__hp-bar {
+  height: 8px;
+  background: color-mix(in srgb, var(--paper) 58%, #05090f);
+  border-radius: 0;
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .character-header__hp-bar > span {
+  display: block;
+  height: 100%;
+  background: #93a97b;
+}
+[data-theme="arcane-observatory"] .character-header__hp-meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-2);
+  font-family: var(--font-role-body);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .character-header__hd-roll {
+  min-height: 26px;
+  padding: 4px 10px;
+}
+
+/* Death saves: labeled, compact diamonds, state never color-only. */
+[data-theme="arcane-observatory"] .character-header__saves {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+  padding-bottom: 2px;
+}
+[data-theme="arcane-observatory"] .character-header__saves-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+[data-theme="arcane-observatory"] .character-header__saves-row > span {
+  width: 74px;
+  color: var(--ink-3);
+  font: 700 0.6rem/1 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .character-header__save {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: 1px solid var(--ink-3);
+  border-radius: 1px;
+  background: transparent;
+  transform: rotate(45deg);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__save:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 3px;
+}
+[data-theme="arcane-observatory"] .character-header__save.is-success {
+  background: #7f9f83;
+  border-color: #7f9f83;
+}
+[data-theme="arcane-observatory"] .character-header__save.is-fail {
+  background: #a75f5b;
+  border-color: #a75f5b;
+}
+[data-theme="arcane-observatory"] .character-header__saves-reset {
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .character-header__saves-reset:hover { color: var(--ink); }
+[data-theme="arcane-observatory"] .character-header__saves-reset:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+
+/* ── Flat statistics row: one system, no gauges ── */
+[data-theme="arcane-observatory"] .character-header__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 -26px;
+  border-top: 1px solid color-mix(in srgb, var(--doc-select) 70%, transparent);
+}
+[data-theme="arcane-observatory"] .character-stat {
+  min-width: 0;
+  padding: 13px 16px 14px;
+  border: 0;
+  border-right: 1px solid var(--doc-rule);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+[data-theme="arcane-observatory"] .character-stat:last-child { border-right: 0; }
+[data-theme="arcane-observatory"] .character-stat strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-role-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+[data-theme="arcane-observatory"] .character-stat > span {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink-3);
+  font: 700 0.6rem/1 var(--font-role-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .character-stat > small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+}
+[data-theme="arcane-observatory"] button.character-stat { cursor: pointer; }
+[data-theme="arcane-observatory"] button.character-stat:hover {
+  background: color-mix(in srgb, var(--paper) 88%, #ffffff);
+}
+[data-theme="arcane-observatory"] button.character-stat:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: -3px;
+}
+
+/* ── Header responsive ── */
+@media (max-width: 960px) {
+  [data-theme="arcane-observatory"] .character-header {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .character-header__top {
+    grid-template-columns: 1fr;
+  }
+  [data-theme="arcane-observatory"] .character-header__actions { justify-content: flex-start; }
+  [data-theme="arcane-observatory"] .character-header__resources {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 14px;
+  }
+}
+@media (max-width: 720px) {
+  [data-theme="arcane-observatory"] .character-header {
+    grid-template-columns: 1fr;
+  }
+  [data-theme="arcane-observatory"] .character-header__portrait {
+    min-height: 280px;
+    border-right: 0;
+    border-bottom: 1px solid var(--doc-rule);
+  }
+  [data-theme="arcane-observatory"] .character-header__content {
+    padding: 18px 18px 0;
+  }
+  [data-theme="arcane-observatory"] .character-header__name {
+    font-size: clamp(2rem, 9vw, 2.7rem);
+  }
+  [data-theme="arcane-observatory"] .character-header__action { min-height: 44px; }
+  [data-theme="arcane-observatory"] .character-header__stats {
+    margin: 0 -18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  [data-theme="arcane-observatory"] .character-stat:nth-child(2) { border-right: 0; }
+  [data-theme="arcane-observatory"] .character-stat:nth-child(-n + 2) { border-bottom: 1px solid var(--doc-rule); }
+}
