@@ -26,7 +26,9 @@ export function derivePartyAlerts(members: CampaignMemberSummary[], presence: Ca
     const depleted = deriveImportantResources(member).find((resource) => resource.current === 0 && resource.priority >= 80);
     if (depleted) alerts.push({ id: `${member.userId}:resource:${depleted.id}`, userId: member.userId, characterId: member.characterId, severity: "info", kind: "resource-empty", title: `${name} is out of ${depleted.label}`, detail: depleted.recharge === "other" ? undefined : `Returns on ${depleted.recharge.replaceAll("-", " ")}` });
     const state = presence.find((item) => item.userId === member.userId)?.state ?? "disconnected";
-    if (state === "disconnected") alerts.push({ id: `${member.userId}:disconnected`, userId: member.userId, characterId: member.characterId, severity: "warning", kind: "disconnected", title: `${name} is disconnected` });
+    // Ghosts have no presence rows; the server plays them, so they are never
+    // "disconnected" (review finding DM-9 #1 — this was spamming the rail).
+    if (state === "disconnected" && !member.isGhost) alerts.push({ id: `${member.userId}:disconnected`, userId: member.userId, characterId: member.characterId, severity: "warning", kind: "disconnected", title: `${name} is disconnected` });
   }
   const rank: Record<PartyAlertSeverity, number> = { critical: 3, warning: 2, info: 1 };
   return alerts.sort((a, b) => rank[b.severity] - rank[a.severity] || a.title.localeCompare(b.title));

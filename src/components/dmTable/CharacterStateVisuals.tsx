@@ -12,7 +12,7 @@ export const CharacterPortrait = memo(function CharacterPortrait({
 }) {
   const name = member.characterName ?? member.userName;
   const portraitId = member.characterJson?.portraitUrl?.trim() || null;
-  const px = size === "inspector" ? 58 : 54;
+  const px = size === "inspector" ? 84 : 76;
   return (
     <CharacterPortraitBase
       portraitId={portraitId}
