@@ -3269,7 +3269,8 @@
   [data-theme="arcane-observatory"] .dm-init-chip {
     min-width: 36px;
     min-height: 36px;
-
+  }
+}
 /* Mobile contracts: the Observatory layer is loaded after globals.css, so it
    must repeat the Table collapse here instead of letting its desktop grid
    minima win the cascade. Every child surface is allowed to shrink to the
