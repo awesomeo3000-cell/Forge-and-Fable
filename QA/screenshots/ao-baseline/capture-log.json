@@ -1,0 +1,122 @@
+[
+  {
+    "step": "shot 01-auth @ 1440x900",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 01-auth @ 1280x800",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 01-auth @ 768x1024",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 01-auth @ 390x844",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "register",
+    "status": "ok",
+    "detail": "ao_baseline_1784000345875@forge.test"
+  },
+  {
+    "step": "shot 02-start @ 1440x900",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 02-start @ 1280x800",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 02-start @ 768x1024",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 02-start @ 390x844",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "open standard creator",
+    "status": "fail",
+    "detail": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=Standard').first()\u001b[2"
+  },
+  {
+    "step": "shot 03-creator @ 1440x900",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 03-creator @ 1280x800",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 03-creator @ 768x1024",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 03-creator @ 390x844",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "premade to sheet",
+    "status": "fail",
+    "detail": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=/premade/i').first()\u001b[22m\n"
+  },
+  {
+    "step": "shot 04-sheet @ 1440x900",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 04-sheet @ 1280x800",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 04-sheet @ 768x1024",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 04-sheet @ 390x844",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "open campaigns",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 05-campaigns @ 1440x900",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 05-campaigns @ 1280x800",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 05-campaigns @ 768x1024",
+    "status": "ok",
+    "detail": ""
+  },
+  {
+    "step": "shot 05-campaigns @ 390x844",
+    "status": "ok",
+    "detail": ""
+  }
+]
