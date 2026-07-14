@@ -62,3 +62,22 @@ and audit in CHANGES-AO-0.md.
 - Test coverage: build/test/lint; recaptured screenshot set (passes 1/2/5).
 - Remaining legacy styles: all interiors (Phase 4A–4C), splash/auth.
 - Rollback commit: remove body attribute or revert AO-3.
+
+## Phase 4 amendment (2026-07-14) — ink interiors, parchment retired
+
+- Old component/route: all paper interiors (`.cs-sheet`, `.paper-surface`,
+  `.campaign-panel`, `.feedback-modal`, `.ledger-page` family) — legacy CSS
+  untouched; flipped via doc-palette + `--ledger-*` re-points in the
+  Phase 4 block of arcane-observatory.css.
+- New component / token dependency: document tokens now ink
+  (`--surface-document` `#152438`); old-gold selection in documents.
+- Behavior preserved: everything (CSS-only); skins override inline and
+  still win (verified: Tundra-skinned sheet unchanged, default sheet ink).
+- Known visual differences: no parchment anywhere by default; ledger seal
+  brightened for contrast on dark.
+- Test coverage: build/test/lint; recaptured sheet/commission/onboarding/
+  quickbuilder/campaigns/mobile. Level-up, dice overlay, import/feedback
+  modals pending capture.
+- Remaining legacy styles: layout/structure rules (Phase 4A–4F proper),
+  splash/auth photo, dice drawer, DM table (own scope, 4D).
+- Rollback commit: revert AO-4.

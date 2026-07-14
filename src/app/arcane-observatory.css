@@ -26,8 +26,9 @@
   --surface-panel: #142235;           /* primary work surface */
   --surface-panel-raised: #1a2b40;    /* hover targets, raised cards */
   --surface-panel-recessed: #0f1b2a;  /* wells, insets, quiet regions */
-  --surface-document: #e5dccb;        /* parchment — DOCUMENTS ONLY */
-  --surface-document-muted: #d3c7b3;  /* aged parchment, secondary sheets */
+  --surface-document: #152438;        /* documents = distinct ink panel (owner
+                                         amendment 2026-07-14: parchment retired) */
+  --surface-document-muted: #112031;  /* quieter document surface */
   --surface-input: #101c2b;
   --surface-overlay: #0a111c;         /* opaque modal/drawer surface — never translucent */
 
@@ -36,8 +37,8 @@
   --text-secondary: #b8c2cc;
   --text-muted: #8391a0;
   --text-disabled: #5f6a75;
-  --text-document: #222a34;           /* ink on parchment */
-  --text-document-muted: #5a5f57;
+  --text-document: #e9eef4;           /* warm white on ink documents */
+  --text-document-muted: #91a0b0;
   --text-on-accent: #081018;
 
   /* ── Borders and rules ── */
@@ -139,8 +140,10 @@
 }
 [data-theme="arcane-observatory"] .ao-document {
   background:
-    repeating-linear-gradient(0deg, transparent 0 27px, rgba(55, 68, 85, 0.05) 27px 28px),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
     var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
   border-radius: var(--radius-xs);
   box-shadow: var(--shadow-document);
   color: var(--text-document);
@@ -643,6 +646,51 @@
   color: var(--text-primary);
   font-family: var(--font-role-body);
   box-shadow: var(--shadow-overlay);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Phase 4 — ink interiors (CHANGES-AO-4)
+   OWNER AMENDMENT AT GATE 3 (2026-07-14): parchment is retired ENTIRELY —
+   interiors build on the ink-blue palette. This supersedes the plan's
+   "parchment for documents" rule. Document surfaces stay a distinct,
+   slightly raised ink panel so "document" remains a readable role.
+
+   Mechanism: every paper interior (.cs-sheet, .paper-surface,
+   .campaign-panel, .feedback-modal) derives ALL of its color from the doc
+   palette (--paper/--ink/--doc-*), so one scoped re-point flips the whole
+   subtree coherently. Character skins apply these same variables INLINE,
+   so a user-chosen skin still wins — the skins feature keeps working; only
+   the DEFAULT presentation becomes Observatory ink.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .cs-sheet,
+[data-theme="arcane-observatory"] .paper-surface,
+[data-theme="arcane-observatory"] .campaign-panel,
+[data-theme="arcane-observatory"] .feedback-modal {
+  --paper: #152438;          /* document ink-blue, a step warmer than the shell */
+  --paper-raised: #1c2e46;
+  --ink: #e9eef4;
+  --ink-2: #b6c1cd;
+  --ink-3: #91a0b0;
+  --doc-rule: #33465f;
+  --doc-rule-soft: #253850;
+  --doc-accent: #a84f49;     /* seal red keeps its role on the sheet */
+  --doc-accent-deep: #8f423d;
+  --doc-select: #b3924a;     /* old gold for selection marks in documents */
+}
+
+/* The Ledger "daylight" palette (R18, :root) drives .ledger-page surfaces:
+   start panel, onboarding, quickbuilder, learn modals, admin. Re-pointed to
+   ink here — the seal brightens for small-text contrast on dark. */
+[data-theme="arcane-observatory"] {
+  --ledger-paper: #152438;
+  --ledger-tint: #1c2e46;
+  --ledger-ink: #e9eef4;
+  --ledger-faded: #b6c1cd;
+  --ledger-ghost: #91a0b0;
+  --ledger-rule: #2b3d55;
+  --ledger-edge: #3c5068;
+  --ledger-seal: #c47b72;
 }
 
 /* ── Phase 1 token showcase (/theme-observatory) — review surface only.

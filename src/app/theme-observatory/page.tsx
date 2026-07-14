@@ -70,7 +70,8 @@ export default function ThemeObservatoryPage() {
         <p className="ao-sc-lede">
           Phase 1 semantic foundation. Every value below is a candidate until
           Gate 2 signs it off. Matte, engraved, scholarly — panels are opaque,
-          borders do the separation, parchment appears only inside documents.
+          borders do the separation. Parchment is retired (owner amendment,
+          Gate 3) — documents are distinct ink panels.
         </p>
       </header>
 
@@ -94,7 +95,7 @@ export default function ThemeObservatoryPage() {
         </div>
         <div className="ao-sc-document">
           <p style={{ color: "var(--text-document)" }}>
-            <code>--text-document</code> — dark ink on a document surface. Long-form
+            <code>--text-document</code> — warm white on a document surface. Long-form
             reading happens here: handouts, notes, the character sheet itself.
           </p>
           <p style={{ color: "var(--text-document-muted)" }}>
