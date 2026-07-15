@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState } from "react";
+import Image from "next/image";
 import type {
   AbilityKey,
   AbilityScores,
@@ -53,6 +54,27 @@ type AssignmentMap = Record<AbilityKey, number>;
 
 const steps = ["Setup", "Portrait", "Class", "Origin", "Species", "Attributes", "Finalize"];
 const levelOptions = Array.from({ length: 20 }, (_, index) => index + 1);
+
+const CLASS_SELECTOR_COPY: Record<string, { description: string; role: string }> = {
+  artificer: { description: "Clever inventor and magical engineer", role: "Support & Utility" },
+  barbarian: { description: "Relentless frontline bruiser", role: "Durability & Damage" },
+  bard: { description: "Charismatic performer and versatile ally", role: "Support & Control" },
+  cleric: { description: "Divine champion and steadfast healer", role: "Support & Healing" },
+  druid: { description: "Wild spellcaster and shapeshifter", role: "Control & Support" },
+  fighter: { description: "Versatile master of weapons and armor", role: "Martial Damage" },
+  monk: { description: "Swift martial artist and skirmisher", role: "Mobility & Damage" },
+  paladin: { description: "Armored champion bound by an oath", role: "Defense & Support" },
+  ranger: { description: "Wilderness hunter and deadly scout", role: "Ranged Damage" },
+  rogue: { description: "Elusive expert and precision striker", role: "Precision Damage" },
+  sorcerer: { description: "Unstable & explosive spellcaster", role: "Arcane Damage" },
+  warlock: { description: "Pact-bound caster with forbidden power", role: "Arcane Damage" },
+  wizard: { description: "Studied master of arcane magic", role: "Control & Utility" },
+};
+
+const CLASS_ART_IDS = new Set([
+  "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+  "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+]);
 
 function casterLabel(heroClass: HeroClass) {
   if (!heroClass.casterType || heroClass.casterType === "none") return "martial";
@@ -664,16 +686,34 @@ export default memo(function CreatorPanel(props: {
                     ) : null}
                   </div>
                 ) : null}
-                <div className="ledger-option-list">
+                <div className="ledger-option-list ledger-class-grid">
                   {props.ruleset.classes.map((candidate) => {
                     const selected = candidate.id === props.draft.classId;
+                    const cardCopy = CLASS_SELECTOR_COPY[candidate.id] ?? {
+                      description: classDescriptor(candidate.id),
+                      role: classDetailLine(candidate),
+                    };
 
                     return (
                       <div
                         key={candidate.id}
-                        className={`ledger-option has-dot ${selected ? "active" : ""}`}
+                        className={`ledger-option ledger-class-card ${selected ? "active" : ""}`}
                         data-class={candidate.id}
                       >
+                        {CLASS_ART_IDS.has(candidate.id) ? (
+                          <Image
+                            className="ledger-class-card-art"
+                            src={`/class-art/${candidate.id}.jfif`}
+                            alt=""
+                            fill
+                            sizes="(max-width: 900px) 100vw, 440px"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <span className="ledger-class-card-fallback" aria-hidden="true">
+                            <ClassIconPlaceholder classId={candidate.id} size={74} strokeWidth={1.25} />
+                          </span>
+                        )}
                         <button
                           className="dj-card-select"
                           type="button"
@@ -693,18 +733,20 @@ export default memo(function CreatorPanel(props: {
                             }
                           }}
                         />
-                        <span className="ledger-option-dot" aria-hidden="true" />
-                        <span className="ledger-option-name">{candidate.name}</span>
-                        <span className="ledger-option-desc">{classDescriptor(candidate.id)}</span>
+                        <span className="ledger-class-card-copy">
+                          <strong className="ledger-class-card-name">{candidate.name}</strong>
+                          <span className="ledger-class-card-desc">{cardCopy.description}</span>
+                          <small className="ledger-class-card-role">{cardCopy.role}</small>
+                        </span>
                         <button
-                          className="dj-card-link ledger-option-link"
+                          className="dj-card-link ledger-class-card-link"
                           type="button"
                           aria-haspopup="dialog"
                           onClick={() => setInspectedClassId(candidate.id)}
                         >
-                          Preview class
+                          Details
                         </button>
-                        {selected ? <em className="ledger-option-state">Chosen ✦</em> : null}
+                        {selected ? <em className="ledger-class-card-state">Chosen ✦</em> : null}
                       </div>
                     );
                   })}

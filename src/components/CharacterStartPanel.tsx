@@ -22,7 +22,7 @@ export default memo(function CharacterStartPanel(props: {
   const [selectedMode, setSelectedMode] = useState<BuildMode | null>(null);
 
   return (
-    <div className="start-panel commission-screen dj-start ledger-page">
+    <div className="start-panel commission-screen dj-start">
       <div className="commission-head">
         <header className="commission-page-head">
           <span className="commission-eyebrow">
