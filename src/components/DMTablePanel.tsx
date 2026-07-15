@@ -50,6 +50,9 @@ type Props = {
   onInitiativeUpdate: (data: InitiativeState, version: number) => Promise<void> | void;
   /** Open the campaign list (create, join, delete, switch) without closing the session. */
   onOpenCampaigns?: () => void;
+  /** Open the preparation tools directly on the session scheduler. */
+  openScheduleSession?: boolean;
+  onScheduleSessionOpened?: () => void;
 };
 
 function parsePayload(event: CampaignEvent) {
@@ -78,7 +81,7 @@ function eventLine(event: CampaignEvent) {
   return "Table event.";
 }
 
-export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate, onOpenCampaigns }: Props) {
+export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate, onOpenCampaigns, openScheduleSession, onScheduleSessionOpened }: Props) {
   const [tracks, setTracks] = useState<CampaignTrack[]>([]);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackUrl, setTrackUrl] = useState("");
@@ -113,6 +116,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [activeCommand, setActiveCommand] = useState<null | "announce" | "roll" | "condition" | "handout" | "loot" | "combatant">(null);
   const [error, setError] = useState("");
   const [prepOpen, setPrepOpen] = useState(false);
+  const [prepInitialTab, setPrepInitialTab] = useState<"encounters" | "sessions">("encounters");
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
   const [activeEncounter, setActiveEncounter] = useState<EncounterRun | null>(null);
   const [savedHandouts, setSavedHandouts] = useState<CampaignHandout[]>([]);
@@ -249,6 +253,13 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     const interval = window.setInterval(() => void refreshWorkspace(), 10000);
     return () => window.clearInterval(interval);
   }, [refreshWorkspace]);
+  useEffect(() => {
+    if (!openScheduleSession) return;
+    setWorkspaceMode("preparation");
+    setPrepInitialTab("sessions");
+    setPrepOpen(true);
+    onScheduleSessionOpened?.();
+  }, [onScheduleSessionOpened, openScheduleSession]);
   useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   // Chronicle data: the sessions list loads when Review opens; pins follow
   // the selected session.
@@ -625,7 +636,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <button type="button" className="dm-btn" onClick={() => { const note = window.prompt("Session note"); if (note) void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note }); }}>Note</button>
             <button type="button" className="dm-btn" disabled={!records[0]} onClick={() => records[0] && void dmToolsApi.pin(campaign.campaign.id, activeSession.id, { note: records[0].text, eventId: records[0].id })}>Pin latest</button>
             <button type="button" className="dm-btn" onClick={() => setSessionOnBreak((value) => !value)}>{sessionOnBreak ? "Resume" : "Break"}</button>
-            <button type="button" className="dm-btn" onClick={() => { if (window.confirm("End this session and prepare its summary draft?")) void dmToolsApi.endSession(campaign.campaign.id, activeSession.id).then(() => { setPrepOpen(true); return refreshWorkspace(); }); }}>End session</button>
+            <button type="button" className="dm-btn dm-btn-danger" onClick={() => { if (!window.confirm("End this session and prepare its summary draft?")) return; void dmToolsApi.endSession(campaign.campaign.id, activeSession.id).then(() => { setPrepInitialTab("sessions"); setPrepOpen(true); return refreshWorkspace(); }).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not end the session.")); }}>End session</button>
           </> : <>
             <input placeholder="Session title" aria-label="Session title" value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} />
             <button type="button" className="dm-btn dm-btn-primary" onClick={() => void dmToolsApi.startSession(campaign.campaign.id, { title: sessionTitle || undefined }).then(() => { setSessionTitle(""); return refreshWorkspace(); })}>Start session</button>
@@ -1130,7 +1141,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         )}
       </div>
       <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input placeholder="Direct audio URL" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || !trackUrl.trim()}><Plus size={14}/> Add track</button></div></section>
-      {prepOpen ? <DMPrepPanel campaignId={campaign.campaign.id} onClose={() => { setPrepOpen(false); void refreshWorkspace(); }} onEncounterStarted={() => void refreshWorkspace()}/> : null}
+      {prepOpen ? <DMPrepPanel campaignId={campaign.campaign.id} initialTab={prepInitialTab} onClose={() => { setPrepOpen(false); void refreshWorkspace(); }} onEncounterStarted={() => void refreshWorkspace()}/> : null}
     </section>
   );
 });

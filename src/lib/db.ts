@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 15;
+const SCHEMA_REVISION = 17;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -97,6 +97,7 @@ function createSchema(db: DatabaseSync) {
       code TEXT NOT NULL UNIQUE,
       dm_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       theme_key TEXT NOT NULL DEFAULT 'observatory',
+      banner_image_url TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -287,6 +288,9 @@ function createSchema(db: DatabaseSync) {
       session_number INTEGER,
       title TEXT,
       started_at TEXT NOT NULL,
+      scheduled_at TEXT,
+      duration_minutes INTEGER,
+      location TEXT,
       ended_at TEXT,
       status TEXT NOT NULL,
       dm_notes TEXT,
@@ -415,6 +419,20 @@ function migrateSchema(db: DatabaseSync) {
       db.exec("ALTER TABLE campaigns ADD COLUMN theme_key TEXT NOT NULL DEFAULT 'observatory'");
     }
     recordMigration(db, 15, "campaign banner themes");
+    if (!tableHasColumn(db, "campaign_sessions", "scheduled_at")) {
+      db.exec("ALTER TABLE campaign_sessions ADD COLUMN scheduled_at TEXT");
+    }
+    if (!tableHasColumn(db, "campaign_sessions", "duration_minutes")) {
+      db.exec("ALTER TABLE campaign_sessions ADD COLUMN duration_minutes INTEGER");
+    }
+    if (!tableHasColumn(db, "campaign_sessions", "location")) {
+      db.exec("ALTER TABLE campaign_sessions ADD COLUMN location TEXT");
+    }
+    recordMigration(db, 16, "scheduled campaign sessions");
+    if (!tableHasColumn(db, "campaigns", "banner_image_url")) {
+      db.exec("ALTER TABLE campaigns ADD COLUMN banner_image_url TEXT");
+    }
+    recordMigration(db, 17, "custom campaign banner artwork");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

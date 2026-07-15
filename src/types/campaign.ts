@@ -195,6 +195,7 @@ export type CampaignSyncPayload = {
     code: string;
     dmUserId: string;
     themeKey: CampaignThemeId;
+    bannerImageUrl?: string | null;
   };
   events: CampaignEvent[];
   rolls: Array<{

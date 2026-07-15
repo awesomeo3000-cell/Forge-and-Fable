@@ -900,8 +900,11 @@ function sessionFromRow(row: {
   session_number: number | null;
   title: string | null;
   started_at: string;
+  scheduled_at: string | null;
+  duration_minutes: number | null;
+  location: string | null;
   ended_at: string | null;
-  status: "active" | "completed";
+  status: "scheduled" | "active" | "completed";
   dm_notes: string | null;
   summary_json: string | null;
   published_journal_entry_id: string | null;
@@ -912,6 +915,9 @@ function sessionFromRow(row: {
     ...(row.session_number ? { number: row.session_number } : {}),
     ...(row.title ? { title: row.title } : {}),
     startedAt: row.started_at,
+    ...(row.scheduled_at ? { scheduledAt: row.scheduled_at } : {}),
+    ...(row.duration_minutes ? { durationMinutes: row.duration_minutes } : {}),
+    ...(row.location ? { location: row.location } : {}),
     ...(row.ended_at ? { endedAt: row.ended_at } : {}),
     status: row.status,
     ...(row.dm_notes ? { dmNotes: row.dm_notes } : {}),
@@ -922,7 +928,7 @@ function sessionFromRow(row: {
 export function listSessions(campaignId: string, userId: string) {
   requireMember(campaignId, userId);
   const rows = getDb()
-    .prepare("SELECT * FROM campaign_sessions WHERE campaign_id=? ORDER BY started_at DESC")
+    .prepare("SELECT * FROM campaign_sessions WHERE campaign_id=? ORDER BY COALESCE(scheduled_at, started_at) DESC")
     .all(campaignId) as Parameters<typeof sessionFromRow>[0][];
   return rows
     .map(sessionFromRow)
@@ -935,12 +941,96 @@ export function listSessions(campaignId: string, userId: string) {
             number: session.number,
             title: session.title,
             startedAt: session.startedAt,
+            scheduledAt: session.scheduledAt,
+            durationMinutes: session.durationMinutes,
+            location: session.location,
             endedAt: session.endedAt,
             status: session.status,
             publishedJournalEntryId: session.publishedJournalEntryId,
           },
     );
 }
+
+function parseScheduledAt(value: unknown): string {
+  if (typeof value !== "string" || !value.trim()) throw new Error("Choose a date and time for the session.");
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) throw new Error("Choose a valid date and time for the session.");
+  if (parsed.getTime() <= Date.now()) throw new Error("A scheduled session must be in the future.");
+  return parsed.toISOString();
+}
+
+export function scheduleSession(
+  campaignId: string,
+  userId: string,
+  input: { title?: unknown; scheduledAt?: unknown; durationMinutes?: unknown; location?: unknown; dmNotes?: unknown },
+) {
+  requireDm(campaignId, userId);
+  return transaction(() => {
+    const scheduledAt = parseScheduledAt(input.scheduledAt);
+    const count = (getDb().prepare("SELECT COUNT(*) AS count FROM campaign_sessions WHERE campaign_id=?").get(campaignId) as { count: number }).count;
+    return insertScheduledSession(campaignId, count + 1, scheduledAt, input);
+  });
+}
+
+function insertScheduledSession(
+  campaignId: string,
+  number: number,
+  scheduledAt: string,
+  input: { title?: unknown; durationMinutes?: unknown; location?: unknown; dmNotes?: unknown },
+  titleOverride?: string,
+) {
+  const location = safeText(input.location, 160);
+  const dmNotes = safeText(input.dmNotes, 4000);
+  const session: CampaignSession = {
+    id: randomUUID(),
+    campaignId,
+    number,
+    title: titleOverride ?? (safeText(input.title, 100) || `Session ${number}`),
+    startedAt: scheduledAt,
+    scheduledAt,
+    durationMinutes: safeInt(input.durationMinutes, 30, 720, 180),
+    ...(location ? { location } : {}),
+    status: "scheduled",
+    ...(dmNotes ? { dmNotes } : {}),
+  };
+  getDb()
+    .prepare("INSERT INTO campaign_sessions(id,campaign_id,session_number,title,started_at,scheduled_at,duration_minutes,location,status,dm_notes)VALUES(?,?,?,?,?,?,?,?,?,?)")
+    .run(session.id, campaignId, session.number, session.title, session.startedAt, session.scheduledAt, session.durationMinutes, session.location ?? null, session.status, session.dmNotes ?? null);
+  return session;
+}
+
+export function scheduleSessions(
+  campaignId: string,
+  userId: string,
+  input: { title?: unknown; scheduledAts?: unknown; durationMinutes?: unknown; location?: unknown; dmNotes?: unknown },
+) {
+  requireDm(campaignId, userId);
+  return transaction(() => {
+    if (!Array.isArray(input.scheduledAts) || input.scheduledAts.length < 2) throw new Error("Choose at least two dates for a recurring series.");
+    if (input.scheduledAts.length > 24) throw new Error("A recurring series can contain at most 24 sessions.");
+    const scheduledAts = input.scheduledAts.map(parseScheduledAt);
+    if (new Set(scheduledAts).size !== scheduledAts.length) throw new Error("Each recurring session needs a different date and time.");
+    const count = (getDb().prepare("SELECT COUNT(*) AS count FROM campaign_sessions WHERE campaign_id=?").get(campaignId) as { count: number }).count;
+    const title = safeText(input.title, 100);
+    return scheduledAts.map((scheduledAt, index) =>
+      insertScheduledSession(campaignId, count + index + 1, scheduledAt, input, title ? `${title} · Session ${index + 1}`.slice(0, 100) : undefined),
+    );
+  });
+}
+
+export function activateSession(campaignId: string, userId: string, id: string) {
+  requireDm(campaignId, userId);
+  return transaction(() => {
+    if (getDb().prepare("SELECT 1 FROM campaign_sessions WHERE campaign_id=? AND status='active'").get(campaignId))
+      throw new Error("A session is already active.");
+    const row = getDb().prepare("SELECT * FROM campaign_sessions WHERE id=? AND campaign_id=? AND status='scheduled'").get(id, campaignId) as Parameters<typeof sessionFromRow>[0] | undefined;
+    if (!row) throw new Error("Scheduled session not found.");
+    const startedAt = nowIso();
+    getDb().prepare("UPDATE campaign_sessions SET started_at=?,status='active' WHERE id=?").run(startedAt, id);
+    return sessionFromRow({ ...row, started_at: startedAt, status: "active" });
+  });
+}
+
 export function startSession(campaignId: string, userId: string, input: { title?: unknown; dmNotes?: unknown }) {
   requireDm(campaignId, userId);
   return transaction(() => {

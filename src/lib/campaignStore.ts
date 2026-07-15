@@ -30,6 +30,7 @@ export type CampaignRow = {
   code: string;
   dm_user_id: string;
   theme_key: CampaignThemeId;
+  banner_image_url: string | null;
   created_at: string;
 };
 
@@ -77,6 +78,8 @@ export type CampaignDetail = {
   name: string;
   code: string;
   dmUserId: string;
+  themeKey: CampaignThemeId;
+  bannerImageUrl: string | null;
   createdAt: string;
   members: CampaignMemberSummary[];
   rolls: CampaignRollRow[];
@@ -89,6 +92,7 @@ export type CampaignSummary = {
   code: string;
   dmUserId: string;
   themeKey: CampaignThemeId;
+  bannerImageUrl: string | null;
   createdAt: string;
   memberCount: number;
   myRole: "dm" | "player";
@@ -119,6 +123,16 @@ function generateCode(): string {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function normalizeBannerImageUrl(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string") throw new Error("Banner image URL must be text.");
+  const trimmed = value.trim();
+  if (trimmed.length > 500 || !(/^(https?:\/\/|\/)/i.test(trimmed)) || /["'()\\]/.test(trimmed)) {
+    throw new Error("Banner image URL must be a safe https:// link or site-relative image path.");
+  }
+  return trimmed;
 }
 
 function parseCharacter(data: string): Character | null {
@@ -534,7 +548,7 @@ export function createCampaign(userId: string, name: string, themeKey: CampaignT
     db.prepare("INSERT INTO campaign_audio (campaign_id, loop, version) VALUES (?, 1, 0)")
       .run(id);
     db.exec("COMMIT");
-    return { id, name: trimmedName, code, dm_user_id: userId, theme_key: safeThemeKey, created_at: createdAt };
+    return { id, name: trimmedName, code, dm_user_id: userId, theme_key: safeThemeKey, banner_image_url: null, created_at: createdAt };
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
@@ -614,6 +628,7 @@ export function listCampaigns(userId: string): CampaignSummary[] {
       code: row.code,
       dmUserId: row.dm_user_id,
       themeKey: isCampaignThemeId(row.theme_key) ? row.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
+      bannerImageUrl: row.banner_image_url ?? null,
       createdAt: row.created_at,
       memberCount: row.member_count,
       myRole: row.dm_user_id === userId ? "dm" as const : "player" as const,
@@ -642,6 +657,8 @@ export function getCampaignDetail(campaignId: string, userId: string): CampaignD
     name: campaign.name,
     code: campaign.code,
     dmUserId: campaign.dm_user_id,
+    themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
+    bannerImageUrl: campaign.banner_image_url ?? null,
     createdAt: campaign.created_at,
     members,
     rolls: rolls.reverse(),
@@ -680,6 +697,7 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
       code: campaign.code,
       dmUserId: campaign.dm_user_id,
       themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
+      bannerImageUrl: campaign.banner_image_url ?? null,
     },
     events,
     rolls,
@@ -888,6 +906,27 @@ export function rollCampaignInitiative(campaignId: string, userId: string, chara
 }
 
 // -- Delete / Leave ---------------------------------------------------------
+
+export function updateCampaignAppearance(
+  campaignId: string,
+  userId: string,
+  input: { themeKey?: unknown; bannerImageUrl?: unknown },
+) {
+  const campaign = requireDm(campaignId, userId);
+  const themeKey = isCampaignThemeId(input.themeKey) ? input.themeKey : campaign.theme_key;
+  const bannerImageUrl = normalizeBannerImageUrl(input.bannerImageUrl);
+  getDb().prepare("UPDATE campaigns SET theme_key=?, banner_image_url=? WHERE id=?")
+    .run(themeKey, bannerImageUrl, campaignId);
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    code: campaign.code,
+    dm_user_id: campaign.dm_user_id,
+    theme_key: themeKey,
+    banner_image_url: bannerImageUrl,
+    created_at: campaign.created_at,
+  } satisfies CampaignRow;
+}
 
 export function deleteCampaign(campaignId: string, userId: string): void {
   const campaign = getCampaignOrThrow(campaignId);

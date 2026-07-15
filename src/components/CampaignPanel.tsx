@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Check, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
-import { CAMPAIGN_THEMES } from "@/lib/campaignThemes";
+import { CAMPAIGN_THEMES, getCampaignTheme } from "@/lib/campaignThemes";
 import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
 import { summarizeRollRequest, describeRollRequest } from "@/lib/rollRequest";
@@ -108,6 +108,8 @@ export default memo(function CampaignPanel({
   const [rollDc, setRollDc] = useState("");
   const [conditionLabel, setConditionLabel] = useState("Poisoned");
   const [conditionTarget, setConditionTarget] = useState("");
+  const [appearanceThemeKey, setAppearanceThemeKey] = useState("forge");
+  const [appearanceImageUrl, setAppearanceImageUrl] = useState("");
   const [copiedCode, setCopiedCode] = useState("");
   const onCloseRef = useRef(onClose);
 
@@ -117,6 +119,14 @@ export default memo(function CampaignPanel({
 
   const detail = activeId && campaignSync?.campaign.id === activeId ? campaignSync : null;
   const isDm = Boolean(detail && currentUserId && detail.campaign.dmUserId === currentUserId);
+  const detailCampaignId = detail?.campaign.id;
+  const detailThemeKey = detail?.campaign.themeKey;
+  const detailBannerImageUrl = detail?.campaign.bannerImageUrl;
+  useEffect(() => {
+    if (!detailCampaignId) return;
+    setAppearanceThemeKey(detailThemeKey ?? "forge");
+    setAppearanceImageUrl(detailBannerImageUrl ?? "");
+  }, [detailCampaignId, detailThemeKey, detailBannerImageUrl]);
   // Same paper-surface technique as the sheet/feedback modal: paint the
   // chosen background texture over the themed paper so the panel matches.
   const backgroundKey = theme?.backgroundImageUrl ? "custom" : theme?.backgroundKey ?? "parchment";
@@ -261,6 +271,32 @@ export default memo(function CampaignPanel({
     }
   };
 
+  const handleSaveAppearance = async () => {
+    if (!activeId) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/campaigns/${activeId}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ themeKey: appearanceThemeKey, bannerImageUrl: appearanceImageUrl.trim() || null }),
+      });
+      const data = await response.json().catch(() => ({})) as { campaign?: { theme_key: string; banner_image_url: string | null }; error?: string };
+      if (!response.ok || !data.campaign) {
+        setError(data.error ?? "Campaign appearance could not be saved.");
+        return;
+      }
+      setCampaigns((current) => current.map((campaign) => campaign.id === activeId
+        ? { ...campaign, themeKey: data.campaign!.theme_key as typeof campaign.themeKey, bannerImageUrl: data.campaign!.banner_image_url }
+        : campaign));
+      setError("");
+    } catch {
+      setError("Campaign appearance could not be saved.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code)
       .then(() => {
@@ -386,7 +422,12 @@ export default memo(function CampaignPanel({
                     : `${featured.myCharacterName ? `Playing as ${featured.myCharacterName}` : "Player"} · ${featured.memberCount} member${featured.memberCount === 1 ? "" : "s"}`;
                   return (
                     <>
-                      <section className="ao-dash-feature" aria-labelledby="ao-dash-feature-name">
+                      <section
+                        className="ao-dash-feature"
+                        aria-labelledby="ao-dash-feature-name"
+                        data-campaign-theme={featured.themeKey}
+                        style={{ "--campaign-feature-art": `url("${(featured.bannerImageUrl || getCampaignTheme(featured.themeKey).imageUrl).replace(/["\\)]/g, "")}")` } as CSSProperties}
+                      >
                         <div className="ao-dash-feature-main">
                           <span className="ao-dash-eyebrow">{featured.id === activeCampaignId ? "Current campaign" : "Most recent campaign"}</span>
                           <h3 id="ao-dash-feature-name">{featured.name}</h3>
@@ -395,6 +436,7 @@ export default memo(function CampaignPanel({
                             {featuredMeta}
                           </p>
                         </div>
+                        <div className="ao-dash-feature-art" aria-hidden="true" />
                         <div className="ao-dash-feature-actions">
                           <button className="dj-btn dj-btn-primary ao-dash-resume" type="button" onClick={() => handleSelect(featured.id)}>
                             {featured.myRole === "dm" ? "Open the Table" : "Resume campaign"}
@@ -633,6 +675,27 @@ export default memo(function CampaignPanel({
                 ) : null}
 
                 {isDm ? (
+                  <>
+                  <section className="campaign-appearance" aria-labelledby="campaign-appearance-title">
+                    <div className="campaign-appearance-header">
+                      <div>
+                        <span className="ao-dash-eyebrow">Campaign appearance</span>
+                        <h3 id="campaign-appearance-title">Set the table’s mood</h3>
+                      </div>
+                      <small>Used on the dashboard and campaign list</small>
+                    </div>
+                    <div className="campaign-theme-options campaign-appearance-options">
+                      {CAMPAIGN_THEMES.map((campaignTheme) => (
+                        <label className={`campaign-theme-option${appearanceThemeKey === campaignTheme.id ? " is-selected" : ""}`} key={campaignTheme.id}>
+                          <input type="radio" name="appearance-theme" value={campaignTheme.id} checked={appearanceThemeKey === campaignTheme.id} onChange={() => setAppearanceThemeKey(campaignTheme.id)} />
+                          <span className="campaign-theme-image" style={{ backgroundImage: `url(${campaignTheme.imageUrl})` }} aria-hidden="true" />
+                          <span className="campaign-theme-copy"><strong>{campaignTheme.label}</strong><small>{campaignTheme.description}</small></span>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="campaign-appearance-url"><span>Custom image URL (optional)</span><input value={appearanceImageUrl} onChange={(event) => setAppearanceImageUrl(event.currentTarget.value)} placeholder="https://… or /your-image.jpg" /></label>
+                    <button className="dj-btn dj-btn-primary" type="button" onClick={handleSaveAppearance} disabled={busy}>Save appearance</button>
+                  </section>
                   <div className="campaign-dm-tools">
                     <h3><Sparkles size={14} /> DM Tools</h3>
                     <div className="campaign-tool-row">
@@ -701,6 +764,7 @@ export default memo(function CampaignPanel({
                       <button className="glass-button" type="button" onClick={() => sendCondition("condition-remove")} disabled={!conditionTarget || !conditionLabel.trim()}>Remove Condition</button>
                     </div>
                   </div>
+                  </>
                 ) : null}
 
                 <div className="campaign-detail-grid">

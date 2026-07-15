@@ -521,6 +521,7 @@ export default function ForgeAndFableApp() {
   // Campaign list access while enrolled: forces CampaignPanel's list view so
   // a DM (or player) can create/join/delete/leave without detaching first.
   const [campaignListOpen, setCampaignListOpen] = useState(false);
+  const [scheduleSessionOpen, setScheduleSessionOpen] = useState(false);
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   // Onboarding panel replaces forced character creation when the roster is empty
@@ -2042,6 +2043,8 @@ export default function ForgeAndFableApp() {
         onPostEvent={postCampaignEvent}
         onInitiativeUpdate={updateCampaignInitiative}
         onOpenCampaigns={() => setCampaignListOpen(true)}
+        openScheduleSession={scheduleSessionOpen}
+        onScheduleSessionOpened={() => setScheduleSessionOpen(false)}
       /> : <CampaignPanel
         characters={characters}
         currentUserId={user.id}
@@ -2214,6 +2217,7 @@ export default function ForgeAndFableApp() {
           campaignSync={campaignSync}
           campaignEvents={campaignEvents}
           onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setCampaignOpen(true); }}
+          onScheduleSession={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setScheduleSessionOpen(true); setCampaignOpen(true); }}
           onOpenCampaigns={() => { setCampaignListOpen(true); setCampaignOpen(true); }}
           onOpenCharacter={(characterId) => {
             setSelectedId(characterId);

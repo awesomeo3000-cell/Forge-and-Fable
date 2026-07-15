@@ -9,13 +9,14 @@ type BuildMode = "standard" | "quickbuilder" | "premade";
 /* Art lives in public/Start/ — swap the files to change the cards, no code
    edits needed. Every image gets the same ink-wash filter (CSS) so mixed
    sources read as plates from one book. */
-const BUILD_MODES: Array<{ mode: BuildMode; label: string; art: string[] }> = [
-  { mode: "standard", label: "Standard", art: ["/Start/start-standard.jpg"] },
-  { mode: "quickbuilder", label: "Quickbuilder", art: ["/Start/start-quick.jpg"] },
+const BUILD_MODES: Array<{ mode: BuildMode; label: string; plate: string; art: string }> = [
+  { mode: "standard", label: "Standard", plate: "PLATE I", art: "/Start/start-standard.webp" },
+  { mode: "quickbuilder", label: "Quickbuilder", plate: "PLATE II", art: "/Start/start-quick.webp" },
   {
     mode: "premade",
     label: "Premade",
-    art: [1, 2, 3, 4].map((n) => `/Start/start-premade-${n}.jpg`),
+    plate: "PLATE III",
+    art: "/Start/start-premade.webp",
   },
 ];
 
@@ -27,21 +28,34 @@ export default memo(function CharacterStartPanel(props: {
   const [selectedMode, setSelectedMode] = useState<BuildMode | null>(null);
 
   return (
-    <div className="start-panel dj-start ledger-page">
-      <header className="ledger-page-header">
-        <span className="ledger-eyebrow">
+    <div className="start-panel commission-screen dj-start ledger-page">
+      <div className="commission-head">
+        <header className="commission-page-head">
+          <span className="commission-eyebrow">
           {props.rosterEmpty ? "The roster is empty" : "The ledger opens"}
         </span>
         <h2>Commission a character</h2>
-      </header>
-      <div className="threshold-grid">
+        </header>
+        <div className="commission-actions">
+          {props.onBack ? <button type="button" className="commission-button" onClick={props.onBack}>Back</button> : null}
+          <button
+            type="button"
+            className="commission-button commission-button-primary"
+            disabled={!selectedMode}
+            onClick={() => selectedMode && props.onSelectBuild(selectedMode)}
+          >
+            Open the commission
+          </button>
+        </div>
+      </div>
+      <div className="commission-strip">
         {BUILD_MODES.map((item) => {
           const chosen = selectedMode === item.mode;
           return (
             <button
               type="button"
               key={item.mode}
-              className={`threshold-card${chosen ? " active" : ""}`}
+              className={`commission-panel commission-panel-${item.mode}${chosen ? " chosen" : ""}`}
               aria-pressed={chosen}
               onClick={() => setSelectedMode(item.mode)}
               onDoubleClick={() => props.onSelectBuild(item.mode)}

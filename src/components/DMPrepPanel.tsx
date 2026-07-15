@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Archive, BookOpen, Copy, Dices, Library, Play, Plus, Save, Send, Swords, X } from "lucide-react";
+import { Archive, BookOpen, CalendarDays, Clock3, Copy, Dices, Library, MapPin, Play, Plus, Save, Send, Swords, X } from "lucide-react";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import type {
   CampaignHandout,
@@ -15,7 +15,8 @@ import type {
 } from "@/types/dmTools";
 
 type Tab = "creatures" | "encounters" | "generator" | "handouts" | "journal" | "sessions";
-type Props = { campaignId: string; onClose: () => void; onEncounterStarted: () => void };
+type ScheduleMode = "single" | "series";
+type Props = { campaignId: string; onClose: () => void; onEncounterStarted: () => void; initialTab?: Tab };
 const uid = () => crypto.randomUUID();
 const emptyEncounter = (campaignId: string): SavedEncounter => ({
   id: "",
@@ -67,8 +68,8 @@ const features = (value: string) =>
 const featureText = (value?: CreatureLibraryRecord["actions"]) =>
   value?.map((item) => [item.name, item.description, item.damage].filter(Boolean).join(" | ")).join("\n") ?? "";
 
-export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }: Props) {
-  const [tab, setTab] = useState<Tab>("encounters");
+export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, initialTab = "encounters" }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [creatures, setCreatures] = useState<CreatureLibraryRecord[]>([]),
     [encounters, setEncounters] = useState<SavedEncounter[]>([]),
     [handouts, setHandouts] = useState<CampaignHandout[]>([]),
@@ -109,6 +110,12 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
     status: "active",
   });
   const [sessionTitle, setSessionTitle] = useState(""),
+    [scheduledAt, setScheduledAt] = useState(""),
+    [scheduledDuration, setScheduledDuration] = useState("180"),
+    [scheduledLocation, setScheduledLocation] = useState("The Table · online"),
+    [scheduleMode, setScheduleMode] = useState<ScheduleMode>("single"),
+    [repeatEveryWeeks, setRepeatEveryWeeks] = useState("1"),
+    [seriesCount, setSeriesCount] = useState("6"),
     [summarySession, setSummarySession] = useState<CampaignSession | null>(null),
     [summary, setSummary] = useState<SessionSummary | null>(null);
 
@@ -311,13 +318,45 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
       setJournalDraft({ title: "", type: "freeform", body: "", tags: "", visibility: "dm-private", status: "active" });
     });
   const activeSession = sessions.find((item) => item.status === "active");
+  const scheduledDates = () => {
+    if (!scheduledAt) throw new Error("Choose a date and time for the session.");
+    const first = new Date(scheduledAt);
+    if (Number.isNaN(first.getTime())) throw new Error("Choose a valid date and time for the session.");
+    const count = scheduleMode === "series" ? Number(seriesCount) : 1;
+    const interval = scheduleMode === "series" ? Number(repeatEveryWeeks) : 1;
+    if (scheduleMode === "series" && (!Number.isInteger(count) || count < 2 || count > 24)) throw new Error("Choose between 2 and 24 sessions.");
+    if (scheduleMode === "series" && (!Number.isInteger(interval) || interval < 1 || interval > 12)) throw new Error("Repeat interval must be between 1 and 12 weeks.");
+    return Array.from({ length: count }, (_, index) => {
+      const occurrence = new Date(first);
+      occurrence.setDate(occurrence.getDate() + index * interval * 7);
+      return occurrence.toISOString();
+    });
+  };
+  const scheduleNextSession = () =>
+    void run(async () => {
+      const input = { title: sessionTitle, durationMinutes: Number(scheduledDuration), location: scheduledLocation };
+      const dates = scheduledDates();
+      if (scheduleMode === "series") {
+        const result = await dmToolsApi.scheduleSessions(campaignId, { ...input, scheduledAts: dates });
+        setSessions((current) => [...result.sessions, ...current]);
+        setStatus(`${result.sessions.length} sessions scheduled.`);
+      } else {
+        const result = await dmToolsApi.scheduleSession(campaignId, { ...input, scheduledAt: dates[0] });
+        setSessions((current) => [result.session, ...current]);
+        setStatus("Next session scheduled.");
+      }
+      setSessionTitle("");
+      setScheduledAt("");
+    });
   const endActiveSession = () =>
     activeSession &&
     run(async () => {
+      if (!window.confirm("End this session and prepare its summary draft?")) return;
       const result = await dmToolsApi.endSession(campaignId, activeSession.id);
       setSessions((current) => current.map((item) => (item.id === result.session.id ? result.session : item)));
       setSummarySession(result.session);
       setSummary(result.session.summaryDraft ?? null);
+      setStatus("Session ended. Review the summary draft below.");
     });
   const updateSummaryList = (key: keyof SessionSummary, value: string) =>
     summary && setSummary({ ...summary, [key]: lines(value) } as SessionSummary);
@@ -1211,7 +1250,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
                   </p>
                 </div>
                 {activeSession ? (
-                  <button className="primary" onClick={endActiveSession}>
+                  <button className="primary dm-btn-danger" onClick={endActiveSession}>
                     End session
                   </button>
                 ) : (
@@ -1237,15 +1276,40 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted }:
                   </>
                 )}
               </div>
+              <section className="dm-session-scheduler" aria-labelledby="dm-session-scheduler-title">
+                <header>
+                  <div>
+                    <span className="dm-prep-kicker"><CalendarDays size={13} /> Plan ahead</span>
+                    <h3 id="dm-session-scheduler-title">Schedule the next session</h3>
+                  </div>
+                  <small>{Intl.DateTimeFormat().resolvedOptions().timeZone}</small>
+                </header>
+                <div className="dm-form-grid">
+                  <label><span>Schedule type</span><select value={scheduleMode} onChange={(event) => setScheduleMode(event.target.value as ScheduleMode)}><option value="single">One session</option><option value="series">Recurring series</option></select></label>
+                  <label><span>Title</span><input value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} placeholder="Chapter IV" /></label>
+                  <label><span>Date and time</span><input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label>
+                  <label><span>Duration</span><select value={scheduledDuration} onChange={(event) => setScheduledDuration(event.target.value)}><option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option></select></label>
+                  <label><span>Location</span><input value={scheduledLocation} onChange={(event) => setScheduledLocation(event.target.value)} placeholder="The Table · online" /></label>
+                  {scheduleMode === "series" ? <>
+                    <label><span>Repeat every</span><select value={repeatEveryWeeks} onChange={(event) => setRepeatEveryWeeks(event.target.value)}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? "week" : "weeks"}</option>)}</select></label>
+                    <label><span>Number of sessions</span><input type="number" min="2" max="24" value={seriesCount} onChange={(event) => setSeriesCount(event.target.value)} /></label>
+                  </> : null}
+                </div>
+                {scheduleMode === "series" ? <p className="dm-session-series-note">Creates {seriesCount || "0"} sessions at the same local time, starting from the date above.</p> : null}
+                <button className="primary" type="button" onClick={scheduleNextSession} disabled={busy || !scheduledAt}><CalendarDays size={14} /> {scheduleMode === "series" ? `Schedule ${seriesCount || "0"} sessions` : "Schedule session"}</button>
+              </section>
               <div className="dm-library-list">
                 {sessions.map((item) => (
                   <article key={item.id}>
                     <div>
                       <strong>{item.title ?? `Session ${item.number}`}</strong>
                       <small>
-                        {item.status} · {new Date(item.startedAt).toLocaleDateString()}
+                        {item.status} · {new Date(item.scheduledAt ?? item.startedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
                       </small>
                     </div>
+                    {item.location ? <small><MapPin size={12} /> {item.location}</small> : null}
+                    {item.durationMinutes ? <small><Clock3 size={12} /> {Math.round(item.durationMinutes / 60)}h</small> : null}
+                    {item.status === "scheduled" ? <button className="primary" type="button" onClick={() => void run(async () => { const result = await dmToolsApi.activateSession(campaignId, item.id); setSessions((current) => current.map((session) => session.id === item.id ? result.session : session)); })}>Start now</button> : null}
                     {item.summaryDraft ? (
                       <button
                         onClick={() => {

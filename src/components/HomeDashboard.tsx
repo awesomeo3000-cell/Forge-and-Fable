@@ -1,11 +1,13 @@
 "use client";
 
 import { memo, useEffect, useMemo, useState, type CSSProperties } from "react";
-import { BookOpen, Plus, Swords, Users } from "lucide-react";
+import { BookOpen, CalendarDays, Check, ChevronRight, Clock3, MapPin, Plus, Swords, Users } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { getCampaignTheme } from "@/lib/campaignThemes";
 import type { Character, Ruleset } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
+import type { CampaignSession } from "@/types/dmTools";
+import { dmToolsApi } from "@/lib/client/dmToolsApi";
 
 /**
  * The Home screen (AO-6): the observatory landing page from the approved
@@ -22,6 +24,7 @@ type Props = {
   campaignSync: CampaignSyncPayload | null;
   campaignEvents: CampaignEvent[];
   onResumeCampaign: (campaignId: string) => void;
+  onScheduleSession: (campaignId: string) => void;
   onOpenCampaigns: () => void;
   onOpenCharacter: (characterId: string) => void;
   onCreateCharacter: () => void;
@@ -48,11 +51,13 @@ export default memo(function HomeDashboard({
   campaignSync,
   campaignEvents,
   onResumeCampaign,
+  onScheduleSession,
   onOpenCampaigns,
   onOpenCharacter,
   onCreateCharacter,
 }: Props) {
   const [campaigns, setCampaigns] = useState<CampaignSummary[] | null>(null);
+  const [nextSession, setNextSession] = useState<CampaignSession | null>(null);
   const [greeting, setGreeting] = useState("Welcome back");
 
   useEffect(() => {
@@ -82,10 +87,44 @@ export default memo(function HomeDashboard({
 
   const featuredTheme = getCampaignTheme(featured?.themeKey);
 
+  useEffect(() => {
+    let cancelled = false;
+    setNextSession(null);
+    if (!featured?.id) return () => { cancelled = true; };
+    void dmToolsApi.listSessions(featured.id)
+      .then(({ sessions }) => {
+        const upcoming = sessions
+          .filter((session) => session.status === "scheduled" && Date.parse(session.scheduledAt ?? session.startedAt) > Date.now())
+          .sort((a, b) => Date.parse(a.scheduledAt ?? a.startedAt) - Date.parse(b.scheduledAt ?? b.startedAt));
+        if (!cancelled) setNextSession(upcoming[0] ?? null);
+      })
+      .catch(() => { if (!cancelled) setNextSession(null); });
+    return () => { cancelled = true; };
+  }, [featured?.id]);
+
   const recentEvents = useMemo(
     () => (campaignSync ? campaignEvents.slice(-3).reverse() : []),
     [campaignSync, campaignEvents],
   );
+
+  const partyMembers = useMemo(
+    () => (campaignSync?.members ?? []).filter((member) => !member.isGhost).slice(0, 4),
+    [campaignSync],
+  );
+  const readyMembers = partyMembers.filter((member) => member.characterId).length;
+  const readinessLabel = partyMembers.length > 0
+    ? `${readyMembers} of ${partyMembers.length} ready`
+    : nextSession ? "Party check-in" : "No session scheduled";
+
+  const sessionDate = nextSession ? new Date(nextSession.scheduledAt ?? nextSession.startedAt) : null;
+  const sessionDateLabel = sessionDate
+    ? sessionDate.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+    : "Plan the next session";
+  const sessionTimeLabel = sessionDate
+    ? `${sessionDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(sessionDate.getTime() + (nextSession?.durationMinutes ?? 180) * 60000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    : "Choose a date and time in the campaign workshop";
+  const daysUntilSession = sessionDate ? Math.max(0, Math.ceil((sessionDate.getTime() - Date.now()) / 86400000)) : null;
+  const sessionCountdown = daysUntilSession === null ? "Awaiting a date" : daysUntilSession === 0 ? "Today" : daysUntilSession === 1 ? "Tomorrow" : `In ${daysUntilSession} days`;
 
   const heroLine = (character: Character) => {
     const race = ruleset?.races.find((item) => item.id === character.raceId)?.name;
@@ -118,7 +157,7 @@ export default memo(function HomeDashboard({
         className="ao-home-hero"
         aria-labelledby="ao-home-hero-title"
         data-campaign-theme={featuredTheme.id}
-        style={{ "--campaign-art": `url(${featuredTheme.imageUrl})` } as CSSProperties}
+        style={{ "--campaign-art": `url("${(featured?.bannerImageUrl || featuredTheme.imageUrl).replace(/["\\)]/g, "")}")` } as CSSProperties}
       >
         <div className="ao-home-hero-copy">
           <span className="ao-dash-eyebrow">{featured && featured.id === activeCampaignId ? "Current campaign" : "Most recent campaign"}</span>
@@ -153,6 +192,79 @@ export default memo(function HomeDashboard({
         </div>
         <div className="ao-home-hero-art" aria-hidden="true" />
       </section>
+
+      <div className="ao-home-widget-row">
+        <section className="ao-home-panel ao-home-session-panel" aria-labelledby="ao-home-session-title">
+          <header className="ao-home-widget-header">
+            <div>
+              <span className="ao-dash-eyebrow">Next session</span>
+              <h2 id="ao-home-session-title">{sessionDateLabel}</h2>
+            </div>
+            <span className="ao-home-widget-badge">{sessionCountdown}</span>
+          </header>
+          {nextSession && sessionDate ? (
+            <div className="ao-home-session-body">
+              <div className="ao-home-calendar-date" aria-hidden="true">
+                <span>{sessionDate.toLocaleDateString([], { month: "short" }).toUpperCase()}</span>
+                <strong>{sessionDate.getDate()}</strong>
+                <small>{sessionDate.toLocaleDateString([], { weekday: "long" })}</small>
+              </div>
+              <div className="ao-home-session-copy">
+                <strong>{nextSession.title ?? featured?.name ?? "Your next adventure"}</strong>
+                <span><Clock3 size={14} /> {sessionTimeLabel}</span>
+                {nextSession.location ? <span><MapPin size={14} /> {nextSession.location}</span> : null}
+                <p>{featured?.name ?? "Your campaign"} is ready when the party is.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="ao-home-session-empty">
+              <CalendarDays size={22} aria-hidden="true" />
+              <strong>No session scheduled yet</strong>
+              <span>{featured?.myRole === "dm" ? "Set a date and time from the campaign workshop." : "Your Dungeon Master has not set the next session yet."}</span>
+            </div>
+          )}
+          <footer className="ao-home-widget-footer">
+            <span className="ao-home-readiness-label"><Check size={14} /> {readinessLabel}</span>
+            <button className="dj-btn dj-btn-primary" type="button" onClick={() => featured ? (featured.myRole === "dm" && !nextSession ? onScheduleSession(featured.id) : onResumeCampaign(featured.id)) : onOpenCampaigns()}>
+              {featured?.myRole === "dm" && !nextSession ? "Schedule a session" : featured ? "Open the Table" : "Plan a campaign"} <ChevronRight size={14} />
+            </button>
+          </footer>
+        </section>
+
+        <section className="ao-home-panel ao-home-readiness-panel" aria-labelledby="ao-home-readiness-title">
+          <header className="ao-home-widget-header">
+            <div>
+              <span className="ao-dash-eyebrow">Party readiness</span>
+              <h2 id="ao-home-readiness-title">Who&apos;s ready?</h2>
+            </div>
+            <CalendarDays size={18} aria-hidden="true" className="ao-home-widget-header-icon" />
+          </header>
+          {partyMembers.length > 0 ? (
+            <ul className="ao-home-readiness-list">
+              {partyMembers.map((member) => (
+                <li key={member.userId}>
+                  <span className="ao-home-readiness-avatar" aria-hidden="true">{member.userName.trim().charAt(0).toUpperCase() || "?"}</span>
+                  <span className="ao-home-readiness-copy">
+                    <strong>{member.characterName ?? member.userName}</strong>
+                    <small>{member.characterName ? `${member.userName} · Level ${member.characterLevel ?? 1}` : "Character not assigned"}</small>
+                  </span>
+                  <span className={`ao-home-readiness-state${member.characterId ? " is-ready" : ""}`}>
+                    {member.characterId ? "Ready" : "Pending"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="ao-home-readiness-empty">
+              <strong>Readiness appears here</strong>
+              <span>Open a campaign to see character assignments and session prep.</span>
+            </div>
+          )}
+          <button className="ao-home-text-action" type="button" onClick={onOpenCampaigns}>
+            View campaign roster <ChevronRight size={14} />
+          </button>
+        </section>
+      </div>
 
       <div className="ao-home-lower">
         <section className="ao-home-panel" aria-labelledby="ao-home-party-title">

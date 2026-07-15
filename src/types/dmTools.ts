@@ -208,8 +208,11 @@ export type CampaignSession = {
   number?: number;
   title?: string;
   startedAt: string;
+  scheduledAt?: string;
+  durationMinutes?: number;
+  location?: string;
   endedAt?: string;
-  status: "active" | "completed";
+  status: "scheduled" | "active" | "completed";
   dmNotes?: string;
   summaryDraft?: SessionSummary;
   publishedJournalEntryId?: string;
