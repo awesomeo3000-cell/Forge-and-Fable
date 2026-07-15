@@ -24,6 +24,7 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
   const [copied, setCopied] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newMaxUses, setNewMaxUses] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError("");
@@ -70,6 +71,24 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
       setInvites((current) => current.map((i) => (i.code === code ? { ...i, revoked: true } : i)));
     } catch {
       setError("Could not revoke code.");
+    }
+  };
+
+  const deleteUser = async (userId: string, email: string) => {
+    if (!window.confirm(`Delete user ${email} and all their characters, campaigns, and data? This cannot be undone.`)) return;
+    setDeleting(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not delete user.");
+      setOverview((current) => current ? {
+        ...current,
+        users: current.users.filter((u) => u.id !== userId),
+        totals: { ...current.totals, users: current.totals.users - 1 },
+      } : null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete user.");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -167,6 +186,9 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
                   <li key={u.id}>
                     <strong>{u.name}{u.isAdmin ? <em className="admin-tag">admin</em> : null}</strong>
                     <span>{u.email} · {u.characterCount} character{u.characterCount === 1 ? "" : "s"} · {new Date(u.createdAt).toLocaleDateString()}</span>
+                    <button type="button" className="admin-icon-btn" onClick={() => void deleteUser(u.id, u.email)} disabled={deleting === u.id} aria-label={`Delete ${u.email}`}>
+                      {deleting === u.id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                    </button>
                   </li>
                 ))}
               </ul>
