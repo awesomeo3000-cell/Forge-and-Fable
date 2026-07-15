@@ -72,13 +72,15 @@
   --desk:         #1a140d;
   --sheet-shadow: 0 26px 55px rgba(0,0,0,0.50), 0 4px 14px rgba(0,0,0,0.40);
 
-  /* Shared world backdrop for splash, auth, and the app shell. */
-  --world-backdrop: url("/heroes-backdrop.jpg");
-  --world-backdrop-position: 48% center;
+  /* Shared world backdrop for splash and auth ("The Observatory at Night",
+     Option A art — docs/design/arcane-observatory/backdrop-prompts.md).
+     The AO app shell overrides its ::before with the engraved field. */
+  --world-backdrop: url("/observatory-backdrop.jpg");
+  --world-backdrop-position: 24% center;
   --world-backdrop-wash:
-    radial-gradient(circle at 50% 45%, rgba(30, 22, 13, 0.42) 0%, rgba(30, 22, 13, 0.16) 34%, rgba(239, 226, 194, 0.05) 68%),
-    linear-gradient(180deg, rgba(24, 18, 10, 0.34) 0%, rgba(24, 18, 10, 0.08) 38%, rgba(24, 18, 10, 0.38) 100%),
-    linear-gradient(90deg, rgba(24, 18, 10, 0.40) 0%, rgba(24, 18, 10, 0.08) 52%, rgba(24, 18, 10, 0.24) 100%);
+    linear-gradient(180deg, rgba(7, 13, 22, 0.12) 0%, transparent 30%, rgba(7, 13, 22, 0.5) 100%),
+    linear-gradient(90deg, transparent 0%, transparent 55%, rgba(7, 13, 22, 0.22) 100%),
+    linear-gradient(180deg, rgba(7, 13, 22, 0.10) 0%, transparent 22%, transparent 100%);
 }
 
 * {

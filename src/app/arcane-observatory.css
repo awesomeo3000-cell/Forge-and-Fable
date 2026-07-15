@@ -1646,6 +1646,19 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
+  /* Keep the first creation action clear of the fixed navigation. The
+     entry panel is vertically centered, so lift the action group inside
+     the existing layout without changing the desktop composition. */
+  [data-theme="arcane-observatory"] .start-panel.ledger-page .start-actions {
+    transform: translateY(calc(-24px - env(safe-area-inset-bottom, 0px)));
+  }
+
+  /* The dossier owns the creator's scroll content on phones; reserve room
+     inside it so the final chapter action can clear the fixed navigation. */
+  [data-theme="arcane-observatory"] .studio-surface:has(.ao-forge-preview) {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
