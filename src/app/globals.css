@@ -13634,8 +13634,9 @@ button.dj-card {
 
 .commission-strip {
   display: flex;
-  flex: 1;
+  flex: none;
   justify-content: center;
+  height: clamp(480px, calc(100dvh - 190px), 760px);
   min-height: 480px;
   border-top: 1px solid var(--commission-subtle);
 }
@@ -13652,6 +13653,12 @@ button.dj-card {
   color: var(--commission-text);
   text-align: left;
   cursor: pointer;
+}
+.commission-panel-standard,
+.commission-panel-quickbuilder { flex: 0.9 1 0; }
+.commission-panel-premade {
+  flex: 1.35 1 0;
+  max-width: 560px;
 }
 .commission-panel:first-child { border-left: 1px solid rgba(3, 8, 14, 0.8); }
 .commission-panel:focus-visible { outline: 2px solid var(--state-selected, #5c94c8); outline-offset: -3px; }
@@ -13674,7 +13681,20 @@ button.dj-card {
   filter: grayscale(0.48) contrast(1.04) brightness(0.82) sepia(0.12);
   transition: filter 320ms ease;
 }
-.commission-panel-premade .commission-plate img { object-position: 50% 50%; }
+.commission-panel-premade .commission-plate {
+  background: var(--commission-app);
+}
+.commission-panel-premade .commission-plate::before {
+  content: none;
+}
+.commission-panel-premade .commission-plate img {
+  z-index: 1;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+.commission-panel-premade .commission-plate::after {
+  background: linear-gradient(180deg, rgba(7, 13, 22, 0.08), rgba(7, 13, 22, 0.42));
+}
 .commission-panel:hover .commission-plate img,
 .commission-panel.chosen .commission-plate img {
   filter: grayscale(0.02) contrast(1.02) brightness(0.96) sepia(0);
@@ -13742,6 +13762,10 @@ button.dj-card {
   .commission-actions { width: 100%; padding: 0; }
   .commission-button { flex: 1; }
   .commission-strip { flex-direction: column; min-height: 0; }
+  .commission-strip { height: auto; }
   .commission-panel { min-height: 260px; max-width: none; border-right: 0; border-bottom: 1px solid rgba(3, 8, 14, 0.8); }
+  .commission-panel-standard,
+  .commission-panel-quickbuilder,
+  .commission-panel-premade { flex: 1 1 auto; }
   .commission-panel:first-child { border-left: 0; }
 }

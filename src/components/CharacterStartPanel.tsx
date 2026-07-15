@@ -11,7 +11,7 @@ type BuildMode = "standard" | "quickbuilder" | "premade";
 const BUILD_MODES: Array<{ mode: BuildMode; label: string; plate: string; art: string }> = [
   { mode: "standard", label: "Standard", plate: "PLATE I", art: "/Start/start-standard.webp" },
   { mode: "quickbuilder", label: "Quickbuilder", plate: "PLATE II", art: "/Start/start-quick.webp" },
-  { mode: "premade", label: "Premade", plate: "PLATE III", art: "/Start/start-premade.webp" },
+  { mode: "premade", label: "Premade", plate: "PLATE III", art: "/Start/start-premade-spliced.webp" },
 ];
 
 export default memo(function CharacterStartPanel(props: {

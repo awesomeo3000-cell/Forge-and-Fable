@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { registerUser, deleteUserById } from "@/lib/vaultStore";
-import { SESSION_COOKIE_NAME, sessionCookieOptions, signToken } from "@/lib/auth";
 import { authRateLimitKeys, clearAuthFailures, isAuthRateLimited, recordAuthFailure } from "@/lib/authRateLimit";
 import { consumeRegistrationCode, registrationRequiresCode } from "@/lib/adminStore";
+import { createVerificationToken } from "@/lib/verificationStore";
+import { sendVerificationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,19 +41,45 @@ export async function POST(request: Request) {
       password: String(body.password ?? ""),
     });
 
-    let token: string;
+    // Generate a verification token and send the email.
+    let verificationToken: string;
     try {
-      token = await signToken({ userId: user.id });
-    } catch (signError) {
+      verificationToken = createVerificationToken(user.id);
+    } catch (tokenError) {
       await deleteUserById(user.id);
-      throw signError;
+      throw new Error("Could not create verification token. Please try again.");
+    }
+
+    // In dev without a Resend API key, auto-verify for convenience.
+    if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") {
+      // Auto-verify in dev — import dynamically to avoid bundling into every route.
+      const { consumeVerificationToken } = await import("@/lib/verificationStore");
+      consumeVerificationToken(verificationToken);
+      clearAuthFailures(rateLimitKeys);
+      return NextResponse.json({ message: "Account created (dev — auto-verified). You may now log in." });
+    }
+
+    let emailSent = false;
+    try {
+      await sendVerificationEmail({
+        email: user.email,
+        name: user.name,
+        token: verificationToken,
+      });
+      emailSent = true;
+    } catch (emailError) {
+      // User was created and token stored — they can request a resend later.
+      // Log but don't fail the registration.
+      console.error("Failed to send verification email:", emailError);
     }
 
     clearAuthFailures(rateLimitKeys);
 
-    const response = NextResponse.json({ user });
-    response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
-    return response;
+    const message = emailSent
+      ? "Account created! Check your email to verify your address."
+      : "Account created! We couldn't send a verification email — please contact support.";
+
+    return NextResponse.json({ message });
   } catch (error) {
     if (rateLimitKeys.length > 0) recordAuthFailure(rateLimitKeys);
     return NextResponse.json(

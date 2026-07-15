@@ -459,6 +459,8 @@ export type PublicUser = {
   /** Server-derived from ADMIN_EMAILS. A UI hint only — never trusted for
       access; every admin endpoint re-checks server-side. */
   isAdmin?: boolean;
+  /** Whether the user's email has been verified. */
+  emailVerified?: boolean;
 };
 
 export type Ruleset = {

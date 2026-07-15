@@ -317,6 +317,21 @@ export default function ForgeAndFableApp() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  // Handle verification redirects — check URL params on mount.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verified = params.get("verified");
+    if (verified === "1") {
+      setStatus("Email verified! You may now log in.");
+      setAuthMode("login");
+      // Clean up the URL so the param doesn't linger on refresh.
+      window.history.replaceState(null, "", "/");
+    } else if (verified === "error") {
+      setStatus("Verification link is invalid or expired.");
+      window.history.replaceState(null, "", "/");
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) {
       return;
@@ -727,18 +742,32 @@ export default function ForgeAndFableApp() {
         }),
       });
 
-      const data = (await response.json()) as { user?: PublicUser; error?: string };
+      const data = (await response.json()) as { user?: PublicUser; message?: string; error?: string };
 
-      if (!response.ok || !data.user) {
+      if (!response.ok) {
         setStatus(data.error ?? "Vault access failed.");
         return;
       }
 
-      setUser(data.user);
-      setCharactersLoadedForUser(null);
-      window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
-      setAuthInviteCode("");
-      setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
+      // Registration now returns a message (check your email) instead of a user.
+      // The user must verify their email before logging in.
+      if (data.message && !data.user) {
+        setStatus(data.message);
+        setAuthMode("login"); // switch to login so they can come back after verifying
+        return;
+      }
+
+      // Login returns a user object as before.
+      if (data.user) {
+        setUser(data.user);
+        setCharactersLoadedForUser(null);
+        window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
+        setAuthInviteCode("");
+        setStatus(authMode === "login" ? "Tome opened" : "Account inscribed");
+        return;
+      }
+
+      setStatus("Unexpected response from server.");
     } catch {
       setStatus("Network error — please try again.");
     }

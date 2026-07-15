@@ -10,9 +10,12 @@ services:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
-      - key: ADMIN_DETAILS
-	sync:false
-        generateValue: true
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: APP_URL
+        value: https://dreamwright.gg
       - key: FORGE_VAULT_DIR
         value: /var/data
     disk:

@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 17;
+const SCHEMA_REVISION = 18;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -61,7 +61,8 @@ function createSchema(db: DatabaseSync) {
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      email_verified INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS characters (
@@ -333,6 +334,15 @@ function createSchema(db: DatabaseSync) {
       revoked INTEGER NOT NULL DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS verification_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_verification_tokens_hash ON verification_tokens(token_hash);
+
     CREATE TABLE IF NOT EXISTS user_portraits (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -433,6 +443,22 @@ function migrateSchema(db: DatabaseSync) {
       db.exec("ALTER TABLE campaigns ADD COLUMN banner_image_url TEXT");
     }
     recordMigration(db, 17, "custom campaign banner artwork");
+    if (!tableHasColumn(db, "users", "email_verified")) {
+      db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0");
+      // Grandfather all existing users as verified so they aren't locked out.
+      db.exec("UPDATE users SET email_verified = 1");
+    }
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS verification_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_verification_tokens_hash ON verification_tokens(token_hash);
+    `);
+    recordMigration(db, 18, "email verification");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {
