@@ -4602,6 +4602,74 @@ select option {
 
 .cs-skill-bonus { font-family: var(--font-body); font-size: 1.15em; color: var(--parchment); text-align: right; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; min-width: 3ch; flex: 0 0 auto; }
 
+/* Roll affordance: quiet at rest, obvious when hovered or keyboard-focused. */
+.cs-roll-target { position: relative; }
+
+.cs-roll-target-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  min-width: 3ch;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: color-mix(in srgb, var(--select, #c9a25a) 70%, var(--parchment, #e8dcc2));
+  font-weight: 700;
+  line-height: 1.1;
+  box-shadow: inset 0 -1px color-mix(in srgb, var(--select, #c9a25a) 26%, transparent);
+  white-space: nowrap;
+  transition: background 120ms, color 120ms, box-shadow 120ms;
+}
+
+.cs-roll-target-value::after {
+  content: "◇";
+  font-family: var(--font-label, sans-serif);
+  font-size: 0.46em;
+  font-weight: 700;
+  opacity: 0.38;
+}
+
+.cs-roll-target:hover .cs-roll-target-value,
+.cs-roll-target-value:hover {
+  color: var(--select, #c9a25a);
+  background: color-mix(in srgb, var(--select, #c9a25a) 8%, transparent);
+  box-shadow: inset 0 -1px var(--select, #c9a25a);
+}
+
+.cs-roll-target:focus-visible,
+.cs-roll-target-value:focus-visible {
+  outline: 2px solid var(--select, #c9a25a);
+  outline-offset: 2px;
+}
+
+.cs-skill-btn.cs-roll-target {
+  text-decoration: underline dotted color-mix(in srgb, var(--select, #c9a25a) 38%, transparent);
+  text-underline-offset: 0.22em;
+}
+
+.cs-skill-btn.cs-roll-target:hover {
+  color: var(--select, #c9a25a);
+  text-decoration-color: color-mix(in srgb, var(--select, #c9a25a) 82%, transparent);
+}
+
+button.cs-skill-bonus {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.cs-skill-bonus.cs-roll-target-value::after {
+  content: "◇";
+  width: auto;
+  height: auto;
+  border: 0;
+  transform: none;
+}
+
 /* ── Action Table ── */
 
 .cs-action-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 1.08em; table-layout: fixed; }
@@ -10017,10 +10085,10 @@ button.dj-card {
   min-height: 126px;
   padding: 18px 18px 15px;
   overflow: hidden;
-  border: 1px solid rgba(205, 218, 215, 0.18);
+  border: 1px solid rgba(176, 193, 207, 0.18);
   border-radius: 11px;
-  background: linear-gradient(105deg, #263432 0%, #263432 44%, color-mix(in srgb, var(--class-a) 20%, #172522) 100%);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 8px 18px rgba(21, 29, 28, 0.13);
+  background: linear-gradient(105deg, #142235 0%, #142235 44%, color-mix(in srgb, var(--class-a) 20%, #0f1b2a) 100%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 8px 18px rgba(4, 10, 18, 0.13);
   color: #f5f7f5;
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
@@ -10032,24 +10100,24 @@ button.dj-card {
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, rgba(27, 40, 38, 0.98) 0%, rgba(27, 40, 38, 0.9) 42%, rgba(27, 40, 38, 0.3) 72%, rgba(27, 40, 38, 0.12) 100%),
-    linear-gradient(0deg, rgba(10, 18, 17, 0.22), transparent 60%);
+    linear-gradient(90deg, rgba(13, 23, 36, 0.98) 0%, rgba(13, 23, 36, 0.9) 42%, rgba(13, 23, 36, 0.3) 72%, rgba(13, 23, 36, 0.12) 100%),
+    linear-gradient(0deg, rgba(7, 13, 22, 0.22), transparent 60%);
 }
 
 .ledger-class-card:hover:not(.active) {
-  border-color: color-mix(in srgb, var(--class-a) 58%, #d9e1df);
-  background: #263432;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.07), 0 11px 24px rgba(21, 29, 28, 0.2);
+  border-color: color-mix(in srgb, var(--class-a) 58%, #d6dfe8);
+  background: #142235;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.07), 0 11px 24px rgba(4, 10, 18, 0.2);
   transform: translateY(-2px);
 }
 
 .ledger-class-card.active {
   border-color: color-mix(in srgb, var(--class-a) 72%, #efe6bd);
-  background: #263432;
+  background: #142235;
   box-shadow:
     inset 4px 0 0 color-mix(in srgb, var(--class-a) 80%, #f0d37d),
     inset 0 0 0 1px rgba(244, 219, 141, 0.12),
-    0 12px 25px rgba(21, 29, 28, 0.22);
+    0 12px 25px rgba(4, 10, 18, 0.22);
 }
 
 .ledger-class-card-art {
@@ -10077,7 +10145,7 @@ button.dj-card {
   right: 24px;
   top: 50%;
   z-index: -1;
-  color: color-mix(in srgb, var(--class-a) 75%, #dce9e5);
+  color: color-mix(in srgb, var(--class-a) 75%, #dbe4ee);
   opacity: 0.38;
   transform: translateY(-50%);
 }
@@ -10090,7 +10158,7 @@ button.dj-card {
   flex-direction: column;
   max-width: 76%;
   min-height: 91px;
-  text-shadow: 0 2px 8px rgba(4, 12, 11, 0.72);
+  text-shadow: 0 2px 8px rgba(3, 8, 14, 0.72);
 }
 
 .ledger-class-card-name {
@@ -10110,7 +10178,7 @@ button.dj-card {
   max-width: 100%;
   height: 2px;
   margin: 8px 0 6px;
-  background: linear-gradient(90deg, rgba(231, 238, 235, 0.28), transparent);
+  background: linear-gradient(90deg, rgba(224, 232, 241, 0.28), transparent);
 }
 
 .ledger-class-card-desc {
@@ -10135,9 +10203,9 @@ button.dj-card {
   position: absolute;
   right: 12px;
   z-index: 2;
-  border: 1px solid rgba(226, 235, 232, 0.2);
+  border: 1px solid rgba(203, 216, 229, 0.2);
   border-radius: 999px;
-  background: rgba(10, 18, 17, 0.56);
+  background: rgba(7, 13, 22, 0.56);
   color: rgba(245, 248, 247, 0.92);
   font-family: var(--font-sans, sans-serif);
   font-size: 9px;
@@ -10471,6 +10539,32 @@ button.dj-card {
   width: min(920px, 100%);
   max-height: min(860px, calc(100dvh - 40px));
   padding: 22px clamp(18px, 3vw, 30px);
+}
+
+/* Class banner art crowns the details modal, full-bleed above the header. */
+.class-modal.ledger-page:has(.ledger-modal-art) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.ledger-modal-art {
+  position: relative;
+  height: clamp(110px, 16vw, 165px);
+  margin: -22px calc(-1 * clamp(18px, 3vw, 30px)) 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ledger-rule);
+}
+
+.ledger-modal-art img {
+  object-fit: cover;
+  object-position: 65% 30%;
+}
+
+.ledger-modal-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(3, 8, 14, 0.3), transparent 34%);
+  pointer-events: none;
 }
 
 .class-modal.ledger-page .class-modal-hero {
@@ -13968,4 +14062,15 @@ button.dj-card {
   .commission-strip { flex-direction: column; min-height: 0; }
   .commission-panel { flex: 1 1 auto; min-height: 260px; max-width: none; border-right: 0; border-bottom: 1px solid rgba(3, 8, 14, 0.8); }
   .commission-panel:first-child { border-left: 0; }
+}
+
+/* Keep the roll affordance above the sheet's late typography overrides. */
+.cs-roll-target .cs-roll-target-value,
+.cs-skill-bonus.cs-roll-target-value {
+  color: color-mix(in srgb, var(--select, #c9a25a) 70%, var(--ui-text-primary, #e9eef4));
+}
+
+.cs-roll-target:hover .cs-roll-target-value,
+.cs-skill-bonus.cs-roll-target-value:hover {
+  color: var(--select, #c9a25a);
 }

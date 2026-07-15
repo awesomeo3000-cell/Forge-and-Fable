@@ -1,0 +1,1322 @@
+[
+  {
+    "id": "acolyte-template",
+    "kind": "template",
+    "name": "Acolyte",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Good",
+    "challengeRating": 0.25,
+    "experienceValue": 50,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 9,
+      "formula": "2d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 10,
+      "constitution": 10,
+      "intelligence": 10,
+      "wisdom": 14,
+      "charisma": 11
+    },
+    "savingThrows": "",
+    "skills": "Medicine +4, Religion +2",
+    "senses": "passive Perception 12",
+    "languages": "Common",
+    "passivePerception": 12,
+    "traits": [
+      {
+        "name": "Spellcasting",
+        "description": "The acolyte is a 1st-level spellcaster. Its spellcasting ability is Wisdom (spell save DC 12, +4 to hit with spell attacks). The acolyte has the following cleric spells prepared: Cantrips (at will): light, sacred flame, thaumaturgy; 1st level (3 slots): bless, cure wounds, sanctuary."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Club",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.",
+        "attackBonus": 2,
+        "damage": "1d4 bludgeoning",
+        "averageDamage": 2
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "archmage-template",
+    "kind": "template",
+    "name": "Archmage",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster",
+      "Artillery",
+      "Solo"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 12,
+    "experienceValue": 8400,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 99,
+      "formula": "18d8 + 18"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 14,
+      "constitution": 12,
+      "intelligence": 20,
+      "wisdom": 15,
+      "charisma": 16
+    },
+    "savingThrows": "Int +9, Wis +6",
+    "skills": "Arcana +13, History +13",
+    "senses": "passive Perception 12",
+    "languages": "Common, plus five other languages",
+    "passivePerception": 12,
+    "resistances": "Damage from spells; nonmagical bludgeoning, piercing, and slashing (from stoneskin)",
+    "traits": [
+      {
+        "name": "Magic Resistance",
+        "description": "The archmage has advantage on saving throws against spells and other magical effects."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The archmage is an 18th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 17, +9 to hit with spell attacks). The archmage can cast disguise self and invisibility at will and has the following wizard spells prepared: Cantrips (at will): fire bolt, light, mage hand, prestidigitation, shocking grasp; 1st level (4 slots): detect magic, identify, mage armor, magic missile; 2nd level (3 slots): detect thoughts, mirror image, misty step; 3rd level (3 slots): counterspell, fly, lightning bolt; 4th level (3 slots): banishment, fire shield, stoneskin; 5th level (3 slots): cone of cold, scrying, wall of force; 6th level (1 slot): globe of invulnerability; 7th level (1 slot): teleport; 8th level (1 slot): mind blank; 9th level (1 slot): time stop."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Dagger",
+        "description": "Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "attackBonus": 6,
+        "damage": "1d4 + 2 piercing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "assassin-template",
+    "kind": "template",
+    "name": "Assassin",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Ambusher"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Non-Good",
+    "challengeRating": 8,
+    "experienceValue": 3900,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 15,
+    "hitPoints": {
+      "average": 78,
+      "formula": "12d8 + 24"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 16,
+      "constitution": 14,
+      "intelligence": 13,
+      "wisdom": 11,
+      "charisma": 10
+    },
+    "savingThrows": "Dex +6, Int +4",
+    "skills": "Acrobatics +6, Deception +3, Perception +3, Stealth +9",
+    "senses": "passive Perception 13",
+    "languages": "Thieves' cant plus any two languages",
+    "passivePerception": 13,
+    "resistances": "Poison",
+    "traits": [
+      {
+        "name": "Assassinate",
+        "description": "During its first turn, the assassin has advantage on attack rolls against any creature that hasn't taken a turn. Any hit the assassin scores against a surprised creature is a critical hit."
+      },
+      {
+        "name": "Evasion",
+        "description": "If the assassin is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the assassin instead takes no damage if it succeeds on the saving throw, and only half damage if it fails."
+      },
+      {
+        "name": "Sneak Attack",
+        "description": "Once per turn, the assassin deals an extra 14 (4d6) damage when it hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of the assassin that isn't incapacitated and the assassin doesn't have disadvantage on the attack roll."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The assassin makes two shortsword attacks."
+      },
+      {
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage, and the target must make a DC 15 Constitution saving throw, taking 24 (7d6) poison damage on a failed save, or half as much damage on a successful one.",
+        "attackBonus": 6,
+        "damage": "1d6 + 3 piercing",
+        "averageDamage": 6
+      },
+      {
+        "name": "Light Crossbow",
+        "description": "Ranged Weapon Attack: +6 to hit, range 80/320 ft., one target. Hit: 7 (1d8 + 3) piercing damage, and the target must make a DC 15 Constitution saving throw, taking 24 (7d6) poison damage on a failed save, or half as much damage on a successful one.",
+        "attackBonus": 6,
+        "damage": "1d8 + 3 piercing",
+        "averageDamage": 7
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "bandit-template",
+    "kind": "template",
+    "name": "Bandit",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion",
+      "Skirmisher"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Non-Lawful",
+    "challengeRating": 0.125,
+    "experienceValue": 25,
+    "environments": [
+      "Forest",
+      "Hill",
+      "Grassland",
+      "Urban",
+      "Coastal"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 11,
+      "formula": "2d8 + 2"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 12,
+      "constitution": 12,
+      "intelligence": 10,
+      "wisdom": 10,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "actions": [
+      {
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) slashing damage.",
+        "attackBonus": 3,
+        "damage": "1d6 + 1 slashing",
+        "averageDamage": 4
+      },
+      {
+        "name": "Light Crossbow",
+        "description": "Ranged Weapon Attack: +3 to hit, range 80/320 ft., one target. Hit: 5 (1d8 + 1) piercing damage.",
+        "attackBonus": 3,
+        "damage": "1d8 + 1 piercing",
+        "averageDamage": 5
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "berserker-template",
+    "kind": "template",
+    "name": "Berserker",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Brute",
+      "Leader"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Chaotic",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Arctic",
+      "Forest",
+      "Hill",
+      "Mountain"
+    ],
+    "armorClass": 13,
+    "hitPoints": {
+      "average": 67,
+      "formula": "9d8 + 27"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 16,
+      "dexterity": 12,
+      "constitution": 17,
+      "intelligence": 9,
+      "wisdom": 11,
+      "charisma": 9
+    },
+    "savingThrows": "",
+    "skills": "",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "traits": [
+      {
+        "name": "Reckless",
+        "description": "At the start of its turn, the berserker can gain advantage on all melee weapon attack rolls during that turn, but attack rolls against it have advantage until the start of its next turn."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Greataxe",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 9 (1d12 + 3) slashing damage.",
+        "attackBonus": 5,
+        "damage": "1d12 + 3 slashing",
+        "averageDamage": 9
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "commoner-template",
+    "kind": "template",
+    "name": "Commoner",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 0,
+    "experienceValue": 10,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 4,
+      "formula": "1d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 10,
+      "constitution": 10,
+      "intelligence": 10,
+      "wisdom": 10,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "actions": [
+      {
+        "name": "Club",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.",
+        "attackBonus": 2,
+        "damage": "1d4 bludgeoning",
+        "averageDamage": 2
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "cult-fanatic-template",
+    "kind": "template",
+    "name": "Cult Fanatic",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Non-Good",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Desert",
+      "Forest",
+      "Swamp"
+    ],
+    "armorClass": 13,
+    "hitPoints": {
+      "average": 33,
+      "formula": "6d8 + 6"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 14,
+      "constitution": 12,
+      "intelligence": 10,
+      "wisdom": 13,
+      "charisma": 14
+    },
+    "savingThrows": "",
+    "skills": "Deception +4, Persuasion +4, Religion +2",
+    "senses": "passive Perception 11",
+    "languages": "Common",
+    "passivePerception": 11,
+    "traits": [
+      {
+        "name": "Dark Devotion",
+        "description": "The cult fanatic has advantage on saving throws against being charmed or frightened."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The cult fanatic is a 4th-level spellcaster. Its spellcasting ability is Wisdom (spell save DC 11, +3 to hit with spell attacks). The cult fanatic has the following cleric spells prepared: Cantrips (at will): light, sacred flame, thaumaturgy; 1st level (4 slots): command, inflict wounds, shield of faith; 2nd level (3 slots): hold person, spiritual weapon."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The cult fanatic makes two melee attacks."
+      },
+      {
+        "name": "Dagger",
+        "description": "Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "attackBonus": 4,
+        "damage": "1d4 + 2 piercing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "cultist-template",
+    "kind": "template",
+    "name": "Cultist",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Non-Good",
+    "challengeRating": 0.125,
+    "experienceValue": 25,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Desert",
+      "Forest",
+      "Swamp"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 9,
+      "formula": "2d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 12,
+      "constitution": 10,
+      "intelligence": 10,
+      "wisdom": 11,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "Deception +2, Religion +2",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "traits": [
+      {
+        "name": "Dark Devotion",
+        "description": "The cultist has advantage on saving throws against being charmed or frightened."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) slashing damage.",
+        "attackBonus": 3,
+        "damage": "1d6 + 1 slashing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "druid-template",
+    "kind": "template",
+    "name": "Druid",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster",
+      "Healer"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Neutral",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Forest",
+      "Swamp",
+      "Hill",
+      "Coastal",
+      "Mountain"
+    ],
+    "armorClass": 11,
+    "hitPoints": {
+      "average": 27,
+      "formula": "5d8 + 5"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 12,
+      "constitution": 13,
+      "intelligence": 12,
+      "wisdom": 15,
+      "charisma": 11
+    },
+    "savingThrows": "",
+    "skills": "Medicine +4, Nature +3, Perception +4",
+    "senses": "passive Perception 14",
+    "languages": "Druidic, plus any two languages",
+    "passivePerception": 14,
+    "traits": [
+      {
+        "name": "Spellcasting",
+        "description": "The druid is a 4th-level spellcaster. Its spellcasting ability is Wisdom (spell save DC 12, +4 to hit with spell attacks). It has the following druid spells prepared: Cantrips (at will): druidcraft, produce flame, shillelagh; 1st level (4 slots): entangle, longstrider, speak with animals, thunderwave; 2nd level (3 slots): animal messenger, barkskin."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Quarterstaff",
+        "description": "Melee Weapon Attack: +2 to hit (+4 to hit with shillelagh), reach 5 ft., one target. Hit: 3 (1d6) bludgeoning damage, 4 (1d8) bludgeoning damage if wielded with two hands, or 6 (1d8 + 2) bludgeoning damage with shillelagh.",
+        "attackBonus": 2,
+        "damage": "1d6 bludgeoning",
+        "averageDamage": 3
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "gladiator-template",
+    "kind": "template",
+    "name": "Gladiator",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Leader",
+      "Brute"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 5,
+    "experienceValue": 1800,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 16,
+    "hitPoints": {
+      "average": 112,
+      "formula": "15d8 + 45"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 18,
+      "dexterity": 15,
+      "constitution": 16,
+      "intelligence": 10,
+      "wisdom": 12,
+      "charisma": 15
+    },
+    "savingThrows": "Str +7, Dex +5, Con +6",
+    "skills": "Athletics +10, Intimidation +5",
+    "senses": "passive Perception 11",
+    "languages": "Common",
+    "passivePerception": 11,
+    "traits": [
+      {
+        "name": "Brave",
+        "description": "The gladiator has advantage on saving throws against being frightened."
+      },
+      {
+        "name": "Brute",
+        "description": "A melee weapon deals one extra die of its damage when the gladiator hits with it (included in the attack)."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The gladiator makes three melee attacks or two ranged attacks."
+      },
+      {
+        "name": "Spear",
+        "description": "Melee or Ranged Weapon Attack: +7 to hit, reach 5 ft. and range 20/60 ft., one target. Hit: 11 (2d6 + 4) piercing damage, or 13 (2d8 + 4) piercing damage if used with two hands to make a melee attack.",
+        "attackBonus": 7,
+        "damage": "2d6 + 4 piercing",
+        "averageDamage": 11
+      },
+      {
+        "name": "Shield Bash",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one creature. Hit: 9 (2d4 + 4) bludgeoning damage. If the target is a Medium or smaller creature, it must succeed on a DC 15 Strength saving throw or be knocked prone.",
+        "attackBonus": 7,
+        "damage": "2d4 + 4 bludgeoning",
+        "averageDamage": 9
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Parry",
+        "description": "The gladiator adds 3 to its AC against one melee attack that would hit it. To do so, the gladiator must see the attacker and be wielding a melee weapon."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "guard-template",
+    "kind": "template",
+    "name": "Guard",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Lawful",
+    "challengeRating": 0.125,
+    "experienceValue": 25,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 16,
+    "hitPoints": {
+      "average": 11,
+      "formula": "2d8 + 2"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 13,
+      "dexterity": 12,
+      "constitution": 12,
+      "intelligence": 10,
+      "wisdom": 11,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "Perception +2",
+    "senses": "passive Perception 12",
+    "languages": "Common",
+    "passivePerception": 12,
+    "actions": [
+      {
+        "name": "Spear",
+        "description": "Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d6 + 1) piercing damage, or 5 (1d8 + 1) piercing damage if used with two hands to make a melee attack.",
+        "attackBonus": 3,
+        "damage": "1d6 + 1 piercing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "knight-template",
+    "kind": "template",
+    "name": "Knight",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Leader"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Lawful",
+    "challengeRating": 3,
+    "experienceValue": 700,
+    "environments": [
+      "Urban",
+      "Grassland",
+      "Hill"
+    ],
+    "armorClass": 18,
+    "hitPoints": {
+      "average": 52,
+      "formula": "8d8 + 16"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 16,
+      "dexterity": 11,
+      "constitution": 14,
+      "intelligence": 11,
+      "wisdom": 11,
+      "charisma": 15
+    },
+    "savingThrows": "Con +4, Wis +2",
+    "skills": "",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "traits": [
+      {
+        "name": "Brave",
+        "description": "The knight has advantage on saving throws against being frightened."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The knight makes two melee attacks."
+      },
+      {
+        "name": "Greatsword",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage.",
+        "attackBonus": 5,
+        "damage": "2d6 + 3 slashing",
+        "averageDamage": 10
+      },
+      {
+        "name": "Heavy Crossbow",
+        "description": "Ranged Weapon Attack: +2 to hit, range 100/400 ft., one target. Hit: 5 (1d10) piercing damage.",
+        "attackBonus": 2,
+        "damage": "1d10 piercing",
+        "averageDamage": 5
+      },
+      {
+        "name": "Leadership (Recharges after a Short or Long Rest)",
+        "description": "For 1 minute, the knight can utter a special command or warning whenever a nonhostile creature that it can see within 30 feet of it makes an attack roll or a saving throw. The creature can add a d4 to its roll provided it can hear and understand the knight. A creature can benefit from only one Leadership die at a time. This effect ends if the knight is incapacitated."
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Parry",
+        "description": "The knight adds 2 to its AC against one melee attack that would hit it. To do so, the knight must see the attacker and be wielding a melee weapon."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "mage-template",
+    "kind": "template",
+    "name": "Mage",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster",
+      "Artillery"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 6,
+    "experienceValue": 2300,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 40,
+      "formula": "9d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 9,
+      "dexterity": 14,
+      "constitution": 11,
+      "intelligence": 17,
+      "wisdom": 12,
+      "charisma": 11
+    },
+    "savingThrows": "Int +6, Wis +4",
+    "skills": "Arcana +6, History +6",
+    "senses": "passive Perception 11",
+    "languages": "Common, plus three other languages",
+    "passivePerception": 11,
+    "traits": [
+      {
+        "name": "Spellcasting",
+        "description": "The mage is a 9th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 14, +6 to hit with spell attacks). The mage has the following wizard spells prepared: Cantrips (at will): fire bolt, light, mage hand, prestidigitation; 1st level (4 slots): detect magic, mage armor, magic missile, shield; 2nd level (3 slots): misty step, suggestion; 3rd level (3 slots): counterspell, fireball, fly; 4th level (3 slots): greater invisibility, ice storm; 5th level (1 slot): cone of cold."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Dagger",
+        "description": "Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "attackBonus": 5,
+        "damage": "1d4 + 2 piercing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "noble-template",
+    "kind": "template",
+    "name": "Noble",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 0.125,
+    "experienceValue": 25,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 15,
+    "hitPoints": {
+      "average": 9,
+      "formula": "2d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 12,
+      "constitution": 11,
+      "intelligence": 12,
+      "wisdom": 14,
+      "charisma": 16
+    },
+    "savingThrows": "",
+    "skills": "Deception +5, Insight +4, Persuasion +5",
+    "senses": "passive Perception 12",
+    "languages": "Common, plus any two languages",
+    "passivePerception": 12,
+    "actions": [
+      {
+        "name": "Rapier",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage.",
+        "attackBonus": 3,
+        "damage": "1d8 + 1 piercing",
+        "averageDamage": 5
+      }
+    ],
+    "reactions": [
+      {
+        "name": "Parry",
+        "description": "The noble adds 2 to its AC against one melee attack that would hit it. To do so, the noble must see the attacker and be wielding a melee weapon."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "priest-template",
+    "kind": "template",
+    "name": "Priest",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Spellcaster",
+      "Healer"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Good",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 13,
+    "hitPoints": {
+      "average": 27,
+      "formula": "5d8 + 5"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 10,
+      "constitution": 12,
+      "intelligence": 13,
+      "wisdom": 16,
+      "charisma": 13
+    },
+    "savingThrows": "",
+    "skills": "Medicine +7, Persuasion +3, Religion +4",
+    "senses": "passive Perception 13",
+    "languages": "Common, plus any two languages",
+    "passivePerception": 13,
+    "traits": [
+      {
+        "name": "Divine Eminence",
+        "description": "As a bonus action, the priest can expend a spell slot to cause its melee weapon attacks to magically deal an extra 10 (3d6) radiant damage to a target on a hit. This benefit lasts until the end of the turn. If the priest expends a spell slot of 2nd level or higher, the extra damage increases by 1d6 for each level above 1st."
+      },
+      {
+        "name": "Spellcasting",
+        "description": "The priest is a 5th-level spellcaster. Its spellcasting ability is Wisdom (spell save DC 13, +5 to hit with spell attacks). The priest has the following cleric spells prepared: Cantrips (at will): light, sacred flame, thaumaturgy; 1st level (4 slots): cure wounds, guiding bolt, sanctuary; 2nd level (3 slots): lesser restoration, spiritual weapon; 3rd level (2 slots): dispel magic, spirit guardians."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Mace",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 3 (1d6) bludgeoning damage.",
+        "attackBonus": 2,
+        "damage": "1d6 bludgeoning",
+        "averageDamage": 3
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "scout-template",
+    "kind": "template",
+    "name": "Scout",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Skirmisher"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 0.5,
+    "experienceValue": 100,
+    "environments": [
+      "Forest",
+      "Hill",
+      "Grassland",
+      "Mountain",
+      "Swamp"
+    ],
+    "armorClass": 13,
+    "hitPoints": {
+      "average": 16,
+      "formula": "3d8 + 3"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 11,
+      "dexterity": 14,
+      "constitution": 12,
+      "intelligence": 11,
+      "wisdom": 13,
+      "charisma": 11
+    },
+    "savingThrows": "",
+    "skills": "Nature +4, Perception +5, Stealth +6, Survival +5",
+    "senses": "passive Perception 15",
+    "languages": "Common",
+    "passivePerception": 15,
+    "traits": [
+      {
+        "name": "Keen Hearing and Sight",
+        "description": "The scout has advantage on Wisdom (Perception) checks that rely on hearing or sight."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The scout makes two melee attacks or two ranged attacks."
+      },
+      {
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "attackBonus": 4,
+        "damage": "1d6 + 2 piercing",
+        "averageDamage": 5
+      },
+      {
+        "name": "Longbow",
+        "description": "Ranged Weapon Attack: +4 to hit, ranged 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage.",
+        "attackBonus": 4,
+        "damage": "1d8 + 2 piercing",
+        "averageDamage": 6
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "spy-template",
+    "kind": "template",
+    "name": "Spy",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Ambusher",
+      "Skirmisher"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 27,
+      "formula": "6d8"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 10,
+      "dexterity": 15,
+      "constitution": 10,
+      "intelligence": 12,
+      "wisdom": 14,
+      "charisma": 16
+    },
+    "savingThrows": "",
+    "skills": "Deception +5, Insight +4, Investigation +5, Perception +6, Persuasion +5, Sleight of Hand +4, Stealth +4",
+    "senses": "passive Perception 16",
+    "languages": "Common, plus any two languages",
+    "passivePerception": 16,
+    "traits": [
+      {
+        "name": "Cunning Action",
+        "description": "On each of its turns, the spy can use a bonus action to take the Dash, Disengage, or Hide action."
+      },
+      {
+        "name": "Sneak Attack (1/Turn)",
+        "description": "The spy deals an extra 7 (2d6) damage when it hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of the spy that isn't incapacitated and the spy doesn't have disadvantage on the attack roll."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The spy makes two melee attacks."
+      },
+      {
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "attackBonus": 4,
+        "damage": "1d6 + 2 piercing",
+        "averageDamage": 5
+      },
+      {
+        "name": "Hand Crossbow",
+        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "attackBonus": 4,
+        "damage": "1d6 + 2 piercing",
+        "averageDamage": 5
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "thug-template",
+    "kind": "template",
+    "name": "Thug",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Brute"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any Non-Good",
+    "challengeRating": 0.5,
+    "experienceValue": 100,
+    "environments": [
+      "Urban"
+    ],
+    "armorClass": 11,
+    "hitPoints": {
+      "average": 32,
+      "formula": "5d8 + 10"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 15,
+      "dexterity": 11,
+      "constitution": 14,
+      "intelligence": 10,
+      "wisdom": 10,
+      "charisma": 11
+    },
+    "savingThrows": "",
+    "skills": "Intimidation +2",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "traits": [
+      {
+        "name": "Pack Tactics",
+        "description": "The thug has advantage on an attack roll against a creature if at least one of the thug's allies is within 5 feet of the creature and the ally isn't incapacitated."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The thug makes two melee attacks."
+      },
+      {
+        "name": "Mace",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) bludgeoning damage.",
+        "attackBonus": 4,
+        "damage": "1d6 + 2 bludgeoning",
+        "averageDamage": 5
+      },
+      {
+        "name": "Heavy Crossbow",
+        "description": "Ranged Weapon Attack: +2 to hit, range 100/400 ft., one target. Hit: 5 (1d10) piercing damage.",
+        "attackBonus": 2,
+        "damage": "1d10 piercing",
+        "averageDamage": 5
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "tribal-warrior-template",
+    "kind": "template",
+    "name": "Tribal Warrior",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Minion"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 0.125,
+    "experienceValue": 25,
+    "environments": [
+      "Forest",
+      "Hill",
+      "Grassland",
+      "Mountain",
+      "Arctic",
+      "Swamp"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 11,
+      "formula": "2d8 + 2"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 13,
+      "dexterity": 11,
+      "constitution": 12,
+      "intelligence": 8,
+      "wisdom": 11,
+      "charisma": 8
+    },
+    "savingThrows": "",
+    "skills": "",
+    "senses": "passive Perception 10",
+    "languages": "Common",
+    "passivePerception": 10,
+    "traits": [
+      {
+        "name": "Pack Tactics",
+        "description": "The warrior has advantage on an attack roll against a creature if at least one of the warrior's allies is within 5 feet of the creature and the ally isn't incapacitated."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Spear",
+        "description": "Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d6 + 1) piercing damage, or 5 (1d8 + 1) piercing damage if used with two hands to make a melee attack.",
+        "attackBonus": 3,
+        "damage": "1d6 + 1 piercing",
+        "averageDamage": 4
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "veteran-template",
+    "kind": "template",
+    "name": "Veteran",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Leader"
+    ],
+    "creatureType": "Humanoid (Any Race)",
+    "size": "Medium",
+    "alignment": "Any",
+    "challengeRating": 3,
+    "experienceValue": 700,
+    "environments": [
+      "Urban",
+      "Hill",
+      "Mountain",
+      "Grassland",
+      "Forest"
+    ],
+    "armorClass": 17,
+    "hitPoints": {
+      "average": 58,
+      "formula": "9d8 + 18"
+    },
+    "speed": "30 ft.",
+    "abilities": {
+      "strength": 16,
+      "dexterity": 13,
+      "constitution": 14,
+      "intelligence": 10,
+      "wisdom": 11,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "Athletics +5, Perception +2",
+    "senses": "passive Perception 12",
+    "languages": "Common",
+    "passivePerception": 12,
+    "actions": [
+      {
+        "name": "Multiattack",
+        "description": "The veteran makes two longsword attacks. If it has a shortsword drawn, it can also make a shortsword attack."
+      },
+      {
+        "name": "Longsword",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage, or 8 (1d10 + 3) slashing damage if used with two hands.",
+        "attackBonus": 5,
+        "damage": "1d8 + 3 slashing",
+        "averageDamage": 7
+      },
+      {
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage.",
+        "attackBonus": 5,
+        "damage": "1d6 + 3 piercing",
+        "averageDamage": 6
+      },
+      {
+        "name": "Heavy Crossbow",
+        "description": "Ranged Weapon Attack: +3 to hit, range 100/400 ft., one target. Hit: 6 (1d10 + 1) piercing damage.",
+        "attackBonus": 3,
+        "damage": "1d10 + 1 piercing",
+        "averageDamage": 6
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "werewolf-template",
+    "kind": "template",
+    "name": "Werewolf",
+    "source": "SRD",
+    "tags": [
+      "NPC",
+      "Brute"
+    ],
+    "creatureType": "Humanoid (Human, Shapechanger)",
+    "size": "Medium",
+    "alignment": "Chaotic Evil",
+    "challengeRating": 3,
+    "experienceValue": 700,
+    "environments": [
+      "Forest",
+      "Hill",
+      "Grassland"
+    ],
+    "armorClass": 11,
+    "hitPoints": {
+      "average": 58,
+      "formula": "9d8 + 18"
+    },
+    "speed": "30 ft. (40 ft. in wolf form)",
+    "abilities": {
+      "strength": 15,
+      "dexterity": 13,
+      "constitution": 14,
+      "intelligence": 10,
+      "wisdom": 11,
+      "charisma": 10
+    },
+    "savingThrows": "",
+    "skills": "Perception +4, Stealth +3",
+    "senses": "passive Perception 14",
+    "languages": "Common (can't speak in wolf form)",
+    "passivePerception": 14,
+    "immunities": "Bludgeoning, Piercing, and Slashing from Nonmagical Attacks that aren't Silvered",
+    "traits": [
+      {
+        "name": "Shapechanger",
+        "description": "The werewolf can use its action to polymorph into a wolf-humanoid hybrid or into a wolf, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+      },
+      {
+        "name": "Keen Hearing and Smell",
+        "description": "The werewolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Multiattack (Humanoid or Hybrid Form Only)",
+        "description": "The werewolf makes two attacks: two with its spear (humanoid form) or one with its bite and one with its claws (hybrid form)."
+      },
+      {
+        "name": "Bite (Wolf or Hybrid Form Only)",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage. If the target is a humanoid, it must succeed on a DC 12 Constitution saving throw or be cursed with werewolf lycanthropy.",
+        "attackBonus": 4,
+        "damage": "1d8 + 2 piercing",
+        "averageDamage": 6
+      },
+      {
+        "name": "Claws (Hybrid Form Only)",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 7 (2d4 + 2) slashing damage.",
+        "attackBonus": 4,
+        "damage": "2d4 + 2 slashing",
+        "averageDamage": 7
+      },
+      {
+        "name": "Spear (Humanoid Form Only)",
+        "description": "Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one creature. Hit: 5 (1d6 + 2) piercing damage, or 6 (1d8 + 2) piercing damage if used with two hands to make a melee attack.",
+        "attackBonus": 4,
+        "damage": "1d6 + 2 piercing",
+        "averageDamage": 5
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  }
+]

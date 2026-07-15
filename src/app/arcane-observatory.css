@@ -2445,8 +2445,9 @@
 
 [data-theme="arcane-observatory"] .character-header {
   display: grid;
-  grid-template-columns: clamp(220px, 18vw, 280px) minmax(0, 1fr);
-  min-height: 300px;
+  /* Carded Observatory: wider portrait share, taller header = gentler crop */
+  grid-template-columns: clamp(260px, 22vw, 340px) minmax(0, 1fr);
+  min-height: clamp(330px, 31vw, 390px);
   overflow: hidden;
   background: var(--paper-raised);
   border: 1px solid var(--doc-rule);
@@ -2480,7 +2481,9 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: 50% 30%;
+  /* Presentation-only focal hooks — 22% keeps faces and hairlines in frame
+     across the portrait library without persisting a crop position. */
+  object-position: var(--portrait-focus-x, 50%) var(--portrait-focus-y, 22%);
 }
 [data-theme="arcane-observatory"] .character-header__portrait-art {
   position: absolute;
@@ -2840,6 +2843,20 @@
   outline: 2px solid var(--doc-select);
   outline-offset: -3px;
 }
+[data-theme="arcane-observatory"] button.character-stat--roll .cs-roll-target-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  color: color-mix(in srgb, var(--doc-select) 70%, var(--ink));
+  border: 0;
+  background: transparent;
+  box-shadow: inset 0 -1px color-mix(in srgb, var(--doc-select) 26%, transparent);
+}
+[data-theme="arcane-observatory"] button.character-stat--roll:hover .cs-roll-target-value {
+  color: var(--doc-select);
+  background: color-mix(in srgb, var(--doc-select) 8%, transparent);
+  box-shadow: inset 0 -1px var(--doc-select);
+}
 
 /* ── Header responsive ── */
 @media (max-width: 960px) {
@@ -2861,7 +2878,9 @@
     grid-template-columns: 1fr;
   }
   [data-theme="arcane-observatory"] .character-header__portrait {
-    min-height: 280px;
+    /* Stacked above identity: controlled height, full-width picker target. */
+    height: clamp(240px, 68vw, 300px);
+    min-height: 0;
     border-right: 0;
     border-bottom: 1px solid var(--doc-rule);
   }

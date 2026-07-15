@@ -1,0 +1,738 @@
+[
+  {
+    "id": "hazard-poison-gas",
+    "kind": "hazard",
+    "name": "Poison Gas Trap",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Trap",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Underdark",
+      "Swamp",
+      "Urban"
+    ],
+    "armorClass": 15,
+    "hitPoints": {
+      "average": 10,
+      "formula": "3d6"
+    },
+    "savingThrows": "Constitution DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature that steps on a pressure plate or opens a sealed door releases the gas in a 10-foot-radius sphere."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 reveals the faint smell or hissing sound. A successful Intelligence (Investigation) check DC 15 reveals the trigger mechanism."
+      },
+      {
+        "name": "Disarm",
+        "description": "A Dexterity check using thieves' tools DC 15 disables the trigger. A dispel magic (DC 13) on the gas suppresses it for 1 hour."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Poison Gas Burst",
+        "description": "All creatures in a 10-foot-radius sphere must make a DC 13 Constitution saving throw, taking 7 (2d6) poison damage on a failed save, or half as much damage on a successful one. The gas dissipates after 1 minute but a creature that ends its turn in the area must repeat the save.",
+        "damage": "2d6 poison",
+        "averageDamage": 7
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-pit-trap-10",
+    "kind": "hazard",
+    "name": "Pit Trap (10 ft.)",
+    "source": "SRD",
+    "tags": [
+      "Hazard"
+    ],
+    "creatureType": "Trap",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 0.5,
+    "experienceValue": 100,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Forest",
+      "Hill",
+      "Mountain"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 15,
+      "formula": "4d6 + 1"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature that steps on the covered pit falls in. The pit is 10 feet deep."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices the unstable or false flooring."
+      },
+      {
+        "name": "Disable",
+        "description": "A Dexterity check using thieves' tools DC 15 can jam the cover open or closed."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Fall",
+        "description": "The triggering creature must make a DC 13 Dexterity saving throw. On a failure, it falls 10 feet, taking 3 (1d6) bludgeoning damage and landing prone. On a success, it catches the edge and doesn't fall."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-pit-trap-20",
+    "kind": "hazard",
+    "name": "Pit Trap (20 ft.)",
+    "source": "SRD",
+    "tags": [
+      "Hazard"
+    ],
+    "creatureType": "Trap",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Forest",
+      "Hill",
+      "Mountain"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 20,
+      "formula": "5d6 + 2"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature that steps on the covered pit falls in. The pit is 20 feet deep."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices the unstable or false flooring."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Fall",
+        "description": "The triggering creature must make a DC 13 Dexterity saving throw. On a failure, it falls 20 feet, taking 7 (2d6) bludgeoning damage and landing prone. On a success, it catches the edge and doesn't fall."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-pit-trap-30",
+    "kind": "hazard",
+    "name": "Pit Trap (30 ft.)",
+    "source": "SRD",
+    "tags": [
+      "Hazard"
+    ],
+    "creatureType": "Trap",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Forest",
+      "Hill",
+      "Mountain"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 25,
+      "formula": "6d6 + 3"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature that steps on the covered pit falls in. The pit is 30 feet deep."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices the unstable or false flooring."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Fall",
+        "description": "The triggering creature must make a DC 13 Dexterity saving throw. On a failure, it falls 30 feet, taking 10 (3d6) bludgeoning damage and landing prone. On a success, it catches the edge and doesn't fall."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-falling-rocks",
+    "kind": "hazard",
+    "name": "Falling Rocks",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Artillery"
+    ],
+    "creatureType": "Trap",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Mountain",
+      "Underdark",
+      "Hill"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 20,
+      "formula": "4d8 + 2"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "Disturbing a tripwire or a creature stepping on an unstable floor causes rocks to fall from above in a 10-foot-radius area."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices the tripwire or loose ceiling stones."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Rockfall",
+        "description": "Each creature in a 10-foot-radius area must make a DC 13 Dexterity saving throw. On a failed save, a creature takes 10 (3d6) bludgeoning damage and is knocked prone. On a successful save, the creature takes half as much damage and isn't knocked prone."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-spike-trap",
+    "kind": "hazard",
+    "name": "Spike Trap",
+    "source": "SRD",
+    "tags": [
+      "Hazard"
+    ],
+    "creatureType": "Trap",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Underdark",
+      "Urban",
+      "Forest",
+      "Mountain"
+    ],
+    "armorClass": 14,
+    "hitPoints": {
+      "average": 15,
+      "formula": "3d8 + 2"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature stepping on a pressure plate causes spikes to thrust up from the floor in a 5-foot square."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices small holes in the floor. A successful Intelligence (Investigation) check DC 15 reveals the pressure plate."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Spike Impalement",
+        "description": "The triggering creature must make a DC 13 Dexterity saving throw. On a failure, it takes 7 (2d6) piercing damage and its speed is reduced by 10 feet until it receives magical healing or a successful DC 15 Wisdom (Medicine) check. On a success, it takes no damage."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-acid-pool",
+    "kind": "hazard",
+    "name": "Acid Pool",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Hazard",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Underdark",
+      "Swamp",
+      "Urban"
+    ],
+    "armorClass": 8,
+    "hitPoints": {
+      "average": 30,
+      "formula": "6d8 + 3"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "vulnerabilities": "Cold",
+    "immunities": "Acid",
+    "traits": [
+      {
+        "name": "Difficult Terrain",
+        "description": "The area of the acid pool is difficult terrain. A creature that falls prone in the pool or enters it for the first time on a turn takes damage."
+      },
+      {
+        "name": "Corrosive",
+        "description": "Nonmagical weapons that strike the pool's surface take a permanent -1 penalty to damage rolls after each hit, and are destroyed if the penalty reaches -5."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Acid Immersion",
+        "description": "A creature that enters the acid or starts its turn there takes 7 (2d6) acid damage."
+      },
+      {
+        "name": "Splash",
+        "description": "If a creature falls into the pool, all creatures within 5 feet of the pool take 3 (1d6) acid damage unless they succeed on a DC 13 Dexterity saving throw."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-lava-stream",
+    "kind": "hazard",
+    "name": "Lava Stream",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Hazard",
+    "size": "Huge",
+    "alignment": "Unaligned",
+    "challengeRating": 4,
+    "experienceValue": 1100,
+    "environments": [
+      "Mountain",
+      "Underdark",
+      "Desert"
+    ],
+    "armorClass": 8,
+    "hitPoints": {
+      "average": 50,
+      "formula": "10d8 + 5"
+    },
+    "savingThrows": "Dexterity DC 15",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "immunities": "Fire",
+    "vulnerabilities": "Cold",
+    "traits": [
+      {
+        "name": "Intense Heat",
+        "description": "A creature that starts its turn within 10 feet of the lava takes 3 (1d6) fire damage."
+      },
+      {
+        "name": "Slow Flow",
+        "description": "The lava moves 5 feet per round in a predetermined direction. Any creature in the path must succeed on a DC 13 Strength saving throw or be pushed 5 feet and knocked prone."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Lava Immersion",
+        "description": "A creature that enters the lava or starts its turn there takes 21 (6d6) fire damage. A creature that dies in the lava is completely destroyed."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-lightning-barrier",
+    "kind": "hazard",
+    "name": "Lightning Barrier",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Trap",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "challengeRating": 3,
+    "experienceValue": 700,
+    "environments": [
+      "Urban",
+      "Underdark",
+      "Mountain"
+    ],
+    "armorClass": 12,
+    "hitPoints": {
+      "average": 25,
+      "formula": "5d8 + 3"
+    },
+    "savingThrows": "Dexterity DC 14",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "immunities": "Lightning",
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature passing between two rune-etched pillars activates the arcane barrier."
+      },
+      {
+        "name": "Detection",
+        "description": "A Detect Magic spell reveals evocation magic. A successful Intelligence (Arcana) check DC 15 identifies the runes."
+      },
+      {
+        "name": "Disable",
+        "description": "A dispel magic (DC 14) on either pillar suppresses the barrier for 1 minute. A Dexterity check using thieves' tools DC 15 can scratch out a rune to disable it."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Lightning Arc",
+        "description": "When triggered, arcs of lightning connect the pillars in a 10-foot-wide line up to 20 feet long. Each creature in the area must make a DC 14 Dexterity saving throw, taking 14 (4d6) lightning damage on a failed save, or half as much on a successful one."
+      },
+      {
+        "name": "Sustained Barrier",
+        "description": "While active, any creature that enters or ends its turn within the barrier's area takes 7 (2d6) lightning damage (no save)."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-web-passage",
+    "kind": "hazard",
+    "name": "Web-Filled Passage",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Hazard",
+    "size": "Large",
+    "alignment": "Unaligned",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Underdark",
+      "Forest",
+      "Swamp"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 15,
+      "formula": "3d8 + 2"
+    },
+    "savingThrows": "Strength DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "vulnerabilities": "Fire",
+    "immunities": "Bludgeoning, Poison, Psychic",
+    "traits": [
+      {
+        "name": "Dense Webs",
+        "description": "The entire passage is filled with thick, sticky webbing. The area is heavily obscured and difficult terrain. A creature that enters or starts its turn in the webs must succeed on a DC 13 Strength saving throw or become restrained. A restrained creature can use its action to make a DC 13 Strength check to break free."
+      },
+      {
+        "name": "Flammable",
+        "description": "The webs are highly flammable. Any fire damage dealt to the webs causes them to burn away in a 5-foot-radius area, dealing 3 (1d6) fire damage to any creature inside that area."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Web Strand",
+        "description": "Each round on initiative count 10, a loose strand lashes at one random creature in the passage. The target must make a DC 13 Dexterity saving throw or be grappled and pulled 5 feet deeper into the webs."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-brown-mold",
+    "kind": "hazard",
+    "name": "Brown Mold",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Hazard",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Underdark"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 20,
+      "formula": "4d8 + 2"
+    },
+    "savingThrows": "Constitution DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "immunities": "Cold, Fire",
+    "vulnerabilities": "None",
+    "traits": [
+      {
+        "name": "Heat Absorption",
+        "description": "Brown mold feeds on warmth. Any source of fire or heat brought within 5 feet of the mold causes it to instantly expand 10 feet in all directions. Creatures within the expansion area take 7 (2d6) cold damage as the mold drains heat."
+      },
+      {
+        "name": "Cold Aura",
+        "description": "A creature that starts its turn within 5 feet of brown mold takes 3 (1d6) cold damage."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Survival) check DC 13 identifies the mold. Cold damage destroys a 5-foot patch."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Feed on Warmth",
+        "description": "Any creature that touches the mold or starts its turn in physical contact with it takes 10 (3d6) cold damage and must succeed on a DC 13 Constitution saving throw or gain one level of exhaustion (max 3 levels from this effect)."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-green-slime",
+    "kind": "hazard",
+    "name": "Green Slime",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Ambusher"
+    ],
+    "creatureType": "Hazard",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Underdark",
+      "Swamp",
+      "Forest"
+    ],
+    "armorClass": 8,
+    "hitPoints": {
+      "average": 15,
+      "formula": "3d8 + 2"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "immunities": "Acid",
+    "vulnerabilities": "Cold, Fire, Radiant",
+    "traits": [
+      {
+        "name": "Ambusher",
+        "description": "Green slime blends with damp stone. A Wisdom (Perception) check DC 15 is required to spot it before it drops."
+      },
+      {
+        "name": "Acidic Dissolution",
+        "description": "When the slime contacts flesh, wood, or metal, it deals ongoing acid damage. It can be scraped off (action), frozen, or burned away (any cold, fire, or radiant damage)."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Drop",
+        "description": "The green slime drops from the ceiling onto a creature below. The target must make a DC 13 Dexterity saving throw. On a failure, the slime covers it."
+      },
+      {
+        "name": "Corrode",
+        "description": "A creature covered in green slime takes 5 (1d10) acid damage at the start of each of its turns. Nonmagical armor or weapons in contact with the slime take a permanent -1 penalty and are destroyed after 1 minute."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-yellow-mold",
+    "kind": "hazard",
+    "name": "Yellow Mold",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Artillery"
+    ],
+    "creatureType": "Hazard",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 2,
+    "experienceValue": 450,
+    "environments": [
+      "Underdark",
+      "Swamp",
+      "Forest"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 15,
+      "formula": "3d8 + 2"
+    },
+    "savingThrows": "Constitution DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "immunities": "Poison",
+    "vulnerabilities": "Fire",
+    "traits": [
+      {
+        "name": "Spore Cloud",
+        "description": "If disturbed (stepped on, touched, burned, or struck), the mold releases a cloud of poisonous spores in a 10-foot-radius sphere."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Survival) or Intelligence (Nature) check DC 15 identifies the mold. Fire destroys a 5-foot patch."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Spore Burst",
+        "description": "When disturbed, each creature in a 10-foot-radius sphere must make a DC 13 Constitution saving throw, taking 10 (3d6) poison damage on a failed save, or half as much on a successful one. A creature that fails the save by 5 or more is also poisoned for 1 hour."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-scything-blade",
+    "kind": "hazard",
+    "name": "Scything Blade Trap",
+    "source": "SRD",
+    "tags": [
+      "Hazard"
+    ],
+    "creatureType": "Trap",
+    "size": "Medium",
+    "alignment": "Unaligned",
+    "challengeRating": 1,
+    "experienceValue": 200,
+    "environments": [
+      "Urban",
+      "Underdark"
+    ],
+    "armorClass": 14,
+    "hitPoints": {
+      "average": 15,
+      "formula": "3d8 + 2"
+    },
+    "savingThrows": "Dexterity DC 13",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "A creature stepping on a pressure plate or breaking a tripwire causes a blade to swing from a hidden wall slit."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 reveals the thin slit in the wall. A successful Intelligence (Investigation) DC 15 reveals the trigger."
+      },
+      {
+        "name": "Disable",
+        "description": "A Dexterity check using thieves' tools DC 15 jams the blade mechanism."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Blade Sweep",
+        "description": "The blade sweeps in a 5-foot line up to 10 feet long. Each creature in the area must make a DC 13 Dexterity saving throw, taking 9 (2d8) slashing damage on a failed save, or half as much damage on a successful one."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  },
+  {
+    "id": "hazard-collapsing-ceiling",
+    "kind": "hazard",
+    "name": "Collapsing Ceiling",
+    "source": "SRD",
+    "tags": [
+      "Hazard",
+      "Controller"
+    ],
+    "creatureType": "Trap",
+    "size": "Huge",
+    "alignment": "Unaligned",
+    "challengeRating": 3,
+    "experienceValue": 700,
+    "environments": [
+      "Underdark",
+      "Urban",
+      "Mountain"
+    ],
+    "armorClass": 10,
+    "hitPoints": {
+      "average": 40,
+      "formula": "8d8 + 4"
+    },
+    "savingThrows": "Dexterity DC 14",
+    "senses": "passive Perception 0",
+    "passivePerception": 0,
+    "traits": [
+      {
+        "name": "Trigger",
+        "description": "Disturbing a support beam, strong vibrations, or a trap mechanism causes the ceiling to partially collapse in a 15-foot-radius area."
+      },
+      {
+        "name": "Detection",
+        "description": "A Wisdom (Perception) check DC 15 notices cracks in the ceiling. A successful Intelligence (Investigation) DC 15 identifies the unstable supports."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Ceiling Collapse",
+        "description": "Each creature in a 15-foot-radius area must make a DC 14 Dexterity saving throw. On a failed save, a creature takes 14 (4d6) bludgeoning damage and is restrained under rubble. A restrained creature can use its action to make a DC 14 Strength check to free itself. On a successful save, the creature takes half damage and isn't restrained."
+      }
+    ],
+    "createdAt": "2026-07-15T00:00:00Z",
+    "updatedAt": "2026-07-15T00:00:00Z"
+  }
+]

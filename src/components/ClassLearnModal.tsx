@@ -3,8 +3,10 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import type { HeroClass } from "@/types/game";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
+import { CLASS_ART_IDS, classArtSrc } from "@/lib/classArt";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
 import { memo } from "react";
@@ -45,6 +47,12 @@ export default memo(function ClassLearnModal(props: {
         role="dialog"
         onMouseDown={(event) => event.stopPropagation()}
       >
+        {CLASS_ART_IDS.has(props.heroClass.id) ? (
+          <div className="ledger-modal-art" aria-hidden="true">
+            <Image src={classArtSrc(props.heroClass.id)} alt="" fill sizes="920px" priority />
+          </div>
+        ) : null}
+
         <button className="glass-icon modal-close" type="button" onClick={props.onClose} title="Close">
           <X size={18} />
         </button>

@@ -13,6 +13,9 @@ import "./globals.css";
 // Arcane Observatory semantic theme layer — must stay after globals.css so
 // it wins ties by cascade order (docs/ai-project-proposal-34 §3).
 import "./arcane-observatory.css";
+// Carded Observatory character-sheet presentation — must stay after
+// arcane-observatory.css so its card rules win ties by cascade order.
+import "./character-sheet-carded-observatory.css";
 import { BRAND_NAME } from "@/lib/brand";
 
 const fraunces = Fraunces({

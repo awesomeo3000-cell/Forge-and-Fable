@@ -1,0 +1,1852 @@
+[
+  {
+    "id": "goblinoid-raiding-party",
+    "name": "Goblinoid Raiding Party",
+    "description": "A mixed force of goblins led by a hobgoblin captain with a bugbear enforcer. They strike from hiding and retreat when outmatched.",
+    "environment": [
+      "Forest",
+      "Hill",
+      "Grassland",
+      "Mountain"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 5,
+    "difficultyRange": [
+      "easy",
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "ambush",
+      "humanoid"
+    ],
+    "creatures": [
+      {
+        "creatureId": "goblin",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "goblin-boss",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "hobgoblin",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "bugbear",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "wolf-pack",
+    "name": "Wolf Pack",
+    "description": "A hungry pack of wolves hunting together, using pack tactics to bring down isolated prey.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill",
+      "Arctic"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 4,
+    "difficultyRange": [
+      "easy",
+      "medium"
+    ],
+    "tags": [
+      "combat",
+      "beast",
+      "pack-tactics"
+    ],
+    "creatures": [
+      {
+        "creatureId": "wolf",
+        "quantity": 5,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "dire-wolf",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "bandit-ambush",
+    "name": "Bandit Ambush",
+    "description": "A gang of bandits led by a veteran captain, lying in wait along a trade route.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill",
+      "Urban"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 5,
+    "difficultyRange": [
+      "easy",
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "ambush",
+      "humanoid"
+    ],
+    "creatures": [
+      {
+        "creatureId": "bandit",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "bandit-captain",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "scout",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "undead-crypt",
+    "name": "Undead Crypt",
+    "description": "Skeletons and zombies animated by a wight's dark magic, guarding an ancient burial chamber.",
+    "environment": [
+      "Dungeon",
+      "Urban",
+      "Swamp"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "dungeon"
+    ],
+    "creatures": [
+      {
+        "creatureId": "skeleton",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "zombie",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "wight",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "kobold-warren",
+    "name": "Kobold Warren",
+    "description": "A warren of kobolds defending their territory with traps, tunnels, and sheer numbers.",
+    "environment": [
+      "Forest",
+      "Hill",
+      "Mountain",
+      "Underdark"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 4,
+    "difficultyRange": [
+      "easy",
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "dungeon",
+      "traps"
+    ],
+    "creatures": [
+      {
+        "creatureId": "kobold",
+        "quantity": 8,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "winged-kobold",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-rat",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "giant-spider-nest",
+    "name": "Giant Spider Nest",
+    "description": "A nest of giant spiders and their ettercap shepherd, webbing and poison everywhere.",
+    "environment": [
+      "Forest",
+      "Underdark",
+      "Swamp"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "beast",
+      "ambush"
+    ],
+    "creatures": [
+      {
+        "creatureId": "giant-spider",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-wolf-spider",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "ettercap",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "bullywug-swamp-patrol",
+    "name": "Bullywug Swamp Patrol",
+    "description": "A patrol of bullywugs and their giant frog mounts, patrolling the murky swamp waters.",
+    "environment": [
+      "Swamp"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 4,
+    "difficultyRange": [
+      "easy",
+      "medium"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "swamp"
+    ],
+    "creatures": [
+      {
+        "creatureId": "bullywug",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-frog",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-toad",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "sahuagin-shore-raiders",
+    "name": "Sahuagin Shore Raiders",
+    "description": "A raiding party of sahuagin emerging from the sea to drag victims below the waves.",
+    "environment": [
+      "Coastal",
+      "Underwater"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "aquatic",
+      "ambush"
+    ],
+    "creatures": [
+      {
+        "creatureId": "sahuagin",
+        "quantity": 5,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "reef-shark",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "sahuagin-baron",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "orc-warband-small",
+    "name": "Orc Warband (Small)",
+    "description": "A small scouting force of orcs and their worg mounts, ranging ahead of a larger horde.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill",
+      "Mountain",
+      "Arctic"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "scout"
+    ],
+    "creatures": [
+      {
+        "creatureId": "orc",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "worg",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "orc-eye-of-gruumsh",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "cultist-circle",
+    "name": "Cultist Circle",
+    "description": "A ring of cultists led by a fanatic, conducting a dark ritual that must be interrupted.",
+    "environment": [
+      "Urban",
+      "Forest",
+      "Swamp",
+      "Underdark"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "ritual"
+    ],
+    "creatures": [
+      {
+        "creatureId": "cultist",
+        "quantity": 5,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "cult-fanatic",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "acolyte",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "stirge-swarm",
+    "name": "Stirge Swarm",
+    "description": "A cloud of hungry stirges descend from the canopy, seeking blood from warm bodies.",
+    "environment": [
+      "Forest",
+      "Swamp",
+      "Coastal"
+    ],
+    "minPartyLevel": 1,
+    "maxPartyLevel": 4,
+    "difficultyRange": [
+      "easy",
+      "medium"
+    ],
+    "tags": [
+      "combat",
+      "beast",
+      "swarm"
+    ],
+    "creatures": [
+      {
+        "creatureId": "stirge",
+        "quantity": 8,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "swarm-of-bats",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "animated-objects",
+    "name": "Animated Objects",
+    "description": "A wizard's laboratory where animated armor, flying swords, and a rug of smothering guard the room.",
+    "environment": [
+      "Urban",
+      "Dungeon"
+    ],
+    "minPartyLevel": 3,
+    "maxPartyLevel": 7,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "construct",
+      "dungeon"
+    ],
+    "creatures": [
+      {
+        "creatureId": "animated-armor",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "flying-sword",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "rug-of-smothering",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "gnoll-hunting-pack",
+    "name": "Gnoll Hunting Pack",
+    "description": "A pack of gnolls and their hyena pets, driven by hunger and demonic rage.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill",
+      "Desert",
+      "Arctic"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 6,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "beast"
+    ],
+    "creatures": [
+      {
+        "creatureId": "gnoll",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "hyena",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "gnoll-fang-of-ysheen",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "lizardfolk-ambush",
+    "name": "Lizardfolk Ambush",
+    "description": "Lizardfolk hunters lying in wait in the marsh, using their hold-breath ability to remain hidden.",
+    "environment": [
+      "Swamp",
+      "Coastal",
+      "Forest"
+    ],
+    "minPartyLevel": 2,
+    "maxPartyLevel": 5,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "ambush",
+      "swamp"
+    ],
+    "creatures": [
+      {
+        "creatureId": "lizardfolk",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "lizard-king",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "crocodile",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "ghoul-pack",
+    "name": "Ghoul Pack",
+    "description": "A pack of ghouls and ghasts emerging from shallow graves, hungry for living flesh.",
+    "environment": [
+      "Urban",
+      "Underdark",
+      "Swamp",
+      "Desert"
+    ],
+    "minPartyLevel": 3,
+    "maxPartyLevel": 7,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "horror"
+    ],
+    "creatures": [
+      {
+        "creatureId": "ghoul",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "ghast",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "drow-raiding-party",
+    "name": "Drow Raiding Party",
+    "description": "A drow elite warrior leads a band of drow and giant spiders on a surface raid.",
+    "environment": [
+      "Underdark",
+      "Forest",
+      "Mountain"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "medium",
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "raid"
+    ],
+    "creatures": [
+      {
+        "creatureId": "drow",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "drow-elite-warrior",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "drow-mage",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-spider",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "troll-bridge",
+    "name": "Troll Bridge",
+    "description": "A pair of trolls have taken over a bridge, demanding tribute from all who cross.",
+    "environment": [
+      "Forest",
+      "Swamp",
+      "Mountain"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 9,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "giant",
+      "road"
+    ],
+    "creatures": [
+      {
+        "creatureId": "troll",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "dire-wolf",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "young-dragon-lair",
+    "name": "Young Dragon's Lair",
+    "description": "A young dragon attended by kobold minions, guarding its growing hoard.",
+    "environment": [
+      "Forest",
+      "Mountain",
+      "Swamp",
+      "Desert",
+      "Arctic",
+      "Coastal"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "dragon",
+      "boss",
+      "dungeon"
+    ],
+    "creatures": [
+      {
+        "creatureId": "young-green-dragon",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "kobold",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "winged-kobold",
+        "quantity": 3,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "yuan-ti-temple-guards",
+    "name": "Yuan-ti Temple Guards",
+    "description": "Yuan-ti purebloods led by a malison and an abomination, guarding a serpent temple.",
+    "environment": [
+      "Forest",
+      "Desert",
+      "Swamp"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "medium",
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "humanoid",
+      "temple",
+      "serpent"
+    ],
+    "creatures": [
+      {
+        "creatureId": "yuan-ti-pureblood",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "yuan-ti-malison",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "yuan-ti-abomination",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "hag-coven",
+    "name": "Hag Coven",
+    "description": "A coven of hags working dark magic together, far more powerful than any single hag alone.",
+    "environment": [
+      "Forest",
+      "Swamp",
+      "Underdark",
+      "Coastal"
+    ],
+    "minPartyLevel": 7,
+    "maxPartyLevel": 12,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "fey",
+      "coven",
+      "boss"
+    ],
+    "creatures": [
+      {
+        "creatureId": "green-hag",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "night-hag",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "sea-hag",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "scarecrow",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "bulette-territory",
+    "name": "Bulette Territory",
+    "description": "A bulette (land shark) has claimed this territory. The ground trembles before it strikes.",
+    "environment": [
+      "Grassland",
+      "Hill",
+      "Mountain"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 9,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "ambush",
+      "terrain"
+    ],
+    "creatures": [
+      {
+        "creatureId": "bulette",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "ankheg",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "hill-giant-camp",
+    "name": "Hill Giant Camp",
+    "description": "A hill giant and its ogre servants have made a messy camp, scattered with bones and loot.",
+    "environment": [
+      "Hill",
+      "Grassland",
+      "Forest",
+      "Mountain"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "giant",
+      "camp"
+    ],
+    "creatures": [
+      {
+        "creatureId": "hill-giant",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "ogre",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "goblin",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "ogre-goblin-horde",
+    "name": "Ogre + Goblin Horde",
+    "description": "An ogre boss has rallied a horde of goblins to terrorize the countryside.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill",
+      "Mountain"
+    ],
+    "minPartyLevel": 3,
+    "maxPartyLevel": 7,
+    "difficultyRange": [
+      "medium",
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "giant",
+      "humanoid",
+      "horde"
+    ],
+    "creatures": [
+      {
+        "creatureId": "ogre",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "half-ogre",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "goblin",
+        "quantity": 8,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "goblin-boss",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "vampire-spawn-nest",
+    "name": "Vampire Spawn Nest",
+    "description": "A brood of vampire spawn and their charmed servants, hiding in an abandoned manor.",
+    "environment": [
+      "Urban",
+      "Underdark",
+      "Forest"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "horror"
+    ],
+    "creatures": [
+      {
+        "creatureId": "vampire-spawn",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "swarm-of-bats",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "thug",
+        "quantity": 3,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "chuul-lair",
+    "name": "Chuul + Will-o'-Wisps",
+    "description": "A chuul lairing in a swamp, with will-o'-wisps luring travelers into its claws.",
+    "environment": [
+      "Swamp",
+      "Underwater",
+      "Coastal"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 9,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "abberration",
+      "ambush",
+      "swamp"
+    ],
+    "creatures": [
+      {
+        "creatureId": "chuul",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "will-o-wisp",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "elemental-convergence",
+    "name": "Elemental Convergence",
+    "description": "A rift has opened, spilling mephits and a full elemental into the area.",
+    "environment": [
+      "Mountain",
+      "Desert",
+      "Coastal",
+      "Underdark"
+    ],
+    "minPartyLevel": 5,
+    "maxPartyLevel": 10,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "elemental",
+      "planar"
+    ],
+    "creatures": [
+      {
+        "creatureId": "fire-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "earth-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "magma-mephit",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "dust-mephit",
+        "quantity": 3,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "mind-flayer-scouting-party",
+    "name": "Mind Flayer Scouting Party",
+    "description": "A mind flayer and its intellect devourer pets, scouting for thralls and brains.",
+    "environment": [
+      "Underdark"
+    ],
+    "minPartyLevel": 7,
+    "maxPartyLevel": 12,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "abberration",
+      "psionic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "mind-flayer",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "intellect-devourer",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "quaggoth",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "mummy-crypt",
+    "name": "Mummy's Crypt",
+    "description": "A mummy rises from its sarcophagus, surrounded by skeleton guards and cursed traps.",
+    "environment": [
+      "Desert",
+      "Underdark",
+      "Urban"
+    ],
+    "minPartyLevel": 4,
+    "maxPartyLevel": 8,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "tomb",
+      "curse"
+    ],
+    "creatures": [
+      {
+        "creatureId": "mummy",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "skeleton",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "warhorse-skeleton",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "werewolf-ambush",
+    "name": "Werewolf Ambush",
+    "description": "A pack of werewolves hunting under the full moon, immune to non-silver weapons.",
+    "environment": [
+      "Forest",
+      "Grassland",
+      "Hill"
+    ],
+    "minPartyLevel": 4,
+    "maxPartyLevel": 8,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "lycanthrope",
+      "horror"
+    ],
+    "creatures": [
+      {
+        "creatureId": "werewolf",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "wolf",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "basilisk-lair",
+    "name": "Basilisk Lair",
+    "description": "A basilisk has turned dozens of creatures to stone. The petrified forms serve as cover.",
+    "environment": [
+      "Mountain",
+      "Underdark",
+      "Desert"
+    ],
+    "minPartyLevel": 4,
+    "maxPartyLevel": 8,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "petrification"
+    ],
+    "creatures": [
+      {
+        "creatureId": "basilisk",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-lizard",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "adult-dragon-minions",
+    "name": "Adult Dragon + Minions",
+    "description": "An adult dragon with a retinue of kobolds and dragon cultists defending its lair.",
+    "environment": [
+      "Mountain",
+      "Forest",
+      "Desert",
+      "Arctic",
+      "Coastal",
+      "Swamp"
+    ],
+    "minPartyLevel": 11,
+    "maxPartyLevel": 17,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "dragon",
+      "boss",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "adult-red-dragon",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "kobold",
+        "quantity": 6,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "cult-fanatic",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "half-red-dragon-veteran",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "beholder-lair",
+    "name": "Beholder's Lair",
+    "description": "A beholder in its sanctum, with gazers and spectators as lesser eye tyrants. Reality warps around it.",
+    "environment": [
+      "Underdark"
+    ],
+    "minPartyLevel": 13,
+    "maxPartyLevel": 18,
+    "difficultyRange": [
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "abberration",
+      "boss",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "beholder",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "spectator",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "gauth",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "lich-undead-guards",
+    "name": "Lich + Undead Guards",
+    "description": "A lich in its inner sanctum, flanked by death knights and ghostly sentinels.",
+    "environment": [
+      "Underdark",
+      "Urban",
+      "Desert"
+    ],
+    "minPartyLevel": 17,
+    "maxPartyLevel": 20,
+    "difficultyRange": [
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "boss",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "lich",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "death-knight",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "wraith",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "flameskull",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "mummy-lord-tomb",
+    "name": "Mummy Lord's Tomb",
+    "description": "A mummy lord awakens in its pyramid tomb, protected by mummies, stone golems, and swarms of scarabs.",
+    "environment": [
+      "Desert",
+      "Underdark"
+    ],
+    "minPartyLevel": 13,
+    "maxPartyLevel": 18,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "boss",
+      "tomb",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "mummy-lord",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "mummy",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "stone-golem",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "swarm-of-insects",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "giant-lord-court",
+    "name": "Giant Lord's Court",
+    "description": "A fire giant lord holds court, attended by hell hounds and salamander guards.",
+    "environment": [
+      "Mountain",
+      "Underdark"
+    ],
+    "minPartyLevel": 12,
+    "maxPartyLevel": 18,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "giant",
+      "boss",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "fire-giant",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "hell-hound",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "salamander",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "azer",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "frost-giant-war-party",
+    "name": "Frost Giant War Party",
+    "description": "A frost giant war party with winter wolves, hunting across the frozen tundra.",
+    "environment": [
+      "Arctic",
+      "Mountain"
+    ],
+    "minPartyLevel": 10,
+    "maxPartyLevel": 15,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "giant",
+      "arctic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "frost-giant",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "winter-wolf",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "yeti",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "demon-incursion",
+    "name": "Demon Incursion",
+    "description": "A demonic rift has opened, pouring forth a balor, vrocks, and lesser demons.",
+    "environment": [
+      "Mountain",
+      "Desert",
+      "Underdark"
+    ],
+    "minPartyLevel": 15,
+    "maxPartyLevel": 20,
+    "difficultyRange": [
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "fiend",
+      "planar",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "balor",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "vrock",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "shadow-demon",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "quasit",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "death-knight-cavalry",
+    "name": "Death Knight + Undead Cavalry",
+    "description": "A death knight rides at the head of a column of undead cavalry on skeletal warhorses.",
+    "environment": [
+      "Desert",
+      "Urban",
+      "Grassland"
+    ],
+    "minPartyLevel": 14,
+    "maxPartyLevel": 19,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "undead",
+      "cavalry",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "death-knight",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "warhorse-skeleton",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "wight",
+        "quantity": 3,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "minotaur-skeleton",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "elemental-chaos",
+    "name": "Elemental Chaos",
+    "description": "Mixed elementals from all four planes, summoned and now uncontrolled.",
+    "environment": [
+      "Mountain",
+      "Desert",
+      "Coastal",
+      "Underdark"
+    ],
+    "minPartyLevel": 9,
+    "maxPartyLevel": 14,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "elemental",
+      "chaos",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "air-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "earth-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "fire-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "water-elemental",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "purple-worm-territory",
+    "name": "Purple Worm Territory",
+    "description": "A purple worm tunnels through the area, with ground tremors and collapsing terrain.",
+    "environment": [
+      "Underdark",
+      "Desert",
+      "Mountain"
+    ],
+    "minPartyLevel": 12,
+    "maxPartyLevel": 18,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "terrain",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "purple-worm",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "ankheg",
+        "quantity": 3,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "kraken-attack",
+    "name": "Kraken Attack",
+    "description": "A kraken rises from the depths, with sahuagin swarming in its wake to pick off survivors.",
+    "environment": [
+      "Underwater",
+      "Coastal"
+    ],
+    "minPartyLevel": 17,
+    "maxPartyLevel": 20,
+    "difficultyRange": [
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "aquatic",
+      "boss",
+      "epic"
+    ],
+    "creatures": [
+      {
+        "creatureId": "kraken",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "sahuagin-baron",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "sahuagin",
+        "quantity": 8,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "giant-shark",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "aboleth-lair",
+    "name": "Aboleth's Sunken Lair",
+    "description": "An aboleth in its sunken temple, with chuul guards and enslaved kuo-toa.",
+    "environment": [
+      "Underwater",
+      "Underdark",
+      "Coastal"
+    ],
+    "minPartyLevel": 10,
+    "maxPartyLevel": 15,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "abberration",
+      "aquatic",
+      "boss"
+    ],
+    "creatures": [
+      {
+        "creatureId": "aboleth",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "chuul",
+        "quantity": 2,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "kuo-toa",
+        "quantity": 4,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "kuo-toa-whip",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "rakshasa-deception",
+    "name": "Rakshasa's Deception",
+    "description": "A rakshasa in disguise, attended by charmed guards and an invisible stalker bodyguard.",
+    "environment": [
+      "Urban",
+      "Desert"
+    ],
+    "minPartyLevel": 11,
+    "maxPartyLevel": 17,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "fiend",
+      "social",
+      "deception"
+    ],
+    "creatures": [
+      {
+        "creatureId": "rakshasa",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "invisible-stalker",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "veteran",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "remorhaz-hunt",
+    "name": "Remorhaz Hunt",
+    "description": "A remorhaz bursts through the ice, its body radiating intense heat that melts the frozen ground.",
+    "environment": [
+      "Arctic"
+    ],
+    "minPartyLevel": 10,
+    "maxPartyLevel": 15,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "arctic",
+      "ambush"
+    ],
+    "creatures": [
+      {
+        "creatureId": "remorhaz",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "young-remorhaz",
+        "quantity": 2,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "hydra-marsh",
+    "name": "Hydra of the Marsh",
+    "description": "A hydra lairs in a fen, its multiple heads snapping at anyone who approaches its treasure.",
+    "environment": [
+      "Swamp"
+    ],
+    "minPartyLevel": 8,
+    "maxPartyLevel": 13,
+    "difficultyRange": [
+      "hard",
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "boss"
+    ],
+    "creatures": [
+      {
+        "creatureId": "hydra",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "lizardfolk",
+        "quantity": 4,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "roper-ambush",
+    "name": "Roper Ambush",
+    "description": "A roper camouflaged as a stalagmite, with piercers dropping from the ceiling.",
+    "environment": [
+      "Underdark",
+      "Mountain"
+    ],
+    "minPartyLevel": 7,
+    "maxPartyLevel": 12,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "ambush",
+      "dungeon"
+    ],
+    "creatures": [
+      {
+        "creatureId": "roper",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "darkmantle",
+        "quantity": 3,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "gynosphinx-riddle",
+    "name": "Gynosphinx's Riddle",
+    "description": "A gynosphinx guards a treasure vault, challenging all who approach with riddles — and claws.",
+    "environment": [
+      "Desert"
+    ],
+    "minPartyLevel": 10,
+    "maxPartyLevel": 15,
+    "difficultyRange": [
+      "medium",
+      "hard"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "puzzle",
+      "social"
+    ],
+    "creatures": [
+      {
+        "creatureId": "gynosphinx",
+        "quantity": 1,
+        "kind": "enemy"
+      },
+      {
+        "creatureId": "manticore",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  },
+  {
+    "id": "tarrasque-awakens",
+    "name": "The Tarrasque Awakens",
+    "description": "The legendary tarrasque stirs from its slumber. No minions are needed — this is an extinction-level event.",
+    "environment": [
+      "Grassland",
+      "Desert",
+      "Mountain"
+    ],
+    "minPartyLevel": 18,
+    "maxPartyLevel": 20,
+    "difficultyRange": [
+      "deadly"
+    ],
+    "tags": [
+      "combat",
+      "monstrosity",
+      "boss",
+      "epic",
+      "legendary"
+    ],
+    "creatures": [
+      {
+        "creatureId": "tarrasque",
+        "quantity": 1,
+        "kind": "enemy"
+      }
+    ]
+  }
+]

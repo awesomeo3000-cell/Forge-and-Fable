@@ -1,0 +1,1564 @@
+{
+  "ape": [
+    "Forest",
+    "Hill"
+  ],
+  "baboon": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "badger": [
+    "Forest",
+    "Grassland"
+  ],
+  "bat": [
+    "Underdark",
+    "Forest",
+    "Hill",
+    "Urban"
+  ],
+  "black-bear": [
+    "Forest",
+    "Hill"
+  ],
+  "blood-hawk": [
+    "Hill",
+    "Mountain",
+    "Coastal",
+    "Grassland"
+  ],
+  "boar": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "brown-bear": [
+    "Forest",
+    "Hill",
+    "Mountain"
+  ],
+  "camel": [
+    "Desert"
+  ],
+  "cat": [
+    "Urban",
+    "Forest",
+    "Grassland"
+  ],
+  "constrictor-snake": [
+    "Forest",
+    "Swamp",
+    "Underdark"
+  ],
+  "crab": [
+    "Coastal",
+    "Underwater"
+  ],
+  "crocodile": [
+    "Swamp",
+    "Coastal",
+    "Underwater"
+  ],
+  "death-dog": [
+    "Desert",
+    "Hill",
+    "Grassland"
+  ],
+  "deer": [
+    "Forest",
+    "Grassland",
+    "Hill"
+  ],
+  "dire-wolf": [
+    "Forest",
+    "Hill",
+    "Mountain"
+  ],
+  "draft-horse": [
+    "Urban",
+    "Grassland"
+  ],
+  "eagle": [
+    "Coastal",
+    "Mountain",
+    "Hill"
+  ],
+  "elephant": [
+    "Grassland",
+    "Forest"
+  ],
+  "elk": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain"
+  ],
+  "flying-snake": [
+    "Forest",
+    "Swamp",
+    "Hill"
+  ],
+  "frog": [
+    "Swamp",
+    "Forest",
+    "Underwater"
+  ],
+  "giant-ape": [
+    "Forest",
+    "Hill",
+    "Mountain"
+  ],
+  "giant-badger": [
+    "Forest",
+    "Grassland"
+  ],
+  "giant-bat": [
+    "Underdark",
+    "Mountain",
+    "Forest"
+  ],
+  "giant-boar": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "giant-centipede": [
+    "Underdark",
+    "Swamp",
+    "Forest"
+  ],
+  "giant-constrictor-snake": [
+    "Forest",
+    "Swamp",
+    "Underdark"
+  ],
+  "giant-crab": [
+    "Coastal",
+    "Underwater"
+  ],
+  "giant-crocodile": [
+    "Swamp",
+    "Coastal",
+    "Underwater"
+  ],
+  "giant-eagle": [
+    "Mountain",
+    "Hill",
+    "Coastal"
+  ],
+  "giant-elk": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain"
+  ],
+  "giant-fire-beetle": [
+    "Underdark",
+    "Hill"
+  ],
+  "giant-frog": [
+    "Swamp",
+    "Forest",
+    "Underwater"
+  ],
+  "giant-goat": [
+    "Mountain",
+    "Hill"
+  ],
+  "giant-hyena": [
+    "Desert",
+    "Grassland",
+    "Hill"
+  ],
+  "giant-lizard": [
+    "Forest",
+    "Swamp",
+    "Hill",
+    "Underdark"
+  ],
+  "giant-octopus": [
+    "Underwater",
+    "Coastal"
+  ],
+  "giant-owl": [
+    "Forest",
+    "Mountain",
+    "Hill"
+  ],
+  "giant-poisonous-snake": [
+    "Forest",
+    "Swamp",
+    "Desert",
+    "Grassland"
+  ],
+  "giant-rat": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "giant-rat-diseased": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "giant-scorpion": [
+    "Desert",
+    "Hill",
+    "Underdark"
+  ],
+  "giant-sea-horse": [
+    "Underwater",
+    "Coastal"
+  ],
+  "giant-shark": [
+    "Underwater",
+    "Coastal"
+  ],
+  "giant-spider": [
+    "Forest",
+    "Underdark",
+    "Hill",
+    "Swamp"
+  ],
+  "giant-toad": [
+    "Swamp",
+    "Forest",
+    "Underwater"
+  ],
+  "giant-vulture": [
+    "Desert",
+    "Hill",
+    "Grassland"
+  ],
+  "giant-wasp": [
+    "Forest",
+    "Grassland",
+    "Hill"
+  ],
+  "giant-weasel": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "giant-wolf-spider": [
+    "Forest",
+    "Hill",
+    "Underdark",
+    "Desert"
+  ],
+  "goat": [
+    "Mountain",
+    "Hill",
+    "Grassland"
+  ],
+  "hawk": [
+    "Hill",
+    "Mountain",
+    "Coastal",
+    "Grassland",
+    "Forest"
+  ],
+  "hunter-shark": [
+    "Underwater",
+    "Coastal"
+  ],
+  "hyena": [
+    "Desert",
+    "Grassland",
+    "Hill"
+  ],
+  "jackal": [
+    "Desert",
+    "Grassland",
+    "Hill"
+  ],
+  "killer-whale": [
+    "Underwater",
+    "Coastal",
+    "Arctic"
+  ],
+  "lion": [
+    "Grassland",
+    "Hill",
+    "Desert"
+  ],
+  "lizard": [
+    "Forest",
+    "Swamp",
+    "Desert",
+    "Hill",
+    "Urban"
+  ],
+  "mammoth": [
+    "Arctic",
+    "Grassland"
+  ],
+  "mastiff": [
+    "Urban",
+    "Hill",
+    "Grassland"
+  ],
+  "mule": [
+    "Urban",
+    "Hill",
+    "Grassland"
+  ],
+  "octopus": [
+    "Underwater",
+    "Coastal"
+  ],
+  "owl": [
+    "Forest",
+    "Urban",
+    "Hill"
+  ],
+  "panther": [
+    "Forest",
+    "Hill",
+    "Swamp"
+  ],
+  "plesiosaurus": [
+    "Underwater",
+    "Coastal",
+    "Swamp"
+  ],
+  "poisonous-snake": [
+    "Forest",
+    "Swamp",
+    "Desert",
+    "Grassland",
+    "Hill"
+  ],
+  "polar-bear": [
+    "Arctic",
+    "Coastal"
+  ],
+  "pony": [
+    "Grassland",
+    "Hill",
+    "Urban"
+  ],
+  "quipper": [
+    "Underwater",
+    "Swamp",
+    "Coastal"
+  ],
+  "rat": [
+    "Urban",
+    "Underdark",
+    "Swamp"
+  ],
+  "raven": [
+    "Forest",
+    "Hill",
+    "Urban",
+    "Mountain"
+  ],
+  "reef-shark": [
+    "Underwater",
+    "Coastal"
+  ],
+  "rhinoceros": [
+    "Grassland",
+    "Hill",
+    "Forest"
+  ],
+  "riding-horse": [
+    "Urban",
+    "Grassland"
+  ],
+  "saber-toothed-tiger": [
+    "Arctic",
+    "Mountain",
+    "Hill",
+    "Grassland"
+  ],
+  "scorpion": [
+    "Desert",
+    "Hill",
+    "Underdark",
+    "Grassland"
+  ],
+  "sea-horse": [
+    "Underwater",
+    "Coastal"
+  ],
+  "spider": [
+    "Forest",
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "stirge": [
+    "Swamp",
+    "Forest",
+    "Underdark",
+    "Coastal"
+  ],
+  "swarm-of-bats": [
+    "Underdark",
+    "Forest",
+    "Hill",
+    "Urban"
+  ],
+  "swarm-of-beetles": [
+    "Forest",
+    "Underdark",
+    "Grassland"
+  ],
+  "swarm-of-centipedes": [
+    "Underdark",
+    "Swamp",
+    "Forest"
+  ],
+  "swarm-of-insects": [
+    "Forest",
+    "Grassland",
+    "Swamp",
+    "Hill"
+  ],
+  "swarm-of-poisonous-snakes": [
+    "Forest",
+    "Swamp",
+    "Desert",
+    "Grassland"
+  ],
+  "swarm-of-quippers": [
+    "Underwater",
+    "Swamp",
+    "Coastal"
+  ],
+  "swarm-of-rats": [
+    "Urban",
+    "Underdark",
+    "Swamp"
+  ],
+  "swarm-of-ravens": [
+    "Forest",
+    "Hill",
+    "Urban",
+    "Mountain"
+  ],
+  "swarm-of-spiders": [
+    "Forest",
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "swarm-of-wasps": [
+    "Forest",
+    "Grassland",
+    "Hill"
+  ],
+  "tiger": [
+    "Forest",
+    "Hill",
+    "Swamp"
+  ],
+  "triceratops": [
+    "Grassland",
+    "Hill",
+    "Forest",
+    "Swamp"
+  ],
+  "tyrannosaurus-rex": [
+    "Grassland",
+    "Hill",
+    "Forest",
+    "Swamp"
+  ],
+  "vampire-bat": [
+    "Underdark",
+    "Forest",
+    "Hill"
+  ],
+  "vulture": [
+    "Desert",
+    "Hill",
+    "Grassland"
+  ],
+  "warhorse": [
+    "Urban",
+    "Grassland"
+  ],
+  "weasel": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "wolf": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain"
+  ],
+  "acolyte": [
+    "Urban"
+  ],
+  "archmage": [
+    "Urban"
+  ],
+  "assassin": [
+    "Urban"
+  ],
+  "bandit": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Urban",
+    "Coastal"
+  ],
+  "bandit-captain": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Urban",
+    "Coastal"
+  ],
+  "berserker": [
+    "Arctic",
+    "Forest",
+    "Hill",
+    "Mountain"
+  ],
+  "bugbear": [
+    "Forest",
+    "Hill",
+    "Underdark",
+    "Mountain"
+  ],
+  "commoner": [
+    "Urban"
+  ],
+  "cult-fanatic": [
+    "Urban",
+    "Underdark",
+    "Desert",
+    "Forest",
+    "Swamp"
+  ],
+  "cultist": [
+    "Urban",
+    "Underdark",
+    "Desert",
+    "Forest",
+    "Swamp"
+  ],
+  "deep-gnome-svirfneblin": [
+    "Underdark"
+  ],
+  "drow": [
+    "Underdark"
+  ],
+  "druid": [
+    "Forest",
+    "Swamp",
+    "Hill",
+    "Coastal",
+    "Mountain"
+  ],
+  "duergar": [
+    "Underdark",
+    "Mountain"
+  ],
+  "gladiator": [
+    "Urban"
+  ],
+  "gnoll": [
+    "Desert",
+    "Grassland",
+    "Hill",
+    "Forest"
+  ],
+  "goblin": [
+    "Forest",
+    "Grassland",
+    "Hill",
+    "Underdark"
+  ],
+  "grimlock": [
+    "Underdark"
+  ],
+  "guard": [
+    "Urban"
+  ],
+  "half-red-dragon-veteran": [
+    "Mountain",
+    "Hill",
+    "Urban"
+  ],
+  "hobgoblin": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain",
+    "Underdark"
+  ],
+  "knight": [
+    "Urban",
+    "Grassland",
+    "Hill"
+  ],
+  "kobold": [
+    "Forest",
+    "Hill",
+    "Mountain",
+    "Underdark",
+    "Grassland"
+  ],
+  "lizardfolk": [
+    "Swamp",
+    "Forest",
+    "Coastal"
+  ],
+  "mage": [
+    "Urban"
+  ],
+  "merfolk": [
+    "Underwater",
+    "Coastal"
+  ],
+  "merrow": [
+    "Underwater",
+    "Coastal",
+    "Swamp"
+  ],
+  "noble": [
+    "Urban"
+  ],
+  "orc": [
+    "Arctic",
+    "Forest",
+    "Grassland",
+    "Hill",
+    "Mountain",
+    "Swamp",
+    "Underdark"
+  ],
+  "priest": [
+    "Urban"
+  ],
+  "sahuagin": [
+    "Underwater",
+    "Coastal"
+  ],
+  "scout": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain",
+    "Swamp"
+  ],
+  "spy": [
+    "Urban"
+  ],
+  "thug": [
+    "Urban"
+  ],
+  "tribal-warrior": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain",
+    "Arctic",
+    "Swamp"
+  ],
+  "veteran": [
+    "Urban",
+    "Hill",
+    "Mountain",
+    "Grassland",
+    "Forest"
+  ],
+  "werebear-human": [
+    "Forest",
+    "Mountain",
+    "Arctic"
+  ],
+  "werebear-hybrid": [
+    "Forest",
+    "Mountain",
+    "Arctic"
+  ],
+  "werebear-bear": [
+    "Forest",
+    "Mountain",
+    "Arctic"
+  ],
+  "wereboar-human": [
+    "Forest",
+    "Hill",
+    "Swamp"
+  ],
+  "wereboar-hybrid": [
+    "Forest",
+    "Hill",
+    "Swamp"
+  ],
+  "wereboar-boar": [
+    "Forest",
+    "Hill",
+    "Swamp"
+  ],
+  "wererat-human": [
+    "Urban",
+    "Underdark",
+    "Swamp"
+  ],
+  "wererat-hybrid": [
+    "Urban",
+    "Underdark",
+    "Swamp"
+  ],
+  "wererat-rat": [
+    "Urban",
+    "Underdark",
+    "Swamp"
+  ],
+  "weretiger-human": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "weretiger-hybrid": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "weretiger-tiger": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "werewolf-human": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "werewolf-hybrid": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "werewolf-wolf": [
+    "Forest",
+    "Hill",
+    "Grassland"
+  ],
+  "adult-black-dragon": [
+    "Swamp",
+    "Forest"
+  ],
+  "adult-blue-dragon": [
+    "Desert",
+    "Coastal"
+  ],
+  "adult-green-dragon": [
+    "Forest",
+    "Hill"
+  ],
+  "adult-red-dragon": [
+    "Mountain",
+    "Hill"
+  ],
+  "adult-white-dragon": [
+    "Arctic",
+    "Mountain"
+  ],
+  "ancient-black-dragon": [
+    "Swamp",
+    "Forest"
+  ],
+  "ancient-blue-dragon": [
+    "Desert",
+    "Coastal"
+  ],
+  "ancient-green-dragon": [
+    "Forest",
+    "Hill"
+  ],
+  "ancient-red-dragon": [
+    "Mountain",
+    "Hill"
+  ],
+  "ancient-white-dragon": [
+    "Arctic",
+    "Mountain"
+  ],
+  "black-dragon-wyrmling": [
+    "Swamp",
+    "Forest"
+  ],
+  "blue-dragon-wyrmling": [
+    "Desert",
+    "Coastal"
+  ],
+  "green-dragon-wyrmling": [
+    "Forest",
+    "Hill"
+  ],
+  "red-dragon-wyrmling": [
+    "Mountain",
+    "Hill"
+  ],
+  "white-dragon-wyrmling": [
+    "Arctic",
+    "Mountain"
+  ],
+  "young-black-dragon": [
+    "Swamp",
+    "Forest"
+  ],
+  "young-blue-dragon": [
+    "Desert",
+    "Coastal"
+  ],
+  "young-green-dragon": [
+    "Forest",
+    "Hill"
+  ],
+  "young-red-dragon": [
+    "Mountain",
+    "Hill"
+  ],
+  "young-white-dragon": [
+    "Arctic",
+    "Mountain"
+  ],
+  "adult-brass-dragon": [
+    "Desert",
+    "Hill"
+  ],
+  "adult-bronze-dragon": [
+    "Coastal",
+    "Underwater"
+  ],
+  "adult-copper-dragon": [
+    "Hill",
+    "Mountain"
+  ],
+  "adult-gold-dragon": [
+    "Forest",
+    "Grassland",
+    "Mountain"
+  ],
+  "adult-silver-dragon": [
+    "Mountain",
+    "Urban",
+    "Arctic"
+  ],
+  "ancient-brass-dragon": [
+    "Desert",
+    "Hill"
+  ],
+  "ancient-bronze-dragon": [
+    "Coastal",
+    "Underwater"
+  ],
+  "ancient-copper-dragon": [
+    "Hill",
+    "Mountain"
+  ],
+  "ancient-gold-dragon": [
+    "Forest",
+    "Grassland",
+    "Mountain"
+  ],
+  "ancient-silver-dragon": [
+    "Mountain",
+    "Urban",
+    "Arctic"
+  ],
+  "brass-dragon-wyrmling": [
+    "Desert",
+    "Hill"
+  ],
+  "bronze-dragon-wyrmling": [
+    "Coastal",
+    "Underwater"
+  ],
+  "copper-dragon-wyrmling": [
+    "Hill",
+    "Mountain"
+  ],
+  "gold-dragon-wyrmling": [
+    "Forest",
+    "Grassland",
+    "Mountain"
+  ],
+  "silver-dragon-wyrmling": [
+    "Mountain",
+    "Urban",
+    "Arctic"
+  ],
+  "young-brass-dragon": [
+    "Desert",
+    "Hill"
+  ],
+  "young-bronze-dragon": [
+    "Coastal",
+    "Underwater"
+  ],
+  "young-copper-dragon": [
+    "Hill",
+    "Mountain"
+  ],
+  "young-gold-dragon": [
+    "Forest",
+    "Grassland",
+    "Mountain"
+  ],
+  "young-silver-dragon": [
+    "Mountain",
+    "Urban",
+    "Arctic"
+  ],
+  "ghast": [
+    "Underdark",
+    "Swamp",
+    "Urban"
+  ],
+  "ghost": [
+    "Urban",
+    "Underdark",
+    "Forest",
+    "Swamp"
+  ],
+  "ghoul": [
+    "Underdark",
+    "Swamp",
+    "Urban"
+  ],
+  "lich": [
+    "Underdark",
+    "Urban",
+    "Desert"
+  ],
+  "minotaur-skeleton": [
+    "Underdark",
+    "Urban"
+  ],
+  "mummy": [
+    "Desert",
+    "Underdark",
+    "Urban"
+  ],
+  "mummy-lord": [
+    "Desert",
+    "Underdark"
+  ],
+  "ogre-zombie": [
+    "Swamp",
+    "Underdark",
+    "Urban"
+  ],
+  "shadow": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "skeleton": [
+    "Underdark",
+    "Urban"
+  ],
+  "specter": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "vampire-mist": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "vampire-spawn": [
+    "Underdark",
+    "Urban"
+  ],
+  "vampire-vampire": [
+    "Underdark",
+    "Urban"
+  ],
+  "warhorse-skeleton": [
+    "Underdark",
+    "Urban",
+    "Grassland"
+  ],
+  "wight": [
+    "Underdark",
+    "Swamp",
+    "Urban",
+    "Desert"
+  ],
+  "will-o-wisp": [
+    "Swamp",
+    "Forest",
+    "Underdark"
+  ],
+  "wraith": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "zombie": [
+    "Underdark",
+    "Urban",
+    "Swamp"
+  ],
+  "barbed-devil": [
+    "Underdark"
+  ],
+  "bearded-devil": [
+    "Underdark"
+  ],
+  "bone-devil": [
+    "Underdark"
+  ],
+  "chain-devil": [
+    "Underdark"
+  ],
+  "erinyes": [
+    "Underdark"
+  ],
+  "horned-devil": [
+    "Underdark"
+  ],
+  "ice-devil": [
+    "Underdark"
+  ],
+  "imp": [
+    "Underdark",
+    "Urban"
+  ],
+  "lemure": [
+    "Underdark"
+  ],
+  "pit-fiend": [
+    "Underdark"
+  ],
+  "balor": [
+    "Underdark"
+  ],
+  "dretch": [
+    "Underdark"
+  ],
+  "glabrezu": [
+    "Underdark"
+  ],
+  "hezrou": [
+    "Underdark"
+  ],
+  "marilith": [
+    "Underdark"
+  ],
+  "nalfeshnee": [
+    "Underdark"
+  ],
+  "quasit": [
+    "Underdark",
+    "Urban"
+  ],
+  "vrock": [
+    "Underdark"
+  ],
+  "night-hag": [
+    "Underdark",
+    "Swamp",
+    "Forest"
+  ],
+  "nightmare": [
+    "Underdark"
+  ],
+  "rakshasa": [
+    "Urban",
+    "Underdark"
+  ],
+  "succubus-incubus": [
+    "Urban",
+    "Underdark"
+  ],
+  "air-elemental": [
+    "Coastal",
+    "Mountain",
+    "Desert"
+  ],
+  "azer": [
+    "Underdark",
+    "Mountain"
+  ],
+  "djinni": [
+    "Coastal",
+    "Mountain",
+    "Desert"
+  ],
+  "dust-mephit": [
+    "Desert",
+    "Underdark"
+  ],
+  "earth-elemental": [
+    "Underdark",
+    "Mountain"
+  ],
+  "efreeti": [
+    "Desert",
+    "Mountain"
+  ],
+  "fire-elemental": [
+    "Desert",
+    "Mountain",
+    "Underdark"
+  ],
+  "gargoyle": [
+    "Urban",
+    "Underdark",
+    "Mountain"
+  ],
+  "ice-mephit": [
+    "Arctic",
+    "Mountain"
+  ],
+  "invisible-stalker": [
+    "Coastal",
+    "Mountain",
+    "Desert"
+  ],
+  "magma-mephit": [
+    "Mountain",
+    "Underdark",
+    "Desert"
+  ],
+  "magmin": [
+    "Mountain",
+    "Underdark",
+    "Desert"
+  ],
+  "salamander": [
+    "Underdark",
+    "Mountain",
+    "Desert"
+  ],
+  "steam-mephit": [
+    "Coastal",
+    "Swamp",
+    "Underwater"
+  ],
+  "water-elemental": [
+    "Coastal",
+    "Swamp",
+    "Underwater"
+  ],
+  "xorn": [
+    "Underdark",
+    "Mountain"
+  ],
+  "blink-dog": [
+    "Forest"
+  ],
+  "dryad": [
+    "Forest"
+  ],
+  "green-hag": [
+    "Forest",
+    "Swamp"
+  ],
+  "pseudodragon": [
+    "Forest",
+    "Urban",
+    "Hill"
+  ],
+  "satyr": [
+    "Forest",
+    "Hill"
+  ],
+  "sea-hag": [
+    "Coastal",
+    "Swamp",
+    "Underwater"
+  ],
+  "sprite": [
+    "Forest"
+  ],
+  "cloud-giant": [
+    "Mountain"
+  ],
+  "ettin": [
+    "Hill",
+    "Mountain",
+    "Underdark"
+  ],
+  "fire-giant": [
+    "Mountain",
+    "Underdark",
+    "Desert"
+  ],
+  "frost-giant": [
+    "Arctic",
+    "Mountain"
+  ],
+  "hill-giant": [
+    "Hill",
+    "Grassland"
+  ],
+  "ogre": [
+    "Hill",
+    "Grassland",
+    "Forest",
+    "Mountain",
+    "Swamp"
+  ],
+  "oni": [
+    "Urban",
+    "Forest",
+    "Hill",
+    "Underdark"
+  ],
+  "stone-giant": [
+    "Mountain",
+    "Underdark"
+  ],
+  "storm-giant": [
+    "Coastal",
+    "Mountain",
+    "Underwater"
+  ],
+  "aboleth": [
+    "Underdark",
+    "Underwater"
+  ],
+  "behir": [
+    "Underdark",
+    "Mountain"
+  ],
+  "chuul": [
+    "Swamp",
+    "Underdark",
+    "Coastal"
+  ],
+  "cloaker": [
+    "Underdark"
+  ],
+  "darkmantle": [
+    "Underdark"
+  ],
+  "doppelganger": [
+    "Urban",
+    "Underdark"
+  ],
+  "gibbering-mouther": [
+    "Underdark"
+  ],
+  "grick": [
+    "Underdark",
+    "Mountain"
+  ],
+  "intellect-devourer": [
+    "Underdark"
+  ],
+  "mind-flayer": [
+    "Underdark"
+  ],
+  "nothic": [
+    "Underdark",
+    "Forest"
+  ],
+  "otyugh": [
+    "Underdark",
+    "Swamp"
+  ],
+  "roper": [
+    "Underdark"
+  ],
+  "rust-monster": [
+    "Underdark"
+  ],
+  "black-pudding": [
+    "Underdark",
+    "Swamp"
+  ],
+  "gelatinous-cube": [
+    "Underdark"
+  ],
+  "gray-ooze": [
+    "Underdark",
+    "Swamp"
+  ],
+  "ochre-jelly": [
+    "Underdark",
+    "Swamp"
+  ],
+  "awakened-shrub": [
+    "Forest",
+    "Grassland"
+  ],
+  "awakened-tree": [
+    "Forest"
+  ],
+  "shambling-mound": [
+    "Swamp",
+    "Forest"
+  ],
+  "shrieker": [
+    "Underdark",
+    "Forest",
+    "Swamp"
+  ],
+  "treant": [
+    "Forest"
+  ],
+  "violet-fungus": [
+    "Underdark",
+    "Forest",
+    "Swamp"
+  ],
+  "animated-armor": [
+    "Urban",
+    "Underdark"
+  ],
+  "clay-golem": [
+    "Urban",
+    "Underdark"
+  ],
+  "flesh-golem": [
+    "Urban",
+    "Underdark"
+  ],
+  "flying-sword": [
+    "Urban",
+    "Underdark"
+  ],
+  "homunculus": [
+    "Urban",
+    "Underdark"
+  ],
+  "iron-golem": [
+    "Urban",
+    "Underdark"
+  ],
+  "rug-of-smothering": [
+    "Urban",
+    "Underdark"
+  ],
+  "shield-guardian": [
+    "Urban",
+    "Underdark"
+  ],
+  "stone-golem": [
+    "Urban",
+    "Underdark"
+  ],
+  "couatl": [
+    "Forest",
+    "Mountain",
+    "Hill",
+    "Coastal",
+    "Desert"
+  ],
+  "deva": [
+    "Mountain",
+    "Urban",
+    "Forest",
+    "Coastal"
+  ],
+  "pegasus": [
+    "Forest",
+    "Mountain",
+    "Hill"
+  ],
+  "planetar": [
+    "Mountain",
+    "Urban",
+    "Forest",
+    "Coastal",
+    "Desert"
+  ],
+  "solar": [
+    "Mountain",
+    "Urban",
+    "Forest",
+    "Coastal",
+    "Desert"
+  ],
+  "unicorn": [
+    "Forest"
+  ],
+  "androsphinx": [
+    "Desert",
+    "Mountain"
+  ],
+  "ankheg": [
+    "Forest",
+    "Grassland",
+    "Hill"
+  ],
+  "basilisk": [
+    "Mountain",
+    "Hill",
+    "Underdark"
+  ],
+  "bulette": [
+    "Hill",
+    "Mountain",
+    "Grassland"
+  ],
+  "centaur": [
+    "Forest",
+    "Grassland"
+  ],
+  "chimera": [
+    "Hill",
+    "Mountain",
+    "Grassland"
+  ],
+  "cockatrice": [
+    "Grassland",
+    "Hill",
+    "Swamp"
+  ],
+  "dragon-turtle": [
+    "Underwater",
+    "Coastal"
+  ],
+  "drider": [
+    "Underdark"
+  ],
+  "ettercap": [
+    "Forest",
+    "Underdark"
+  ],
+  "gorgon": [
+    "Grassland",
+    "Hill",
+    "Mountain"
+  ],
+  "griffon": [
+    "Hill",
+    "Mountain",
+    "Coastal"
+  ],
+  "gynosphinx": [
+    "Desert",
+    "Mountain"
+  ],
+  "harpy": [
+    "Coastal",
+    "Hill",
+    "Mountain"
+  ],
+  "hell-hound": [
+    "Mountain",
+    "Underdark",
+    "Desert"
+  ],
+  "hippogriff": [
+    "Hill",
+    "Mountain",
+    "Grassland"
+  ],
+  "hydra": [
+    "Swamp",
+    "Coastal"
+  ],
+  "kraken": [
+    "Underwater",
+    "Coastal"
+  ],
+  "lamia": [
+    "Desert",
+    "Hill",
+    "Underdark"
+  ],
+  "manticore": [
+    "Mountain",
+    "Hill",
+    "Coastal"
+  ],
+  "medusa": [
+    "Underdark",
+    "Desert",
+    "Hill"
+  ],
+  "mimic": [
+    "Underdark",
+    "Urban"
+  ],
+  "minotaur": [
+    "Underdark",
+    "Hill",
+    "Forest"
+  ],
+  "owlbear": [
+    "Forest",
+    "Hill",
+    "Mountain"
+  ],
+  "phase-spider": [
+    "Underdark",
+    "Forest",
+    "Desert"
+  ],
+  "purple-worm": [
+    "Underdark",
+    "Mountain"
+  ],
+  "remorhaz": [
+    "Arctic",
+    "Mountain"
+  ],
+  "roc": [
+    "Mountain",
+    "Hill",
+    "Coastal"
+  ],
+  "tarrasque": [
+    "Mountain",
+    "Hill",
+    "Grassland",
+    "Underdark"
+  ],
+  "winter-wolf": [
+    "Arctic",
+    "Mountain"
+  ],
+  "worg": [
+    "Forest",
+    "Hill",
+    "Grassland",
+    "Mountain"
+  ],
+  "wyvern": [
+    "Mountain",
+    "Hill",
+    "Forest",
+    "Coastal"
+  ],
+  "yeti": [
+    "Arctic",
+    "Mountain"
+  ],
+  "young-remorhaz": [
+    "Arctic",
+    "Mountain"
+  ],
+  "axe-beak": [
+    "Grassland",
+    "Hill"
+  ],
+  "guardian-naga": [
+    "Forest",
+    "Hill",
+    "Underdark"
+  ],
+  "spirit-naga": [
+    "Underdark",
+    "Swamp",
+    "Forest"
+  ],
+  "troll": [
+    "Forest",
+    "Hill",
+    "Mountain",
+    "Swamp",
+    "Underdark"
+  ]
+}

@@ -1,0 +1,378 @@
+/* ================================================================
+   CHARACTER SHEET - CARDED OBSERVATORY
+   Presentation-only layer over the live sheet. Loaded after
+   arcane-observatory.css so it wins ties by cascade order.
+
+   Modules read as separate instruments on a recessed work surface:
+   canvas (deepest) → card → header/tabs → rows and controls.
+
+   Every color derives from the sheet's document palette
+   (--paper/--ink/--doc-*): the AO theme re-points that palette to
+   Observatory ink, and user skins apply the same variables inline,
+   so skins keep theming the carded sheet exactly as before.
+   Do not alter SheetLayout persistence — styling hooks only.
+   ================================================================ */
+
+/* ── Level 1: sheet canvas ── */
+
+[data-theme="arcane-observatory"] .cs-sheet {
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  background: color-mix(in srgb, var(--paper) 52%, #060b12);
+  border: 1px solid var(--doc-rule-soft);
+  border-radius: var(--radius-md);
+}
+
+/* The toolbar floats on the canvas instead of reading as a paper strip. */
+[data-theme="arcane-observatory"] .cs-sheet-tools {
+  background: transparent;
+  border-bottom: 0;
+  min-height: 0;
+  padding: 8px 12px 0;
+}
+
+/* Header banner and column stage get inset gutters from the canvas edge. */
+[data-theme="arcane-observatory"] .cs-sheet-top,
+[data-theme="arcane-observatory"] .cs-sheet-bottom {
+  padding: 0 var(--space-3);
+  background: transparent;
+}
+
+/* ── Level 2: module cards ── */
+
+[data-theme="arcane-observatory"] .cs-sheet-columns {
+  gap: var(--space-3);
+  padding: 0 var(--space-3);
+  align-items: flex-start;
+  background: transparent;
+}
+
+[data-theme="arcane-observatory"] .cs-sheet-col {
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Columns are transparent flex rails; kill the legacy paper tail-painter. */
+[data-theme="arcane-observatory"] .cs-sheet-col:not(:empty)::after {
+  content: none;
+}
+
+[data-theme="arcane-observatory"] .cs-sheet-col > .cs-section {
+  background: var(--paper);
+  border: 1px solid var(--doc-rule);
+  /* replaces the legacy universal seal-red top rule — red is for urgent state */
+  border-top: 1px solid var(--doc-rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-document);
+  overflow: hidden;
+}
+
+/* The flex gap owns vertical rhythm now. */
+[data-theme="arcane-observatory"] .cs-sheet-col > .cs-section + .cs-section {
+  margin-top: 0;
+}
+
+/* Pinned console banner becomes a card like its movable siblings. */
+[data-theme="arcane-observatory"] .cs-sheet-bottom > .cs-section.cs-pinned {
+  background: var(--paper);
+  border: 1px solid var(--doc-rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-document);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ── Level 3: module headers and tabs ── */
+
+[data-theme="arcane-observatory"] .cs-section-header-row {
+  min-height: 40px;
+  align-items: stretch;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--doc-rule);
+}
+
+[data-theme="arcane-observatory"] .cs-section-header {
+  min-width: 0;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  background: transparent;
+  border-bottom: 0;
+  color: var(--ink);
+}
+
+[data-theme="arcane-observatory"] .cs-section-header:hover {
+  background: color-mix(in srgb, var(--doc-select) 10%, transparent);
+}
+
+[data-theme="arcane-observatory"] .cs-section-header:focus-visible,
+[data-theme="arcane-observatory"] .cs-drag-handle:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: -2px;
+}
+
+[data-theme="arcane-observatory"] .cs-section-title {
+  color: var(--ink);
+  font-family: var(--font-role-label);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+[data-theme="arcane-observatory"] .cs-section-chevron {
+  color: var(--ink-3);
+}
+
+[data-theme="arcane-observatory"] .cs-drag-handle {
+  border-bottom: 0;
+  padding: 0 8px;
+}
+
+/* ── Level 4: module body ── */
+
+[data-theme="arcane-observatory"] .cs-section-body {
+  padding: var(--space-3);
+}
+
+/* Collapsed bodies must stay collapsed (guards the padding override). */
+[data-theme="arcane-observatory"] .cs-section-body.cs-collapsed {
+  display: none;
+}
+
+/* Attack table: recessed head band + faint row separators, no extra boxes. */
+[data-theme="arcane-observatory"] .cs-action-table thead th {
+  background: color-mix(in srgb, var(--paper) 86%, #05090f);
+  color: var(--ink-3);
+}
+
+[data-theme="arcane-observatory"] .cs-action-table td {
+  border-bottom: 1px solid var(--doc-rule-soft);
+}
+
+/* Rows meet the 36px dense-table target without boxing every value. */
+[data-theme="arcane-observatory"] .cs-save-row {
+  min-height: 36px;
+}
+
+[data-theme="arcane-observatory"] .cs-skill-row {
+  grid-template-columns: 1.1em minmax(0, 1fr) auto;
+  min-height: 36px;
+}
+
+/* ================================================================
+   Roll controls — one recognizable pattern, visible at rest.
+   .cs-roll-btn  = a real <button> (SheetRollButton component)
+   .cs-roll-chip = the same language rendered inside a larger
+                   native button that is itself the roll target
+                   (ability cells, save rows, the initiative stat)
+   ================================================================ */
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--doc-select) 46%, var(--doc-rule));
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--font-role-numeric);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn svg,
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-chip svg {
+  flex: none;
+  color: color-mix(in srgb, var(--doc-select) 80%, var(--ink));
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:not(.cs-roll-btn--compact)::after {
+  content: "ROLL";
+  color: var(--ink-3);
+  font-family: var(--font-role-label);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:hover:not(:disabled) {
+  border-color: var(--doc-select);
+  background: color-mix(in srgb, var(--paper-raised) 86%, var(--doc-select) 14%);
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--inset-recessed);
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn--compact {
+  min-width: 58px;
+  min-height: 32px;
+  padding: 4px 7px;
+}
+
+/* Non-interactive twin for values inside larger roll-target buttons. */
+[data-theme="arcane-observatory"] .cs-sheet .cs-roll-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  min-width: 52px;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--doc-select) 46%, var(--doc-rule));
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--font-role-numeric);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+/* Chip brightens when its host roll button is hovered or focused. */
+[data-theme="arcane-observatory"] .cs-sheet :is(.cs-roll-target, .character-stat--roll):hover .cs-roll-chip,
+[data-theme="arcane-observatory"] .cs-sheet :is(.cs-roll-target, .character-stat--roll):focus-visible .cs-roll-chip {
+  border-color: var(--doc-select);
+  background: color-mix(in srgb, var(--paper-raised) 86%, var(--doc-select) 14%);
+}
+
+[data-theme="arcane-observatory"] .cs-sheet :is(.cs-roll-target, .character-stat--roll):active .cs-roll-chip {
+  box-shadow: var(--inset-recessed);
+}
+
+/* Ability cells: the chip carries the modifier; keep the cell roomy. */
+[data-theme="arcane-observatory"] .cs-ability-cell {
+  min-height: 64px;
+  gap: 4px;
+}
+
+[data-theme="arcane-observatory"] .cs-ability-cell .cs-roll-chip {
+  font-size: 1.05rem;
+}
+
+/* Initiative stat chip sits under the big-number type scale. */
+[data-theme="arcane-observatory"] .character-stat--roll .cs-roll-chip {
+  font-size: 1.05rem;
+  min-height: 32px;
+}
+
+/* Damage buttons in the attack table stay compact but readable. */
+[data-theme="arcane-observatory"] .cs-dmg-btns {
+  gap: 5px;
+}
+
+@media (pointer: coarse) {
+  [data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn,
+  [data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn--compact {
+    min-height: 44px;
+  }
+}
+
+/* ── Edit-layout mode ── */
+
+/* Column resize handle spans the new 12px gutter (12 + 10 hit slack). */
+[data-theme="arcane-observatory"] .cs-col-divider {
+  right: calc(var(--space-3) / -2 - 5.5px);
+  width: calc(var(--space-3) + 10px);
+  background: linear-gradient(var(--doc-rule-soft) 0 0) center / 1px 100% no-repeat;
+}
+
+[data-theme="arcane-observatory"] .cs-col-divider:hover,
+[data-theme="arcane-observatory"] .cs-col-divider:focus-visible {
+  background: linear-gradient(var(--doc-select) 0 0) center / 3px 100% no-repeat;
+}
+
+[data-theme="arcane-observatory"] .cs-column-drop-target {
+  border-radius: var(--radius-md);
+  outline: 1px dashed var(--doc-select);
+  outline-offset: 4px;
+}
+
+[data-theme="arcane-observatory"] .cs-section.cs-dragging {
+  box-shadow: none;
+}
+
+[data-theme="arcane-observatory"] .cs-section-body.cs-merge-target {
+  outline: 2px solid var(--doc-select);
+  outline-offset: -4px;
+  background: color-mix(in srgb, var(--paper) 84%, var(--doc-select) 16%);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 1024px) {
+  [data-theme="arcane-observatory"] .cs-sheet-top,
+  [data-theme="arcane-observatory"] .cs-sheet-bottom,
+  [data-theme="arcane-observatory"] .cs-sheet-columns {
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+}
+
+@media (max-width: 700px) {
+  [data-theme="arcane-observatory"] .cs-sheet,
+  [data-theme="arcane-observatory"] .cs-sheet-columns,
+  [data-theme="arcane-observatory"] .cs-sheet-col {
+    gap: 10px;
+  }
+}
+
+/* ── Print: hand the page back to the light stylesheet ── */
+
+@media print {
+  [data-theme="arcane-observatory"] .cs-sheet {
+    padding: 0;
+    gap: 0;
+    background: #fff;
+    border: 0;
+  }
+  [data-theme="arcane-observatory"] .cs-sheet-top,
+  [data-theme="arcane-observatory"] .cs-sheet-columns {
+    padding: 0;
+    gap: 0;
+  }
+  [data-theme="arcane-observatory"] .cs-sheet-col {
+    gap: 0;
+  }
+  [data-theme="arcane-observatory"] .cs-sheet-col > .cs-section {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  [data-theme="arcane-observatory"] .cs-section-header-row {
+    background: #fff;
+    border-bottom-color: #ccc;
+  }
+  [data-theme="arcane-observatory"] .cs-section-title {
+    color: #000;
+  }
+  [data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn,
+  [data-theme="arcane-observatory"] .cs-sheet .cs-roll-chip {
+    background: #fff;
+    border-color: #ccc;
+    color: #000;
+    box-shadow: none;
+  }
+  [data-theme="arcane-observatory"] .cs-sheet .cs-roll-btn:not(.cs-roll-btn--compact)::after {
+    content: none;
+  }
+}

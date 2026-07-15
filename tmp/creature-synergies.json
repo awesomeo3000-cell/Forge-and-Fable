@@ -1,0 +1,1064 @@
+{
+  "goblin": {
+    "synergizesWith": [
+      "hobgoblin",
+      "bugbear",
+      "goblin-boss",
+      "wolf",
+      "worg",
+      "giant-rat"
+    ],
+    "synergyNote": "Goblins work well under hobgoblin and bugbear leadership. They tame wolves and worgs as mounts and hunting companions. A goblin boss can coordinate hit-and-run tactics."
+  },
+  "hobgoblin": {
+    "synergizesWith": [
+      "goblin",
+      "bugbear",
+      "hobgoblin-captain",
+      "orc",
+      "worg"
+    ],
+    "synergyNote": "Hobgoblins are natural military leaders for goblinoids. They form disciplined phalanxes and employ goblins as skirmishers and bugbears as shock troops."
+  },
+  "bugbear": {
+    "synergizesWith": [
+      "goblin",
+      "hobgoblin",
+      "bugbear-chief",
+      "dire-wolf"
+    ],
+    "synergyNote": "Bugbears serve as enforcers and assassins in goblinoid warbands. Their surprise attack trait pairs well with goblin scouting."
+  },
+  "goblinBoss": {
+    "synergizesWith": [
+      "goblin",
+      "hobgoblin",
+      "worg"
+    ],
+    "synergyNote": "A goblin boss can redirect attacks to nearby goblins, making them effective with many goblin minions. They coordinate ambushes and retreats."
+  },
+  "kobold": {
+    "synergizesWith": [
+      "winged-kobold",
+      "giant-rat",
+      "young-green-dragon",
+      "young-red-dragon",
+      "young-white-dragon",
+      "young-black-dragon",
+      "young-blue-dragon",
+      "adult-red-dragon",
+      "adult-green-dragon",
+      "dragon-turtle"
+    ],
+    "synergyNote": "Kobolds worship dragons and serve them fanatically. Their pack tactics are devastating in numbers. They work with dragons of any color, setting traps and using tunnels."
+  },
+  "orc": {
+    "synergizesWith": [
+      "orc-eye-of-gruumsh",
+      "worg",
+      "ogre",
+      "half-ogre",
+      "gnoll"
+    ],
+    "synergyNote": "Orcs form brutal warbands with war priests of Gruumsh. They use worgs as mounts and ogres as siege engines. They occasionally ally with gnolls."
+  },
+  "gnoll": {
+    "synergizesWith": [
+      "gnoll-fang-of-ysheen",
+      "hyena",
+      "giant-hyena",
+      "orc",
+      "death-dog"
+    ],
+    "synergyNote": "Gnolls hunt alongside hyenas and are driven by demonic hunger. Fang of Ysheen leaders command larger packs and can summon demonic aid."
+  },
+  "bandit": {
+    "synergizesWith": [
+      "bandit-captain",
+      "thug",
+      "scout",
+      "mastiff",
+      "veteran"
+    ],
+    "synergyNote": "Bandits operate under a captain and use scouts for reconnaissance. They employ thugs for intimidation and mastiffs as guard dogs."
+  },
+  "cultist": {
+    "synergizesWith": [
+      "cult-fanatic",
+      "acolyte",
+      "priest",
+      "imp",
+      "quasit",
+      "shadow-demon",
+      "succubus"
+    ],
+    "synergyNote": "Cultists follow a fanatic leader and may summon fiends. They perform rituals that can bring more powerful entities into the material plane."
+  },
+  "drow": {
+    "synergizesWith": [
+      "drow-elite-warrior",
+      "drow-mage",
+      "giant-spider",
+      "quaggoth",
+      "shadow-demon"
+    ],
+    "synergyNote": "Drow society is hierarchical with elite warriors and mages commanding lesser drow. They use giant spiders as mounts and quaggoths as slaves."
+  },
+  "skeleton": {
+    "synergizesWith": [
+      "zombie",
+      "wight",
+      "lich",
+      "death-knight",
+      "mummy",
+      "mummy-lord",
+      "minotaur-skeleton",
+      "warhorse-skeleton"
+    ],
+    "synergyNote": "Skeletons are the foot soldiers of undead armies, animated by wights, liches, and death knights. They pair with zombies for a mix of ranged and melee."
+  },
+  "zombie": {
+    "synergizesWith": [
+      "skeleton",
+      "ghoul",
+      "wight",
+      "ogre-zombie",
+      "necromancer-like"
+    ],
+    "synergyNote": "Zombies are slow but resilient front-liners. Their undead fortitude makes them ideal for holding positions while skeletons fire from behind."
+  },
+  "ghoul": {
+    "synergizesWith": [
+      "ghast",
+      "wight",
+      "zombie",
+      "carrion-crawler"
+    ],
+    "synergyNote": "Ghouls hunt in packs led by ghasts. Their paralyzing claws become far more dangerous when multiple ghouls can swarm a single target."
+  },
+  "wight": {
+    "synergizesWith": [
+      "skeleton",
+      "zombie",
+      "wraith",
+      "specter"
+    ],
+    "synergyNote": "Wights command lesser undead and can create new zombies from those they slay. They pair well with incorporeal undead that ignore terrain."
+  },
+  "wraith": {
+    "synergizesWith": [
+      "specter",
+      "wight",
+      "shadow",
+      "death-knight"
+    ],
+    "synergyNote": "Wraiths and specters pass through walls and floors, making them excellent ambushers. With a death knight commander, they form devastating strike forces."
+  },
+  "vampire": {
+    "synergizesWith": [
+      "vampire-spawn",
+      "swarm-of-bats",
+      "thug",
+      "ghoul"
+    ],
+    "synergyNote": "Vampires create spawn from their victims and command swarms of bats. They use charmed thugs as daylight operatives."
+  },
+  "lich": {
+    "synergizesWith": [
+      "death-knight",
+      "demilich",
+      "wraith",
+      "flameskull",
+      "bone-naga",
+      "iron-golem"
+    ],
+    "synergyNote": "A lich surrounds itself with death knights, demiliches, and constructs. Their phylactery is often guarded by iron golems or bone nagas."
+  },
+  "young-red-dragon": {
+    "synergizesWith": [
+      "kobold",
+      "winged-kobold",
+      "half-red-dragon-veteran",
+      "fire-elemental",
+      "salamander",
+      "magmin"
+    ],
+    "synergyNote": "Red dragons surround themselves with kobold worshippers and fire-themed creatures. A half-dragon veteran serves as a loyal lieutenant."
+  },
+  "young-green-dragon": {
+    "synergizesWith": [
+      "kobold",
+      "dryad",
+      "awakened-tree",
+      "will-o-wisp",
+      "shambling-mound"
+    ],
+    "synergyNote": "Green dragons lair in deep forests with kobold minions. They manipulate forest creatures like dryads and shambling mounds to defend their territory."
+  },
+  "young-black-dragon": {
+    "synergizesWith": [
+      "kobold",
+      "lizardfolk",
+      "giant-crocodile",
+      "bullywug",
+      "chuul"
+    ],
+    "synergyNote": "Black dragons rule fetid swamps with lizardfolk and bullywug vassals. They tolerate chuuls and giant crocodiles as lair guardians."
+  },
+  "young-white-dragon": {
+    "synergizesWith": [
+      "kobold",
+      "winter-wolf",
+      "yeti",
+      "ice-mephit",
+      "polar-bear"
+    ],
+    "synergyNote": "White dragons are feral hunters of the arctic. They ally with winter wolves and yetis, and kobolds serve them even in the frozen wastes."
+  },
+  "young-blue-dragon": {
+    "synergizesWith": [
+      "kobold",
+      "giant-scorpion",
+      "manticore",
+      "ankheg",
+      "dust-mephit"
+    ],
+    "synergyNote": "Blue dragons prowl the desert with kobold minions. They share territory with giant scorpions and ankhegs."
+  },
+  "hill-giant": {
+    "synergizesWith": [
+      "ogre",
+      "half-ogre",
+      "goblin",
+      "orc",
+      "ettin"
+    ],
+    "synergyNote": "Hill giants bully lesser creatures like ogres and goblins into service. They are the lowest in the giant ordning but still command respect."
+  },
+  "frost-giant": {
+    "synergizesWith": [
+      "winter-wolf",
+      "yeti",
+      "white-dragon-wyrmling",
+      "young-white-dragon",
+      "ice-mephit"
+    ],
+    "synergyNote": "Frost giants hunt with winter wolves and yetis. They sometimes ally with young white dragons or use ice mephits as scouts."
+  },
+  "fire-giant": {
+    "synergizesWith": [
+      "hell-hound",
+      "salamander",
+      "fire-elemental",
+      "magmin",
+      "fire-snake"
+    ],
+    "synergyNote": "Fire giants forge weapons with salamander help. They command hell hounds and fire elementals in their volcanic strongholds."
+  },
+  "stone-giant": {
+    "synergizesWith": [
+      "earth-elemental",
+      "galeb-duhr",
+      "basilisk",
+      "xorn"
+    ],
+    "synergyNote": "Stone giants shape the earth and ally with earth elementals and galeb duhr. They tolerate basilisks and xorns in their caverns."
+  },
+  "cloud-giant": {
+    "synergizesWith": [
+      "air-elemental",
+      "griffon",
+      "roper",
+      "giant-eagle"
+    ],
+    "synergyNote": "Cloud giants dwell in sky castles with air elementals. They ride griffons and giant eagles as aerial cavalry."
+  },
+  "storm-giant": {
+    "synergizesWith": [
+      "air-elemental",
+      "water-elemental",
+      "killer-whale",
+      "dragon-turtle",
+      "marid"
+    ],
+    "synergyNote": "Storm giants command both air and sea. They ally with marid genies and use dragon turtles as living siege weapons."
+  },
+  "fire-elemental": {
+    "synergizesWith": [
+      "magma-mephit",
+      "salamander",
+      "efreeti",
+      "magmin",
+      "fire-snake",
+      "hell-hound"
+    ],
+    "synergyNote": "Fire elementals rage through anything flammable. Mephits and magmin trail in their wake, and efreeti command them as slaves."
+  },
+  "water-elemental": {
+    "synergizesWith": [
+      "steam-mephit",
+      "water-weird",
+      "marid",
+      "chuul",
+      "giant-crocodile",
+      "sea-hag"
+    ],
+    "synergyNote": "Water elementals surge through aquatic environments. Water weirds and steam mephits accompany them, and marid use them as guardians."
+  },
+  "earth-elemental": {
+    "synergizesWith": [
+      "dust-mephit",
+      "galeb-duhr",
+      "dao",
+      "xorn",
+      "gargoyle"
+    ],
+    "synergyNote": "Earth elementals are slow but devastating. Dust mephits and galeb duhr follow their wake, while dao enslave them."
+  },
+  "air-elemental": {
+    "synergizesWith": [
+      "smoke-mephit",
+      "invisible-stalker",
+      "djinni",
+      "griffon",
+      "peryton"
+    ],
+    "synergyNote": "Air elementals soar and scatter enemies. Djinni command them, and invisible stalkers hunt in their downdrafts."
+  },
+  "balor": {
+    "synergizesWith": [
+      "vrock",
+      "shadow-demon",
+      "quasit",
+      "goristro",
+      "marilith"
+    ],
+    "synergyNote": "Balors are demon generals who command vrocks and shadow demons. They lead incursions alongside goristros and mariliths."
+  },
+  "pit-fiend": {
+    "synergizesWith": [
+      "horned-devil",
+      "chain-devil",
+      "bearded-devil",
+      "imp",
+      "hell-hound"
+    ],
+    "synergyNote": "Pit fiends command devil legions. Bearded devils form infantry, chain devils are torturers, and imps serve as spies."
+  },
+  "mind-flayer": {
+    "synergizesWith": [
+      "intellect-devourer",
+      "quaggoth",
+      "drow",
+      "duergar",
+      "grell",
+      "neothelid"
+    ],
+    "synergyNote": "Mind flayers use intellect devourers to control thralls. They enslave quaggoths, drow, and duergar. A neothelid is their greatest nightmare."
+  },
+  "beholder": {
+    "synergizesWith": [
+      "spectator",
+      "gauth",
+      "death-tyrant",
+      "gas-spore",
+      "mindwitness"
+    ],
+    "synergyNote": "Beholders are paranoid and territorial, but lesser eye tyrants (spectators, gauths) serve them. Death tyrants are undead beholders."
+  },
+  "aboleth": {
+    "synergizesWith": [
+      "chuul",
+      "kuo-toa",
+      "kuo-toa-whip",
+      "chuul",
+      "giant-crocodile"
+    ],
+    "synergyNote": "Aboleths enslave kuo-toa and chuuls through their mucus and psychic powers. They dwell in sunken temples with giant crocodile guards."
+  },
+  "dryad": {
+    "synergizesWith": [
+      "sprite",
+      "awakened-tree",
+      "treant",
+      "satyr",
+      "unicorn"
+    ],
+    "synergyNote": "Dryads charm creatures to defend their trees. They ally with sprites, satyrs, treants, and unicorns to protect the forest."
+  },
+  "treant": {
+    "synergizesWith": [
+      "awakened-tree",
+      "dryad",
+      "needle-blight",
+      "vine-blight",
+      "twig-blight"
+    ],
+    "synergyNote": "Treants awaken trees to fight alongside them. Blights are corrupted plant creatures that sometimes serve as vanguard forces."
+  },
+  "green-hag": {
+    "synergizesWith": [
+      "night-hag",
+      "sea-hag",
+      "scarecrow",
+      "will-o-wisp",
+      "displacer-beast"
+    ],
+    "synergyNote": "Green hags form covens with night hags and sea hags. They use scarecrows and will-o'-wisps to lure victims into their territory."
+  },
+  "roper": {
+    "synergizesWith": [
+      "darkmantle",
+      "hook-horror",
+      "umber-hulk",
+      "piercer"
+    ],
+    "synergyNote": "Ropers camouflage as stalagmites near darkmantle colonies. Hook horrors and umber hulks drive prey toward the roper's grasping tendrils."
+  },
+  "umber-hulk": {
+    "synergizesWith": [
+      "hook-horror",
+      "grell",
+      "carrion-crawler",
+      "duergar"
+    ],
+    "synergyNote": "Umber hulks tunnel through stone, creating paths for hook horrors and carrion crawlers. Their confusing gaze makes allies more effective."
+  },
+  "sahuagin": {
+    "synergizesWith": [
+      "sahuagin-baron",
+      "reef-shark",
+      "hunter-shark",
+      "merrow",
+      "giant-shark"
+    ],
+    "synergyNote": "Sahuagin are shark-riders led by barons. They share territory with merrow and sometimes ally with sea hags."
+  },
+  "merrow": {
+    "synergizesWith": [
+      "sahuagin",
+      "plesiosaurus",
+      "hunter-shark",
+      "water-elemental",
+      "sea-hag"
+    ],
+    "synergyNote": "Merrow are aquatic ogres that bully lesser sea creatures. They hunt alongside sharks and sometimes serve water elementals."
+  },
+  "kuoToa": {
+    "synergizesWith": [
+      "kuo-toa-whip",
+      "chuul",
+      "aboleth",
+      "will-o-wisp",
+      "water-weird"
+    ],
+    "synergyNote": "Kuo-toa are fanatical and easily enslaved. Aboleths and mind flayers dominate them, and their whips drive them into frenzies."
+  },
+  "wolf": {
+    "synergizesWith": [
+      "dire-wolf",
+      "worg",
+      "goblin",
+      "winter-wolf",
+      "werewolf"
+    ],
+    "synergyNote": "Wolves hunt in packs with a dire wolf alpha. Goblins and worgs use them as companions. In arctic regions, winter wolves lead the pack."
+  },
+  "dire-wolf": {
+    "synergizesWith": [
+      "wolf",
+      "orc",
+      "bugbear",
+      "hobgoblin",
+      "goblin-boss"
+    ],
+    "synergyNote": "Dire wolves are favored mounts for orcs and bugbears. A dire wolf alpha commands normal wolf packs with lethal efficiency."
+  },
+  "giant-spider": {
+    "synergizesWith": [
+      "ettercap",
+      "drow",
+      "phase-spider",
+      "giant-wolf-spider",
+      "spider"
+    ],
+    "synergyNote": "Giant spiders are bred by ettercaps and drow. Their webs create difficult terrain that benefits all spider-kin."
+  },
+  "giant-crocodile": {
+    "synergizesWith": [
+      "lizardfolk",
+      "crocodile",
+      "bullywug",
+      "black-dragon-wyrmling",
+      "hydra"
+    ],
+    "synergyNote": "Giant crocodiles lurk near lizardfolk villages as sacred predators. Black dragon wyrmlings use them as lair guardians."
+  },
+  "giant-shark": {
+    "synergizesWith": [
+      "sahuagin",
+      "hunter-shark",
+      "reef-shark",
+      "killer-whale",
+      "plesiosaurus"
+    ],
+    "synergyNote": "Giant sharks are the apex predators sahuagin aspire to master. A hunter shark often schools with them for larger prey."
+  },
+  "giant-eagle": {
+    "synergizesWith": [
+      "air-elemental",
+      "griffon",
+      "hippogriff",
+      "pegasus",
+      "cloud-giant"
+    ],
+    "synergyNote": "Giant eagles are noble creatures that ally with griffons and pegasi. Cloud giants and air elementals respect their mastery of the skies."
+  },
+  "owlbear": {
+    "synergizesWith": [
+      "bugbear",
+      "goblin",
+      "hobgoblin",
+      "displacer-beast"
+    ],
+    "synergyNote": "Owlbears are territorial and aggressive. Bugbears sometimes tame young owlbears as guard beasts. A displacer beast may share hunting grounds."
+  },
+  "displacer-beast": {
+    "synergizesWith": [
+      "blink-dog",
+      "phase-spider",
+      "owlbear",
+      "green-hag"
+    ],
+    "synergyNote": "Displacer beasts and blink dogs are natural enemies but share similar displacement abilities. Phase spiders and displacer beasts hunt the same ethereal-adjacent prey."
+  },
+  "troll": {
+    "synergizesWith": [
+      "ettin",
+      "ogre",
+      "hag-coven",
+      "green-hag"
+    ],
+    "synergyNote": "Trolls are often found with ettins and ogres in giant-kin warbands. Hags sometimes keep trolls as enforcers, exploiting their regeneration."
+  },
+  "mimic": {
+    "synergizesWith": [
+      "gelatinous-cube",
+      "ochre-jelly",
+      "animated-armor",
+      "rug-of-smothering"
+    ],
+    "synergyNote": "Mimics share dungeon ecology with oozes and animated objects. A room might contain both a mimic chest and animated armor standing guard."
+  },
+  "gelatinous-cube": {
+    "synergizesWith": [
+      "black-pudding",
+      "ochre-jelly",
+      "gray-ooze",
+      "skeleton"
+    ],
+    "synergyNote": "Gelatinous cubes clean dungeon corridors, often containing undigested skeleton bones. Other oozes occupy adjacent chambers."
+  },
+  "doppelganger": {
+    "synergizesWith": [
+      "mimic",
+      "rakshasa",
+      "succubus",
+      "oni"
+    ],
+    "synergyNote": "Doppelgangers infiltrate society alongside mimics as objects. They serve rakshasas, succubi, and oni as spies and agents."
+  },
+  "chimera": {
+    "synergizesWith": [
+      "manticore",
+      "wyvern",
+      "griffon",
+      "peryton"
+    ],
+    "synergyNote": "Chimeras dominate skies alongside manticores and wyverns. They compete with griffons and perytons for mountain territory."
+  },
+  "wyvern": {
+    "synergizesWith": [
+      "young-red-dragon",
+      "chimera",
+      "manticore",
+      "giant-vulture"
+    ],
+    "synergyNote": "Wyverns are lesser dragon-kin that defer to true dragons. They hunt alongside giant vultures and compete with chimeras."
+  },
+  "basilisk": {
+    "synergizesWith": [
+      "cockatrice",
+      "medusa",
+      "gorgon",
+      "beholder"
+    ],
+    "synergyNote": "Basilisks share petrification abilities with cockatrices, medusas, and gorgons. A beholder may keep a basilisk in its lair as a guard."
+  },
+  "manticore": {
+    "synergizesWith": [
+      "chimera",
+      "wyvern",
+      "peryton",
+      "harpy"
+    ],
+    "synergyNote": "Manticores are aerial hunters that compete with chimeras and wyverns. They sometimes ally with harpies for coordinated attacks."
+  },
+  "gorgon": {
+    "synergizesWith": [
+      "basilisk",
+      "stone-giant",
+      "medusa",
+      "cockatrice"
+    ],
+    "synergyNote": "Gorgons are bull-like monstrosities with petrifying breath. Stone giants value them as guardians, and they share territory with basilisks."
+  },
+  "mummy": {
+    "synergizesWith": [
+      "mummy-lord",
+      "skeleton",
+      "swarm-of-insects",
+      "stone-golem"
+    ],
+    "synergyNote": "Mummies guard tombs for their mummy lord masters. Swarms of scarabs and stone golems reinforce ancient burial chambers."
+  },
+  "assassin": {
+    "synergizesWith": [
+      "doppelganger",
+      "imp",
+      "quasit",
+      "invisible-stalker"
+    ],
+    "synergyNote": "Assassins employ doppelgangers for infiltration, imps for scouting, and invisible stalkers to ensure no target escapes."
+  },
+  "mage": {
+    "synergizesWith": [
+      "shield-guardian",
+      "gargoyle",
+      "animated-armor",
+      "flesh-golem",
+      "clay-golem"
+    ],
+    "synergyNote": "Mages craft or command constructs as bodyguards. A shield guardian stores spells, while golems and gargoyles provide physical protection."
+  },
+  "archmage": {
+    "synergizesWith": [
+      "shield-guardian",
+      "iron-golem",
+      "stone-golem",
+      "planer-bound-elemental"
+    ],
+    "synergyNote": "Archmages bind powerful elementals and construct iron golems. Their towers are protected by shield guardians and magical wards."
+  },
+  "knight": {
+    "synergizesWith": [
+      "veteran",
+      "guard",
+      "warhorse",
+      "priest"
+    ],
+    "synergyNote": "Knights lead squads of veterans and guards. A mounted knight with a warhorse is a formidable commander, often blessed by a priest."
+  },
+  "priest": {
+    "synergizesWith": [
+      "acolyte",
+      "knight",
+      "guard",
+      "deva"
+    ],
+    "synergyNote": "Priests lead acolytes in divine rituals. They bless knights and guards before battle, and powerful priests can summon devas."
+  },
+  "ankheg": {
+    "synergizesWith": [
+      "bulette",
+      "umber-hulk",
+      "purple-worm",
+      "giant-scorpion"
+    ],
+    "synergyNote": "Ankhegs burrow through soft earth. Bulettes and umber hulks share their tunneling habits, while purple worms are their giant cousins."
+  },
+  "bulette": {
+    "synergizesWith": [
+      "ankheg",
+      "umber-hulk",
+      "purple-worm",
+      "stirge"
+    ],
+    "synergyNote": "Bulettes are land sharks that burst from the ground. Stirges may follow in their wake to feed on the carnage left behind."
+  },
+  "shambling-mound": {
+    "synergizesWith": [
+      "will-o-wisp",
+      "chuul",
+      "bullywug",
+      "giant-frog"
+    ],
+    "synergyNote": "Shambling mounds roam swamps where will-o'-wisps lead travelers astray. Bullywugs and chuuls share these murky territories."
+  },
+  "yeti": {
+    "synergizesWith": [
+      "winter-wolf",
+      "white-dragon-wyrmling",
+      "young-white-dragon",
+      "polar-bear"
+    ],
+    "synergyNote": "Yetis hunt in the high mountains with winter wolves. They sometimes serve young white dragons or share hunting grounds with polar bears."
+  },
+  "phase-spider": {
+    "synergizesWith": [
+      "giant-spider",
+      "displacer-beast",
+      "blink-dog",
+      "ettercap"
+    ],
+    "synergyNote": "Phase spiders phase in and out of the Ethereal Plane. Displacer beasts and blink dogs share similar reality-bending movement patterns."
+  },
+  "couatl": {
+    "synergizesWith": [
+      "guardian-naga",
+      "deva",
+      "pegasus",
+      "unicorn"
+    ],
+    "synergyNote": "Couatls are celestial guardians alongside devas and guardian nagas. They ally with pegasi and unicorns in defense of sacred places."
+  },
+  "nightmares": {
+    "synergizesWith": [
+      "helmed-horror",
+      "flameskull",
+      "shadow-demon",
+      "night-hag"
+    ],
+    "synergyNote": "Nightmares (the horse) serve as mounts for helmed horrors and night hags. Flameskulls and shadow demons accompany them in dark processions."
+  },
+  "ogre": {
+    "synergizesWith": [
+      "goblin",
+      "orc",
+      "hill-giant",
+      "troll",
+      "ettin",
+      "half-ogre"
+    ],
+    "synergyNote": "Ogres are the foot soldiers of giant-kind, serving hill giants and teaming up with goblins and orcs. Half-ogres bridge the gap between ogres and humans."
+  },
+  "ettin": {
+    "synergizesWith": [
+      "ogre",
+      "troll",
+      "hill-giant",
+      "orc",
+      "goblin"
+    ],
+    "synergyNote": "Ettins are two-headed giant-kin that often lead ogre bands. Trolls tolerate them, and goblins scavenge from their messy camps."
+  },
+  "dragon-turtle": {
+    "synergizesWith": [
+      "kobold",
+      "sahuagin",
+      "giant-shark",
+      "killer-whale",
+      "merrow"
+    ],
+    "synergyNote": "Dragon turtles are aquatic terrors. Kobolds serve them even underwater, while sahuagin and merrow offer tribute to avoid being eaten."
+  },
+  "dracolich": {
+    "synergizesWith": [
+      "lich",
+      "bone-naga",
+      "flameskull",
+      "death-knight",
+      "demilich"
+    ],
+    "synergyNote": "A dracolich is often created by a lich. It commands lesser undead dragons (bone nagas) and is attended by flameskulls and death knights."
+  },
+  "satyr": {
+    "synergizesWith": [
+      "dryad",
+      "sprite",
+      "blink-dog",
+      "unicorn",
+      "centaur"
+    ],
+    "synergyNote": "Satyrs celebrate with dryads and sprites in woodland revels. They share forests with blink dogs, unicorns, and centaurs."
+  },
+  "unicorn": {
+    "synergizesWith": [
+      "dryad",
+      "sprite",
+      "satyr",
+      "pegasus",
+      "couatl"
+    ],
+    "synergyNote": "Unicorns are the heart of the fey forest, protected by dryads, sprites, and satyrs. Pegasi and couatls are their celestial allies."
+  },
+  "centaur": {
+    "synergizesWith": [
+      "satyr",
+      "dryad",
+      "elf-scout",
+      "pegasus"
+    ],
+    "synergyNote": "Centaurs patrol the forest alongside satyrs and dryads. They respect pegasi as kin of the sky and work with elf scouts."
+  },
+  "flumph": {
+    "synergizesWith": [
+      "cloaker",
+      "darkmantle",
+      "mind-flayer"
+    ],
+    "synergyNote": "Flumphs are hunted by mind flayers and cloakers. They sometimes serve as unwilling bait in underdark ambushes."
+  },
+  "githyanki-warrior": {
+    "synergizesWith": [
+      "githzerai-monk",
+      "red-dragon",
+      "astral-dreadnought"
+    ],
+    "synergyNote": "Githyanki ride red dragons and raid mind flayer colonies. They maintain an uneasy truce with githzerai monks against their common illithid enemies."
+  },
+  "githzerai-monk": {
+    "synergizesWith": [
+      "githyanki-warrior",
+      "mind-flayer",
+      "intellect-devourer"
+    ],
+    "synergyNote": "Githzerai monks are disciplined psionic warriors. They ally with githyanki against mind flayers despite their philosophical differences."
+  },
+  "kraken": {
+    "synergizesWith": [
+      "sahuagin",
+      "sahuagin-baron",
+      "giant-shark",
+      "dragon-turtle",
+      "water-elemental",
+      "aboleth"
+    ],
+    "synergyNote": "Krakens command the deep oceans. Sahuagin worship them as gods, dragon turtles serve as their lieutenants, and water elementals answer their call."
+  },
+  "harpy": {
+    "synergizesWith": [
+      "peryton",
+      "manticore",
+      "blood-hawk",
+      "griffon"
+    ],
+    "synergyNote": "Harpies lure victims with their song for aerial ambushes. They share hunting grounds with perytons and manticores, and blood hawks scavenge their kills."
+  },
+  "peryton": {
+    "synergizesWith": [
+      "harpy",
+      "chimera",
+      "griffon",
+      "hippogriff"
+    ],
+    "synergyNote": "Perytons compete with harpies and griffons for mountain territory. Their shadow-attuned hearts mark them as unnatural predators."
+  },
+  "hippogriff": {
+    "synergizesWith": [
+      "griffon",
+      "pegasus",
+      "giant-eagle",
+      "peryton"
+    ],
+    "synergyNote": "Hippogriffs are tamer cousins of griffons, often used as aerial mounts. They share stable space in high mountain eyries with giant eagles."
+  },
+  "flesh-golem": {
+    "synergizesWith": [
+      "zombie",
+      "wight",
+      "necromancer-like",
+      "lightning-elemental"
+    ],
+    "synergyNote": "Flesh golems are stitched from corpses and powered by lightning. They're often found in mad wizards' labs alongside zombies and wights."
+  },
+  "clay-golem": {
+    "synergizesWith": [
+      "earth-elemental",
+      "stone-golem",
+      "galeb-duhr",
+      "dao"
+    ],
+    "synergyNote": "Clay golems are divine constructs that can heal from acid damage. Earth elementals instinctively protect them, and dao value them as temple guards."
+  },
+  "stone-golem": {
+    "synergizesWith": [
+      "clay-golem",
+      "iron-golem",
+      "gargoyle",
+      "earth-elemental"
+    ],
+    "synergyNote": "Stone golems are the most common golem type. They stand eternal watch alongside gargoyles in ancient temples and wizard towers."
+  },
+  "iron-golem": {
+    "synergizesWith": [
+      "stone-golem",
+      "helmed-horror",
+      "archmage",
+      "fire-elemental"
+    ],
+    "synergyNote": "Iron golems are the mightiest constructs, healed by fire. Archmages create them as ultimate guardians, and fire elementals are drawn to their forge-heat."
+  },
+  "helmedHorror": {
+    "synergizesWith": [
+      "animated-armor",
+      "shield-guardian",
+      "flameskull",
+      "mage"
+    ],
+    "synergyNote": "Helmed horrors are intelligent constructs that serve as elite bodyguards. They work alongside animated armor squads and take orders from mages."
+  },
+  "invisible-stalker": {
+    "synergizesWith": [
+      "air-elemental",
+      "assassin",
+      "djinni",
+      "rakshasa"
+    ],
+    "synergyNote": "Invisible stalkers are bound to hunt specific targets. Assassins, rakshasas, and djinn use them as perfect trackers that cannot be seen."
+  },
+  "xorn": {
+    "synergizesWith": [
+      "earth-elemental",
+      "dao",
+      "rust-monster",
+      "umber-hulk"
+    ],
+    "synergyNote": "Xorns swim through solid stone seeking precious metals. They coexist with earth elementals and rust monsters in mineral-rich caverns."
+  },
+  "rust-monster": {
+    "synergizesWith": [
+      "xorn",
+      "umber-hulk",
+      "carrion-crawler",
+      "gelatinous-cube"
+    ],
+    "synergyNote": "Rust monsters corrode metal equipment, softening up adventurers for other dungeon predators like umber hulks and carrion crawlers."
+  },
+  "behir": {
+    "synergizesWith": [
+      "blue-dragon",
+      "giant-scorpion",
+      "wyvern",
+      "young-blue-dragon"
+    ],
+    "synergyNote": "Behirs are lightning-breathing serpents that hate dragons. They compete with young blue dragons for desert and mountain territory."
+  },
+  "remorhaz": {
+    "synergizesWith": [
+      "young-remorhaz",
+      "frost-giant",
+      "winter-wolf",
+      "yeti"
+    ],
+    "synergyNote": "Remorhazes burst through arctic ice with searing heat. Frost giants hunt them for sport, and their young burrow alongside yeti caves."
+  },
+  "guardian-naga": {
+    "synergizesWith": [
+      "couatl",
+      "spirit-naga",
+      "deva",
+      "gynosphinx"
+    ],
+    "synergyNote": "Guardian nagas are lawful good protectors of sacred sites. They ally with couatls and devas, and are mortal enemies of spirit nagas."
+  },
+  "spirit-naga": {
+    "synergizesWith": [
+      "guardian-naga",
+      "yuan-ti-abomination",
+      "bone-naga",
+      "death-knight"
+    ],
+    "synergyNote": "Spirit nagas are chaotic evil and return to life after death. They serve yuan-ti and death knights, and hate guardian nagas with supernatural fury."
+  },
+  "flameskull": {
+    "synergizesWith": [
+      "lich",
+      "helmed-horror",
+      "death-knight",
+      "demilich"
+    ],
+    "synergyNote": "Flameskulls are undead wizard heads bound to guard duty. Liches and death knights create them as eternal sentries that reform when destroyed."
+  },
+  "gibbering-mouther": {
+    "synergizesWith": [
+      "gray-ooze",
+      "carrion-crawler",
+      "not",
+      "gelatinous-cube"
+    ],
+    "synergyNote": "Gibbering mouthers are writhing masses of insanity. They share dungeon niches with oozes and carrion crawlers, their babble luring prey."
+  },
+  "scarecrow": {
+    "synergizesWith": [
+      "green-hag",
+      "night-hag",
+      "twig-blight",
+      "vine-blight"
+    ],
+    "synergyNote": "Scarecrows stand guard in hag-haunted fields. Their fear aura works well with blights and hag covens that command corrupted plant life."
+  },
+  "carrion-crawler": {
+    "synergizesWith": [
+      "gelatinous-cube",
+      "gibbering-mouther",
+      "gray-ooze",
+      "ghoul"
+    ],
+    "synergyNote": "Carrion crawlers patrol dungeon corridors for carrion. Their paralyzing tentacles complement ghoul claws, and they avoid gelatinous cubes."
+  },
+  "darkmantle": {
+    "synergizesWith": [
+      "roper",
+      "cloaker",
+      "hook-horror",
+      "grimlock"
+    ],
+    "synergyNote": "Darkmantles drop from cavern ceilings, creating magical darkness. Ropers exploit the chaos, and grimlocks hunt effortlessly in the dark."
+  },
+  "nothic": {
+    "synergizesWith": [
+      "mimic",
+      "doppelganger",
+      "beholder",
+      "intellect-devourer"
+    ],
+    "synergyNote": "Nothics are cursed wizards with rot-eye secrets. They lurk near beholders' lairs and share a telepathic affinity with doppelgangers."
+  },
+  "hook-horror": {
+    "synergizesWith": [
+      "roper",
+      "darkmantle",
+      "umber-hulk",
+      "carrion-crawler"
+    ],
+    "synergyNote": "Hook horrors hunt in packs in the underdark. They drive prey into roper tendrils or umber hulk territory."
+  },
+  "cloaker": {
+    "synergizesWith": [
+      "darkmantle",
+      "mimic",
+      "roper",
+      "mind-flayer"
+    ],
+    "synergyNote": "Cloakers are ambush predators that mimic cloaks. They share hunting strategies with darkmantles and are sometimes used by mind flayers."
+  },
+  "grell": {
+    "synergizesWith": [
+      "mind-flayer",
+      "intellect-devourer",
+      "gas-spore",
+      "beholder"
+    ],
+    "synergyNote": "Grell are floating brain-creatures with paralyzing tentacles. They serve mind flayers and beholders, or drift alongside gas spores."
+  },
+  "spectator": {
+    "synergizesWith": [
+      "beholder",
+      "gauth",
+      "death-tyrant",
+      "gas-spore"
+    ],
+    "synergyNote": "Spectators are lesser beholders summoned to guard treasures. They obey true beholders and share lairs with gauths."
+  }
+}

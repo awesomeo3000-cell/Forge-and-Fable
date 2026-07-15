@@ -1,0 +1,1098 @@
+{
+  "acolyte": [
+    "Spellcaster"
+  ],
+  "awakened-shrub": [
+    "Minion"
+  ],
+  "baboon": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "badger": [
+    "Minion"
+  ],
+  "bandit": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "bat": [
+    "Minion"
+  ],
+  "blood-hawk": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "cat": [
+    "Minion"
+  ],
+  "commoner": [
+    "Minion"
+  ],
+  "crab": [
+    "Minion"
+  ],
+  "cultist": [
+    "Minion"
+  ],
+  "darkmantle": [
+    "Ambusher"
+  ],
+  "dretch": [
+    "Minion"
+  ],
+  "eagle": [
+    "Minion"
+  ],
+  "flying-snake": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "flying-sword": [
+    "Minion"
+  ],
+  "frog": [
+    "Minion"
+  ],
+  "giant-fire-beetle": [
+    "Minion"
+  ],
+  "goat": [
+    "Minion"
+  ],
+  "goblin": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "guard": [
+    "Minion"
+  ],
+  "hawk": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "homunculus": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "hyena": [
+    "Minion"
+  ],
+  "jackal": [
+    "Minion"
+  ],
+  "kobold": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "lemure": [
+    "Minion"
+  ],
+  "lizard": [
+    "Minion"
+  ],
+  "octopus": [
+    "Minion",
+    "Ambusher"
+  ],
+  "owl": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "poisonous-snake": [
+    "Minion"
+  ],
+  "pony": [
+    "Minion"
+  ],
+  "quasit": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "quipper": [
+    "Minion"
+  ],
+  "rat": [
+    "Minion"
+  ],
+  "raven": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "riding-horse": [
+    "Skirmisher"
+  ],
+  "scorpion": [
+    "Minion"
+  ],
+  "sea-horse": [
+    "Minion"
+  ],
+  "shrieker": [
+    "Minion"
+  ],
+  "skeleton": [
+    "Minion"
+  ],
+  "spider": [
+    "Minion"
+  ],
+  "sprite": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "steam-mephit": [
+    "Minion"
+  ],
+  "stirge": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "tribal-warrior": [
+    "Minion"
+  ],
+  "twig-blight": [
+    "Minion"
+  ],
+  "vampire-bat": [
+    "Minion"
+  ],
+  "violet-fungus": [
+    "Minion"
+  ],
+  "vulture": [
+    "Minion"
+  ],
+  "weasel": [
+    "Minion"
+  ],
+  "will-o-wisp": [
+    "Minion",
+    "Skirmisher"
+  ],
+  "zombie": [
+    "Minion"
+  ],
+  "ankheg": [
+    "Brute"
+  ],
+  "awakened-tree": [
+    "Brute"
+  ],
+  "black-bear": [
+    "Brute"
+  ],
+  "brown-bear": [
+    "Brute"
+  ],
+  "bugbear": [
+    "Ambusher"
+  ],
+  "bulette": [
+    "Brute"
+  ],
+  "chuul": [
+    "Brute"
+  ],
+  "constrictor-snake": [
+    "Brute"
+  ],
+  "crocodile": [
+    "Brute"
+  ],
+  "cyclops": [
+    "Brute"
+  ],
+  "death-dog": [
+    "Brute"
+  ],
+  "elephant": [
+    "Brute"
+  ],
+  "ettin": [
+    "Brute"
+  ],
+  "flesh-golem": [
+    "Brute"
+  ],
+  "giant-boar": [
+    "Brute"
+  ],
+  "giant-crocodile": [
+    "Brute"
+  ],
+  "giant-constrictor-snake": [
+    "Brute"
+  ],
+  "giant-hyena": [
+    "Brute"
+  ],
+  "giant-octopus": [
+    "Brute"
+  ],
+  "giant-scorpion": [
+    "Brute"
+  ],
+  "giant-shark": [
+    "Brute"
+  ],
+  "giant-toad": [
+    "Brute"
+  ],
+  "gorgon": [
+    "Brute"
+  ],
+  "hill-giant": [
+    "Brute"
+  ],
+  "hydra": [
+    "Brute"
+  ],
+  "minotaur": [
+    "Brute"
+  ],
+  "ogre": [
+    "Brute"
+  ],
+  "ogre-zombie": [
+    "Brute"
+  ],
+  "otyugh": [
+    "Brute"
+  ],
+  "owlbear": [
+    "Brute"
+  ],
+  "polar-bear": [
+    "Brute"
+  ],
+  "rhinoceros": [
+    "Brute"
+  ],
+  "roc": [
+    "Solo"
+  ],
+  "shambling-mound": [
+    "Brute"
+  ],
+  "stone-giant": [
+    "Brute"
+  ],
+  "troll": [
+    "Brute"
+  ],
+  "tyrannosaurus-rex": [
+    "Brute"
+  ],
+  "warhorse-skeleton": [
+    "Brute"
+  ],
+  "yeti": [
+    "Brute"
+  ],
+  "axe-beak": [
+    "Skirmisher"
+  ],
+  "blink-dog": [
+    "Skirmisher"
+  ],
+  "boar": [
+    "Skirmisher"
+  ],
+  "centaur": [
+    "Skirmisher"
+  ],
+  "deer": [
+    "Skirmisher"
+  ],
+  "dire-wolf": [
+    "Skirmisher"
+  ],
+  "displacer-beast": [
+    "Skirmisher"
+  ],
+  "draft-horse": [
+    "Skirmisher"
+  ],
+  "elk": [
+    "Skirmisher"
+  ],
+  "gar Shatterkeel": [
+    "Skirmisher"
+  ],
+  "giant-elk": [
+    "Skirmisher"
+  ],
+  "giant-goat": [
+    "Skirmisher"
+  ],
+  "giant-vulture": [
+    "Skirmisher"
+  ],
+  "giant-wasp": [
+    "Skirmisher"
+  ],
+  "giant-weasel": [
+    "Skirmisher"
+  ],
+  "giant-wolf-spider": [
+    "Skirmisher"
+  ],
+  "harpy": [
+    "Skirmisher"
+  ],
+  "hell-hound": [
+    "Skirmisher"
+  ],
+  "hunter-shark": [
+    "Skirmisher"
+  ],
+  "lion": [
+    "Skirmisher"
+  ],
+  "mastiff": [
+    "Skirmisher"
+  ],
+  "mule": [
+    "Skirmisher"
+  ],
+  "nightmare": [
+    "Skirmisher"
+  ],
+  "panther": [
+    "Skirmisher"
+  ],
+  "phase-spider": [
+    "Ambusher"
+  ],
+  "reef-shark": [
+    "Skirmisher"
+  ],
+  "saber-toothed-tiger": [
+    "Skirmisher"
+  ],
+  "tiger": [
+    "Skirmisher"
+  ],
+  "vampire-spawn": [
+    "Skirmisher"
+  ],
+  "warhorse": [
+    "Skirmisher"
+  ],
+  "winter-wolf": [
+    "Skirmisher"
+  ],
+  "wolf": [
+    "Skirmisher"
+  ],
+  "worg": [
+    "Skirmisher"
+  ],
+  "adult-black-dragon": [
+    "Solo"
+  ],
+  "adult-blue-dragon": [
+    "Solo"
+  ],
+  "adult-brass-dragon": [
+    "Solo"
+  ],
+  "adult-bronze-dragon": [
+    "Solo"
+  ],
+  "adult-copper-dragon": [
+    "Solo"
+  ],
+  "adult-gold-dragon": [
+    "Solo"
+  ],
+  "adult-green-dragon": [
+    "Solo"
+  ],
+  "adult-red-dragon": [
+    "Solo"
+  ],
+  "adult-silver-dragon": [
+    "Solo"
+  ],
+  "adult-white-dragon": [
+    "Solo"
+  ],
+  "ancient-black-dragon": [
+    "Solo"
+  ],
+  "ancient-blue-dragon": [
+    "Solo"
+  ],
+  "ancient-brass-dragon": [
+    "Solo"
+  ],
+  "ancient-bronze-dragon": [
+    "Solo"
+  ],
+  "ancient-copper-dragon": [
+    "Solo"
+  ],
+  "ancient-gold-dragon": [
+    "Solo"
+  ],
+  "ancient-green-dragon": [
+    "Solo"
+  ],
+  "ancient-red-dragon": [
+    "Solo"
+  ],
+  "ancient-silver-dragon": [
+    "Solo"
+  ],
+  "ancient-white-dragon": [
+    "Solo"
+  ],
+  "archmage": [
+    "Spellcaster"
+  ],
+  "azer": [
+    "Artillery"
+  ],
+  "black-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "blue-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "brass-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "bronze-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "copper-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "dragon-turtle": [
+    "Solo"
+  ],
+  "gargoyle": [
+    "Ambusher"
+  ],
+  "giant-spider": [
+    "Ambusher"
+  ],
+  "gold-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "green-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "mage": [
+    "Spellcaster"
+  ],
+  "magmin": [
+    "Artillery"
+  ],
+  "manticore": [
+    "Artillery"
+  ],
+  "red-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "silver-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "white-dragon-wyrmling": [
+    "Artillery"
+  ],
+  "young-black-dragon": [
+    "Artillery"
+  ],
+  "young-blue-dragon": [
+    "Artillery"
+  ],
+  "young-brass-dragon": [
+    "Artillery"
+  ],
+  "young-bronze-dragon": [
+    "Artillery"
+  ],
+  "young-copper-dragon": [
+    "Artillery"
+  ],
+  "young-gold-dragon": [
+    "Artillery"
+  ],
+  "young-green-dragon": [
+    "Artillery"
+  ],
+  "young-red-dragon": [
+    "Artillery"
+  ],
+  "young-silver-dragon": [
+    "Artillery"
+  ],
+  "young-white-dragon": [
+    "Artillery"
+  ],
+  "aboleth": [
+    "Controller",
+    "Solo"
+  ],
+  "androsphinx": [
+    "Solo"
+  ],
+  "behir": [
+    "Solo"
+  ],
+  "cloaker": [
+    "Ambusher",
+    "Controller"
+  ],
+  "couatl": [
+    "Healer"
+  ],
+  "gibbering-mouther": [
+    "Controller"
+  ],
+  "gynosphinx": [
+    "Solo"
+  ],
+  "kraken": [
+    "Solo"
+  ],
+  "lamia": [
+    "Controller"
+  ],
+  "medusa": [
+    "Controller"
+  ],
+  "night-hag": [
+    "Controller"
+  ],
+  "rakshasa": [
+    "Spellcaster"
+  ],
+  "vampire-vampire": [
+    "Solo"
+  ],
+  "wraith": [
+    "Controller"
+  ],
+  "assassin": [
+    "Ambusher"
+  ],
+  "doppelganger": [
+    "Ambusher"
+  ],
+  "ettercap": [
+    "Ambusher"
+  ],
+  "gelatinous-cube": [
+    "Ambusher"
+  ],
+  "ghast": [
+    "Ambusher"
+  ],
+  "ghoul": [
+    "Ambusher"
+  ],
+  "grick": [
+    "Ambusher"
+  ],
+  "invisible-stalker": [
+    "Ambusher"
+  ],
+  "mimic": [
+    "Ambusher"
+  ],
+  "piercer": [
+    "Ambusher"
+  ],
+  "roper": [
+    "Ambusher"
+  ],
+  "rug-of-smothering": [
+    "Ambusher"
+  ],
+  "shadow": [
+    "Ambusher"
+  ],
+  "specter": [
+    "Ambusher"
+  ],
+  "spy": [
+    "Ambusher",
+    "Skirmisher"
+  ],
+  "balor": [
+    "Solo"
+  ],
+  "death-knight": [
+    "Solo"
+  ],
+  "deva": [
+    "Healer"
+  ],
+  "empyrean": [
+    "Solo"
+  ],
+  "lich": [
+    "Spellcaster"
+  ],
+  "marilith": [
+    "Solo"
+  ],
+  "mummy-lord": [
+    "Spellcaster"
+  ],
+  "pit-fiend": [
+    "Solo"
+  ],
+  "planetar": [
+    "Healer"
+  ],
+  "purple-worm": [
+    "Solo"
+  ],
+  "remorhaz": [
+    "Solo"
+  ],
+  "solar": [
+    "Healer"
+  ],
+  "storm-giant": [
+    "Solo",
+    "Artillery"
+  ],
+  "tarrasque": [
+    "Solo"
+  ],
+  "bandit-captain": [
+    "Leader"
+  ],
+  "berserker": [
+    "Leader",
+    "Brute"
+  ],
+  "drow": [
+    "Spellcaster"
+  ],
+  "duergar": [
+    "Spellcaster"
+  ],
+  "gladiator": [
+    "Leader",
+    "Brute"
+  ],
+  "hobgoblin": [
+    "Leader"
+  ],
+  "knight": [
+    "Leader"
+  ],
+  "lizardfolk": [
+    "Leader"
+  ],
+  "orc": [
+    "Leader"
+  ],
+  "sahuagin": [
+    "Leader"
+  ],
+  "veteran": [
+    "Leader"
+  ],
+  "cult-fanatic": [
+    "Spellcaster"
+  ],
+  "druid": [
+    "Healer"
+  ],
+  "dryad": [
+    "Spellcaster"
+  ],
+  "flameskull": [
+    "Spellcaster"
+  ],
+  "green-hag": [
+    "Spellcaster"
+  ],
+  "guardian-naga": [
+    "Spellcaster"
+  ],
+  "larva-mage": [
+    "Spellcaster"
+  ],
+  "oni": [
+    "Spellcaster"
+  ],
+  "priest": [
+    "Healer"
+  ],
+  "sea-hag": [
+    "Spellcaster"
+  ],
+  "spirit-naga": [
+    "Spellcaster"
+  ],
+  "succubus-incubus": [
+    "Spellcaster"
+  ],
+  "unicorn": [
+    "Healer"
+  ],
+  "air-elemental": [
+    "Skirmisher"
+  ],
+  "earth-elemental": [
+    "Brute"
+  ],
+  "fire-elemental": [
+    "Skirmisher"
+  ],
+  "water-elemental": [
+    "Brute"
+  ],
+  "ape": [
+    "Brute"
+  ],
+  "dust-mephit": [
+    "Controller"
+  ],
+  "ice-mephit": [
+    "Artillery"
+  ],
+  "magma-mephit": [
+    "Artillery"
+  ],
+  "merfolk": [
+    "Skirmisher"
+  ],
+  "merrow": [
+    "Brute"
+  ],
+  "plesiosaurus": [
+    "Brute"
+  ],
+  "satyr": [
+    "Skirmisher"
+  ],
+  "triceratops": [
+    "Brute"
+  ],
+  "troglodyte": [
+    "Skirmisher"
+  ],
+  "young-remorhaz": [
+    "Brute"
+  ],
+  "animated-armor": [
+    "Brute"
+  ],
+  "clay-golem": [
+    "Brute"
+  ],
+  "iron-golem": [
+    "Brute",
+    "Solo"
+  ],
+  "shield-guardian": [
+    "Brute"
+  ],
+  "stone-golem": [
+    "Brute",
+    "Solo"
+  ],
+  "barbed-devil": [
+    "Skirmisher"
+  ],
+  "bearded-devil": [
+    "Brute"
+  ],
+  "bone-devil": [
+    "Skirmisher"
+  ],
+  "chain-devil": [
+    "Controller"
+  ],
+  "erinyes": [
+    "Artillery",
+    "Skirmisher"
+  ],
+  "horned-devil": [
+    "Brute"
+  ],
+  "ice-devil": [
+    "Brute",
+    "Controller"
+  ],
+  "imp": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "glabrezu": [
+    "Brute",
+    "Spellcaster"
+  ],
+  "hezrou": [
+    "Brute"
+  ],
+  "nalfeshnee": [
+    "Brute",
+    "Spellcaster"
+  ],
+  "vrock": [
+    "Skirmisher"
+  ],
+  "basilisk": [
+    "Controller"
+  ],
+  "chimera": [
+    "Brute",
+    "Artillery"
+  ],
+  "cockatrice": [
+    "Controller",
+    "Minion"
+  ],
+  "griffon": [
+    "Brute"
+  ],
+  "hippogriff": [
+    "Skirmisher"
+  ],
+  "wyvern": [
+    "Skirmisher",
+    "Artillery"
+  ],
+  "cloud-giant": [
+    "Brute",
+    "Artillery"
+  ],
+  "fire-giant": [
+    "Brute",
+    "Solo"
+  ],
+  "frost-giant": [
+    "Brute"
+  ],
+  "djinni": [
+    "Controller",
+    "Spellcaster"
+  ],
+  "efreeti": [
+    "Brute",
+    "Spellcaster"
+  ],
+  "salamander": [
+    "Brute"
+  ],
+  "xorn": [
+    "Brute"
+  ],
+  "ghost": [
+    "Controller"
+  ],
+  "minotaur-skeleton": [
+    "Brute",
+    "Minion"
+  ],
+  "mummy": [
+    "Controller"
+  ],
+  "vampire-mist": [
+    "Skirmisher",
+    "Ambusher"
+  ],
+  "wight": [
+    "Controller",
+    "Leader"
+  ],
+  "black-pudding": [
+    "Brute",
+    "Ambusher"
+  ],
+  "gray-ooze": [
+    "Ambusher"
+  ],
+  "ochre-jelly": [
+    "Ambusher"
+  ],
+  "treant": [
+    "Brute",
+    "Controller"
+  ],
+  "deep-gnome-svirfneblin": [
+    "Spellcaster"
+  ],
+  "drider": [
+    "Artillery",
+    "Spellcaster"
+  ],
+  "gnoll": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "grimlock": [
+    "Brute"
+  ],
+  "half-red-dragon-veteran": [
+    "Brute",
+    "Artillery"
+  ],
+  "noble": [
+    "Minion"
+  ],
+  "scout": [
+    "Skirmisher"
+  ],
+  "thug": [
+    "Brute"
+  ],
+  "werebear-human": [
+    "Brute"
+  ],
+  "werebear-hybrid": [
+    "Brute"
+  ],
+  "werebear-bear": [
+    "Brute"
+  ],
+  "wereboar-human": [
+    "Brute"
+  ],
+  "wereboar-hybrid": [
+    "Brute"
+  ],
+  "wereboar-boar": [
+    "Brute"
+  ],
+  "wererat-human": [
+    "Skirmisher",
+    "Ambusher"
+  ],
+  "wererat-hybrid": [
+    "Skirmisher",
+    "Ambusher"
+  ],
+  "wererat-rat": [
+    "Skirmisher",
+    "Ambusher"
+  ],
+  "weretiger-human": [
+    "Skirmisher"
+  ],
+  "weretiger-hybrid": [
+    "Skirmisher"
+  ],
+  "weretiger-tiger": [
+    "Skirmisher"
+  ],
+  "werewolf-human": [
+    "Skirmisher"
+  ],
+  "werewolf-hybrid": [
+    "Skirmisher"
+  ],
+  "werewolf-wolf": [
+    "Skirmisher"
+  ],
+  "camel": [
+    "Skirmisher"
+  ],
+  "giant-ape": [
+    "Brute"
+  ],
+  "giant-badger": [
+    "Brute"
+  ],
+  "giant-bat": [
+    "Skirmisher"
+  ],
+  "giant-centipede": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "giant-crab": [
+    "Brute"
+  ],
+  "giant-eagle": [
+    "Skirmisher"
+  ],
+  "giant-frog": [
+    "Ambusher"
+  ],
+  "giant-lizard": [
+    "Brute"
+  ],
+  "giant-owl": [
+    "Skirmisher"
+  ],
+  "giant-poisonous-snake": [
+    "Skirmisher"
+  ],
+  "giant-rat": [
+    "Minion"
+  ],
+  "giant-rat-diseased": [
+    "Minion"
+  ],
+  "giant-sea-horse": [
+    "Skirmisher"
+  ],
+  "killer-whale": [
+    "Brute"
+  ],
+  "mammoth": [
+    "Brute"
+  ],
+  "pegasus": [
+    "Skirmisher"
+  ],
+  "pseudodragon": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "rust-monster": [
+    "Controller"
+  ],
+  "swarm-of-bats": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-beetles": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-centipedes": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-insects": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-poisonous-snakes": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-quippers": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-rats": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-ravens": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-spiders": [
+    "Skirmisher",
+    "Minion"
+  ],
+  "swarm-of-wasps": [
+    "Skirmisher",
+    "Minion"
+  ]
+}

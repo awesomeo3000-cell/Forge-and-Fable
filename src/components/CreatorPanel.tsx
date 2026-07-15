@@ -35,6 +35,7 @@ import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal"
 import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
 
 import { CHAPTERS, classDescriptor, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
+import { CLASS_ART_IDS, classArtSrc } from "@/lib/classArt";
 import {
   CLASS_SKILL_CHOICES,
   SKILLS,
@@ -71,10 +72,6 @@ const CLASS_SELECTOR_COPY: Record<string, { description: string; role: string }>
   wizard: { description: "Studied master of arcane magic", role: "Control & Utility" },
 };
 
-const CLASS_ART_IDS = new Set([
-  "barbarian", "bard", "cleric", "druid", "fighter", "monk",
-  "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
-]);
 
 function casterLabel(heroClass: HeroClass) {
   if (!heroClass.casterType || heroClass.casterType === "none") return "martial";
@@ -703,7 +700,7 @@ export default memo(function CreatorPanel(props: {
                         {CLASS_ART_IDS.has(candidate.id) ? (
                           <Image
                             className="ledger-class-card-art"
-                            src={`/class-art/${candidate.id}.webp`}
+                            src={classArtSrc(candidate.id)}
                             alt=""
                             fill
                             sizes="(max-width: 900px) 100vw, 440px"
