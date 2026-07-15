@@ -89,7 +89,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: color-mix(in srgb, var(--parchment) 65%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 72%, var(--ground));
   cursor: pointer;
 }
 .level-rite-close:hover { color: var(--parchment); }
@@ -131,7 +131,7 @@
 
 .level-rite-eyebrow {
   display: block;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 75%, var(--ground));
   font-family: var(--font-label);
   font-size: 11px;
   font-weight: 600;
@@ -153,7 +153,7 @@
   font-size: 12.5px;
   font-style: italic;
   font-weight: 400;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 72%, var(--ground));
 }
 
 /* ── Body: margin checklist + step content ── */
@@ -174,7 +174,7 @@
 
 .level-rite-rail-label {
   padding: 0 14px 8px;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 72%, var(--ground));
   font-family: var(--font-label);
   font-size: 11px;
   font-weight: 600;
@@ -191,9 +191,9 @@
   border: 0;
   border-left: 2px solid transparent;
   background: none;
-  color: color-mix(in srgb, var(--parchment) 55%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 75%, var(--ground));
   font-family: var(--font-label);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -203,7 +203,8 @@
 .level-rite-step.is-done { color: var(--parchment); }
 .level-rite-step.is-current {
   border-left-color: var(--doc-accent, var(--accent));
-  color: var(--doc-accent, var(--accent));
+  background: color-mix(in srgb, var(--doc-accent, var(--accent)) 12%, transparent);
+  color: var(--parchment);
 }
 .level-rite-step:focus-visible {
   outline: 2px solid var(--doc-accent, var(--accent));
@@ -215,7 +216,7 @@
 .level-rite-step-note {
   max-width: 100%;
   overflow: hidden;
-  color: color-mix(in srgb, var(--parchment) 58%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 68%, var(--ground));
   font-family: var(--font-body);
   font-size: 12px;
   font-style: italic;
@@ -246,9 +247,11 @@
 .level-rite-gained-label {
   display: block;
   margin-bottom: 4px;
-  color: var(--doc-accent, var(--accent));
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--doc-accent, var(--accent));
+  color: var(--parchment);
   font-family: var(--font-label);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -280,7 +283,7 @@
 
 .level-rite-panel-sub {
   margin: -6px 0 0;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 72%, var(--ground));
   font-family: var(--font-body);
   font-size: 12.5px;
   font-style: italic;
@@ -376,7 +379,7 @@
 .level-rite-card p,
 .level-rite-option-detail {
   margin: 0;
-  color: color-mix(in srgb, var(--parchment) 60%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 70%, var(--ground));
   font-family: var(--font-body);
   font-size: 12.5px;
   font-style: italic;
@@ -401,7 +404,7 @@
 
 .level-rite-hp-die span {
   display: block;
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 72%, var(--ground));
   font-family: var(--font-label);
   font-size: 11px;
   font-weight: 600;
@@ -565,7 +568,7 @@
 }
 
 .level-rite-summary-label {
-  color: color-mix(in srgb, var(--parchment) 62%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 75%, var(--ground));
   font-family: var(--font-label);
   font-size: 11px;
   font-weight: 600;
@@ -580,13 +583,13 @@
   line-height: 1.5;
 }
 .level-rite-summary-value.pending {
-  color: color-mix(in srgb, var(--parchment) 48%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 65%, var(--ground));
   font-style: italic;
 }
 
 .level-rite-summary-empty {
   margin: 6px 0 0;
-  color: color-mix(in srgb, var(--parchment) 55%, var(--ground));
+  color: color-mix(in srgb, var(--parchment) 68%, var(--ground));
   font-family: var(--font-body);
   font-size: 12.5px;
   font-style: italic;
