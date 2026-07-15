@@ -703,7 +703,7 @@ export default memo(function CreatorPanel(props: {
                         {CLASS_ART_IDS.has(candidate.id) ? (
                           <Image
                             className="ledger-class-card-art"
-                            src={`/class-art/${candidate.id}.jfif`}
+                            src={`/class-art/${candidate.id}.webp`}
                             alt=""
                             fill
                             sizes="(max-width: 900px) 100vw, 440px"

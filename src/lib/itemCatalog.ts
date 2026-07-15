@@ -64,7 +64,7 @@ export const ITEM_CATEGORIES = Array.from(
 export const ITEM_RARITIES = Array.from(
   new Set(ITEM_CATALOG.map((item) => item.rarity).filter(Boolean)),
 ).sort((a, b) => {
-  const order = ["Mundane", "Common", "Uncommon", "Rare", "Very Rare", "Legendary"];
+  const order = ["Mundane", "Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact"];
   return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
 });
 

@@ -1,0 +1,53 @@
+============================================================
+FINAL CATALOG SUMMARY
+============================================================
+Total items: 1055
+
+--- By Category ---
+    320  Scroll
+    199  Wondrous Items
+    192  Adventuring Gear
+    108  Weapon
+     47  Potions & Oils
+     42  Armor
+     39  Tools
+     29  Ring
+     15  Wand
+     14  Poisons
+     14  Food & Drink
+     12  Staff
+      8  Mount
+      8  Tack
+      6  Rod
+      1  Elixir
+      1  Musical Instrument
+
+--- By Rarity ---
+     78  Mundane
+    314  Common
+    208  Uncommon
+    214  Rare
+    155  Very Rare
+     83  Legendary
+      3  Artifact
+
+--- Statistics ---
+  Items with images:         159
+  Items with cost data:      908
+  Items with classification: 981
+
+--- Merge Details ---
+  Base items (Agent 4):              521
+  Removed old potions:               23
+  Added Agent 3 potions:             48
+  Added Agent 2 scrolls:             320
+  Net-new from Agent 1:              189
+  Agent 1 duplicates skipped:        416
+  Agent 1 cross-category dupes:      66
+  Agent 1 templates skipped:         20
+  Agent 1 Other category skipped:    78
+  Agent 1 potions skipped (replaced): 29
+  Agent 1 scrolls skipped (replaced): 11
+
+--- Category Changes ---
+  New categories: Elixir, Food & Drink, Mount, Musical Instrument, Scroll, Tack

@@ -41,7 +41,8 @@ export async function POST(request: Request) {
       password: String(body.password ?? ""),
     });
 
-    // Generate a verification token and send the email.
+    // Generate a token for production email verification. Local development
+    // consumes it immediately below.
     let verificationToken: string;
     try {
       verificationToken = createVerificationToken(user.id);
@@ -50,8 +51,8 @@ export async function POST(request: Request) {
       throw new Error("Could not create verification token. Please try again.");
     }
 
-    // In dev without a Resend API key, auto-verify for convenience.
-    if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== "production") {
+    // Never require external email verification during non-production local testing.
+    if (process.env.NODE_ENV !== "production") {
       // Auto-verify in dev — import dynamically to avoid bundling into every route.
       const { consumeVerificationToken } = await import("@/lib/verificationStore");
       consumeVerificationToken(verificationToken);

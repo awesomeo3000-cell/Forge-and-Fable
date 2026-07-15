@@ -184,11 +184,17 @@ for item in catalog:
 stats = {
     "from_agent1": 0,
     "duplicates": 0,
+    "cross_cat_dupes": 0,
     "templates": 0,
     "other_category": 0,
     "potion_skipped": 0,
     "scroll_skipped": 0,
 }
+
+# Also build a name-only set for cross-category dedup
+existing_names = set()
+for item in catalog:
+    existing_names.add(item.get("name", "").strip().lower())
 
 for item in merged_items:
     # Skip templates
@@ -216,19 +222,28 @@ for item in merged_items:
     # Normalize
     normalized = normalize_item(dict(item))
 
-    # Check for duplicates
+    # Check for exact (name+category) duplicates
     key = norm_key(normalized)
     if key in existing_keys:
         stats["duplicates"] += 1
         continue
 
+    # Check for cross-category duplicates (same name, different category)
+    # Prefer Agent 4's categorization - skip if name already exists
+    name_lower = normalized.get("name", "").strip().lower()
+    if name_lower in existing_names:
+        stats["cross_cat_dupes"] += 1
+        continue
+
     # Add net-new item
     existing_keys.add(key)
+    existing_names.add(name_lower)
     catalog.append(normalized)
     stats["from_agent1"] += 1
 
 print(f"Step 5 (Agent 1 merge): +{stats['from_agent1']} new, "
-      f"{stats['duplicates']} dupes, {stats['templates']} templates skipped, "
+      f"{stats['duplicates']} dupes, {stats['cross_cat_dupes']} cross-cat dupes, "
+      f"{stats['templates']} templates skipped, "
       f"{stats['other_category']} Other category skipped, "
       f"{stats['potion_skipped']} potions skipped, "
       f"{stats['scroll_skipped']} scrolls skipped")
@@ -485,6 +500,7 @@ summary_lines.append(f"  Added Agent 3 potions:             {len(potion_items)}"
 summary_lines.append(f"  Added Agent 2 scrolls:             {len(scroll_items)}")
 summary_lines.append(f"  Net-new from Agent 1:              {stats['from_agent1']}")
 summary_lines.append(f"  Agent 1 duplicates skipped:        {stats['duplicates']}")
+summary_lines.append(f"  Agent 1 cross-category dupes:      {stats['cross_cat_dupes']}")
 summary_lines.append(f"  Agent 1 templates skipped:         {stats['templates']}")
 summary_lines.append(f"  Agent 1 Other category skipped:    {stats['other_category']}")
 summary_lines.append(f"  Agent 1 potions skipped (replaced): {stats['potion_skipped']}")
