@@ -1,0 +1,82 @@
+[
+  {
+    "id": "modifier-rags-443",
+    "name": "{modifier}Rags"
+  },
+  {
+    "id": "modifier-sword-444",
+    "name": "{modifier}Sword"
+  },
+  {
+    "id": "bucket-of-modifier-eels-445",
+    "name": "Bucket of {modifier}Eels"
+  },
+  {
+    "id": "box-of-modifier-nails-446",
+    "name": "Box of {modifier}Nails"
+  },
+  {
+    "id": "modifier-beaver-pelts-447",
+    "name": "{modifier}Beaver Pelts"
+  },
+  {
+    "id": "modifier-belt-448",
+    "name": "{modifier}Belt"
+  },
+  {
+    "id": "modifier-mask-449",
+    "name": "{modifier}Mask"
+  },
+  {
+    "id": "modifier-blank-scroll-450",
+    "name": "{modifier}Blank Scroll"
+  },
+  {
+    "id": "modifier-scarf-454",
+    "name": "{modifier}Scarf"
+  },
+  {
+    "id": "modifier-garlic-481",
+    "name": "{modifier}Garlic"
+  },
+  {
+    "id": "modifier-jerky-485",
+    "name": "{modifier}Jerky"
+  },
+  {
+    "id": "modifier-twigs-527",
+    "name": "{modifier}Twigs"
+  },
+  {
+    "id": "pile-of-modifier-slime-528",
+    "name": "Pile of {modifier}Slime"
+  },
+  {
+    "id": "modifier-hay-529",
+    "name": "{modifier}Hay"
+  },
+  {
+    "id": "modifier-human-finger-532",
+    "name": "{modifier}Human Finger"
+  },
+  {
+    "id": "modifier-shoe-534",
+    "name": "{modifier}Shoe"
+  },
+  {
+    "id": "single-modifier-coin-536",
+    "name": "Single {modifier}Coin"
+  },
+  {
+    "id": "modifier-bandages-537",
+    "name": "{modifier}Bandages"
+  },
+  {
+    "id": "modifier-buttons-539",
+    "name": "{modifier}Buttons"
+  },
+  {
+    "id": "modifier-teeth-540",
+    "name": "{modifier}Teeth"
+  }
+]

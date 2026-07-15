@@ -1,47 +1,48 @@
-## Plan: Email Verification for Dreamwright.gg
+## Plan: Comprehensive D&D 5e Item Catalog
 
-### 1. Install Resend SDK
-- `npm install resend`
+### Goal
+Replace the current 541-item catalog with a comprehensive ~1,000+ item catalog covering all D&D 5e equipment, magic items, potions, scrolls, elixirs, and more — organized into properly separated categories.
 
-### 2. Database Migration (schema revision 18) — `src/lib/db.ts`
-- Add `email_verified INTEGER NOT NULL DEFAULT 0` to `users` table
-- Add `verification_tokens` table: `id`, `user_id` FK, `token_hash` TEXT, `expires_at` TEXT, `created_at` TEXT
-- Migration SQL grants `email_verified = 1` to all existing users (no lockouts)
+### Subagent Team (5 agents, 4 run in parallel)
 
-### 3. Email Library — new `src/lib/email.ts`
-- `sendVerificationEmail(email, name, token)` — sends via Resend from `noreply@dreamwright.gg`
-- Email links to `https://dreamwright.gg/api/auth/verify?token=<sha256-hash>`
-- Tokens: `crypto.randomUUID()`, stored as SHA-256 hashes, expire after 24h
+**Agent 1: Merge & Normalize**
+- Merge items.json + complete-catalog.json
+- Deduplicate by name+category (~200 duplicates)
+- Normalize all fields to CatalogItem type
+- Preserve images from items.json, add weights from catalog
+- Output: single merged JSON array
 
-### 4. Verification Store — new `src/lib/verificationStore.ts`
-- `createVerificationToken(userId)` → generates token, stores hash in DB
-- `consumeVerificationToken(rawToken)` → look up hash, mark user verified, delete token
-- `isEmailVerified(userId)` → check users table
+**Agent 2: Spell Scrolls**  
+- Generate spell scroll for every spell at appropriate level
+- Rarity: cantrip/1st→Common, 2nd-3rd→Uncommon, 4th-5th→Rare, 6th-8th→Very Rare, 9th→Legendary
+- Name format: "Spell Scroll: Fireball (3rd Level)"
+- Merge with existing Scroll of Protection
+- Output: ~300+ scroll entries
 
-### 5. Update Registration Route — `src/app/api/auth/register/route.ts`
-- After `registerUser()` succeeds → create verification token → send email
-- Do NOT set session cookie (user not verified yet)
-- Return `{ message: "Check your email..." }` instead of `{ user }`
+**Agent 3: Potions, Elixirs & Oils**
+- Catalog all DMG + SRD potions missing from current set
+- Add Elixirs as separate sub-category (Elixir of Health, etc.)
+- Identify missing oils
+- Output: ~50+ potion/elixir/oil entries
 
-### 6. New Verification Endpoint — `src/app/api/auth/verify/route.ts`
-- `GET /api/auth/verify?token=...`
-- Verifies, marks user verified, redirects to `/` with `?verified=1`
+**Agent 4: Category Restructure**
+- Split Wondrous Items (175) into Rings, Rods, Staves, Wands, remaining Wondrous
+- Add missing weights
+- Add classification sub-tags
+- Remove {modifier} template junk items
+- Output: reorganized categories
 
-### 7. Update Login Route — `src/app/api/auth/login/route.ts`
-- After password check, verify `email_verified` is true
-- If not → return error "Please verify your email first"
+**Agent 5: QA & Integration** (runs after 1-4)
+- Validate unique IDs, standardized rarities, complete descriptions
+- Update ITEM_CATEGORIES/ITEM_RARITIES in itemCatalog.ts
+- Verify UI filters work with new categories
+- Output: final clean catalog
 
-### 8. Update Types — `src/types/game.ts`
-- Add `emailVerified?: boolean` to `PublicUser`
+### Final Category Structure
+Armor, Weapons, Ammunition, Adventuring Gear, Tools, Poisons, Potions & Oils, Elixirs, Scrolls, Rings, Rods, Staves, Wands, Wondrous Items
 
-### 9. Frontend Changes
-- `ForgeAndFableApp.tsx` — handle new registration response (message vs user), show status
-- AuthScreen already renders `props.status` — no changes needed
+### Data Sources (all already in repo)
+items.json (active), complete-catalog.json (reference), magic-items.json, adventuring-gear.json, weapons.json, armor.json, spells.json
 
-### 10. Environment & DNS
-- Add `APP_URL=https://dreamwright.gg` to Render env vars
-- Add `RESEND_API_KEY` to Render (already in .env.local)
-- **Porkbun**: Add Resend domain verification DNS records for `dreamwright.gg`
-
-### 11. Render Config — `render.yaml`
-- Add `RESEND_API_KEY` and `APP_URL` env var entries
+### No breaking changes
+Character inventory, equipment slots, combat calculations, loot system, and API routes remain unchanged

@@ -744,6 +744,10 @@ export default function ForgeAndFableApp() {
         }),
       });
 
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(`Server returned ${response.status} instead of JSON. Reopen the app from its active address.`);
+      }
       const data = (await response.json()) as { user?: PublicUser; message?: string; error?: string };
 
       if (!response.ok) {
@@ -770,8 +774,8 @@ export default function ForgeAndFableApp() {
       }
 
       setStatus("Unexpected response from server.");
-    } catch {
-      setStatus("Network error — please try again.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Network error — please try again.");
     }
   }
 

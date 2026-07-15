@@ -1181,10 +1181,13 @@
   grid-template-rows: auto minmax(0, 1fr);
 }
 
-/* Field backdrop: engraved grid plus a brass instrument ring sunk into the
-   lower-right corner. Supersedes the Phase 3 ::before backdrop. */
+/* Field backdrop: the authenticated Observatory now sits over the supplied
+   night-market illustration, with a restrained ink wash so the interface
+   remains readable. The splash/auth surfaces keep their existing backdrop. */
 [data-theme="arcane-observatory"] .builder-shell::before {
   background-image:
+    linear-gradient(90deg, rgba(7, 13, 22, 0.88) 0%, rgba(7, 13, 22, 0.68) 42%, rgba(7, 13, 22, 0.78) 100%),
+    url("/backdrop.png"),
     radial-gradient(circle at calc(100% - 40px) calc(100% + 80px),
       transparent 258px,
       rgba(179, 146, 74, 0.15) 259px 260px,
@@ -1195,9 +1198,9 @@
       transparent 369px),
     linear-gradient(rgba(120, 150, 177, 0.022) 1px, transparent 1px),
     linear-gradient(90deg, rgba(120, 150, 177, 0.022) 1px, transparent 1px);
-  background-size: 100% 100%, 48px 48px, 48px 48px;
-  background-position: 0 0, 0 0, 0 0;
-  background-repeat: no-repeat, repeat, repeat;
+  background-size: cover, cover, 100% 100%, 48px 48px, 48px 48px;
+  background-position: center, center, 0 0, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
 }
 
 /* ── Global nav rail ── */

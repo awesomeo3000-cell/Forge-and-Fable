@@ -1,0 +1,482 @@
+[
+  {
+    "id": "potion-of-healing",
+    "name": "Potion of Healing",
+    "description": "You regain 2d4 + 2 hit points when you drink this potion. The potion's red liquid glimmers when agitated.",
+    "category": "Potions & Oils",
+    "rarity": "Common",
+    "classification": "Potion",
+    "cost": "5000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-greater-healing",
+    "name": "Potion of Greater Healing",
+    "description": "You regain 4d4 + 4 hit points when you drink this potion. The potion's red liquid glimmers when agitated.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "15000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-superior-healing",
+    "name": "Potion of Superior Healing",
+    "description": "You regain 8d4 + 8 hit points when you drink this potion. The potion's red liquid glimmers when agitated.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-supreme-healing",
+    "name": "Potion of Supreme Healing",
+    "description": "You regain 10d4 + 20 hit points when you drink this potion. The potion's red liquid glimmers when agitated.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "150000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-hill-giant-strength",
+    "name": "Potion of Hill Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 21 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-frost-giant-strength",
+    "name": "Potion of Frost Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 23 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-stone-giant-strength",
+    "name": "Potion of Stone Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 23 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-fire-giant-strength",
+    "name": "Potion of Fire Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 25 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "100000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-cloud-giant-strength",
+    "name": "Potion of Cloud Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 27 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "500000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-storm-giant-strength",
+    "name": "Potion of Storm Giant Strength",
+    "description": "When you drink this potion, your Strength score changes to 29 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "category": "Potions & Oils",
+    "rarity": "Legendary",
+    "classification": "Potion",
+    "cost": "1000000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-acid",
+    "name": "Potion of Resistance (Acid)",
+    "description": "When you drink this potion, you gain resistance to acid damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-cold",
+    "name": "Potion of Resistance (Cold)",
+    "description": "When you drink this potion, you gain resistance to cold damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-fire",
+    "name": "Potion of Resistance (Fire)",
+    "description": "When you drink this potion, you gain resistance to fire damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-force",
+    "name": "Potion of Resistance (Force)",
+    "description": "When you drink this potion, you gain resistance to force damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-lightning",
+    "name": "Potion of Resistance (Lightning)",
+    "description": "When you drink this potion, you gain resistance to lightning damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-necrotic",
+    "name": "Potion of Resistance (Necrotic)",
+    "description": "When you drink this potion, you gain resistance to necrotic damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-poison",
+    "name": "Potion of Resistance (Poison)",
+    "description": "When you drink this potion, you gain resistance to poison damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-psychic",
+    "name": "Potion of Resistance (Psychic)",
+    "description": "When you drink this potion, you gain resistance to psychic damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-radiant",
+    "name": "Potion of Resistance (Radiant)",
+    "description": "When you drink this potion, you gain resistance to radiant damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-resistance-thunder",
+    "name": "Potion of Resistance (Thunder)",
+    "description": "When you drink this potion, you gain resistance to thunder damage for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-animal-friendship",
+    "name": "Potion of Animal Friendship",
+    "description": "When you drink this potion, you can cast the animal friendship spell (save DC 13) at will for 1 hour. Agitating this muddy liquid brings little bits into view: a fish scale, a hummingbird tongue, a cat claw, or a squirrel hair.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-clairvoyance",
+    "name": "Potion of Clairvoyance",
+    "description": "When you drink this potion, you gain the effect of the clairvoyance spell for 10 minutes. An eyeball bobs in this yellowish liquid but vanishes when the potion is opened.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-climbing",
+    "name": "Potion of Climbing",
+    "description": "When you drink this potion, you gain a climbing speed equal to your walking speed for 1 hour. During this time, you have advantage on Strength (Athletics) checks you make to climb. The potion is separated into brown, silver, and gray layers resembling bands of stone.",
+    "category": "Potions & Oils",
+    "rarity": "Common",
+    "classification": "Potion",
+    "cost": "5000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-diminution",
+    "name": "Potion of Diminution",
+    "description": "When you drink this potion, you gain the 'reduce' effect of the enlarge/reduce spell for 1d4 hours (no concentration required). The red in the potion's liquid continuously contracts to a tiny bead and then expands to color the clear liquid around it.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-flying",
+    "name": "Potion of Flying",
+    "description": "When you drink this potion, you gain a flying speed equal to your walking speed for 1 hour and can hover. If you're in the air when the potion wears off, you fall unless you have some other means of staying aloft.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-gaseous-form",
+    "name": "Potion of Gaseous Form",
+    "description": "When you drink this potion, you gain the effect of the gaseous form spell for 1 hour (no concentration required) or until you end the effect as a bonus action. This potion's container seems to hold fog that moves and pours like water.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-growth",
+    "name": "Potion of Growth",
+    "description": "When you drink this potion, you gain the 'enlarge' effect of the enlarge/reduce spell for 1d4 hours (no concentration required). The red in the potion's liquid continuously expands from a tiny bead to color the clear liquid around it.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-heroism",
+    "name": "Potion of Heroism",
+    "description": "For 1 hour after drinking it, you gain 10 temporary hit points. For the same duration, you are under the effect of the bless spell (no concentration required). This blue potion bubbles and steams as if boiling.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-invisibility",
+    "name": "Potion of Invisibility",
+    "description": "This potion's container looks empty but feels as though it holds liquid. When you drink it, you become invisible for 1 hour. Anything you wear or carry is invisible with you. The effect ends early if you attack or cast a spell.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-invulnerability",
+    "name": "Potion of Invulnerability",
+    "description": "For 1 minute after you drink this potion, you have resistance to all damage.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-longevity",
+    "name": "Potion of Longevity",
+    "description": "When you drink this potion, your physical age is reduced by 1d6 + 6 years, to a minimum of 13 years. Each time you subsequently drink a potion of longevity, there is a 10 percent cumulative chance that it will instead age you by 1d6 + 6 years.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "100000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-mind-reading",
+    "name": "Potion of Mind Reading",
+    "description": "When you drink this potion, you gain the effect of the detect thoughts spell (save DC 13) for 1 hour. The potion's dense, purple liquid has an ovoid cloud of pink floating in it.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Potion",
+    "cost": "30000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-poison",
+    "name": "Potion of Poison",
+    "description": "This concoction looks, smells, and tastes like a potion of healing or other beneficial potion. However, it is actually poison masked by illusion magic. A creature that drinks it takes 3d6 poison damage and must succeed on a DC 13 Constitution saving throw or be poisoned for 1 hour. An identify spell reveals its true nature.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "10000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-speed",
+    "name": "Potion of Speed",
+    "description": "When you drink this potion, you gain the effect of the haste spell for 1 minute (no concentration required). The potion's yellow fluid is streaked with black and swirls on its own.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-water-breathing",
+    "name": "Potion of Water Breathing",
+    "description": "You can breathe underwater for 1 hour after drinking this potion. Its cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-vitality",
+    "name": "Potion of Vitality",
+    "description": "When you drink this potion, it removes any exhaustion you are suffering and cures any disease or poison affecting you. For the next 24 hours, you regain the maximum number of hit points for any Hit Die you spend. The potion's crimson liquid regularly pulses with dull light, calling to mind a heartbeat.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "50000",
+    "attunement": false
+  },
+  {
+    "id": "philter-of-love",
+    "name": "Philter of Love",
+    "description": "The next time you see a creature within 10 minutes after drinking this philter, you become charmed by that creature for 1 hour. If the creature is of a species and gender you are normally attracted to, you regard it as your true love while you are charmed. This potion's rose-hued, effervescent liquid contains one easy-to-miss bubble shaped like a heart.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "oil-of-etherealness",
+    "name": "Oil of Etherealness",
+    "description": "Beads of this cloudy gray oil form on the outside of its container and quickly evaporate. The oil can cover a Medium or smaller creature, along with the equipment it's wearing and carrying. Applying the oil takes 10 minutes. The affected creature then gains the effect of the etherealness spell for 1 hour.",
+    "category": "Potions & Oils",
+    "rarity": "Rare",
+    "classification": "Oil",
+    "cost": "200000",
+    "attunement": false
+  },
+  {
+    "id": "oil-of-sharpness",
+    "name": "Oil of Sharpness",
+    "description": "This clear, gelatinous oil sparkles with tiny, ultrathin silver shards. The oil can coat one slashing or piercing weapon or up to 5 pieces of slashing or piercing ammunition. Applying the oil takes 1 minute. For 1 hour, the coated item is magical and has a +3 bonus to attack and damage rolls.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Oil",
+    "cost": "300000",
+    "attunement": false
+  },
+  {
+    "id": "oil-of-slipperiness",
+    "name": "Oil of Slipperiness",
+    "description": "This sticky black unguent is thick and heavy in the container, but it flows quickly when poured. The oil can cover a Medium or smaller creature, granting the effect of a freedom of movement spell for 8 hours. Alternatively, the oil can be poured on the ground as an action to cover a 10-foot square, duplicating the effect of the grease spell for 8 hours.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Oil",
+    "cost": "20000",
+    "attunement": false
+  },
+  {
+    "id": "oil-of-taggit",
+    "name": "Oil of Taggit",
+    "description": "A creature subjected to this poison must succeed on a DC 13 Constitution saving throw or become poisoned for 24 hours. The poisoned creature is unconscious. It wakes up if it takes damage. This greasy white oil is made from the leaves of the taggit plant.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Oil",
+    "cost": "40000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-watchful-rest",
+    "name": "Potion of Watchful Rest",
+    "description": "When you drink this potion, you gain the full benefits of a long rest even if you spend the duration keeping watch or performing other light activity. The potion's pale blue liquid has tiny motes of light swirling within it.",
+    "category": "Potions & Oils",
+    "rarity": "Common",
+    "classification": "Potion",
+    "cost": "7500",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-fire-breath",
+    "name": "Potion of Fire Breath",
+    "description": "After drinking this potion, you can use a bonus action to exhale fire at a target within 30 feet of you. The target must make a DC 13 Dexterity saving throw, taking 4d6 fire damage on a failed save, or half as much on a successful one. The effect ends after you have exhaled the fire three times, or after 1 hour. This potion's orange liquid flickers, and smoke fills the top of the container.",
+    "category": "Potions & Oils",
+    "rarity": "Uncommon",
+    "classification": "Potion",
+    "cost": "15000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-possibility",
+    "name": "Potion of Possibility",
+    "description": "When you drink this iridescent potion, you gain two Fragments of Possibility. When you make an attack roll, an ability check, or a saving throw, you can expend one fragment to roll an additional d20 and choose which of the d20s to use. Alternatively, when an attack roll is made against you, you can expend one fragment to force the attacker to roll an additional d20 and use the lower result. The fragments last for 8 hours or until expended.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "80000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-maximum-power",
+    "name": "Potion of Maximum Power",
+    "description": "For 1 minute after drinking this potion, whenever you deal damage with a spell of 5th level or lower, you deal the maximum possible damage instead of rolling. The potion's purple liquid crackles with arcane energy and smells of ozone.",
+    "category": "Potions & Oils",
+    "rarity": "Very Rare",
+    "classification": "Potion",
+    "cost": "80000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-giant-size",
+    "name": "Potion of Giant Size",
+    "description": "When you drink this potion, you become Huge for 24 hours. While Huge, your Strength becomes 25, your speed increases by 10 feet, your reach increases by 5 feet, your weapon attacks deal double damage dice, and you gain temporary hit points equal to your level at the start of each of your turns. The potion's opaque gray liquid has flecks of iron and diamond suspended in it.",
+    "category": "Potions & Oils",
+    "rarity": "Legendary",
+    "classification": "Potion",
+    "cost": "5000000",
+    "attunement": false
+  },
+  {
+    "id": "potion-of-dragons-majesty",
+    "name": "Potion of Dragon's Majesty",
+    "description": "When you drink this potion, you transform into an adult dragon of a type chosen when the potion was created for 1 hour. The transformation works like the shapechange spell, but you are limited to the dragon form. This potion looks like liquid gold, with a single scale from the relevant dragon type suspended within.",
+    "category": "Potions & Oils",
+    "rarity": "Legendary",
+    "classification": "Potion",
+    "cost": "2500000",
+    "attunement": false
+  },
+  {
+    "id": "elixir-of-health",
+    "name": "Elixir of Health",
+    "description": "When you drink this elixir, it cures any disease affecting you, and it removes the blinded, deafened, paralyzed, and poisoned conditions. The clear, sparkling liquid has a sweet taste and leaves a faint glow on the drinker's tongue.",
+    "category": "Elixir",
+    "rarity": "Rare",
+    "classification": "Elixir",
+    "cost": "50000",
+    "attunement": false
+  }
+]
