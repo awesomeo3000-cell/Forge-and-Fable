@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     }
 
     let emailSent = false;
+    let emailErrorMessage = "";
     try {
       await sendVerificationEmail({
         email: user.email,
@@ -69,15 +70,15 @@ export async function POST(request: Request) {
       emailSent = true;
     } catch (emailError) {
       // User was created and token stored — they can request a resend later.
-      // Log but don't fail the registration.
       console.error("Failed to send verification email:", emailError);
+      emailErrorMessage = emailError instanceof Error ? emailError.message : "Unknown error";
     }
 
     clearAuthFailures(rateLimitKeys);
 
     const message = emailSent
       ? "Account created! Check your email to verify your address."
-      : "Account created! We couldn't send a verification email — please contact support.";
+      : `Account created, but we couldn't send the verification email: ${emailErrorMessage}`;
 
     return NextResponse.json({ message });
   } catch (error) {
