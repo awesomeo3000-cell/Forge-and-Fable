@@ -7,6 +7,7 @@ import {
   Dancing_Script,
   UnifrakturCook,
   Space_Mono,
+  Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
 // Arcane Observatory semantic theme layer — must stay after globals.css so
@@ -47,10 +48,16 @@ const spaceMono = Space_Mono({
   variable: "--font-space-mono",
   weight: ["400", "700"],
 });
+// Brand wordmark only (login + splash). The app's display face stays Fraunces.
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  weight: ["500", "600"],
+});
 
 export const metadata: Metadata = {
-  title: "Forge & Fable",
-  description: "A hand-bound D&D 5e character builder and play console.",
+  title: "Keepsake",
+  description: "A D&D 5e character builder and DM toolkit.",
 };
 
 // viewport-fit=cover lets the mobile shell pad into the safe areas
@@ -67,7 +74,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${newsreader.variable} ${archivo.variable} ${baloo.variable} ${dancing.variable} ${unifraktur.variable} ${spaceMono.variable}`}
+      className={`${fraunces.variable} ${newsreader.variable} ${archivo.variable} ${baloo.variable} ${dancing.variable} ${unifraktur.variable} ${spaceMono.variable} ${playfair.variable}`}
     >
       {/* data-theme flips the Arcane Observatory shell (CHANGES-AO-3);
           removing the attribute restores the legacy shell wholesale. */}

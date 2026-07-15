@@ -2168,7 +2168,7 @@ export default function ForgeAndFableApp() {
       <header className="builder-topbar ledger-topbar">
         <div className="builder-brand ledger-masthead">
           <div>
-            <span>Forge & Fable</span>
+            <span>Keepsake</span>
             <strong>
               {campaignOpen ? "The Table"
                 : homeOpen ? "The Hearth"

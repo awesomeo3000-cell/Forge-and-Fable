@@ -93,6 +93,7 @@
   --font-role-label: var(--font-archivo), system-ui, sans-serif;
   --font-role-body: var(--font-newsreader), Georgia, serif;
   --font-role-numeric: var(--font-space-mono), ui-monospace, monospace;
+  --font-role-wordmark: var(--font-playfair), Georgia, serif; /* login/splash brand only */
   --label-tracking: 0.08em;           /* caps label letter-spacing */
 }
 
@@ -3532,13 +3533,13 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 [data-theme="arcane-observatory"] .entry-screen.ao-title-entry {
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
   gap: 32px;
   padding: clamp(24px, 6vw, 96px);
 }
 [data-theme="arcane-observatory"] .ao-title-stack {
-  grid-column: 2;
+  grid-column: 1;
   display: grid;
   justify-items: center;
   gap: 26px;
@@ -3553,7 +3554,7 @@
 }
 [data-theme="arcane-observatory"] .ao-title-wordmark {
   margin: 0;
-  font: 500 clamp(3rem, 5.4vw, 4.8rem)/0.98 var(--font-role-display);
+  font: 600 clamp(3rem, 5.4vw, 4.8rem)/0.98 var(--font-role-wordmark);
   color: #f2ecdd;
   text-shadow: 0 4px 30px rgba(3, 8, 14, 0.8);
 }
