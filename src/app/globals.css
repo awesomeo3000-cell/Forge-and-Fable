@@ -13549,3 +13549,199 @@ button.dj-card {
 .dm-log-group summary:focus-visible { outline:2px solid var(--dm-accent,#8c2f22); outline-offset:-2px; }
 .dm-log-group>.dm-log-entry { padding-left:14px; }
 .dm-log-group>.dm-log-entry:last-child { border-bottom:0; }
+
+/* Commission screen: the active mockup direction is a full-height triptych.
+   The plates stay restrained at rest and earn color plus a brass frame when
+   the player chooses a build path. */
+.commission-screen {
+  --commission-app: var(--surface-app, #070d16);
+  --commission-shell: var(--surface-shell, #0d1724);
+  --commission-panel: var(--surface-panel, #142235);
+  --commission-raised: var(--surface-panel-raised, #1a2b40);
+  --commission-text: var(--text-primary, #edf1f4);
+  --commission-secondary: var(--text-secondary, #b8c2cc);
+  --commission-muted: var(--text-muted, #8391a0);
+  --commission-border: var(--border-default, rgba(176, 193, 207, 0.22));
+  --commission-subtle: var(--border-subtle, rgba(176, 193, 207, 0.12));
+  --commission-brass: var(--border-brass, #b3924a);
+  --commission-brass-bright: var(--border-brass-bright, #d9b967);
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  min-height: calc(100dvh - 102px);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--commission-app);
+  color: var(--commission-text);
+}
+
+.commission-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 34px 20px;
+}
+
+.commission-page-head { margin: 0; }
+.commission-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--commission-brass-bright);
+  font-family: var(--font-role-label, var(--font-label, system-ui));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.commission-eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--commission-brass);
+}
+.commission-page-head h2 {
+  margin-top: 10px;
+  color: var(--commission-text);
+  font-family: var(--font-role-display, var(--font-display, Georgia, serif));
+  font-size: clamp(1.8rem, 3vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.commission-actions { display: flex; gap: 12px; padding-bottom: 4px; }
+.commission-button {
+  min-height: 40px;
+  padding: 11px 22px;
+  border: 1px solid var(--commission-border);
+  border-radius: var(--radius-xs, 2px);
+  background: var(--commission-raised);
+  color: var(--commission-text);
+  font-family: var(--font-role-label, var(--font-label, system-ui));
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.commission-button:hover:not(:disabled) { border-color: var(--commission-brass); }
+.commission-button:focus-visible { outline: 2px solid var(--state-selected, #5c94c8); outline-offset: 2px; }
+.commission-button:disabled { cursor: not-allowed; opacity: 0.45; }
+.commission-button-primary { background: var(--commission-brass); border-color: var(--commission-brass-bright); color: var(--text-on-accent, #081018); }
+.commission-button-primary:hover:not(:disabled) { background: var(--commission-brass-bright); }
+
+.commission-strip {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 480px;
+  border-top: 1px solid var(--commission-subtle);
+}
+.commission-panel {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 420px;
+  overflow: hidden;
+  border: 0;
+  border-right: 1px solid rgba(3, 8, 14, 0.8);
+  border-radius: 0;
+  background: var(--commission-panel);
+  color: var(--commission-text);
+  text-align: left;
+  cursor: pointer;
+}
+.commission-panel:first-child { border-left: 1px solid rgba(3, 8, 14, 0.8); }
+.commission-panel:focus-visible { outline: 2px solid var(--state-selected, #5c94c8); outline-offset: -3px; }
+.commission-plate {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: var(--commission-shell);
+}
+.commission-plate::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(20, 34, 53, 0.22), rgba(7, 13, 22, 0.58));
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+.commission-plate img {
+  object-fit: cover;
+  filter: grayscale(0.48) contrast(1.04) brightness(0.82) sepia(0.12);
+  transition: filter 320ms ease;
+}
+.commission-panel-premade .commission-plate img { object-position: 50% 50%; }
+.commission-panel:hover .commission-plate img,
+.commission-panel.chosen .commission-plate img {
+  filter: grayscale(0.02) contrast(1.02) brightness(0.96) sepia(0);
+}
+.commission-panel:hover .commission-plate::after,
+.commission-panel.chosen .commission-plate::after { opacity: 0.35; }
+.commission-tag {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 18px;
+  padding: 6px 9px;
+  border: 1px solid var(--commission-subtle);
+  border-radius: var(--radius-xs, 2px);
+  background: rgba(7, 13, 22, 0.6);
+  color: var(--commission-brass-bright);
+  font-family: var(--font-role-numeric, var(--font-mono, ui-monospace));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.commission-caption {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 60px 26px 24px;
+  background: linear-gradient(180deg, transparent, rgba(7, 13, 22, 0.92) 72%);
+}
+.commission-caption-rule { width: 30px; height: 1px; margin-bottom: 12px; background: var(--commission-brass); }
+.commission-label {
+  color: var(--commission-text);
+  font-family: var(--font-role-display, var(--font-display, Georgia, serif));
+  font-size: 1.65rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.commission-desc { margin-top: 5px; color: var(--commission-secondary); font-size: 0.98rem; font-style: italic; }
+.commission-state {
+  margin-top: 12px;
+  color: var(--commission-brass-bright);
+  font-family: var(--font-role-label, var(--font-label, system-ui));
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.commission-panel.chosen::before {
+  position: absolute;
+  z-index: 3;
+  inset: 10px;
+  content: "";
+  border: 1px solid color-mix(in srgb, var(--commission-brass-bright) 75%, transparent);
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .commission-screen { overflow: visible; }
+  .commission-head { align-items: flex-start; flex-direction: column; padding: 24px 18px 18px; }
+  .commission-actions { width: 100%; padding: 0; }
+  .commission-button { flex: 1; }
+  .commission-strip { flex-direction: column; min-height: 0; }
+  .commission-panel { min-height: 260px; max-width: none; border-right: 0; border-bottom: 1px solid rgba(3, 8, 14, 0.8); }
+  .commission-panel:first-child { border-left: 0; }
+}
