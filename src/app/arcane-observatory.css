@@ -1323,45 +1323,23 @@
   display: flex;
   align-items: center;
   background:
-    linear-gradient(90deg, var(--surface-panel) 0 46%, rgba(20, 34, 53, 0.82) 68%, rgba(20, 34, 53, 0.2) 100%),
+    linear-gradient(90deg, rgba(17, 31, 48, 1) 0%, rgba(17, 31, 48, 0.98) 24%, rgba(17, 31, 48, 0.86) 46%, rgba(17, 31, 48, 0.4) 78%, rgba(17, 31, 48, 0.16) 100%),
+    var(--campaign-art) right center / auto 150% no-repeat,
     repeating-linear-gradient(0deg, rgba(179, 146, 74, 0.02) 0 1px, transparent 1px 8px),
     var(--surface-panel-recessed);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-panel), inset 0 0 0 1px rgba(3, 8, 14, 0.5);
 }
-[data-theme="arcane-observatory"] .ao-home-orrery {
+[data-theme="arcane-observatory"] .ao-home-hero::after {
+  content: "";
   position: absolute;
-  right: 84px;
-  top: 50%;
-  width: 250px;
-  height: 250px;
-  margin-top: -125px;
-  border-radius: 50%;
-  border: 1px solid rgba(217, 185, 103, 0.5);
-  box-shadow:
-    0 0 0 26px rgba(179, 146, 74, 0.09),
-    0 0 0 27px rgba(179, 146, 74, 0.3),
-    0 0 0 64px rgba(179, 146, 74, 0.03),
-    0 0 0 65px rgba(179, 146, 74, 0.18);
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 14, 24, 0.04), rgba(7, 14, 24, 0.22));
   pointer-events: none;
 }
-[data-theme="arcane-observatory"] .ao-home-orrery::before {
-  content: "";
-  position: absolute;
-  inset: 38px;
-  border: 1px dashed rgba(179, 146, 74, 0.3);
-  border-radius: 50%;
-}
-[data-theme="arcane-observatory"] .ao-home-orrery::after {
-  content: "";
-  position: absolute;
-  left: -18%;
-  top: 50%;
-  width: 136%;
-  height: 1px;
-  background: rgba(179, 146, 74, 0.32);
-  transform: rotate(-18deg);
+[data-theme="arcane-observatory"] .ao-home-hero-art {
+  display: none;
 }
 [data-theme="arcane-observatory"] .ao-home-hero-copy {
   position: relative;
@@ -1588,7 +1566,6 @@
   [data-theme="arcane-observatory"] .ao-home-lower > :last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 980px) {
-  [data-theme="arcane-observatory"] .ao-home-orrery { display: none; }
 }
 /* Phones (AO-11, plan 4F): the shell collapses into a top title bar and a
    persistent bottom navigation, mockup-style. The rail's brand orb and
@@ -3551,7 +3528,7 @@
    login-mockups.html, variant D ("Title Screen"), owner-approved
    2026-07-14. Backdrop art = Option A of backdrop-prompts.md; wash and
    position retuned in globals.css :root. The wordmark and form sit in
-   the calm right-hand sky; the tower keeps the left half.
+   the calm right-hand sky; the wayhouse and crossroads keep the left half.
    ═══════════════════════════════════════════════════════════════════════ */
 
 [data-theme="arcane-observatory"] .entry-screen.ao-title-entry {

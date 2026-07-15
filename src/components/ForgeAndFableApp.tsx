@@ -2171,7 +2171,7 @@ export default function ForgeAndFableApp() {
             <span>Forge & Fable</span>
             <strong>
               {campaignOpen ? "The Table"
-                : homeOpen ? "Campaign Observatory"
+                : homeOpen ? "The Hearth"
                 : creationPromptOpen || creatorOpen ? "The Forge"
                 : selected ? selected.name
                 : "Character Ledger"}

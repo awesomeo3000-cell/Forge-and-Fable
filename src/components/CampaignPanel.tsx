@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Check, Copy, Eye, Loader2, Plus, Send, Sparkles, Swords, Trash2, Users, X } from "lucide-react";
 import { FONT_STACKS } from "@/lib/skins";
+import { CAMPAIGN_THEMES } from "@/lib/campaignThemes";
 import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
 import { summarizeRollRequest, describeRollRequest } from "@/lib/rollRequest";
@@ -96,6 +97,7 @@ export default memo(function CampaignPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [newName, setNewName] = useState("");
+  const [newThemeKey, setNewThemeKey] = useState("forge");
   const [joinCode, setJoinCode] = useState("");
   const [joinCharId, setJoinCharId] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -169,7 +171,7 @@ export default memo(function CampaignPanel({
       const response = await fetch("/api/campaigns", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ name: newName.trim() }),
+        body: JSON.stringify({ name: newName.trim(), themeKey: newThemeKey }),
       });
       const data = await response.json() as { campaign?: { id: string; code: string }; error?: string };
       if (!response.ok || !data.campaign) {
@@ -454,6 +456,27 @@ export default memo(function CampaignPanel({
                   <span>Campaign Name</span>
                   <input type="text" maxLength={60} value={newName} onChange={(event) => setNewName(event.currentTarget.value)} autoFocus />
                 </label>
+                <fieldset className="campaign-theme-picker">
+                  <legend>Select your campaign theme</legend>
+                  <div className="campaign-theme-options">
+                    {CAMPAIGN_THEMES.map((campaignTheme) => (
+                      <label className={`campaign-theme-option${newThemeKey === campaignTheme.id ? " is-selected" : ""}`} key={campaignTheme.id}>
+                        <input
+                          type="radio"
+                          name="campaign-theme"
+                          value={campaignTheme.id}
+                          checked={newThemeKey === campaignTheme.id}
+                          onChange={() => setNewThemeKey(campaignTheme.id)}
+                        />
+                        <span className="campaign-theme-image" style={{ backgroundImage: `url(${campaignTheme.imageUrl})` }} aria-hidden="true" />
+                        <span className="campaign-theme-copy">
+                          <strong>{campaignTheme.label}</strong>
+                          <small>{campaignTheme.description}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
                 <div className="campaign-form-actions">
                   <button className="glass-button" type="button" onClick={() => setView("list")}>Cancel</button>
                   <button className="dj-btn dj-btn-primary" type="button" onClick={handleCreate} disabled={busy || !newName.trim()}>

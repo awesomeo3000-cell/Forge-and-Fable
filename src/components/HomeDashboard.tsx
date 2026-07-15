@@ -1,8 +1,9 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { BookOpen, Plus, Swords, Users } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
+import { getCampaignTheme } from "@/lib/campaignThemes";
 import type { Character, Ruleset } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 
@@ -79,6 +80,8 @@ export default memo(function HomeDashboard({
     return campaigns.find((c) => c.id === activeCampaignId) ?? campaigns[0];
   }, [campaigns, activeCampaignId]);
 
+  const featuredTheme = getCampaignTheme(featured?.themeKey);
+
   const recentEvents = useMemo(
     () => (campaignSync ? campaignEvents.slice(-3).reverse() : []),
     [campaignSync, campaignEvents],
@@ -91,10 +94,10 @@ export default memo(function HomeDashboard({
   };
 
   return (
-    <div className="ao-home" aria-label="Campaign observatory home">
+    <div className="ao-home" aria-label="Home">
       <header className="ao-home-heading">
         <div>
-          <span className="ao-dash-eyebrow">Campaign observatory</span>
+          <span className="ao-dash-eyebrow">Your table</span>
           <h1>{greeting}, {userName}.</h1>
           <p>Your table, your heroes and your campaigns, gathered in one place.</p>
         </div>
@@ -111,7 +114,12 @@ export default memo(function HomeDashboard({
         </div>
       </header>
 
-      <section className="ao-home-hero" aria-labelledby="ao-home-hero-title">
+      <section
+        className="ao-home-hero"
+        aria-labelledby="ao-home-hero-title"
+        data-campaign-theme={featuredTheme.id}
+        style={{ "--campaign-art": `url(${featuredTheme.imageUrl})` } as CSSProperties}
+      >
         <div className="ao-home-hero-copy">
           <span className="ao-dash-eyebrow">{featured && featured.id === activeCampaignId ? "Current campaign" : "Most recent campaign"}</span>
           {featured ? (
@@ -131,10 +139,10 @@ export default memo(function HomeDashboard({
               </div>
             </>
           ) : campaigns === null ? (
-            <h2 id="ao-home-hero-title" className="ao-home-hero-quiet">Consulting the charts…</h2>
+            <h2 id="ao-home-hero-title" className="ao-home-hero-quiet">Opening the tome…</h2>
           ) : (
             <>
-              <h2 id="ao-home-hero-title">No campaign on the meridian</h2>
+              <h2 id="ao-home-hero-title">Your table is quiet</h2>
               <p className="ao-home-hero-blurb">Create a campaign to run as DM, or join a table with a code from your Dungeon Master.</p>
               <div className="ao-home-hero-actions">
                 <button className="dj-btn dj-btn-primary" type="button" onClick={onOpenCampaigns}><Plus size={16} /> New campaign</button>
@@ -143,7 +151,7 @@ export default memo(function HomeDashboard({
             </>
           )}
         </div>
-        <div className="ao-home-orrery" aria-hidden="true" />
+        <div className="ao-home-hero-art" aria-hidden="true" />
       </section>
 
       <div className="ao-home-lower">
