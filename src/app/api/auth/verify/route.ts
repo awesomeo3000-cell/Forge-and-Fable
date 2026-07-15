@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { consumeVerificationToken } from "@/lib/verificationStore";
-import { appUrl } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -322,12 +322,14 @@ export default function ForgeAndFableApp() {
     const params = new URLSearchParams(window.location.search);
     const verified = params.get("verified");
     if (verified === "1") {
-      setStatus("Email verified! You may now log in.");
-      setAuthMode("login");
+      queueMicrotask(() => {
+        setStatus("Email verified! You may now log in.");
+        setAuthMode("login");
+      });
       // Clean up the URL so the param doesn't linger on refresh.
       window.history.replaceState(null, "", "/");
     } else if (verified === "error") {
-      setStatus("Verification link is invalid or expired.");
+      queueMicrotask(() => setStatus("Verification link is invalid or expired."));
       window.history.replaceState(null, "", "/");
     }
   }, []);
@@ -515,8 +517,8 @@ export default function ForgeAndFableApp() {
   // override, including "normal" to cancel out an effect's disadvantage.
   const setRollMode = (mode: RollMode) => setManualRollMode(mode === effectDrivenMode ? null : mode);
 
-  const diceAccent = selected?.theme?.accent ?? "#a23f29";
-  const diceFont = selected?.theme ? FONT_STACKS[selected.theme.fontKey] : undefined;
+  const diceAccent = selected?.theme?.accent ?? "#b3924a";
+  const diceFont = selected?.theme ? FONT_STACKS[selected.theme.fontKey] : "var(--font-role-body, Georgia, serif)";
 
   const vaultThemeVars = useMemo(() => {
     const theme = selected?.theme;
@@ -1914,11 +1916,19 @@ export default function ForgeAndFableApp() {
     nextLog("Command not recognized");
   }
 
-    if (!introDone || !ruleset || !draft || !spellsReady) {
+  const characterSheetOpen = Boolean(!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen && selected);
+  const dmScreenOpen = Boolean(
+    campaignOpen &&
+    !campaignListOpen &&
+    campaignSync &&
+    campaignSync.campaign.dmUserId === user?.id,
+  );
+  const diceTrayVisible = characterSheetOpen || dmScreenOpen;
+
+  if (!introDone || !ruleset || !draft || !spellsReady) {
     return (
       <>
         <SplashScreen />
-    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} />
       </>
     );
   }
@@ -1942,8 +1952,8 @@ export default function ForgeAndFableApp() {
 
   return (
     <>
-    <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} />
-    <RollDrawer
+    {diceTrayVisible ? <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} /> : null}
+    {diceTrayVisible ? <RollDrawer
       history={rollHistory}
       rollMode={rollMode}
       rollModeIsFromEffect={rollModeIsFromEffect}
@@ -1957,7 +1967,7 @@ export default function ForgeAndFableApp() {
       onCampaignInitiativeUpdate={updateCampaignInitiative}
       onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
       onClearHistory={clearHistory}
-    />
+    /> : null}
     {toasts.length > 0 ? (
       <div
         className="ff-toast-stack"
@@ -2214,7 +2224,7 @@ export default function ForgeAndFableApp() {
           {status ? <span className="system-status">{status}</span> : null}
           <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
-          <button className="glass-icon ink-action" type="button" onClick={() => setCampaignOpen(true)} title="Campaigns">
+          <button className="glass-icon ink-action" type="button" onClick={() => { setCampaignListOpen(true); setCampaignOpen(true); }} title="Campaigns">
             <Swords size={18} />
           </button>
           {selected ? (

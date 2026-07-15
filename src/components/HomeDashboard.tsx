@@ -8,6 +8,7 @@ import type { Character, Ruleset } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 import type { CampaignSession } from "@/types/dmTools";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
+import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 
 /**
  * The Home screen (AO-6): the observatory landing page from the approved
@@ -279,7 +280,14 @@ export default memo(function HomeDashboard({
               {characters.slice(0, 5).map((character) => (
                 <li key={character.id}>
                   <button type="button" onClick={() => onOpenCharacter(character.id)}>
-                    <span className="ao-home-avatar" aria-hidden="true">{character.name.trim().charAt(0).toUpperCase() || "?"}</span>
+                  <CharacterPortrait
+                    portraitId={character.portraitUrl || null}
+                    characterName={character.name}
+                    size={52}
+                    shape="rounded"
+                    decorative
+                    className="ao-home-avatar"
+                  />
                     <span className="ao-home-party-copy">
                       <strong>{character.name}</strong>
                       <small>{heroLine(character)}</small>

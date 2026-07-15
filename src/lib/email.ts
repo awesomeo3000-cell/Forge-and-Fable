@@ -9,14 +9,22 @@ function getResend(): Resend {
   return new Resend(apiKey);
 }
 
-export function appUrl(): string {
-  return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+export function appUrl(requestOrigin?: string): string {
+  const forwarded = requestOrigin?.trim();
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
+    || process.env.APP_URL?.trim()
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")
+    || "http://localhost:3000";
+  return (forwarded || configured).replace(/\/+$/, "");
 }
 
 export interface VerificationEmailParams {
   email: string;
   name: string;
   token: string;
+  /** Origin of the registration request, used to prevent links pointing at a
+      stale localhost/preview hostname when the app is deployed. */
+  requestOrigin?: string;
 }
 
 /** Send a verification email via Resend. Returns the Resend API response id on
@@ -25,7 +33,7 @@ export async function sendVerificationEmail(
   params: VerificationEmailParams,
 ): Promise<string> {
   const resend = getResend();
-  const verifyUrl = `${appUrl()}/api/auth/verify?token=${encodeURIComponent(params.token)}`;
+  const verifyUrl = `${appUrl(params.requestOrigin)}/api/auth/verify?token=${encodeURIComponent(params.token)}`;
 
   const { data, error } = await resend.emails.send({
     from: `${BRAND_NAME} <noreply@dreamwright.gg>`,

@@ -1347,13 +1347,21 @@
   display: flex;
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(17, 31, 48, 1) 0%, rgba(17, 31, 48, 0.98) 24%, rgba(17, 31, 48, 0.86) 46%, rgba(17, 31, 48, 0.4) 78%, rgba(17, 31, 48, 0.16) 100%),
+    linear-gradient(90deg, #111f30 0%, #111f30 18%, rgba(17, 31, 48, 0.96) 34%, rgba(17, 31, 48, 0.72) 54%, rgba(17, 31, 48, 0.24) 80%, rgba(17, 31, 48, 0) 100%),
     var(--campaign-art) right center / auto 150% no-repeat,
     repeating-linear-gradient(0deg, rgba(179, 146, 74, 0.02) 0 1px, transparent 1px 8px),
     var(--surface-panel-recessed);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-panel), inset 0 0 0 1px rgba(3, 8, 14, 0.5);
+}
+[data-theme="arcane-observatory"] .ao-home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 18% 0 28%;
+  z-index: 0;
+  background: linear-gradient(90deg, #111f30 0%, rgba(17, 31, 48, 0.76) 42%, rgba(17, 31, 48, 0) 100%);
+  pointer-events: none;
 }
 [data-theme="arcane-observatory"] .ao-home-hero::after {
   content: "";
@@ -1678,7 +1686,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 10px;
+  min-height: 68px;
+  padding: 10px 12px;
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-left: 3px solid transparent;
@@ -1698,8 +1707,8 @@
 }
 [data-theme="arcane-observatory"] .ao-home-avatar {
   flex: none;
-  width: 38px;
-  height: 38px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -1707,7 +1716,12 @@
   border: 1px solid var(--border-strong);
   box-shadow: inset 0 0 0 2px var(--surface-panel-recessed);
   color: var(--text-secondary);
-  font: 700 0.9rem/1 var(--font-role-label);
+  font: 700 1rem/1 var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .ao-home-avatar.cportrait {
+  display: block;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
 }
 [data-theme="arcane-observatory"] .ao-home-party-copy {
   display: grid;
@@ -2196,14 +2210,67 @@
 /* The seal (final review): the one document surface in the flow. */
 [data-theme="arcane-observatory"] .ledger-certificate {
   padding: 20px 22px 22px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
-    var(--surface-document);
+  background: var(--surface-document);
   border: 1px solid var(--border-default);
   border-left: 2px solid var(--border-brass);
   border-radius: var(--radius-xs);
   box-shadow: var(--shadow-document);
 }
+[data-theme="arcane-observatory"] .ledger-certificate .ledger-cert-rows {
+  border-top: 0;
+}
+[data-theme="arcane-observatory"] .ledger-certificate .ledger-cert-row {
+  border-bottom: 0;
+}
+
+/* The creator and level-up selects need a real paired surface so their
+   selected value and native option list remain readable in the Observatory
+   palette. */
+[data-theme="arcane-observatory"] .dj-class-training select,
+[data-theme="arcane-observatory"] .ledger-spread .control-field select,
+[data-theme="arcane-observatory"] .ledger-spread .attribute-card select,
+[data-theme="arcane-observatory"] .level-rite-modal select,
+[data-theme="arcane-observatory"] .level-rite-modal input {
+  color: var(--text-primary);
+  background: var(--surface-input);
+  border-color: var(--border-default);
+}
+[data-theme="arcane-observatory"] .dj-class-training select option,
+[data-theme="arcane-observatory"] .ledger-spread .attribute-card select option,
+[data-theme="arcane-observatory"] .level-rite-modal select option {
+  color: var(--text-primary);
+  background: var(--surface-input);
+}
+
+/* Level-up is rendered at the app root during creation, so give it explicit
+   Observatory tokens instead of letting the legacy root aliases leak in. */
+[data-theme="arcane-observatory"] .level-rite-modal {
+  --ground: var(--surface-overlay);
+  --ground-2: var(--surface-panel-raised);
+  --parchment: var(--text-primary);
+  --font-body: var(--font-role-body);
+  --font-display: var(--font-role-display);
+  --font-label: var(--font-role-label);
+  --accent: var(--border-brass);
+  --doc-accent: var(--state-selected);
+  --rule: var(--border-default);
+  --rule-soft: var(--border-subtle);
+  background: var(--surface-overlay);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* Flying result labels inherit the same shell language as the dice drawer. */
+[data-theme="arcane-observatory"] .die-roll-label {
+  border-color: var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .die-roll-label-name,
+[data-theme="arcane-observatory"] .die-roll-label-detail { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .die-roll-label-die,
+[data-theme="arcane-observatory"] .die-roll-label-total { color: var(--border-brass); }
 
 /* Workflow buttons: align the ledger recipe with .ao-btn. */
 [data-theme="arcane-observatory"] .ledger-button {

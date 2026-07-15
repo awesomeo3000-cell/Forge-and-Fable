@@ -142,7 +142,7 @@ export function resolvePortraitSrc(portraitId: string): string | undefined {
 /** Source image dimensions (all catalog assets are square). */
 export const PORTRAIT_IMG_SIZE = 512;
 /** Crop slightly inside the painted circle so the sheet's dashed border never shows. */
-export const PORTRAIT_FRAME_ZOOM = 0.9;
+export const PORTRAIT_FRAME_ZOOM = 1.05;
 
 export type PortraitFrameCss = {
   backgroundImage: string;
@@ -193,7 +193,10 @@ export function portraitPanelCss(portraitId: string, aspect = 0.8): PortraitFram
     return { ...base, backgroundSize: "cover", backgroundPosition: "center" };
   }
   const { cx, cy, r } = portrait.frame;
-  const cropH = (2 * r) / Math.sqrt(aspect * aspect + 1);
+  // The header is a wide rectangular crop. Give the face a little breathing
+  // room so ears, hair, horns, and shoulders do not disappear at the panel
+  // edges on the smaller responsive layouts.
+  const cropH = Math.min(PORTRAIT_IMG_SIZE, (2 * r * 1.12) / Math.sqrt(aspect * aspect + 1));
   const cropW = aspect * cropH;
   const sizeX = (PORTRAIT_IMG_SIZE / cropW) * 100;
   const px = ((cx - cropW / 2) / (PORTRAIT_IMG_SIZE - cropW)) * 100;

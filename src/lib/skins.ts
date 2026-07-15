@@ -28,6 +28,16 @@ export const BACKGROUND_LABELS: Record<ThemeBackgroundKey, string> = {
   dungeon: "Dungeon",
 };
 
+/** The skin editor's baseline must match the current Observatory shell. */
+export const DEFAULT_SKIN_THEME: CharacterTheme = {
+  paper: "#152438",
+  ink: "#e9eef4",
+  accent: "#a84f49",
+  fontKey: "tome",
+  backgroundKey: "plain",
+  backgroundOpacity: 0.5,
+};
+
 export const SKIN_PRESETS: { id: string; name: string; theme: CharacterTheme }[] = [
   {
     id: "tome",

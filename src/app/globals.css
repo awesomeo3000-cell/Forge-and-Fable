@@ -455,6 +455,13 @@ button:disabled {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
+/* Native option menus do not inherit the themed select text reliably on
+   Chromium/Windows. Keep the foreground/background pair explicit. */
+select option {
+  color: var(--ink, var(--ivory));
+  background: var(--paper, var(--ground-2));
+}
+
 .auth-status {
   min-height: 32px;
   color: var(--teal);
@@ -9968,6 +9975,34 @@ button.dj-card {
   text-transform: lowercase;
 }
 
+.campaign-player-sessions {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground-2) 88%, transparent);
+}
+.campaign-player-section-head,
+.campaign-player-session-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.campaign-player-section-head h3 { margin: 4px 0 0; color: var(--parchment); }
+.campaign-player-section-head > span { color: var(--muted); font-size: 0.76rem; }
+.campaign-player-session-list { display: grid; gap: 7px; }
+.campaign-player-session-card {
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+.campaign-player-session-card > div { display: grid; gap: 3px; }
+.campaign-player-session-card strong { color: var(--parchment); font-size: 0.92rem; }
+.campaign-player-session-card small,
+.campaign-player-session-card span { color: var(--muted); font-size: 0.76rem; }
+.campaign-player-session-card > div:last-child { justify-items: end; text-align: right; }
+
 /* Vocation selector: compact illustrated landscape cards. */
 .ledger-class-grid {
   display: grid;
@@ -11468,6 +11503,12 @@ button.dj-card {
 .dm-combatant-templates > div { display:grid; grid-template-columns:minmax(130px,1fr) 68px 118px auto auto; align-items:center; gap:7px; padding:8px 0; border-bottom:1px solid var(--doc-rule-soft,#d5c8af); }
 .dm-form-grid { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)); gap:12px 16px; margin:16px 0; }
 .dm-form-grid label { flex:none; }
+.dm-schedule-confirm-row { grid-column: 1 / -1; display:flex; align-items:end; gap:12px; flex-wrap:wrap; padding-top:2px; border-top:1px solid var(--doc-rule-soft,#d5c8af); }
+.dm-schedule-confirm-row label { flex:1 1 180px; }
+.dm-schedule-confirm { flex:0 0 auto; min-height:38px; margin-bottom:8px; white-space:nowrap; }
+.dm-session-list-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin:22px 0 10px; }
+.dm-session-list-head h3 { margin:3px 0 0; }
+.dm-session-list-head > small { color:color-mix(in srgb,var(--ink,#241c12) 58%,var(--paper,#eee2c8)); }
 .dm-session-series-note { margin:-4px 0 14px; color:color-mix(in srgb,var(--ink,#241c12) 65%,var(--paper,#eee2c8)); font-size:12px; font-style:italic; }
 
 .dm-warnings { margin:14px 0; padding:12px 14px; border-left:3px solid var(--doc-accent,#8c2f22); background:color-mix(in srgb,var(--doc-accent,#8c2f22) 7%,var(--paper,#eee2c8)); }
@@ -11477,6 +11518,7 @@ button.dj-card {
 .dm-session-action { justify-content:space-between; padding:14px; border:1px solid var(--doc-rule,#b7a589); margin-bottom:16px; }
 .dm-session-action h3 { margin:0; }
 .dm-session-action p { margin:4px 0 0; color:color-mix(in srgb,var(--ink,#241c12) 68%,var(--paper,#eee2c8)); font-size:13.5px; }
+.dm-session-header-note { color:color-mix(in srgb,var(--ink,#241c12) 60%,var(--paper,#eee2c8)); font-family:var(--font-label); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
 .dm-summary { margin-top:20px; padding-top:18px; border-top:2px solid var(--ink,#241c12); }
 
 .dm-empty { margin:8px 0 0; color:color-mix(in srgb,var(--ink,#241c12) 48%,var(--paper,#eee2c8)); font-size:13px; font-style:italic; }

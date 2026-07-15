@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     let verificationToken: string;
     try {
       verificationToken = createVerificationToken(user.id);
-    } catch (tokenError) {
+    } catch {
       await deleteUserById(user.id);
       throw new Error("Could not create verification token. Please try again.");
     }
@@ -66,6 +66,11 @@ export async function POST(request: Request) {
         email: user.email,
         name: user.name,
         token: verificationToken,
+        requestOrigin: (() => {
+          const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+          const forwardedProto = request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "");
+          return forwardedHost ? `${forwardedProto}://${forwardedHost.split(",")[0].trim()}` : new URL(request.url).origin;
+        })(),
       });
       emailSent = true;
     } catch (emailError) {

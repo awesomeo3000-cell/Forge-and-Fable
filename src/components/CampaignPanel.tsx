@@ -9,9 +9,11 @@ import CampaignMemoryPanel from "@/components/CampaignMemoryPanel";
 import { EFFECT_PRESETS } from "@/lib/effects";
 import { summarizeRollRequest, describeRollRequest } from "@/lib/rollRequest";
 import type { CampaignSummary } from "@/lib/campaignStore";
+import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import { SKILLS } from "@/lib/srd";
 import type { AbilityKey, Character, CharacterTheme } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
+import type { CampaignSession } from "@/types/dmTools";
 
 type PanelView = "list" | "create" | "join" | "detail";
 
@@ -111,6 +113,7 @@ export default memo(function CampaignPanel({
   const [appearanceThemeKey, setAppearanceThemeKey] = useState("forge");
   const [appearanceImageUrl, setAppearanceImageUrl] = useState("");
   const [copiedCode, setCopiedCode] = useState("");
+  const [playerSessions, setPlayerSessions] = useState<CampaignSession[]>([]);
   const onCloseRef = useRef(onClose);
 
   useEffect(() => {
@@ -122,6 +125,24 @@ export default memo(function CampaignPanel({
   const detailCampaignId = detail?.campaign.id;
   const detailThemeKey = detail?.campaign.themeKey;
   const detailBannerImageUrl = detail?.campaign.bannerImageUrl;
+  useEffect(() => {
+    if (!detailCampaignId || isDm) {
+      setPlayerSessions([]);
+      return;
+    }
+    let active = true;
+    void dmToolsApi.listSessions(detailCampaignId)
+      .then(({ sessions }) => {
+        if (!active) return;
+        setPlayerSessions(
+          sessions
+            .filter((session) => session.status === "scheduled" && Date.parse(session.scheduledAt ?? session.startedAt) >= Date.now())
+            .sort((a, b) => Date.parse(a.scheduledAt ?? a.startedAt) - Date.parse(b.scheduledAt ?? b.startedAt)),
+        );
+      })
+      .catch(() => { if (active) setPlayerSessions([]); });
+    return () => { active = false; };
+  }, [detailCampaignId, isDm]);
   useEffect(() => {
     if (!detailCampaignId) return;
     setAppearanceThemeKey(detailThemeKey ?? "forge");
@@ -631,6 +652,36 @@ export default memo(function CampaignPanel({
                     </div>
                   ))}
                 </div>
+
+                {!isDm ? (
+                  <section className="campaign-player-sessions" aria-labelledby="campaign-player-sessions-title">
+                    <div className="campaign-player-section-head">
+                      <div>
+                        <span className="ao-dash-eyebrow">Plan ahead</span>
+                        <h3 id="campaign-player-sessions-title">Upcoming Sessions</h3>
+                      </div>
+                      <span>{playerSessions.length} scheduled</span>
+                    </div>
+                    {playerSessions.length > 0 ? (
+                      <div className="campaign-player-session-list">
+                        {playerSessions.map((session) => (
+                          <article key={session.id} className="campaign-player-session-card">
+                            <div>
+                              <strong>{session.title || `Session ${session.number ?? ""}`}</strong>
+                              <small>{new Date(session.scheduledAt ?? session.startedAt).toLocaleString([], { dateStyle: "full", timeStyle: "short" })}</small>
+                            </div>
+                            <div>
+                              {session.location ? <span>{session.location}</span> : null}
+                              {session.durationMinutes ? <span>{Math.round(session.durationMinutes / 60)} hour{session.durationMinutes === 60 ? "" : "s"}</span> : null}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="cs-muted">Your Dungeon Master has not scheduled the next session yet.</p>
+                    )}
+                  </section>
+                ) : null}
 
                 {visibleEvents.length > 0 ? (
                   <div className="campaign-events">

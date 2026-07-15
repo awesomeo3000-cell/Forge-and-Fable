@@ -5,7 +5,7 @@ import { RotateCcw, X } from "lucide-react";
 import PortraitField from "@/components/PortraitField";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import type { CharacterTheme, ThemeBackgroundKey, ThemeFontKey } from "@/types/game";
-import { BACKGROUND_LABELS, FONT_LABELS, FONT_STACKS, SKIN_PRESETS, loadUserPresets, saveUserPreset, deleteUserPreset, encodeSkinCode, decodeSkinCode, isValidBackgroundImageUrl } from "@/lib/skins";
+import { BACKGROUND_LABELS, DEFAULT_SKIN_THEME, FONT_LABELS, FONT_STACKS, SKIN_PRESETS, loadUserPresets, saveUserPreset, deleteUserPreset, encodeSkinCode, decodeSkinCode, isValidBackgroundImageUrl } from "@/lib/skins";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { isCatalogPortrait } from "@/data/portraits";
 
@@ -54,7 +54,7 @@ export default memo(function AppearancePanel(props: {
   onPortraitUpdate?: (portraitUrl: string) => void;
   onClose: () => void;
 }) {
-  const current = props.theme ?? SKIN_PRESETS[0].theme;
+  const current = props.theme ?? DEFAULT_SKIN_THEME;
   const [paper, setPaper] = useState(current.paper);
   const [ink, setInk] = useState(current.ink);
   const [accent, setAccent] = useState(current.accent);
