@@ -1,5 +1,7 @@
 import type { AbilityKey, Character, CharacterEffect } from "@/types/game";
 
+export type CampaignThemeId = "observatory" | "forge" | "wilds";
+
 /** Per-combatant condition marker (DM-editable on NPCs; display-only — not the full effects engine). */
 export type CampaignCombatantCondition = {
   id: string;
@@ -192,6 +194,7 @@ export type CampaignSyncPayload = {
     name: string;
     code: string;
     dmUserId: string;
+    themeKey: CampaignThemeId;
   };
   events: CampaignEvent[];
   rolls: Array<{

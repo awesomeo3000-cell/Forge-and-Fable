@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 14;
+const SCHEMA_REVISION = 15;
 
 function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -96,6 +96,7 @@ function createSchema(db: DatabaseSync) {
       name TEXT NOT NULL,
       code TEXT NOT NULL UNIQUE,
       dm_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      theme_key TEXT NOT NULL DEFAULT 'observatory',
       created_at TEXT NOT NULL
     );
 
@@ -410,6 +411,10 @@ function migrateSchema(db: DatabaseSync) {
     }
     recordMigration(db, 13, "DM rehearsal party ghost members");
     recordMigration(db, 14, "user-uploaded portrait images");
+    if (!tableHasColumn(db, "campaigns", "theme_key")) {
+      db.exec("ALTER TABLE campaigns ADD COLUMN theme_key TEXT NOT NULL DEFAULT 'observatory'");
+    }
+    recordMigration(db, 15, "campaign banner themes");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

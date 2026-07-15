@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest, AuthError } from "@/lib/auth";
 import { createCampaign, listCampaigns } from "@/lib/campaignStore";
+import { isCampaignThemeId } from "@/lib/campaignThemes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,13 +28,13 @@ export async function POST(request: Request) {
   try {
     const userId = await authenticateRequest(request);
     const body = await request.json();
-    const { name } = body as { name?: string };
+    const { name, themeKey } = body as { name?: string; themeKey?: unknown };
 
     if (!name || typeof name !== "string" || !name.trim() || name.trim().length > 60) {
       return NextResponse.json({ error: "Campaign name is required (max 60 chars)." }, { status: 400 });
     }
 
-    const campaign = createCampaign(userId, name);
+    const campaign = createCampaign(userId, name, isCampaignThemeId(themeKey) ? themeKey : undefined);
     return NextResponse.json({ campaign }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) {

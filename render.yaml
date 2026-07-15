@@ -10,6 +10,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
+      - key: ADMIN_DETAILS
+	sync:false
         generateValue: true
       - key: FORGE_VAULT_DIR
         value: /var/data

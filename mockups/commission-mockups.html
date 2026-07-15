@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge &amp; Fable | Commission screen directions — Arcane Observatory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&family=Archivo:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   Commission-a-character directions — retires the last .ledger-page /
+   parchment start screen. All values from src/app/arcane-observatory.css
+   (AO token layer), NOT the old prototype palette.
+   Copy strings are the R18 deck (src/lib/ledgerCopy.ts), verbatim.
+   Art: plates/commission-*.png (owner-generated, 2026-07-15). The
+   engraved SVG sprite (#plate-defs) remains for single-archetype
+   emblems (variant D gallery, variant G manifest minis).
+   ════════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: dark;
+
+  /* AO surfaces */
+  --surface-app: #070d16;
+  --surface-shell: #0d1724;
+  --surface-panel: #142235;
+  --surface-panel-raised: #1a2b40;
+  --surface-panel-recessed: #0f1b2a;
+  --surface-document: #152438;
+  --surface-document-muted: #112031;
+  --surface-input: #101c2b;
+
+  /* AO text */
+  --text-primary: #edf1f4;
+  --text-secondary: #b8c2cc;
+  --text-muted: #8391a0;
+  --text-document: #e9eef4;
+  --text-document-muted: #91a0b0;
+  --text-on-accent: #081018;
+
+  /* AO borders */
+  --border-subtle: rgba(176, 193, 207, 0.12);
+  --border-default: rgba(176, 193, 207, 0.22);
+  --border-strong: rgba(176, 193, 207, 0.34);
+  --border-brass: #b3924a;
+  --border-brass-bright: #d9b967;
+  --rule-engraved-dark: rgba(3, 8, 14, 0.65);
+  --rule-engraved-light: rgba(176, 193, 207, 0.10);
+
+  /* AO state */
+  --state-selected: #5c94c8;
+  --state-selected-soft: rgba(92, 148, 200, 0.16);
+
+  /* AO depth + geometry */
+  --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.28);
+  --shadow-document: 0 8px 18px rgba(0, 0, 0, 0.24);
+  --inset-recessed: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+
+  /* Fonts (same roles the app maps via next/font) */
+  --font-role-display: "Fraunces", Georgia, serif;
+  --font-role-label: "Archivo", system-ui, sans-serif;
+  --font-role-body: "Newsreader", Georgia, serif;
+  --font-role-numeric: "Space Mono", ui-monospace, monospace;
+  --label-tracking: 0.08em;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body {
+  background: var(--surface-app);
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; }
+button { cursor: pointer; color: inherit; background: none; border: 0; }
+button:focus-visible { outline: 2px solid var(--state-selected); outline-offset: 2px; }
+img { display: block; }
+
+/* ── Switcher banner ── */
+.proto-banner {
+  position: sticky; top: 0; z-index: 40;
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 16px;
+  height: 44px; padding: 0 16px;
+  background: #050912;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+.proto-banner strong { font: 700 12px/1 var(--font-role-label); letter-spacing: 0.06em; }
+.proto-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+.proto-tabs button {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.035);
+  color: #9eacbe;
+  font: 700 10px/1 var(--font-role-label);
+  letter-spacing: 0.07em; text-transform: uppercase;
+}
+.proto-tabs button:hover { color: #fff; }
+.proto-tabs button.active {
+  color: var(--text-on-accent);
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+}
+.proto-note { color: #718095; font: 400 11px/1.3 var(--font-role-label); }
+
+.variant { display: none; }
+.variant.active { display: block; }
+
+/* ── Fake AO shell so each variant reads in situ (76px rail + 62px topbar) ── */
+.shell { display: grid; grid-template-columns: 76px 1fr; min-height: calc(100vh - 44px); }
+.rail {
+  background: var(--surface-shell);
+  border-right: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 0; gap: 10px;
+}
+.rail .sigil {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--border-brass);
+  display: grid; place-items: center;
+  color: var(--border-brass-bright);
+  font: 700 15px/1 var(--font-role-display);
+  margin-bottom: 10px;
+}
+.rail .slot {
+  width: 42px; height: 42px; border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  display: grid; place-items: center;
+  color: var(--text-muted); font-size: 17px;
+}
+.rail .slot.on {
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  border-color: var(--border-default);
+  box-shadow: inset 2px 0 0 var(--border-brass);
+}
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 62px; flex: none;
+  background: var(--surface-shell);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 24px;
+}
+.topbar .crumb { font: 600 11px/1 var(--font-role-label); letter-spacing: var(--label-tracking); text-transform: uppercase; color: var(--text-muted); }
+.topbar .crumb b { color: var(--text-secondary); font-weight: 600; }
+.topbar .crumb span { margin: 0 7px; color: var(--text-disabled, #5f6a75); }
+.stage { flex: 1; padding: 30px 34px 38px; overflow: auto; }
+
+/* ── Shared page header (replaces .ledger-page-header) ── */
+.page-head { margin-bottom: 26px; }
+.page-head .eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 600 11px/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking); text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+.page-head .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--border-brass); }
+.page-head h2 {
+  margin-top: 10px;
+  font: 500 clamp(1.7rem, 3vw, 2.2rem)/1.1 var(--font-role-display);
+  letter-spacing: 0.01em;
+}
+.page-head .sub { margin-top: 8px; color: var(--text-muted); font-style: italic; font-size: 0.98rem; }
+
+/* ── Shared: engraved-plate art (inline SVG sprite, see #plate-defs).
+      Same ink-wash filter the photo plates used — brass mutes to grey at
+      rest and ignites when a variant lifts the filter on hover/chosen. ── */
+.plate { position: relative; overflow: hidden; background: var(--surface-panel-recessed); }
+.plate img, .plate > svg {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: grayscale(0.45) contrast(1.04) brightness(0.82) sepia(0.12);
+}
+.plate::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(20, 34, 53, 0.28), rgba(7, 13, 22, 0.55));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ── Shared: AO buttons ── */
+.ao-btn {
+  padding: 11px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font: 600 12px/1 var(--font-role-label);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.ao-btn:hover { border-color: var(--border-brass); }
+.ao-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.ao-btn.primary {
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: var(--text-on-accent);
+}
+.ao-btn.primary:hover { background: var(--border-brass-bright); }
+.footer-row {
+  display: flex; justify-content: flex-end; gap: 12px;
+  margin-top: 28px; padding-top: 18px;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 -1px 0 var(--rule-engraved-light) inset;
+}
+.footer-row .back { margin-right: auto; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT A — "Three Plates": the current triptych, rebuilt as engraved
+   AO panels. Keeps the 3-frame layout you like; parchment scrim replaced
+   with ink plates, brass corner ticks, caption plate below the art.
+   ════════════════════════════════════════════════════════════════════ */
+.va-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 1180px; }
+.va-card {
+  position: relative; text-align: left;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.va-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.va-card.chosen { border-color: var(--border-brass); }
+.va-card.chosen::before {
+  content: ""; position: absolute; inset: 5px;
+  border: 1px solid rgba(179, 146, 74, 0.45);
+  border-radius: var(--radius-sm);
+  pointer-events: none; z-index: 2;
+}
+.va-card .plate { aspect-ratio: 3 / 3.6; }
+.va-quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.va-quad .plate { aspect-ratio: auto; }
+.va-caption {
+  padding: 16px 18px 18px;
+  border-top: 1px solid var(--rule-engraved-dark);
+  box-shadow: 0 1px 0 var(--rule-engraved-light) inset;
+}
+.va-caption .num {
+  font: 700 10px/1 var(--font-role-numeric);
+  color: var(--border-brass); letter-spacing: 0.12em;
+}
+.va-caption h3 { font: 600 1.25rem/1.15 var(--font-role-display); margin-top: 6px; }
+.va-caption p { color: var(--text-muted); font-style: italic; margin-top: 5px; font-size: 0.95rem; }
+.va-caption .state {
+  display: none; margin-top: 10px;
+  font: 600 10px/1 var(--font-role-label); letter-spacing: var(--label-tracking);
+  text-transform: uppercase; color: var(--border-brass-bright);
+}
+.va-card.chosen .state { display: block; }
+/* brass corner ticks on the art */
+.va-tick { position: absolute; width: 14px; height: 14px; border-color: var(--border-brass); border-style: solid; border-width: 0; opacity: 0.85; z-index: 2; }
+.va-tick.tl { top: 9px; left: 9px; border-top-width: 1px; border-left-width: 1px; }
+.va-tick.tr { top: 9px; right: 9px; border-top-width: 1px; border-right-width: 1px; }
+.va-tick.bl { bottom: 9px; left: 9px; border-bottom-width: 1px; border-left-width: 1px; }
+.va-tick.br { bottom: 9px; right: 9px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT B — "The Commission Desk": master–detail. Method list on the
+   left like an instrument panel; the right is one ink document that
+   rewrites itself per method — descriptor, the chapter manifest (I–VII),
+   and the action. The chapters finally earn their place on screen.
+   ════════════════════════════════════════════════════════════════════ */
+.vb-wrap { display: grid; grid-template-columns: 320px 1fr; gap: 26px; max-width: 1180px; align-items: start; }
+.vb-list { display: flex; flex-direction: column; gap: 10px; }
+.vb-row {
+  display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start;
+  text-align: left; padding: 16px 16px 15px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+}
+.vb-row:hover { background: var(--surface-panel-raised); }
+.vb-row.on {
+  border-color: var(--border-brass);
+  background: var(--surface-panel-raised);
+  box-shadow: inset 3px 0 0 var(--border-brass);
+}
+.vb-row .num { font: 700 13px/1.4 var(--font-role-numeric); color: var(--border-brass); }
+.vb-row h3 { font: 600 1.08rem/1.2 var(--font-role-display); }
+.vb-row p { color: var(--text-muted); font-style: italic; font-size: 0.9rem; margin-top: 3px; }
+.vb-doc {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  color: var(--text-document);
+  padding: 30px 34px 28px;
+  min-height: 520px;
+}
+.vb-doc .doc-head { display: grid; grid-template-columns: 1fr 150px; gap: 26px; align-items: start; }
+.vb-doc h3 { font: 500 1.9rem/1.1 var(--font-role-display); }
+.vb-doc .desc { color: var(--text-document-muted); font-style: italic; margin-top: 8px; font-size: 1.05rem; }
+.vb-doc .meta { margin-top: 14px; font: 400 11px/1.6 var(--font-role-numeric); color: var(--text-muted); letter-spacing: 0.04em; }
+.vb-doc .plate { width: 150px; aspect-ratio: 3/4; border: 1px solid var(--border-default); border-radius: var(--radius-xs); }
+.vb-doc .plate.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 3/4; }
+.vb-rule { border: 0; height: 0; border-top: 1px solid var(--rule-engraved-dark); box-shadow: 0 1px 0 var(--rule-engraved-light); margin: 24px 0 18px; }
+.vb-doc .manifest-label { font: 600 10px/1 var(--font-role-label); letter-spacing: var(--label-tracking); text-transform: uppercase; color: var(--border-brass-bright); margin-bottom: 14px; }
+.vb-chapters { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 30px; }
+.vb-chapters li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 7px 0; align-items: baseline; border-bottom: 1px dotted var(--border-subtle); }
+.vb-chapters .n { font: 700 11px/1.5 var(--font-role-numeric); color: var(--border-brass); text-align: right; }
+.vb-chapters .name { font: 600 0.98rem/1.3 var(--font-role-display); }
+.vb-chapters .st { display: block; color: var(--text-document-muted); font-style: italic; font-size: 0.82rem; }
+.vb-premade-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.vb-premade-grid .plate { aspect-ratio: 3/4; border: 1px solid var(--border-default); border-radius: var(--radius-xs); }
+.vb-doc .doc-actions { margin-top: 26px; display: flex; justify-content: flex-end; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT C — "The Register": three full-width bands, like entries in a
+   register. Art plate left, entry text center, meta + open affordance
+   right. One click opens — no footer, no two-step confirm.
+   ════════════════════════════════════════════════════════════════════ */
+.vc-list { display: flex; flex-direction: column; gap: 16px; max-width: 1050px; }
+.vc-band {
+  display: grid; grid-template-columns: 190px 1fr auto; align-items: stretch;
+  text-align: left;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  transition: border-color 120ms ease;
+}
+.vc-band:hover { border-color: var(--border-brass); }
+.vc-band .plate { min-height: 132px; border-right: 1px solid var(--border-subtle); }
+.vc-band .plate.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.vc-body { padding: 20px 26px; display: flex; flex-direction: column; justify-content: center; }
+.vc-body .num { font: 700 10px/1 var(--font-role-numeric); color: var(--border-brass); letter-spacing: 0.12em; }
+.vc-body h3 { font: 600 1.4rem/1.15 var(--font-role-display); margin-top: 6px; }
+.vc-body p { color: var(--text-muted); font-style: italic; margin-top: 4px; }
+.vc-side {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 10px;
+  padding: 20px 26px;
+  border-left: 1px solid var(--rule-engraved-dark);
+  box-shadow: 1px 0 0 var(--rule-engraved-light) inset;
+  min-width: 210px;
+}
+.vc-side .meta { font: 400 10.5px/1.7 var(--font-role-numeric); color: var(--text-muted); text-align: right; letter-spacing: 0.04em; }
+.vc-side .go {
+  font: 600 11px/1 var(--font-role-label); letter-spacing: var(--label-tracking);
+  text-transform: uppercase; color: var(--border-brass-bright);
+}
+.vc-band:hover .go { color: #fff; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT D — "The Gallery": premade stops hiding behind a third card.
+   Two commission doors up top (Standard / Quickbuilder); beneath the
+   rule, the four archetypes hang as portraits you pick directly.
+   ════════════════════════════════════════════════════════════════════ */
+.vd-wrap { max-width: 1100px; }
+.vd-doors { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.vd-door {
+  position: relative; text-align: left;
+  display: grid; grid-template-columns: 170px 1fr;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  transition: border-color 120ms ease;
+}
+.vd-door:hover { border-color: var(--border-brass); }
+.vd-door .plate { border-right: 1px solid var(--border-subtle); min-height: 168px; }
+.vd-door-body { padding: 22px 24px; display: flex; flex-direction: column; justify-content: center; }
+.vd-door-body .num { font: 700 10px/1 var(--font-role-numeric); color: var(--border-brass); letter-spacing: 0.12em; }
+.vd-door-body h3 { font: 600 1.35rem/1.15 var(--font-role-display); margin-top: 7px; }
+.vd-door-body p { color: var(--text-muted); font-style: italic; margin-top: 4px; font-size: 0.95rem; }
+.vd-door-body .go { margin-top: 14px; font: 600 10.5px/1 var(--font-role-label); letter-spacing: var(--label-tracking); text-transform: uppercase; color: var(--border-brass-bright); }
+.vd-sep { display: flex; align-items: center; gap: 16px; margin: 34px 0 22px; }
+.vd-sep hr { flex: 1; border: 0; height: 0; border-top: 1px solid var(--rule-engraved-dark); box-shadow: 0 1px 0 var(--rule-engraved-light); }
+.vd-sep span { font: 600 10.5px/1 var(--font-role-label); letter-spacing: var(--label-tracking); text-transform: uppercase; color: var(--border-brass-bright); }
+.vd-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.vd-frame {
+  text-align: left;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  overflow: hidden;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.vd-frame:hover { border-color: var(--border-brass); transform: translateY(-2px); }
+.vd-frame .plate { aspect-ratio: 3/3.4; }
+.vd-frame-cap { padding: 12px 14px 14px; border-top: 1px solid var(--rule-engraved-dark); box-shadow: 0 1px 0 var(--rule-engraved-light) inset; }
+.vd-frame-cap h4 { font: 600 1.02rem/1.2 var(--font-role-display); }
+.vd-frame-cap p { color: var(--text-muted); font-style: italic; font-size: 0.82rem; margin-top: 3px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT E — "The Triptych": round 2, revised per owner. Three equal
+   fixed-width panels centered in the stage, full height. No size change
+   on hover/selection — the hovered/chosen panel's art warms from
+   ink-wash into color and the chosen one takes a brass inset frame.
+   Color is EARNED by selection; everything at rest stays engraved ink.
+   ════════════════════════════════════════════════════════════════════ */
+.ve-stage { padding: 0; display: flex; flex-direction: column; }
+.ve-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 20px; padding: 24px 34px 20px;
+}
+.ve-head .page-head { margin-bottom: 0; }
+.ve-actions { display: flex; gap: 12px; padding-bottom: 4px; }
+.ve-strip {
+  flex: 1; display: flex; justify-content: center;
+  min-height: 480px;
+  border-top: 1px solid var(--border-subtle);
+}
+.ve-panel {
+  position: relative; flex: 1 1 0; max-width: 420px; min-width: 0; overflow: hidden;
+  text-align: left;
+  border-right: 1px solid rgba(3, 8, 14, 0.8);
+}
+.ve-panel:first-child { border-left: 1px solid rgba(3, 8, 14, 0.8); }
+.ve-panel .plate { position: absolute; inset: 0; }
+.ve-panel .plate img, .ve-panel .plate > svg { transition: filter 320ms ease; }
+.ve-panel .plate::after { transition: opacity 320ms ease; }
+.ve-panel:hover .plate img, .ve-panel.chosen .plate img,
+.ve-panel:hover .plate > svg, .ve-panel.chosen .plate > svg {
+  filter: grayscale(0.02) contrast(1.02) brightness(0.96) sepia(0);
+}
+.ve-panel:hover .plate::after, .ve-panel.chosen .plate::after { opacity: 0.35; }
+.ve-quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.ve-quad .plate { position: relative; inset: auto; }
+.ve-tag {
+  position: absolute; top: 16px; left: 18px; z-index: 3;
+  padding: 6px 9px;
+  background: rgba(7, 13, 22, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  font: 700 10px/1 var(--font-role-numeric);
+  letter-spacing: 0.12em; color: var(--border-brass-bright);
+}
+.ve-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  padding: 60px 26px 24px;
+  background: linear-gradient(180deg, transparent, rgba(7, 13, 22, 0.92) 72%);
+}
+.ve-cap::before { content: ""; display: block; width: 30px; height: 1px; background: var(--border-brass); margin-bottom: 12px; }
+.ve-cap h3 { font: 500 1.65rem/1.1 var(--font-role-display); }
+.ve-cap p { color: var(--text-secondary); font-style: italic; margin-top: 5px; font-size: 0.98rem; }
+.ve-cap .state {
+  display: none; margin-top: 12px;
+  font: 600 10px/1 var(--font-role-label); letter-spacing: var(--label-tracking);
+  text-transform: uppercase; color: var(--border-brass-bright);
+}
+.ve-panel.chosen .state { display: block; }
+.ve-panel.chosen::before {
+  content: ""; position: absolute; inset: 10px; z-index: 4;
+  border: 1px solid rgba(217, 185, 103, 0.75);
+  pointer-events: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT F — "The Gallery Wall": three framed engravings hung on the
+   void, each in a double brass frame with a picture-light falloff and a
+   museum plaque beneath. Art is allowed to keep most of its color — a
+   framed painting justifies it. Selection pins the plaque in brass.
+   ════════════════════════════════════════════════════════════════════ */
+.vf-stage { background: radial-gradient(120% 90% at 50% 0%, #0b1422 0%, var(--surface-app) 72%); }
+.vf-head { text-align: center; margin-bottom: 34px; }
+.vf-head .eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 600 11px/1 var(--font-role-label);
+  letter-spacing: var(--label-tracking); text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+.vf-head .eyebrow::before, .vf-head .eyebrow::after { content: ""; width: 26px; height: 1px; background: var(--border-brass); }
+.vf-head h2 { margin-top: 10px; font: 500 clamp(1.7rem, 3vw, 2.2rem)/1.1 var(--font-role-display); }
+.vf-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 38px; max-width: 1060px; margin: 0 auto; }
+.vf-work { display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; }
+.vf-frame {
+  position: relative; width: 100%; padding: 9px;
+  background: var(--surface-shell);
+  border: 1px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-panel);
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+.vf-work:hover .vf-frame { border-color: var(--border-brass-bright); transform: translateY(-3px); }
+.vf-frame::before {
+  content: ""; position: absolute; inset: 9px; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, rgba(217, 185, 103, 0.13), transparent 42%);
+}
+.vf-frame .plate { border: 1px solid var(--border-default); aspect-ratio: 3 / 3.7; }
+.vf-frame .plate img, .vf-frame .plate > svg { filter: grayscale(0.12) contrast(1.02) brightness(0.9); }
+.vf-frame .plate::after { opacity: 0.4; }
+.vf-frame .plate.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; }
+.vf-frame .plate.quad .plate { aspect-ratio: auto; border: 0; }
+.vf-plaque {
+  min-width: 72%;
+  padding: 11px 20px 13px;
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  transition: border-color 140ms ease;
+}
+.vf-plaque h3 { font: 600 1.12rem/1.2 var(--font-role-display); }
+.vf-plaque p { color: var(--text-muted); font-style: italic; font-size: 0.85rem; margin-top: 3px; }
+.vf-plaque .state {
+  display: none; margin-top: 8px;
+  font: 600 9.5px/1 var(--font-role-label); letter-spacing: var(--label-tracking);
+  text-transform: uppercase; color: var(--border-brass-bright);
+}
+.vf-work.chosen .vf-frame { border-color: var(--border-brass-bright); }
+.vf-work.chosen .vf-plaque { border-color: var(--border-brass); }
+.vf-work.chosen .vf-plaque .state { display: block; }
+.vf-footer { display: flex; justify-content: center; gap: 12px; margin-top: 36px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   VARIANT G — "Plates + Manifest": variant A's triptych, but selection
+   does something — an ink manifest band beneath the plates rewrites
+   itself with the chosen method's chapters and carries the action.
+   (A × B hybrid: the 3 frames you like + the chapter payoff from B.)
+   ════════════════════════════════════════════════════════════════════ */
+.vg-manifest {
+  max-width: 1180px; margin-top: 22px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(176, 193, 207, 0.045) 27px 28px),
+    var(--surface-document);
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-document);
+  color: var(--text-document);
+  padding: 18px 24px;
+}
+.vg-page { display: flex; align-items: center; gap: 24px; }
+.vg-chapters { display: flex; flex: 1; flex-wrap: wrap; }
+.vg-ch { flex: 1 1 auto; padding: 2px 16px; border-right: 1px dotted var(--border-subtle); }
+.vg-ch:first-child { padding-left: 0; }
+.vg-ch:last-child { border-right: 0; }
+.vg-ch .n { display: block; font: 700 10px/1 var(--font-role-numeric); color: var(--border-brass); letter-spacing: 0.1em; margin-bottom: 4px; }
+.vg-ch .nm { font: 600 0.95rem/1.2 var(--font-role-display); white-space: nowrap; }
+.vg-mini { display: flex; flex: 1; gap: 10px; align-items: center; }
+.vg-mini .plate { width: 52px; aspect-ratio: 3/4; border: 1px solid var(--border-default); border-radius: var(--radius-xs); }
+.vg-mini p { color: var(--text-document-muted); font-style: italic; margin-left: 8px; }
+.vg-page .ao-btn { flex: none; }
+
+@media (max-width: 980px) {
+  .ve-strip { flex-direction: column; align-items: stretch; }
+  .ve-panel { min-height: 220px; max-width: none; }
+  .ve-panel:first-child { border-left: 0; }
+  .vf-grid { grid-template-columns: 1fr; }
+  .vg-page { flex-direction: column; align-items: stretch; }
+  .vg-ch .nm { white-space: normal; }
+  .va-grid, .vd-doors { grid-template-columns: 1fr; }
+  .vb-wrap { grid-template-columns: 1fr; }
+  .vc-band { grid-template-columns: 130px 1fr; }
+  .vc-side { display: none; }
+  .vd-gallery { grid-template-columns: 1fr 1fr; }
+  .vb-chapters { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     #plate-defs — engraved plate art, drawn in the AO language: ink-blue
+     night fields, hairline linework in pale slate, brass reserved for
+     the celestial subject. Vector placeholders; painted equivalents are
+     specced in docs/design/arcane-observatory/commission-plate-prompts.md
+     ════════════════════════════════════════════════════════════════════ -->
+<svg id="plate-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="plate-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101d2f"/>
+      <stop offset="1" stop-color="#070d16"/>
+    </linearGradient>
+    <radialGradient id="plate-glow" cx="0.5" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#d9b967" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#d9b967" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- I · Standard — "the full commission": the great orrery over an
+         open tome; an arc of seven brass stars, one per chapter -->
+    <symbol id="art-standard" viewBox="0 0 300 360">
+      <rect width="300" height="360" fill="url(#plate-sky)"/>
+      <rect width="300" height="360" fill="url(#plate-glow)"/>
+      <g fill="#c7d3e0">
+        <circle cx="30" cy="40" r="1.2" opacity="0.7"/><circle cx="70" cy="22" r="0.9" opacity="0.5"/>
+        <circle cx="110" cy="30" r="1" opacity="0.6"/><circle cx="190" cy="18" r="0.8" opacity="0.5"/>
+        <circle cx="255" cy="30" r="1.3" opacity="0.8"/><circle cx="280" cy="90" r="0.8" opacity="0.5"/>
+        <circle cx="20" cy="130" r="0.9" opacity="0.5"/><circle cx="240" cy="150" r="1" opacity="0.6"/>
+        <circle cx="45" cy="210" r="1.1" opacity="0.6"/><circle cx="270" cy="215" r="0.9" opacity="0.5"/>
+      </g>
+      <g fill="none" stroke="#9fb2c4">
+        <circle cx="150" cy="138" r="96" opacity="0.30"/>
+        <circle cx="150" cy="138" r="72" opacity="0.26" stroke-dasharray="3 5"/>
+        <circle cx="150" cy="138" r="46" opacity="0.30"/>
+      </g>
+      <ellipse cx="150" cy="138" rx="96" ry="26" fill="none" stroke="#c8a35a" opacity="0.4" transform="rotate(-16 150 138)"/>
+      <g stroke="#9fb2c4" opacity="0.35">
+        <line x1="150" y1="40" x2="150" y2="47"/><line x1="150" y1="229" x2="150" y2="236"/>
+        <line x1="52" y1="138" x2="59" y2="138"/><line x1="241" y1="138" x2="248" y2="138"/>
+      </g>
+      <circle cx="150" cy="138" r="11" fill="none" stroke="#d9b967" stroke-width="1.4"/>
+      <circle cx="150" cy="138" r="4.5" fill="#d9b967"/>
+      <g stroke="#d9b967" opacity="0.75">
+        <line x1="150" y1="118" x2="150" y2="124"/><line x1="150" y1="152" x2="150" y2="158"/>
+        <line x1="130" y1="138" x2="136" y2="138"/><line x1="164" y1="138" x2="170" y2="138"/>
+        <line x1="136" y1="124" x2="140" y2="128"/><line x1="160" y1="148" x2="164" y2="152"/>
+        <line x1="164" y1="124" x2="160" y2="128"/><line x1="140" y1="148" x2="136" y2="152"/>
+      </g>
+      <circle cx="96" cy="106" r="4" fill="#9fb2c4" opacity="0.85"/>
+      <circle cx="204" cy="176" r="3" fill="#9fb2c4" opacity="0.7"/>
+      <circle cx="150" cy="42" r="3.4" fill="none" stroke="#d9b967"/>
+      <g fill="#d9b967">
+        <circle cx="78" cy="268" r="1.8"/><circle cx="102" cy="262" r="1.8"/>
+        <circle cx="126" cy="258" r="1.8"/><circle cx="150" cy="256" r="2.4"/>
+        <circle cx="174" cy="258" r="1.8"/><circle cx="198" cy="262" r="1.8"/>
+        <circle cx="222" cy="268" r="1.8"/>
+      </g>
+      <path d="M72 322 Q112 300 150 312 Q188 300 228 322 L228 336 Q188 316 150 326 Q112 316 72 336 Z"
+            fill="#0a1322" stroke="#9fb2c4" stroke-opacity="0.55"/>
+      <line x1="150" y1="312" x2="150" y2="326" stroke="#9fb2c4" stroke-opacity="0.55"/>
+      <g stroke="#9fb2c4" opacity="0.3">
+        <line x1="92" y1="318" x2="134" y2="311"/><line x1="94" y1="324" x2="136" y2="317"/>
+        <line x1="166" y1="311" x2="208" y2="318"/><line x1="164" y1="317" x2="206" y2="324"/>
+      </g>
+    </symbol>
+
+    <!-- II · Quickbuilder — "a faster start": a brass comet over the
+         observatory dome, crescent moon looking on -->
+    <symbol id="art-quick" viewBox="0 0 300 360">
+      <rect width="300" height="360" fill="url(#plate-sky)"/>
+      <rect width="300" height="360" fill="url(#plate-glow)"/>
+      <g fill="#c7d3e0">
+        <circle cx="40" cy="120" r="1.1" opacity="0.6"/><circle cx="90" cy="34" r="0.9" opacity="0.5"/>
+        <circle cx="140" cy="60" r="1" opacity="0.6"/><circle cx="250" cy="40" r="1.2" opacity="0.7"/>
+        <circle cx="275" cy="130" r="0.9" opacity="0.5"/><circle cx="30" cy="220" r="1" opacity="0.6"/>
+        <circle cx="255" cy="200" r="1.1" opacity="0.6"/><circle cx="180" cy="30" r="0.8" opacity="0.5"/>
+        <circle cx="60" cy="170" r="0.8" opacity="0.5"/><circle cx="228" cy="150" r="0.9" opacity="0.5"/>
+      </g>
+      <circle cx="66" cy="58" r="16" fill="#9fb2c4" opacity="0.45"/>
+      <circle cx="73" cy="53" r="14" fill="#0c1828"/>
+      <g stroke="#d9b967" stroke-linecap="round">
+        <line x1="210" y1="90" x2="96" y2="168" stroke-width="2.2" opacity="0.65"/>
+        <line x1="212" y1="96" x2="118" y2="164" stroke-width="1.4" opacity="0.4"/>
+        <line x1="206" y1="86" x2="120" y2="142" stroke-width="1.2" opacity="0.3"/>
+      </g>
+      <circle cx="218" cy="86" r="6" fill="#d9b967"/>
+      <circle cx="218" cy="86" r="11" fill="none" stroke="#d9b967" opacity="0.5"/>
+      <path d="M0 306 Q70 284 150 296 Q230 306 300 288 L300 360 L0 360 Z" fill="#0a1322"/>
+      <path d="M116 296 A34 34 0 0 1 184 296 Z" fill="#0d1a2b" stroke="#9fb2c4" stroke-opacity="0.5"/>
+      <path d="M150 262 L162 268 L156 296 L148 296 Z" fill="#070d16" stroke="#c8a35a" stroke-opacity="0.6"/>
+      <rect x="112" y="296" width="76" height="26" fill="#0c1728" stroke="#9fb2c4" stroke-opacity="0.35"/>
+      <rect x="146" y="306" width="10" height="16" fill="#070d16" stroke="#c8a35a" stroke-opacity="0.5"/>
+    </symbol>
+
+    <!-- III · Premade — four sealed emblems, one per archetype -->
+    <symbol id="art-premade-1" viewBox="0 0 150 180"><!-- the vanguard: sword -->
+      <rect width="150" height="180" fill="url(#plate-sky)"/>
+      <g fill="#c7d3e0">
+        <circle cx="20" cy="24" r="0.9" opacity="0.6"/><circle cx="128" cy="30" r="1" opacity="0.6"/>
+        <circle cx="136" cy="150" r="0.9" opacity="0.5"/><circle cx="16" cy="146" r="0.8" opacity="0.5"/>
+      </g>
+      <circle cx="75" cy="84" r="52" fill="none" stroke="#9fb2c4" opacity="0.4"/>
+      <circle cx="75" cy="84" r="46" fill="none" stroke="#c8a35a" opacity="0.45" stroke-dasharray="2 6"/>
+      <g fill="none" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="2">
+        <path d="M75 46 L80 56 L80 96 L75 106 L70 96 L70 56 Z"/>
+        <line x1="75" y1="106" x2="75" y2="120" stroke-width="3"/>
+      </g>
+      <line x1="55" y1="104" x2="95" y2="104" stroke="#d9b967" stroke-width="3"/>
+      <circle cx="75" cy="126" r="4.5" fill="none" stroke="#d9b967" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="art-premade-2" viewBox="0 0 150 180"><!-- the scholar: tome + star -->
+      <rect width="150" height="180" fill="url(#plate-sky)"/>
+      <g fill="#c7d3e0">
+        <circle cx="24" cy="30" r="0.9" opacity="0.6"/><circle cx="124" cy="22" r="1" opacity="0.6"/>
+        <circle cx="132" cy="152" r="0.9" opacity="0.5"/><circle cx="18" cy="140" r="0.8" opacity="0.5"/>
+      </g>
+      <circle cx="75" cy="84" r="52" fill="none" stroke="#9fb2c4" opacity="0.4"/>
+      <circle cx="75" cy="84" r="46" fill="none" stroke="#c8a35a" opacity="0.45" stroke-dasharray="2 6"/>
+      <path d="M75 48 L79 60 L91 64 L79 68 L75 80 L71 68 L59 64 L71 60 Z" fill="#d9b967" opacity="0.9"/>
+      <path d="M43 96 Q59 86 75 93 Q91 86 107 96 L107 108 Q91 98 75 104 Q59 98 43 108 Z"
+            fill="#0a1322" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="1.6"/>
+      <line x1="75" y1="93" x2="75" y2="104" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="art-premade-3" viewBox="0 0 150 180"><!-- the knife: dagger + moon -->
+      <rect width="150" height="180" fill="url(#plate-sky)"/>
+      <g fill="#c7d3e0">
+        <circle cx="26" cy="26" r="0.9" opacity="0.6"/><circle cx="126" cy="34" r="1" opacity="0.6"/>
+        <circle cx="130" cy="146" r="0.9" opacity="0.5"/><circle cx="20" cy="150" r="0.8" opacity="0.5"/>
+      </g>
+      <circle cx="75" cy="84" r="52" fill="none" stroke="#9fb2c4" opacity="0.4"/>
+      <circle cx="75" cy="84" r="46" fill="none" stroke="#c8a35a" opacity="0.45" stroke-dasharray="2 6"/>
+      <circle cx="96" cy="60" r="11" fill="#9fb2c4" opacity="0.4"/>
+      <circle cx="101" cy="57" r="9.5" fill="#0d1a2c"/>
+      <path d="M75 50 L79 88 L75 98 L71 88 Z" fill="none" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="2"/>
+      <path d="M60 92 Q75 84 90 92" fill="none" stroke="#d9b967" stroke-width="2.4"/>
+      <line x1="75" y1="98" x2="75" y2="114" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="3"/>
+    </symbol>
+    <symbol id="art-premade-4" viewBox="0 0 150 180"><!-- the voice: lute -->
+      <rect width="150" height="180" fill="url(#plate-sky)"/>
+      <g fill="#c7d3e0">
+        <circle cx="22" cy="32" r="0.9" opacity="0.6"/><circle cx="130" cy="26" r="1" opacity="0.6"/>
+        <circle cx="134" cy="148" r="0.9" opacity="0.5"/><circle cx="16" cy="152" r="0.8" opacity="0.5"/>
+      </g>
+      <circle cx="75" cy="84" r="52" fill="none" stroke="#9fb2c4" opacity="0.4"/>
+      <circle cx="75" cy="84" r="46" fill="none" stroke="#c8a35a" opacity="0.45" stroke-dasharray="2 6"/>
+      <ellipse cx="75" cy="98" rx="20" ry="24" fill="#0a1322" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="2"/>
+      <circle cx="75" cy="98" r="4.5" fill="none" stroke="#d9b967" stroke-width="1.6"/>
+      <line x1="75" y1="74" x2="75" y2="42" stroke="#c9d4de" stroke-opacity="0.85" stroke-width="3"/>
+      <rect x="70" y="34" width="10" height="9" fill="none" stroke="#d9b967" stroke-width="1.4"/>
+      <g stroke="#c9d4de" opacity="0.5">
+        <line x1="72" y1="43" x2="72" y2="112"/><line x1="78" y1="43" x2="78" y2="112"/>
+      </g>
+      <line x1="64" y1="112" x2="86" y2="112" stroke="#d9b967" stroke-width="2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="proto-banner">
+  <strong>COMMISSION SCREEN — 7 DIRECTIONS</strong>
+  <div class="proto-tabs">
+    <button data-v="e" class="active">E · Triptych</button>
+    <button data-v="f">F · Gallery Wall</button>
+    <button data-v="g">G · Plates + Manifest</button>
+    <button data-v="a">A · Three Plates</button>
+    <button data-v="b">B · Commission Desk</button>
+    <button data-v="c">C · The Register</button>
+    <button data-v="d">D · The Gallery</button>
+  </div>
+  <span class="proto-note">AO tokens · R18 copy deck verbatim · plate art: owner-generated paintings (mockups/plates/) · engraved emblems remain for single archetypes</span>
+</div>
+
+<!-- ════════════ VARIANT E — The Triptych (round 2) ════════════ -->
+<section class="variant active" id="v-e">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage ve-stage">
+        <div class="ve-head">
+          <header class="page-head">
+            <span class="eyebrow">The ledger opens</span>
+            <h2>Commission a character</h2>
+          </header>
+          <div class="ve-actions">
+            <button class="ao-btn">Back</button>
+            <button class="ao-btn primary">Open the commission</button>
+          </div>
+        </div>
+        <div class="ve-strip">
+          <button class="ve-panel chosen">
+            <span class="plate"><img src="plates/commission-standard.png" alt=""></span>
+            <span class="ve-tag">PLATE I</span>
+            <span class="ve-cap">
+              <h3>Standard</h3>
+              <p>the full commission, chapter by chapter</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="ve-panel">
+            <span class="plate"><img src="plates/commission-quick.png" alt=""></span>
+            <span class="ve-tag">PLATE II</span>
+            <span class="ve-cap">
+              <h3>Quickbuilder</h3>
+              <p>guided choices for a faster start</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="ve-panel">
+            <span class="plate"><img src="plates/commission-premade.png" alt=""></span>
+            <span class="ve-tag">PLATE III</span>
+            <span class="ve-cap">
+              <h3>Premade</h3>
+              <p>archetypes awaiting a name</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT F — The Gallery Wall (round 2) ════════════ -->
+<section class="variant" id="v-f">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage vf-stage">
+        <header class="vf-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+        </header>
+        <div class="vf-grid">
+          <button class="vf-work chosen">
+            <span class="vf-frame">
+              <span class="plate"><img src="plates/commission-standard.png" alt=""></span>
+            </span>
+            <span class="vf-plaque">
+              <h3>Standard</h3>
+              <p>the full commission, chapter by chapter</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="vf-work">
+            <span class="vf-frame">
+              <span class="plate"><img src="plates/commission-quick.png" alt=""></span>
+            </span>
+            <span class="vf-plaque">
+              <h3>Quickbuilder</h3>
+              <p>guided choices for a faster start</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="vf-work">
+            <span class="vf-frame">
+              <span class="plate"><img src="plates/commission-premade.png" alt=""></span>
+            </span>
+            <span class="vf-plaque">
+              <h3>Premade</h3>
+              <p>archetypes awaiting a name</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+        </div>
+        <div class="vf-footer">
+          <button class="ao-btn">Back</button>
+          <button class="ao-btn primary">Open the commission</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT G — Plates + Manifest (round 2, A × B) ════════════ -->
+<section class="variant" id="v-g">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage">
+        <header class="page-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+        </header>
+        <div class="va-grid" id="vg-grid">
+          <button class="va-card vg-card chosen" data-doc="standard">
+            <span class="plate">
+              <img src="plates/commission-standard.png" alt="">
+              <i class="va-tick tl"></i><i class="va-tick tr"></i><i class="va-tick bl"></i><i class="va-tick br"></i>
+            </span>
+            <span class="va-caption">
+              <span class="num">PLATE I</span>
+              <h3>Standard</h3>
+              <p>the full commission, chapter by chapter</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="va-card vg-card" data-doc="quickbuilder">
+            <span class="plate">
+              <img src="plates/commission-quick.png" alt="">
+              <i class="va-tick tl"></i><i class="va-tick tr"></i><i class="va-tick bl"></i><i class="va-tick br"></i>
+            </span>
+            <span class="va-caption">
+              <span class="num">PLATE II</span>
+              <h3>Quickbuilder</h3>
+              <p>guided choices for a faster start</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="va-card vg-card" data-doc="premade">
+            <span class="plate" style="aspect-ratio: 3 / 3.6;"><img src="plates/commission-premade.png" alt=""></span>
+            <span class="va-caption">
+              <span class="num">PLATE III</span>
+              <h3>Premade</h3>
+              <p>archetypes awaiting a name</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+        </div>
+        <div class="vg-manifest">
+          <div class="vg-page" data-page="standard">
+            <div class="vg-chapters">
+              <span class="vg-ch"><span class="n">I</span><span class="nm">Provenance</span></span>
+              <span class="vg-ch"><span class="n">II</span><span class="nm">The Likeness</span></span>
+              <span class="vg-ch"><span class="n">III</span><span class="nm">Vocation</span></span>
+              <span class="vg-ch"><span class="n">IV</span><span class="nm">Origin</span></span>
+              <span class="vg-ch"><span class="n">V</span><span class="nm">Lineage</span></span>
+              <span class="vg-ch"><span class="n">VI</span><span class="nm">Attributes</span></span>
+              <span class="vg-ch"><span class="n">VII</span><span class="nm">The Seal</span></span>
+            </div>
+            <button class="ao-btn primary">Record the name →</button>
+          </div>
+          <div class="vg-page" data-page="quickbuilder" hidden>
+            <div class="vg-chapters">
+              <span class="vg-ch"><span class="n">1</span><span class="nm">Answer a few questions</span></span>
+              <span class="vg-ch"><span class="n">2</span><span class="nm">Accept or adjust</span></span>
+              <span class="vg-ch"><span class="n">3</span><span class="nm">Press the seal</span></span>
+            </div>
+            <button class="ao-btn primary">Begin the questions →</button>
+          </div>
+          <div class="vg-page" data-page="premade" hidden>
+            <div class="vg-mini">
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-1"/></svg></span>
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-2"/></svg></span>
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-3"/></svg></span>
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-4"/></svg></span>
+              <p>four archetypes, awaiting a name</p>
+            </div>
+            <button class="ao-btn primary">Browse the archetypes →</button>
+          </div>
+        </div>
+        <div class="footer-row" style="max-width: 1180px;">
+          <button class="ao-btn back">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT A — Three Plates ════════════ -->
+<section class="variant" id="v-a">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage">
+        <header class="page-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+        </header>
+        <div class="va-grid">
+          <button class="va-card chosen">
+            <span class="plate">
+              <img src="plates/commission-standard.png" alt="">
+              <i class="va-tick tl"></i><i class="va-tick tr"></i><i class="va-tick bl"></i><i class="va-tick br"></i>
+            </span>
+            <span class="va-caption">
+              <span class="num">PLATE I</span>
+              <h3>Standard</h3>
+              <p>the full commission, chapter by chapter</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="va-card">
+            <span class="plate">
+              <img src="plates/commission-quick.png" alt="">
+              <i class="va-tick tl"></i><i class="va-tick tr"></i><i class="va-tick bl"></i><i class="va-tick br"></i>
+            </span>
+            <span class="va-caption">
+              <span class="num">PLATE II</span>
+              <h3>Quickbuilder</h3>
+              <p>guided choices for a faster start</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+          <button class="va-card">
+            <span class="plate" style="aspect-ratio: 3 / 3.6;"><img src="plates/commission-premade.png" alt=""></span>
+            <span class="va-caption">
+              <span class="num">PLATE III</span>
+              <h3>Premade</h3>
+              <p>archetypes awaiting a name</p>
+              <em class="state">Chosen ✦</em>
+            </span>
+          </button>
+        </div>
+        <div class="footer-row" style="max-width: 1180px;">
+          <button class="ao-btn back">Back</button>
+          <button class="ao-btn primary">Open the commission</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT B — Commission Desk ════════════ -->
+<section class="variant" id="v-b">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage">
+        <header class="page-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+        </header>
+        <div class="vb-wrap">
+          <nav class="vb-list" id="vb-list">
+            <button class="vb-row on" data-doc="standard">
+              <span class="num">I</span>
+              <span><h3>Standard</h3><p>the full commission, chapter by chapter</p></span>
+            </button>
+            <button class="vb-row" data-doc="quickbuilder">
+              <span class="num">II</span>
+              <span><h3>Quickbuilder</h3><p>guided choices for a faster start</p></span>
+            </button>
+            <button class="vb-row" data-doc="premade">
+              <span class="num">III</span>
+              <span><h3>Premade</h3><p>archetypes awaiting a name</p></span>
+            </button>
+          </nav>
+          <article class="vb-doc">
+            <!-- STANDARD document -->
+            <div class="vb-doc-page" data-page="standard">
+              <div class="doc-head">
+                <div>
+                  <h3>The Standard Commission</h3>
+                  <p class="desc">the full commission, chapter by chapter</p>
+                  <p class="meta">SEVEN CHAPTERS · EVERY CHOICE YOURS · A CAREFUL HOUR</p>
+                </div>
+                <span class="plate"><img src="plates/commission-standard.png" alt=""></span>
+              </div>
+              <hr class="vb-rule">
+              <p class="manifest-label">The chapters, in order</p>
+              <ol class="vb-chapters">
+                <li><span class="n">I</span><span class="name">Provenance<span class="st">a name, and where the record may draw from</span></span></li>
+                <li><span class="n">II</span><span class="name">The Likeness<span class="st">no labels, no filters — pick the face that feels right</span></span></li>
+                <li><span class="n">III</span><span class="name">Vocation<span class="st">what craft has shaped this life?</span></span></li>
+                <li><span class="n">IV</span><span class="name">Origin<span class="st">who were they, before the road?</span></span></li>
+                <li><span class="n">V</span><span class="name">Lineage<span class="st">blood, and what it carries</span></span></li>
+                <li><span class="n">VI</span><span class="name">Attributes<span class="st">the measure of body and mind</span></span></li>
+                <li><span class="n">VII</span><span class="name">The Seal<span class="st">read it back, then press the seal</span></span></li>
+              </ol>
+              <div class="doc-actions"><button class="ao-btn primary">Record the name →</button></div>
+            </div>
+            <!-- QUICKBUILDER document -->
+            <div class="vb-doc-page" data-page="quickbuilder" hidden>
+              <div class="doc-head">
+                <div>
+                  <h3>The Quickbuilder</h3>
+                  <p class="desc">guided choices for a faster start</p>
+                  <p class="meta">A HANDFUL OF QUESTIONS · SENSIBLE DEFAULTS · MINUTES, NOT HOURS</p>
+                </div>
+                <span class="plate"><img src="plates/commission-quick.png" alt=""></span>
+              </div>
+              <hr class="vb-rule">
+              <p class="manifest-label">How it works</p>
+              <ol class="vb-chapters">
+                <li><span class="n">1</span><span class="name">Answer a few questions<span class="st">the register narrows the choices for you</span></span></li>
+                <li><span class="n">2</span><span class="name">Accept or adjust<span class="st">every suggestion can be overridden</span></span></li>
+                <li><span class="n">3</span><span class="name">Press the seal<span class="st">a finished record, ready for the table</span></span></li>
+              </ol>
+              <div class="doc-actions"><button class="ao-btn primary">Begin the questions →</button></div>
+            </div>
+            <!-- PREMADE document -->
+            <div class="vb-doc-page" data-page="premade" hidden>
+              <div class="doc-head">
+                <div>
+                  <h3>Premade</h3>
+                  <p class="desc">archetypes awaiting a name</p>
+                  <p class="meta">FOUR ARCHETYPES · PICK, NAME, PLAY</p>
+                </div>
+              </div>
+              <hr class="vb-rule">
+              <p class="manifest-label">The archetypes</p>
+              <div class="vb-premade-grid" style="grid-template-columns: 1fr;">
+                <span class="plate" style="aspect-ratio: 16 / 8;"><img src="plates/commission-premade.png" alt=""></span>
+              </div>
+              <div class="doc-actions"><button class="ao-btn primary">Browse the archetypes →</button></div>
+            </div>
+          </article>
+        </div>
+        <div class="footer-row" style="max-width: 1180px;">
+          <button class="ao-btn back">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT C — The Register ════════════ -->
+<section class="variant" id="v-c">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage">
+        <header class="page-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+          <p class="sub">Choose how the record begins. One click opens the commission.</p>
+        </header>
+        <div class="vc-list">
+          <button class="vc-band">
+            <span class="plate"><img src="plates/commission-standard.png" alt=""></span>
+            <span class="vc-body">
+              <span class="num">ENTRY I</span>
+              <h3>Standard</h3>
+              <p>the full commission, chapter by chapter</p>
+            </span>
+            <span class="vc-side">
+              <span class="meta">SEVEN CHAPTERS<br>EVERY CHOICE YOURS</span>
+              <span class="go">Open →</span>
+            </span>
+          </button>
+          <button class="vc-band">
+            <span class="plate"><img src="plates/commission-quick.png" alt=""></span>
+            <span class="vc-body">
+              <span class="num">ENTRY II</span>
+              <h3>Quickbuilder</h3>
+              <p>guided choices for a faster start</p>
+            </span>
+            <span class="vc-side">
+              <span class="meta">GUIDED QUESTIONS<br>MINUTES, NOT HOURS</span>
+              <span class="go">Open →</span>
+            </span>
+          </button>
+          <button class="vc-band">
+            <span class="plate"><img src="plates/commission-premade.png" alt=""></span>
+            <span class="vc-body">
+              <span class="num">ENTRY III</span>
+              <h3>Premade</h3>
+              <p>archetypes awaiting a name</p>
+            </span>
+            <span class="vc-side">
+              <span class="meta">FOUR ARCHETYPES<br>PICK, NAME, PLAY</span>
+              <span class="go">Open →</span>
+            </span>
+          </button>
+        </div>
+        <div class="footer-row" style="max-width: 1050px;">
+          <button class="ao-btn back">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ VARIANT D — The Gallery ════════════ -->
+<section class="variant" id="v-d">
+  <div class="shell">
+    <aside class="rail">
+      <span class="sigil">F</span>
+      <span class="slot">✦</span>
+      <span class="slot on">◈</span>
+      <span class="slot">▤</span>
+      <span class="slot">⚔</span>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>The Roster</b><span>/</span>Commission</span></div>
+      <div class="stage">
+        <header class="page-head">
+          <span class="eyebrow">The ledger opens</span>
+          <h2>Commission a character</h2>
+        </header>
+        <div class="vd-wrap">
+          <div class="vd-doors">
+            <button class="vd-door">
+              <span class="plate"><img src="plates/commission-standard.png" alt=""></span>
+              <span class="vd-door-body">
+                <span class="num">COMMISSION I</span>
+                <h3>Standard</h3>
+                <p>the full commission, chapter by chapter</p>
+                <span class="go">Open the commission →</span>
+              </span>
+            </button>
+            <button class="vd-door">
+              <span class="plate"><img src="plates/commission-quick.png" alt=""></span>
+              <span class="vd-door-body">
+                <span class="num">COMMISSION II</span>
+                <h3>Quickbuilder</h3>
+                <p>guided choices for a faster start</p>
+                <span class="go">Begin the questions →</span>
+              </span>
+            </button>
+          </div>
+          <div class="vd-sep">
+            <hr><span>Archetypes awaiting a name</span><hr>
+          </div>
+          <div class="vd-gallery">
+            <button class="vd-frame">
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-1"/></svg></span>
+              <span class="vd-frame-cap"><h4>The Vanguard</h4><p>steel, discipline, and the front line</p></span>
+            </button>
+            <button class="vd-frame">
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-2"/></svg></span>
+              <span class="vd-frame-cap"><h4>The Scholar</h4><p>ink-stained hands and borrowed fire</p></span>
+            </button>
+            <button class="vd-frame">
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-3"/></svg></span>
+              <span class="vd-frame-cap"><h4>The Knife</h4><p>shadows, locks, and a knife you never saw</p></span>
+            </button>
+            <button class="vd-frame">
+              <span class="plate"><svg viewBox="0 0 150 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#art-premade-4"/></svg></span>
+              <span class="vd-frame-cap"><h4>The Voice</h4><p>wit, song, and a dangerous charm</p></span>
+            </button>
+          </div>
+          <div class="footer-row">
+            <button class="ao-btn back">Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Variant switcher
+document.querySelectorAll(".proto-tabs button").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    document.querySelectorAll(".proto-tabs button").forEach(function (b) { b.classList.remove("active"); });
+    document.querySelectorAll(".variant").forEach(function (v) { v.classList.remove("active"); });
+    btn.classList.add("active");
+    document.getElementById("v-" + btn.dataset.v).classList.add("active");
+  });
+});
+
+// Variants A / E / F: single-select cards, scoped per variant
+[["#v-a", ".va-card"], ["#v-e", ".ve-panel"], ["#v-f", ".vf-work"]].forEach(function (pair) {
+  var cards = document.querySelectorAll(pair[0] + " " + pair[1]);
+  cards.forEach(function (card) {
+    card.addEventListener("click", function () {
+      cards.forEach(function (c) { c.classList.remove("chosen"); });
+      card.classList.add("chosen");
+    });
+  });
+});
+
+// Variant G: select plate + swap the manifest band
+document.querySelectorAll("#vg-grid .vg-card").forEach(function (card) {
+  card.addEventListener("click", function () {
+    document.querySelectorAll("#vg-grid .vg-card").forEach(function (c) { c.classList.remove("chosen"); });
+    card.classList.add("chosen");
+    document.querySelectorAll(".vg-page").forEach(function (p) {
+      p.hidden = p.dataset.page !== card.dataset.doc;
+    });
+  });
+});
+
+// Variant B: master–detail swap
+document.querySelectorAll("#vb-list .vb-row").forEach(function (row) {
+  row.addEventListener("click", function () {
+    document.querySelectorAll("#vb-list .vb-row").forEach(function (r) { r.classList.remove("on"); });
+    row.classList.add("on");
+    document.querySelectorAll(".vb-doc-page").forEach(function (p) {
+      p.hidden = p.dataset.page !== row.dataset.doc;
+    });
+  });
+});
+
+</script>
+</body>
+</html>

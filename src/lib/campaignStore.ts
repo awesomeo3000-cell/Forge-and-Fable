@@ -16,7 +16,8 @@ import { passiveSkillScore } from "@/lib/derivedStats";
 import { ruleset } from "@/lib/ruleset";
 import { normalizeStoredRuleset } from "@/lib/characterRuleset";
 import type { Character } from "@/types/game";
-import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignTrack, InitiativeState } from "@/types/campaign";
+import type { CampaignAudioState, CampaignCombatant, CampaignCombatantCondition, CampaignEvent, CampaignMemberSummary, CampaignSyncPayload, CampaignThemeId, CampaignTrack, InitiativeState } from "@/types/campaign";
+import { DEFAULT_CAMPAIGN_THEME_ID, isCampaignThemeId } from "@/lib/campaignThemes";
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
 import { scheduleRehearsalEvent } from "@/lib/dmTable/rehearsal";
@@ -28,6 +29,7 @@ export type CampaignRow = {
   name: string;
   code: string;
   dm_user_id: string;
+  theme_key: CampaignThemeId;
   created_at: string;
 };
 
@@ -86,6 +88,7 @@ export type CampaignSummary = {
   name: string;
   code: string;
   dmUserId: string;
+  themeKey: CampaignThemeId;
   createdAt: string;
   memberCount: number;
   myRole: "dm" | "player";
@@ -506,7 +509,7 @@ function getInitiativeRow(campaignId: string) {
 
 // -- Create / Join / List ---------------------------------------------------
 
-export function createCampaign(userId: string, name: string): CampaignRow {
+export function createCampaign(userId: string, name: string, themeKey: CampaignThemeId = DEFAULT_CAMPAIGN_THEME_ID): CampaignRow {
   const db = getDb();
   const id = randomUUID();
   const createdAt = nowIso();
@@ -521,8 +524,9 @@ export function createCampaign(userId: string, name: string): CampaignRow {
       code = generateCode();
     }
 
-    db.prepare("INSERT INTO campaigns (id, name, code, dm_user_id, created_at) VALUES (?, ?, ?, ?, ?)")
-      .run(id, trimmedName, code, userId, createdAt);
+    const safeThemeKey = isCampaignThemeId(themeKey) ? themeKey : DEFAULT_CAMPAIGN_THEME_ID;
+    db.prepare("INSERT INTO campaigns (id, name, code, dm_user_id, theme_key, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(id, trimmedName, code, userId, safeThemeKey, createdAt);
     db.prepare("INSERT INTO campaign_members (campaign_id, user_id, character_id, joined_at) VALUES (?, ?, NULL, ?)")
       .run(id, userId, createdAt);
     db.prepare("INSERT INTO campaign_initiative (campaign_id, data, version, updated_at) VALUES (?, ?, 0, ?)")
@@ -530,7 +534,7 @@ export function createCampaign(userId: string, name: string): CampaignRow {
     db.prepare("INSERT INTO campaign_audio (campaign_id, loop, version) VALUES (?, 1, 0)")
       .run(id);
     db.exec("COMMIT");
-    return { id, name: trimmedName, code, dm_user_id: userId, created_at: createdAt };
+    return { id, name: trimmedName, code, dm_user_id: userId, theme_key: safeThemeKey, created_at: createdAt };
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
@@ -609,6 +613,7 @@ export function listCampaigns(userId: string): CampaignSummary[] {
       name: row.name,
       code: row.code,
       dmUserId: row.dm_user_id,
+      themeKey: isCampaignThemeId(row.theme_key) ? row.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
       createdAt: row.created_at,
       memberCount: row.member_count,
       myRole: row.dm_user_id === userId ? "dm" as const : "player" as const,
@@ -674,6 +679,7 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
       name: campaign.name,
       code: campaign.code,
       dmUserId: campaign.dm_user_id,
+      themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
     },
     events,
     rolls,

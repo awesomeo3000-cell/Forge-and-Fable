@@ -72,11 +72,12 @@
   --desk:         #1a140d;
   --sheet-shadow: 0 26px 55px rgba(0,0,0,0.50), 0 4px 14px rgba(0,0,0,0.40);
 
-  /* Shared world backdrop for splash and auth ("The Observatory at Night",
-     Option A art — docs/design/arcane-observatory/backdrop-prompts.md).
-     The AO app shell overrides its ::before with the engraved field. */
-  --world-backdrop: url("/observatory-backdrop.jpg");
-  --world-backdrop-position: 24% center;
+  /* Shared world backdrop for splash and auth (the moonlit wayhouse at a
+     crossroads). The AO app shell overrides its ::before with the engraved
+     field, so this stays a title-screen/auth asset rather than a campaign
+     setting baked into the logged-in workspace. */
+  --world-backdrop: url("/wayhouse-backdrop.png");
+  --world-backdrop-position: center center;
   --world-backdrop-wash:
     linear-gradient(180deg, rgba(7, 13, 22, 0.12) 0%, transparent 30%, rgba(7, 13, 22, 0.5) 100%),
     linear-gradient(90deg, transparent 0%, transparent 55%, rgba(7, 13, 22, 0.22) 100%),
@@ -8496,6 +8497,102 @@ button.dj-card {
   gap: 14px;
 }
 
+.campaign-theme-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.campaign-theme-picker legend {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.campaign-theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.campaign-form .campaign-theme-option {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--ground-2);
+  color: var(--parchment);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.campaign-form .campaign-theme-option:hover {
+  border-color: var(--campaign-accent, var(--accent));
+  transform: translateY(-1px);
+}
+
+.campaign-form .campaign-theme-option.is-selected {
+  border-color: var(--campaign-accent, var(--accent));
+  background: color-mix(in srgb, var(--campaign-accent, var(--accent)) 11%, var(--ground-2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--campaign-accent, var(--accent)) 40%, transparent);
+}
+
+.campaign-theme-option input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.campaign-theme-option:has(input:focus-visible) {
+  outline: 2px solid var(--campaign-accent, var(--accent));
+  outline-offset: 2px;
+}
+
+.campaign-theme-image {
+  display: block;
+  aspect-ratio: 16 / 7;
+  border-radius: 6px;
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.campaign-theme-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.campaign-theme-copy strong {
+  color: var(--parchment);
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.campaign-theme-copy small {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
 .campaign-form label {
   display: grid;
   gap: 4px;
@@ -8523,6 +8620,21 @@ button.dj-card {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+@media (max-width: 620px) {
+  .campaign-theme-options {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-form .campaign-theme-option {
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .campaign-theme-image {
+    aspect-ratio: 16 / 9;
+  }
 }
 
 .campaign-created {

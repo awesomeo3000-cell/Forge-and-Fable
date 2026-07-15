@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
-import { createCampaign, joinCampaign, listCampaigns } from "@/lib/campaignStore";
+import { createCampaign, joinCampaign, listCampaigns, syncCampaign } from "@/lib/campaignStore";
 import { createCharacter } from "@/lib/vaultStore";
 import { characterInput } from "./fixtures/character";
 
@@ -42,6 +42,13 @@ describe("campaign roles and character eligibility", () => {
       }),
     ]);
     expect(listCampaigns("player").some((campaign) => campaign.id === run.id)).toBe(false);
+  });
+
+  it("persists the selected campaign theme through summaries and sync", () => {
+    const campaign = createCampaign("dm", "Moonlit Table", "forge");
+
+    expect(listCampaigns("dm")[0]).toMatchObject({ themeKey: "forge" });
+    expect(syncCampaign(campaign.id, "dm").campaign.themeKey).toBe("forge");
   });
 
   it("rejects a character already enrolled in another campaign", async () => {
