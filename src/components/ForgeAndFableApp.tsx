@@ -2127,7 +2127,7 @@ export default function ForgeAndFableApp() {
     ) : null}
     <main className="builder-shell">
       <nav className="ao-nav-rail" aria-label="Primary">
-        <div className="ao-nav-brand" aria-hidden="true">F</div>
+        <div className="ao-nav-brand" aria-hidden="true">D</div>
         <div className="ao-nav-stack">
           <button
             type="button"
@@ -2168,7 +2168,7 @@ export default function ForgeAndFableApp() {
       <header className="builder-topbar ledger-topbar">
         <div className="builder-brand ledger-masthead">
           <div>
-            <span>Keepsake</span>
+            <span>Dreamwright</span>
             <strong>
               {campaignOpen ? "The Table"
                 : homeOpen ? "The Hearth"

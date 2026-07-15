@@ -13,6 +13,7 @@ import "./globals.css";
 // Arcane Observatory semantic theme layer — must stay after globals.css so
 // it wins ties by cascade order (docs/ai-project-proposal-34 §3).
 import "./arcane-observatory.css";
+import { BRAND_NAME } from "@/lib/brand";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -56,7 +57,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Keepsake",
+  title: BRAND_NAME,
   description: "A D&D 5e character builder and DM toolkit.",
 };
 

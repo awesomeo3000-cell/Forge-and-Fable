@@ -1,6 +1,6 @@
-# Forge & Fable
+# Dreamwright
 
-Forge & Fable is a local Next.js 16 character builder and play console inspired by a cinematic RPG HUD. It includes vault login/register, a five-step D&D 5e-style character wizard, point-buy/standard-array/rolled stats, live ability and HP calculations, a dice tray, spell and inventory tabs, and a small command console.
+Dreamwright is a local Next.js 16 character builder and play console inspired by a cinematic RPG HUD. It includes vault login/register, a five-step D&D 5e-style character wizard, point-buy/standard-array/rolled stats, live ability and HP calculations, a dice tray, spell and inventory tabs, and a small command console.
 
 ## Environment
 

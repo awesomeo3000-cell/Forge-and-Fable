@@ -1,17 +1,14 @@
 "use client";
 
 import { memo } from "react";
+import { BRAND_NAME } from "@/lib/brand";
 
 export default memo(function SplashScreen() {
   return (
     <main className="entry-screen ao-title-entry">
       <div className="ao-title-stack">
         <span className="ao-title-eyebrow">A Clarebear D&amp;D character builder</span>
-        <h1 className="ao-title-wordmark">
-          Forge
-          <br />
-          &amp; Fable
-        </h1>
+        <h1 className="ao-title-wordmark">{BRAND_NAME}</h1>
         <div className="ao-title-rule" aria-hidden="true">
           ✦
         </div>

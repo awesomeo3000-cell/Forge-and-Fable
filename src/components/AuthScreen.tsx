@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { FormEvent } from "react";
 import type { AuthMode } from "@/types/game";
+import { BRAND_NAME } from "@/lib/brand";
 
 export default memo(function AuthScreen(props: {
   mode: AuthMode;
@@ -17,13 +18,11 @@ export default memo(function AuthScreen(props: {
   onSubmit: (event: FormEvent) => void;
 }) {
   const registering = props.mode === "register";
-  // Working brand name — flip this one line to preview a candidate.
-  const BRAND = "Keepsake";
   return (
     <main className="entry-screen ao-title-entry">
       <div className="ao-title-stack">
         <span className="ao-title-eyebrow">A D&amp;D character builder &amp; DM toolkit</span>
-        <h1 className="ao-title-wordmark">{BRAND}</h1>
+        <h1 className="ao-title-wordmark">{BRAND_NAME}</h1>
         <div className="ao-title-rule" aria-hidden="true">
           ✦
         </div>

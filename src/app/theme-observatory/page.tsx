@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Arcane Observatory — token showcase",
@@ -65,7 +66,7 @@ export default function ThemeObservatoryPage() {
   return (
     <div data-theme="arcane-observatory" className="ao-sc-root">
       <header className="ao-sc-masthead">
-        <p className="ao-sc-eyebrow">Forge &amp; Fable — internal review surface</p>
+        <p className="ao-sc-eyebrow">{BRAND_NAME} — internal review surface</p>
         <h1>Arcane Observatory tokens</h1>
         <p className="ao-sc-lede">
           Phase 1 semantic foundation. Every value below is a candidate until

@@ -2,6 +2,7 @@ import type { AbilityKey, AbilityScores, Character, CharacterEffect, CharacterSe
 import { DEFAULT_STARTING_HP } from "@/lib/constants";
 import { BACKGROUND_TOOL_GRANTS, CLASS_TOOL_GRANTS } from "@/lib/srd";
 import { buildStartingHp } from "@/lib/hitPoints";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const abilityKeys: AbilityKey[] = [
   "strength",
@@ -72,13 +73,13 @@ export const sourceOptions = [
     id: "homebrew",
     name: "Homebrew",
     summary:
-      "Character options designed by other players and uploaded to Forge & Fable. Talk to your DM before including Homebrew content.",
+      `Character options designed by other players and uploaded to ${BRAND_NAME}. Talk to your DM before including Homebrew content.`,
   },
   {
     id: "5-5e-core",
     name: "5.5e Core Rules",
     summary:
-      "Character options from the 5.5e Player's Handbook, Dungeon Master's Guide, Monster Manual, and Forge & Fable Basic Rules.",
+      `Character options from the 5.5e Player's Handbook, Dungeon Master's Guide, Monster Manual, and ${BRAND_NAME} Basic Rules.`,
   },
   {
     id: "5-5e-expanded",

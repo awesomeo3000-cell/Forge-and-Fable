@@ -1,7 +1,7 @@
 /**
  * POST /api/import/pdf/create
  *
- * Accepts a reviewed ImportDraft and creates a real Forge & Fable character.
+ * Accepts a reviewed ImportDraft and creates a real Dreamwright character.
  * Validates through the normal character validation pipeline.
  */
 

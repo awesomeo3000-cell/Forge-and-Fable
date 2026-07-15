@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Metadata } from "next";
+import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Arcane Observatory — accent palette options",
@@ -157,7 +158,7 @@ export default function PaletteOptionsPage(): ReactNode {
   return (
     <div data-theme="arcane-observatory" className="ao-sc-root">
       <header className="ao-sc-masthead">
-        <p className="ao-sc-eyebrow">Forge &amp; Fable — internal review surface</p>
+        <p className="ao-sc-eyebrow">{BRAND_NAME} — internal review surface</p>
         <h1>Accent options beside the arcane blue</h1>
         <p className="ao-sc-lede">
           Surfaces, arcane-blue selection and seal-red action are FIXED in
