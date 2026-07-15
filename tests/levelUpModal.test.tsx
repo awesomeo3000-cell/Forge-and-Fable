@@ -25,6 +25,24 @@ function render(classId: string, level: number, newLevel: number) {
   }));
 }
 
+function renderLegacyCharacter() {
+  return renderToStaticMarkup(createElement(LevelUpModal, {
+    character: { ruleset: "2014", level: 1, maxHp: 12, currentHp: 12, skillProficiencies: ["athletics"] },
+    newLevel: 2,
+    finalAbilities: abilities,
+    classId: "fighter",
+    className: "fighter",
+    hitDie: 10,
+    asiLevels: [4, 8, 12, 16, 19],
+    subclassLevel: 3,
+    casterType: "none",
+    skipHp: true,
+    hitPointType: defaultCharacterSettings().hitPointType,
+    onConfirm: () => undefined,
+    onCancel: () => undefined,
+  }));
+}
+
 describe("engine-driven level-up modal", () => {
   it("renders required level-one class choices from the progression plan", () => {
     const html = render("fighter", 0, 1);
@@ -38,5 +56,9 @@ describe("engine-driven level-up modal", () => {
     expect(html).toContain("Subclass");
     expect(html).toContain("Berserker");
     expect(html).not.toContain("Wild Soul");
+  });
+
+  it("keeps legacy characters without spellsKnown usable", () => {
+    expect(() => renderLegacyCharacter()).not.toThrow();
   });
 });

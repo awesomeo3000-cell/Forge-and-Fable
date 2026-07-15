@@ -10471,6 +10471,7 @@ button.dj-card {
    the seal" mess). Restore it. */
 .ledger-page > .modal-close {
   position: absolute;
+  z-index: 2;
 }
 
 /* ── Level-up modal inherits the character's skin ──

@@ -65,7 +65,7 @@ export default memo(function LevelUpModal({
   characterName,
   gainedFeatures = [],
 }: {
-  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; abilities?: AbilityScores; subclassId?: string; spellsKnown: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
+  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; abilities?: AbilityScores; subclassId?: string; spellsKnown?: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -92,6 +92,7 @@ export default memo(function LevelUpModal({
   gainedFeatures?: { name: string; description: string }[];
 }) {
   const conMod = abilityModifier(finalAbilities.constitution);
+  const knownSpells = character.spellsKnown ?? [];
 
   const [step, setStep] = useState(0);
   const [pickedSubclass, setPickedSubclass] = useState("");
@@ -175,7 +176,7 @@ export default memo(function LevelUpModal({
   const availableSpells = (anyClassSpellChoice ? ALL_SPELLS : spellsForClass(spellSourceClass))
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
     .filter((s) => restrictedSchools.length === 0 || restrictedSchools.includes(s.school.toLowerCase()))
-    .filter((s) => !character.spellsKnown.includes(s.id))
+    .filter((s) => !knownSpells.includes(s.id))
     .slice(0, 50);
   const plannedSpellCount = progressionPlan.spellChanges.find((change) => change.kind === "spells-known" || change.kind === "spellbook-spells")?.count;
   const choiceSpellCount = progressionPlan.choices.map((choice) => Number(choice.choiceId.match(/choose-(\d+).*(?:spell)/)?.[1] ?? 0)).reduce((max, count) => Math.max(max, count), 0);
@@ -196,7 +197,7 @@ export default memo(function LevelUpModal({
   const availableCantrips = spellsForClass(cantripSourceClass)
     .filter((s) => s.level === 0)
     .filter((s) => !cantripChoices.some((choice) => choice.choiceId === "choose-light-cantrip") || s.id === "light")
-    .filter((s) => !character.spellsKnown.includes(s.id))
+    .filter((s) => !knownSpells.includes(s.id))
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, 50);
   const cantripTarget = Math.min(newCantripsCount, availableCantrips.length);
@@ -312,7 +313,7 @@ export default memo(function LevelUpModal({
     // Feat spells are drawn from ALL spells of the given level and school — a
     // feat's spell grant is independent of the class list, so this works for
     // non-casters (Fighter/Rogue/etc.) too, not just spellcasters.
-    let candidates = ALL_SPELLS.filter((s) => s.level === spellLevel && !character.spellsKnown.includes(s.id));
+    let candidates = ALL_SPELLS.filter((s) => s.level === spellLevel && !knownSpells.includes(s.id));
     if (schools && schools.length > 0) {
       candidates = candidates.filter((s) => schools.includes(s.school.toLowerCase()));
     }
@@ -450,13 +451,13 @@ export default memo(function LevelUpModal({
     }
     if (Object.keys(nextFeatureChoices).length > 0) data.featureChoices = nextFeatureChoices;
     if ((hasSpells && pickedSpells.length > 0) || (hasCantrips && pickedCantrips.length > 0)) {
-      let updated = [...character.spellsKnown, ...pickedCantrips, ...pickedSpells];
+      let updated = [...knownSpells, ...pickedCantrips, ...pickedSpells];
       // The swap is a known-caster feature; wizard spellbooks never forget.
       if (spellToForget && classId !== "wizard") {
         updated = updated.filter((id) => id !== spellToForget);
       }
       data.spellsKnown = updated;
-      if (classId === "wizard") data.spellbookSpells = Array.from(new Set([...(character.spellbookSpells ?? character.spellsKnown), ...pickedCantrips, ...pickedSpells]));
+      if (classId === "wizard") data.spellbookSpells = Array.from(new Set([...(character.spellbookSpells ?? knownSpells), ...pickedCantrips, ...pickedSpells]));
     }
     // Feat-granted spells: add both fixed and chosen spells, and register them
     // as free-use (once per long rest, no slot) with the feat as their source.
@@ -468,7 +469,7 @@ export default memo(function LevelUpModal({
           ...featSpellChoices,
         ];
         if (grantSpells.length > 0) {
-          data.spellsKnown = [...(data.spellsKnown as string[] ?? character.spellsKnown), ...grantSpells];
+          data.spellsKnown = [...(data.spellsKnown as string[] ?? knownSpells), ...grantSpells];
           const statuses: Record<string, SpellStatus> = { ...(character.spellStatuses ?? {}) };
           for (const id of grantSpells) {
             statuses[id] = { source: `${feat.name} feat`, freeUse: true, freeUsed: false };
