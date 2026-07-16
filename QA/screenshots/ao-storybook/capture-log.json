@@ -1,0 +1,75 @@
+{
+  "log": [
+    {
+      "step": "register + verify + login",
+      "status": "ok",
+      "detail": "ao_storybook_1784183230103@forge.test"
+    },
+    {
+      "step": "open standard creator",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "chapter 1 (provenance) banner",
+      "status": "ok",
+      "detail": "src=/commission/provenance-banner.webp loaded=true chip=\"The first page of the commission\""
+    },
+    {
+      "step": "chapter 2 (likeness) banner",
+      "status": "ok",
+      "detail": "src=/commission/likeness-banner.webp loaded=true chip=\"An artist's observatory corner\""
+    },
+    {
+      "step": "chapter 3 (vocation) banner",
+      "status": "ok",
+      "detail": "src=/commission/vocation-banner.webp loaded=true chip=\"Arcane hall of callings\""
+    },
+    {
+      "step": "chapter 4 (origin) banner",
+      "status": "ok",
+      "detail": "src=/commission/origin-banner.webp loaded=true chip=\"A cabinet of past lives\""
+    },
+    {
+      "step": "chapter 5 (lineage) banner",
+      "status": "ok",
+      "detail": "src=/commission/lineage-banner.webp loaded=true chip=\"A storybook naturalist's gallery\""
+    },
+    {
+      "step": "chapter 6 (attributes) banner",
+      "status": "ok",
+      "detail": "src=/commission/attributes-banner.webp loaded=true chip=\"An enchanted measuring chamber\""
+    },
+    {
+      "step": "chapter 7 (seal) backdrop",
+      "status": "ok",
+      "detail": "data-art-mode=backdrop banners=0"
+    },
+    {
+      "step": "responsive vocation @ 768x1024",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "responsive seal @ 768x1024",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "responsive vocation @ 390x844",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "responsive seal @ 390x844",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "console errors",
+      "status": "ok",
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}

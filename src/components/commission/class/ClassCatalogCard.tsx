@@ -28,6 +28,7 @@ export default function ClassCatalogCard(props: {
       data-selected={props.selected || undefined}
       data-previewed={(props.previewed && !props.selected) || undefined}
       aria-pressed={props.selected}
+      aria-label={`${heroClass.name}${props.selected ? ", chosen" : props.previewed ? ", previewing" : ""}`}
       onClick={props.onPreview}
     >
       {CLASS_ART_IDS.has(heroClass.id) ? (
@@ -40,16 +41,20 @@ export default function ClassCatalogCard(props: {
         </span>
       )}
       <span className="ao-class-card-emblem" aria-hidden="true">
-        <ClassIconPlaceholder classId={heroClass.id} size={22} strokeWidth={1.5} />
+        <ClassIconPlaceholder classId={heroClass.id} size={28} strokeWidth={1.5} />
       </span>
       <span className="ao-class-card-copy">
         <strong className="ao-class-card-name">{heroClass.name}</strong>
         <span className="ao-class-card-desc">{classCardDescription(heroClass)}</span>
       </span>
       {props.selected ? (
-        <em className="ao-class-card-state">Chosen ✓</em>
+        <span className="ao-class-card-state" aria-hidden="true">
+          <span className="ao-class-card-state-mark">✓</span> Chosen
+        </span>
       ) : props.previewed ? (
-        <em className="ao-class-card-state previewing">Previewing</em>
+        <span className="ao-class-card-state previewing" aria-hidden="true">
+          <span className="ao-class-card-state-mark">◉</span> Previewing
+        </span>
       ) : null}
     </button>
   );

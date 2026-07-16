@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, type CSSProperties } from "react";
 import type {
   AbilityKey,
   AbilityScores,
@@ -30,6 +30,8 @@ import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
 import ClassChapter from "@/components/commission/class/ClassChapter";
+import CommissionChapterBanner from "@/components/commission/CommissionChapterBanner";
+import { COMMISSION_CHAPTER_ARTWORK } from "@/lib/commissionChapterArtwork";
 import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
 
 import { CHAPTERS, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
@@ -327,10 +329,20 @@ export default memo(function CreatorPanel(props: {
   const portraitIndex = props.draft.portraitUrl
     ? PORTRAITS.findIndex((item) => item.id === props.draft.portraitUrl)
     : -1;
+  /* A draft may persist a retired catalog ID (the 2026-07-15 built-in purge).
+     That is neither a catalog portrait nor a loadable URL — never render it
+     as a "custom image" tile or preview. */
+  const isCustomPortrait = Boolean(
+    props.draft.portraitUrl &&
+      !isCatalogPortrait(props.draft.portraitUrl) &&
+      /^(https?:|data:|blob:|\/)/.test(props.draft.portraitUrl),
+  );
   const portraitLabel = props.draft.portraitUrl
     ? portraitIndex >= 0
       ? `Portrait ${String(portraitIndex + 1).padStart(2, "0")}`
-      : "custom image"
+      : isCustomPortrait
+        ? "custom image"
+        : ""
     : "";
   const decidedValues = [
     props.draft.name.trim(),
@@ -390,24 +402,40 @@ export default memo(function CreatorPanel(props: {
     });
   };
 
+  // The Seal presents the finished hero over the chapter's full illustration
+  // (art handoff §7/§9.VII) — the only chapter using backdrop mode by default.
+  const backdropMode = props.step === 6;
+  const sealArtwork = COMMISSION_CHAPTER_ARTWORK.seal;
+
   return (
     <>
-      <div className="creator-panel paper-surface dj-dossier ledger-spread ao-orrery">
+      <div
+        className="creator-panel paper-surface dj-dossier ledger-spread ao-orrery"
+        data-art-mode={backdropMode ? "backdrop" : "banner"}
+        style={
+          backdropMode
+            ? ({
+                "--chapter-backdrop": `url("${sealArtwork.backdropSrc}")`,
+                "--chapter-backdrop-position": sealArtwork.backdropPosition,
+              } as CSSProperties)
+            : undefined
+        }
+      >
+        <div className="ao-orrery-brand">
+          <span className="ao-orrery-brand-label">The Commission</span>
+          <span
+            className="ao-forge-meter"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={6}
+            aria-valuenow={decidedCount}
+            aria-label="Commission progress"
+          >
+            <span style={{ width: `${(decidedCount / 6) * 100}%` }} />
+          </span>
+          <small className="ao-orrery-brand-count">{decidedCount} of 6 choices complete</small>
+        </div>
         <nav className="ao-orrery-path" aria-label="Character builder steps">
-          <div className="ao-orrery-brand">
-            <span className="ao-orrery-brand-label">The Commission</span>
-            <span
-              className="ao-forge-meter"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={6}
-              aria-valuenow={decidedCount}
-              aria-label="Commission progress"
-            >
-              <span style={{ width: `${(decidedCount / 6) * 100}%` }} />
-            </span>
-            <small className="ao-orrery-brand-count">{decidedCount} of 6 decided</small>
-          </div>
           <ol className="ao-orrery-steps">
             {steps.map((step, index) => {
               const active = index === props.step;
@@ -440,28 +468,33 @@ export default memo(function CreatorPanel(props: {
         </nav>
 
         <section className="dj-document">
-          <header className="dj-document-header">
-            <span className="dj-eyebrow">Record of the adventurer</span>
-            <h2>{props.draft.name.trim() || <span>unwritten</span>}</h2>
-            <p>
-              <StepSlot value={race?.name} label="species" />
-              <span aria-hidden="true"> / </span>
-              <StepSlot value={selectedClass?.name} label="class" />
-              <span aria-hidden="true"> / </span>
-              <StepSlot value={props.draft.background} label="origin" />
-              <span aria-hidden="true"> / </span>
-              <StepSlot value={props.draft.alignment} label="alignment" />
-            </p>
-          </header>
+          {/* The oversized "Record of the Adventurer" identity block is gone
+              from the decision chapters (refinement handoff §1) — identity
+              lives in the compact preview. The Seal keeps it as the record. */}
+          {props.step === 6 ? (
+            <header className="dj-document-header">
+              <span className="dj-eyebrow">Record of the adventurer</span>
+              <h2>{props.draft.name.trim() || <span>unwritten</span>}</h2>
+              <p>
+                <StepSlot value={race?.name} label="species" />
+                <span aria-hidden="true"> / </span>
+                <StepSlot value={selectedClass?.name} label="class" />
+                <span aria-hidden="true"> / </span>
+                <StepSlot value={props.draft.background} label="origin" />
+                <span aria-hidden="true"> / </span>
+                <StepSlot value={props.draft.alignment} label="alignment" />
+              </p>
+            </header>
+          ) : null}
 
           <section className="dj-section" aria-labelledby="dj-section-title">
             {props.step !== 6 ? (
-              <div className="ledger-chapter-head">
-                <h3 className="ledger-chapter-title" id="dj-section-title">
-                  {`Chapter ${CHAPTERS[props.step].numeral} · ${CHAPTERS[props.step].name}`}
-                </h3>
-                <p className="ledger-chapter-sub">{CHAPTERS[props.step].subtitle}</p>
-              </div>
+              <CommissionChapterBanner
+                step={props.step}
+                eyebrow={`Chapter ${CHAPTERS[props.step].numeral}`}
+                title={CHAPTERS[props.step].name}
+                intro={CHAPTERS[props.step].intro}
+              />
             ) : null}
 
             {props.step === 0 ? (
@@ -487,62 +520,86 @@ export default memo(function CreatorPanel(props: {
 
             {props.step === 1 ? (
               <div className="ao-portrait-step">
-                <div className="ao-portrait-toolbar">
-                  <p className="ao-portrait-hint">
-                    {portraitLabel
-                      ? `${portraitLabel} · private until the character joins a campaign`
-                      : "The likeness is optional — you can return to this chapter any time."}
-                  </p>
-                  <button
-                    type="button"
-                    className="ledger-button small"
-                    onClick={() => setPortraitLinkOpen(true)}
-                  >
-                    Use an image link
-                  </button>
-                </div>
-                <div className="ao-portrait-grid" role="radiogroup" aria-label="Portrait library">
-                  {PORTRAITS.map((portrait, index) => {
-                    const chosen = props.draft.portraitUrl === portrait.id;
-                    const label = `Portrait ${String(index + 1).padStart(2, "0")}`;
-                    return (
+                {/* Gallery + large selected-portrait preview (refinement §11)
+                    instead of an eight-column asset browser. Portraits stay
+                    unlabeled; the generated name exists only for a11y. */}
+                <div className="ao-portrait-workspace">
+                  <div className="ao-portrait-grid" role="radiogroup" aria-label="Portrait library">
+                    {PORTRAITS.map((portrait, index) => {
+                      const chosen = props.draft.portraitUrl === portrait.id;
+                      const label = `Portrait ${String(index + 1).padStart(2, "0")}`;
+                      return (
+                        <button
+                          key={portrait.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={chosen}
+                          aria-label={label}
+                          className={`ao-portrait-choice${chosen ? " selected" : ""}`}
+                          onClick={() => props.onDraftChange({ ...props.draft, portraitUrl: portrait.id })}
+                        >
+                          <span className="ao-portrait-art" style={portraitFrameCss(portrait.id)} aria-hidden="true">
+                            <span className="ao-portrait-mark" aria-hidden="true">✓</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {isCustomPortrait ? (
                       <button
-                        key={portrait.id}
                         type="button"
                         role="radio"
-                        aria-checked={chosen}
-                        aria-label={label}
-                        className={`ao-portrait-choice${chosen ? " selected" : ""}`}
-                        onClick={() => props.onDraftChange({ ...props.draft, portraitUrl: portrait.id })}
+                        aria-checked={true}
+                        aria-label="Custom image"
+                        className="ao-portrait-choice selected"
+                        onClick={() => setPortraitLinkOpen(true)}
                       >
-                        <span className="ao-portrait-art" style={portraitFrameCss(portrait.id)} aria-hidden="true">
+                        <span
+                          className="ao-portrait-art"
+                          style={{
+                            backgroundImage: `url("${props.draft.portraitUrl}")`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }}
+                          aria-hidden="true"
+                        >
                           <span className="ao-portrait-mark" aria-hidden="true">✓</span>
                         </span>
                       </button>
-                    );
-                  })}
-                  {props.draft.portraitUrl && !isCatalogPortrait(props.draft.portraitUrl) ? (
+                    ) : null}
+                  </div>
+                  <aside className="ao-portrait-selected" aria-label="Selected portrait">
+                    {props.draft.portraitUrl && (isCatalogPortrait(props.draft.portraitUrl) || isCustomPortrait) ? (
+                      <span
+                        className="ao-portrait-selected-art"
+                        style={
+                          isCatalogPortrait(props.draft.portraitUrl)
+                            ? portraitFrameCss(props.draft.portraitUrl)
+                            : {
+                                backgroundImage: `url("${props.draft.portraitUrl}")`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                              }
+                        }
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <span className="ao-portrait-selected-empty" aria-hidden="true">
+                        <span>?</span>
+                      </span>
+                    )}
+                    <p className="ao-portrait-hint">
+                      {portraitLabel
+                        ? `${portraitLabel} · private until the character joins a campaign`
+                        : "The likeness is optional — you can return to this chapter any time."}
+                    </p>
                     <button
                       type="button"
-                      role="radio"
-                      aria-checked={true}
-                      aria-label="Custom image"
-                      className="ao-portrait-choice selected"
+                      className="ledger-button small"
                       onClick={() => setPortraitLinkOpen(true)}
                     >
-                      <span
-                        className="ao-portrait-art"
-                        style={{
-                          backgroundImage: `url("${props.draft.portraitUrl}")`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                        aria-hidden="true"
-                      >
-                        <span className="ao-portrait-mark" aria-hidden="true">✓</span>
-                      </span>
+                      Use an image link
                     </button>
-                  ) : null}
+                  </aside>
                 </div>
               </div>
             ) : null}
@@ -1064,7 +1121,7 @@ export default memo(function CreatorPanel(props: {
             ) : null}
           </section>
 
-          <div className="creator-footer dj-footer">
+          <div className="creator-footer dj-footer ao-commission-actions">
             {props.onBackToBuildModes ? (
               <button
                 className="ledger-button"
@@ -1127,13 +1184,16 @@ export default memo(function CreatorPanel(props: {
         </section>
 
         <aside className="ao-forge-preview ao-orrery-preview" aria-label="Character preview">
+          {/* NOT .ao-forge-portrait — AO-7's plate treatment forces that class
+              to width/height 100% !important, which blew this compact card up
+              and clipped it off-screen (refinement handoff §2 bug). */}
           <CharacterPortrait
             portraitId={props.draft.portraitUrl || null}
             characterName={props.draft.name || "Adventurer"}
-            size={62}
+            size={48}
             shape="circle"
             decorative
-            className="ao-forge-portrait"
+            className="ao-orrery-portrait"
           />
           <div className="ao-orrery-preview-copy">
             <strong>{props.draft.name.trim() || "Unwritten"}</strong>
@@ -1144,7 +1204,7 @@ export default memo(function CreatorPanel(props: {
             <small>
               {[race ? parseSpeciesName(race.name).displayName : null, props.draft.background || null]
                 .filter(Boolean)
-                .join(" · ") || "The forge awaits its commission."}
+                .join(" · ") || "Choose a calling to shape the commission."}
             </small>
           </div>
         </aside>

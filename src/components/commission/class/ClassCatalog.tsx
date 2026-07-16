@@ -22,6 +22,10 @@ export default function ClassCatalog(props: {
 
   return (
     <section className="ao-class-catalog" aria-label="Class catalog">
+      <div className="ao-class-catalog-head">
+        <h4 className="ao-class-catalog-title">Class Library</h4>
+        <span className="ao-class-catalog-total">{props.totalCount} classes</span>
+      </div>
       <div className="ao-class-catalog-tools">
         <input
           type="search"

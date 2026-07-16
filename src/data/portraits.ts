@@ -35,32 +35,14 @@ export type PortraitOption = {
 
 /* ── Full catalog ───────────────────────────────────────────────────────── */
 
-const BUILT_IN_PORTRAITS: readonly PortraitOption[] = [
-  { id: "portrait-aasimar-01",    src: "/portraits/aasimar-male.png",    suggestedAncestries: ["aasimar"],          frame: { cx: 256, cy: 249, r: 203 } },
-  { id: "portrait-aasimar-02",    src: "/portraits/aasimar-female.png",   suggestedAncestries: ["aasimar"],          frame: { cx: 256, cy: 249, r: 203 } },
-  { id: "portrait-dwarf-01",      src: "/portraits/dwarf-male.png",       suggestedAncestries: ["dwarf"],            frame: { cx: 300, cy: 272, r: 190 } },
-  { id: "portrait-dwarf-02",      src: "/portraits/dwarf-female.png",     suggestedAncestries: ["dwarf"],            frame: { cx: 240, cy: 265, r: 200 } },
-  { id: "portrait-elf-01",        src: "/portraits/elf-male.png",         suggestedAncestries: ["elf", "half-elf"],  frame: { cx: 290, cy: 255, r: 215 } },
-  { id: "portrait-elf-02",        src: "/portraits/elf-female.png",       suggestedAncestries: ["elf", "half-elf"],  frame: { cx: 232, cy: 252, r: 205 } },
-  { id: "portrait-genasi-01",     src: "/portraits/genasi-male.png",      suggestedAncestries: ["genasi"],           frame: { cx: 256, cy: 249, r: 203 } },
-  { id: "portrait-genasi-02",     src: "/portraits/genasi-female.png",    suggestedAncestries: ["genasi"],           frame: { cx: 257, cy: 252, r: 232 } },
-  { id: "portrait-gnome-01",      src: "/portraits/gnome-male.png",       suggestedAncestries: ["gnome"],            frame: { cx: 310, cy: 290, r: 195 } },
-  { id: "portrait-gnome-02",      src: "/portraits/gnome-female.png",     suggestedAncestries: ["gnome"],            frame: { cx: 235, cy: 265, r: 200 } },
-  { id: "portrait-goliath-01",    src: "/portraits/goliath-male.png",     suggestedAncestries: ["goliath"],          frame: { cx: 256, cy: 249, r: 203 } },
-  { id: "portrait-goliath-02",    src: "/portraits/goliath-female.png",   suggestedAncestries: ["goliath"],          frame: { cx: 256, cy: 249, r: 203 } },
-  { id: "portrait-half-elf-01",   src: "/portraits/half-elf-male.png",    suggestedAncestries: ["half-elf", "elf"],  frame: { cx: 300, cy: 235, r: 212 } },
-  { id: "portrait-half-elf-02",   src: "/portraits/half-elf-female.png",  suggestedAncestries: ["half-elf", "elf"],  frame: { cx: 232, cy: 242, r: 210 } },
-  { id: "portrait-halfling-01",   src: "/portraits/halfling-male.png",    suggestedAncestries: ["halfling"],         frame: { cx: 300, cy: 255, r: 205 } },
-  { id: "portrait-halfling-02",   src: "/portraits/halfling-female.png",  suggestedAncestries: ["halfling"],         frame: { cx: 230, cy: 240, r: 210 } },
-  { id: "portrait-human-01",      src: "/portraits/human-male.png",       suggestedAncestries: ["human"],            frame: { cx: 256, cy: 254, r: 243 } },
-  { id: "portrait-human-02",      src: "/portraits/human-female.png",     suggestedAncestries: ["human"],            frame: { cx: 256, cy: 254, r: 243 } },
-  { id: "portrait-tiefling-01",   src: "/portraits/tiefling-male.png",    suggestedAncestries: ["tiefling"],         frame: { cx: 256, cy: 250, r: 205 } },
-  { id: "portrait-tiefling-02",   src: "/portraits/tiefling-female.png",  suggestedAncestries: ["tiefling"],         frame: { cx: 256, cy: 249, r: 205 } },
-] as const;
-
-/** Built-in portraits plus assets created by `npm run portraits:sync`. */
+/**
+ * The 20 hand-framed built-in portraits were retired on 2026-07-15: their
+ * source files were deleted from public/portraits/ in favor of the synced
+ * drop-in pipeline, and dead catalog entries rendered as blank selectable
+ * tiles (Orrery Path refinement §10). Every catalog entry must have a real
+ * file on disk — tests/portraitCatalog.test.ts enforces this.
+ */
 export const PORTRAITS: readonly PortraitOption[] = [
-  ...BUILT_IN_PORTRAITS,
   ...GENERATED_PORTRAITS,
 ];
 

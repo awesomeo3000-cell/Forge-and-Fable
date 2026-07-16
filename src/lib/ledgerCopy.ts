@@ -33,20 +33,23 @@ export const BUILD_MODE_DESCRIPTORS: Record<string, string> = {
   premade: "archetypes awaiting a name",
 };
 
-/** Builder chapters — same order and length as the existing `steps` array in CreatorPanel. */
+/** Builder chapters — same order and length as the existing `steps` array in CreatorPanel.
+    `intro` is the chapter-banner sentence from the Arcane Storybook art handoff mockup;
+    `subtitle` remains the short ledger fragment used elsewhere. */
 export const CHAPTERS: Array<{
   numeral: string;
   name: string;
   subtitle: string;
+  intro: string;
   action: string;
 }> = [
-  { numeral: "I", name: "Provenance", subtitle: "a name, and where the record may draw from", action: "Record the name" },
-  { numeral: "II", name: "The Likeness", subtitle: "no labels, no filters — pick the face that feels right", action: "Fix the likeness" },
-  { numeral: "III", name: "Vocation", subtitle: "every legend begins with a calling — choose the class that shapes this hero's path", action: "Seal the vocation" },
-  { numeral: "IV", name: "Origin", subtitle: "who were they, before the road?", action: "Record the origin" },
-  { numeral: "V", name: "Lineage", subtitle: "blood, and what it carries", action: "Seal the lineage" },
-  { numeral: "VI", name: "Attributes", subtitle: "the measure of body and mind", action: "Fix the attributes" },
-  { numeral: "VII", name: "The Seal", subtitle: "read it back, then press the seal", action: "Press the seal" },
+  { numeral: "I", name: "Provenance", subtitle: "a name, and where the record may draw from", intro: "Begin the commission by naming the hero and setting the rules that shape their story.", action: "Record the name" },
+  { numeral: "II", name: "The Likeness", subtitle: "no labels, no filters — pick the face that feels right", intro: "Choose the face that feels right, or bring your own portrait into the story.", action: "Fix the likeness" },
+  { numeral: "III", name: "Vocation", subtitle: "every legend begins with a calling — choose the class that shapes this hero's path", intro: "Every legend begins with a calling. Choose the class that shapes this hero's path.", action: "Seal the vocation" },
+  { numeral: "IV", name: "Origin", subtitle: "who were they, before the road?", intro: "Piece together the history, skills and experiences that brought this hero here.", action: "Record the origin" },
+  { numeral: "V", name: "Lineage", subtitle: "blood, and what it carries", intro: "Choose the ancestry, heritage and traits that shape the hero's place in the world.", action: "Seal the lineage" },
+  { numeral: "VI", name: "Attributes", subtitle: "the measure of body and mind", intro: "Measure the hero's strengths and refine the numbers behind the legend.", action: "Fix the attributes" },
+  { numeral: "VII", name: "The Seal", subtitle: "read it back, then press the seal", intro: "Review the completed commission and send this hero into the world.", action: "Press the seal" },
 ];
 
 /**

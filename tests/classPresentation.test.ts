@@ -1,5 +1,8 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ruleset } from "@/lib/ruleset";
+import { CLASS_ART_IDS, classArtSrc } from "@/lib/classArt";
 import {
   CLASS_SELECTOR_COPY,
   classCardDescription,
@@ -10,6 +13,13 @@ import {
 } from "@/components/commission/class/classPresentation";
 
 describe("class chapter presentation (Orrery Path)", () => {
+  it("has a real art file on disk for every mapped class", () => {
+    for (const id of CLASS_ART_IDS) {
+      const filePath = join(process.cwd(), "public", ...classArtSrc(id).split("/").filter(Boolean));
+      expect(existsSync(filePath), `missing class art for ${id}`).toBe(true);
+    }
+  });
+
   it("has selector copy for every ruleset class", () => {
     for (const heroClass of ruleset.classes) {
       expect(classCardDescription(heroClass)).toBeTruthy();

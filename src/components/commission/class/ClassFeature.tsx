@@ -18,9 +18,12 @@ export default function ClassFeature(props: {
   const { heroClass } = props;
   return (
     <section className="ao-class-feature" data-class={heroClass.id} aria-labelledby="ao-class-feature-name">
+      {/* The repository art is a wide landscape composition with calm negative
+          space on the left. Keep the image full-bleed so the identity can sit
+          over that quiet side without inventing new artwork. */}
       <div className="ao-class-feature-art">
         {CLASS_ART_IDS.has(heroClass.id) ? (
-          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 760px) 100vw, 420px" />
+          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 980px) 100vw, 920px" />
         ) : (
           <span className="ao-class-feature-art-fallback" aria-hidden="true">
             <ClassIconPlaceholder classId={heroClass.id} size={96} strokeWidth={1.25} />
