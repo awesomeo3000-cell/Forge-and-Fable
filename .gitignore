@@ -71,3 +71,10 @@ dev-server.log
 dev-server.err.log
 tmp/*.log
 .codex-*.log
+
+# backup directories
+.portrait-module-backup/
+.codex-vault-test/
+
+# temp/scratch directory
+/tmp/
