@@ -13330,6 +13330,10 @@ button.dj-card {
   --pm-gold: #c9a25a;
   --pm-gold-deep: #a8853f;
   --pm-ring: #4a4030;
+  --pm-dreamwright: #5b8ec9;
+  --pm-dreamwright-deep: #3d6496;
+  --pm-classic: #c9945a;
+  --pm-classic-deep: #9a6e3a;
 
   width: 100%;
   max-width: 880px;
@@ -13473,6 +13477,24 @@ button.dj-card {
   color: var(--pm-faint);
   font-weight: 500;
   margin-left: 4px;
+}
+
+/* Dreamwright tab: blue arcane accent */
+.portrait-modal-tab-dw.is-active {
+  color: var(--pm-dreamwright);
+  border-bottom-color: var(--pm-dreamwright);
+}
+.portrait-modal-tab-dw:focus-visible {
+  outline-color: var(--pm-dreamwright);
+}
+
+/* Classic tab: warm amber accent */
+.portrait-modal-tab-cl.is-active {
+  color: var(--pm-classic);
+  border-bottom-color: var(--pm-classic);
+}
+.portrait-modal-tab-cl:focus-visible {
+  outline-color: var(--pm-classic);
 }
 
 .portrait-modal-grid {

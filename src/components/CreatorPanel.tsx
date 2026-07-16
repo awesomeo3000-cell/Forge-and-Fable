@@ -31,7 +31,8 @@ import LineageChapter from "@/components/commission/lineage/LineageChapter";
 import { parseSpeciesName, speciesDetailLine } from "@/components/commission/lineage/lineagePresentation";
 import CommissionChapterBanner from "@/components/commission/CommissionChapterBanner";
 import { COMMISSION_CHAPTER_ARTWORK } from "@/lib/commissionChapterArtwork";
-import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
+import { PORTRAITS, PORTRAITS_BY_STYLE, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
+import type { PortraitStyle } from "@/data/portraits";
 
 import { CHAPTERS, ordinalLevel } from "@/lib/ledgerCopy";
 import {
@@ -91,6 +92,7 @@ export default memo(function CreatorPanel(props: {
   // "Use an image link" fallback on the Likeness step (AO-7b) — reuses the
   // selector modal, which owns link validation.
   const [portraitLinkOpen, setPortraitLinkOpen] = useState(false);
+  const [portraitStyleTab, setPortraitStyleTab] = useState<PortraitStyle | "all">("dreamwright");
 
   const selectedClass = props.draft.classId
     ? props.ruleset.classes.find((item) => item.id === props.draft.classId) ?? null
@@ -256,7 +258,12 @@ export default memo(function CreatorPanel(props: {
       : isCustomPortrait
         ? "custom image"
         : ""
-    : "";
+        : "";
+  const stylePortraits = portraitStyleTab === "all"
+    ? PORTRAITS
+    : (PORTRAITS_BY_STYLE.get(portraitStyleTab) ?? PORTRAITS);
+  const dwCount = PORTRAITS_BY_STYLE.get("dreamwright")?.length ?? 0;
+  const clCount = PORTRAITS_BY_STYLE.get("classic")?.length ?? 0;
   const decidedValues = [
     props.draft.name.trim(),
     portraitLabel,
@@ -422,12 +429,20 @@ export default memo(function CreatorPanel(props: {
 
             {props.step === 1 ? (
               <div className="ao-portrait-step">
-                {/* Gallery + large selected-portrait preview (refinement §11)
-                    instead of an eight-column asset browser. Portraits stay
-                    unlabeled; the generated name exists only for a11y. */}
+                <div className="ao-portrait-tabs" role="tablist" aria-label="Portrait styles">
+                  <button type="button" role="tab" aria-selected={portraitStyleTab === "dreamwright"}
+                    className={`ao-portrait-tab ao-portrait-tab-dw${portraitStyleTab === "dreamwright" ? " is-active" : ""}`}
+                    onClick={() => setPortraitStyleTab("dreamwright")}>Dreamwright <span className="ao-portrait-tab-count">{dwCount}</span></button>
+                  <button type="button" role="tab" aria-selected={portraitStyleTab === "classic"}
+                    className={`ao-portrait-tab ao-portrait-tab-cl${portraitStyleTab === "classic" ? " is-active" : ""}`}
+                    onClick={() => setPortraitStyleTab("classic")}>Classic <span className="ao-portrait-tab-count">{clCount}</span></button>
+                  <button type="button" role="tab" aria-selected={portraitStyleTab === "all"}
+                    className={`ao-portrait-tab${portraitStyleTab === "all" ? " is-active" : ""}`}
+                    onClick={() => setPortraitStyleTab("all")}>All Portraits <span className="ao-portrait-tab-count">{PORTRAITS.length}</span></button>
+                </div>
                 <div className="ao-portrait-workspace">
                   <div className="ao-portrait-grid" role="radiogroup" aria-label="Portrait library">
-                    {PORTRAITS.map((portrait, index) => {
+                    {stylePortraits.map((portrait, index) => {
                       const chosen = props.draft.portraitUrl === portrait.id;
                       const label = `Portrait ${String(index + 1).padStart(2, "0")}`;
                       return (

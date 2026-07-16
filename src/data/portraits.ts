@@ -16,6 +16,8 @@ export type PortraitFrame = {
   r: number;
 };
 
+export type PortraitStyle = "dreamwright" | "classic";
+
 export type PortraitOption = {
   /** Opaque stable ID — the value persisted on character.portraitUrl. */
   id: string;
@@ -23,6 +25,8 @@ export type PortraitOption = {
   src: string;
   /** Ancestries this portrait is a reasonable visual match for (sorting hint only). */
   suggestedAncestries: string[];
+  /** Visual style set this portrait belongs to. */
+  style: PortraitStyle;
   /**
    * Locates the painted face circle in the 512×512 source so rendering can
    * crop just inside it. Older assets are loose sheet crops with off-center
@@ -50,6 +54,11 @@ export const PORTRAITS: readonly PortraitOption[] = [
 
 export const PORTRAIT_BY_ID: ReadonlyMap<string, PortraitOption> = new Map(
   PORTRAITS.map((p) => [p.id, p]),
+);
+
+/** Portraits grouped by visual style for tab filtering. */
+export const PORTRAITS_BY_STYLE: ReadonlyMap<PortraitStyle, readonly PortraitOption[]> = new Map(
+  (["dreamwright", "classic"] as const).map((s) => [s, PORTRAITS.filter((p) => p.style === s)]),
 );
 
 /** Ancestries present in the catalog, sorted alphabetically (internal use only). */

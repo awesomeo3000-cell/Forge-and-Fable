@@ -2,10 +2,10 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X, CircleUser, Link, Upload } from "lucide-react";
-import { PORTRAITS, portraitFrameCss } from "@/data/portraits";
+import { PORTRAITS, PORTRAITS_BY_STYLE, portraitFrameCss } from "@/data/portraits";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
-import type { PortraitOption } from "@/data/portraits";
+import type { PortraitOption, PortraitStyle } from "@/data/portraits";
 
 type Props = {
   open: boolean;
@@ -18,7 +18,7 @@ type Props = {
   onClose: () => void;
 };
 
-type TabId = "suggested" | "all";
+type TabId = PortraitStyle | "all";
 
 function isValidImageLink(value: string): boolean {
   return /^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value);
@@ -43,7 +43,7 @@ export default memo(function PortraitSelectorModal({
 }: Props) {
   // Temporary selection — separate from the saved value until Save.
   const [pendingId, setPendingId] = useState<string | null>(value ?? null);
-  const [tab, setTab] = useState<TabId>(suggestedAncestry ? "suggested" : "all");
+  const [tab, setTab] = useState<TabId>("dreamwright");
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -57,7 +57,7 @@ export default memo(function PortraitSelectorModal({
     if (open) {
       triggerRef.current = document.activeElement as HTMLElement | null;
       setPendingId(value ?? null);
-      setTab(suggestedAncestry ? "suggested" : "all");
+      setTab("dreamwright");
       setLinkOpen(false);
       setLinkDraft("");
       setUploading(false);
@@ -128,14 +128,19 @@ export default memo(function PortraitSelectorModal({
     setPendingId(trimmed);
   }, [linkDraft]);
 
-  const suggestedPortraits = useMemo(() => {
-    if (!suggestedAncestry) return PORTRAITS;
-    return PORTRAITS.filter((p) => p.suggestedAncestries.includes(suggestedAncestry));
-  }, [suggestedAncestry]);
+  const displayPortraits: readonly PortraitOption[] = useMemo(() => {
+    let list = tab === "all" ? PORTRAITS : (PORTRAITS_BY_STYLE.get(tab) ?? PORTRAITS);
+    // Sort suggested portraits first when an ancestry hint is available.
+    if (suggestedAncestry) {
+      const suggested = list.filter((p) => p.suggestedAncestries.includes(suggestedAncestry));
+      const rest = list.filter((p) => !p.suggestedAncestries.includes(suggestedAncestry));
+      list = [...suggested, ...rest];
+    }
+    return list;
+  }, [tab, suggestedAncestry]);
 
-  const hasSuggestions = !!suggestedAncestry && suggestedPortraits.length > 0;
-  const displayPortraits: readonly PortraitOption[] =
-    tab === "suggested" && hasSuggestions ? suggestedPortraits : PORTRAITS;
+  const dreamwrightCount = PORTRAITS_BY_STYLE.get("dreamwright")?.length ?? 0;
+  const classicCount = PORTRAITS_BY_STYLE.get("classic")?.length ?? 0;
 
   const linkInvalid = linkDraft.trim() !== "" && !isValidImageLink(linkDraft.trim());
 
@@ -172,27 +177,34 @@ export default memo(function PortraitSelectorModal({
           <div className="portrait-modal-library">
             <div className="portrait-modal-library-head">
               <span className="portrait-modal-eyebrow">Portrait Library</span>
-              <p>Pick a portrait for your character{hasSuggestions ? " — suggestions are sorted for your species first" : ""}.</p>
+              <p>Pick a portrait for your character{suggestedAncestry ? " — matching portraits are sorted first" : ""}.</p>
             </div>
 
             {/* Tabs */}
-            <div className="portrait-modal-tabs" role="tablist" aria-label="Portrait views">
-              {hasSuggestions ? (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === "suggested"}
-                  className={`portrait-modal-tab${tab === "suggested" ? " is-active" : ""}`}
-                  onClick={() => setTab("suggested")}
-                >
-                  Suggested <span className="portrait-modal-tab-count">{suggestedPortraits.length}</span>
-                </button>
-              ) : null}
+            <div className="portrait-modal-tabs" role="tablist" aria-label="Portrait styles">
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === "all" || !hasSuggestions}
-                className={`portrait-modal-tab${tab === "all" || !hasSuggestions ? " is-active" : ""}`}
+                aria-selected={tab === "dreamwright"}
+                className={`portrait-modal-tab portrait-modal-tab-dw${tab === "dreamwright" ? " is-active" : ""}`}
+                onClick={() => setTab("dreamwright")}
+              >
+                Dreamwright <span className="portrait-modal-tab-count">{dreamwrightCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "classic"}
+                className={`portrait-modal-tab portrait-modal-tab-cl${tab === "classic" ? " is-active" : ""}`}
+                onClick={() => setTab("classic")}
+              >
+                Classic <span className="portrait-modal-tab-count">{classicCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "all"}
+                className={`portrait-modal-tab${tab === "all" ? " is-active" : ""}`}
                 onClick={() => setTab("all")}
               >
                 All Portraits <span className="portrait-modal-tab-count">{PORTRAITS.length}</span>
