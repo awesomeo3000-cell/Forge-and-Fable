@@ -23,7 +23,13 @@ export default function ClassFeature(props: {
           over that quiet side without inventing new artwork. */}
       <div className="ao-class-feature-art">
         {CLASS_ART_IDS.has(heroClass.id) ? (
-          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 980px) 100vw, 920px" />
+          <Image
+            src={classArtSrc(heroClass.id)}
+            alt=""
+            fill
+            sizes="(max-width: 980px) 100vw, 920px"
+            quality={90}
+          />
         ) : (
           <span className="ao-class-feature-art-fallback" aria-hidden="true">
             <ClassIconPlaceholder classId={heroClass.id} size={96} strokeWidth={1.25} />

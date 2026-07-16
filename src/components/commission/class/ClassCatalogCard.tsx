@@ -33,7 +33,7 @@ export default function ClassCatalogCard(props: {
     >
       {CLASS_ART_IDS.has(heroClass.id) ? (
         <span className="ao-class-card-art" aria-hidden="true">
-          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 760px) 90vw, 300px" />
+          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 760px) 90vw, 300px" quality={88} />
         </span>
       ) : (
         <span className="ao-class-card-fallback" aria-hidden="true">
