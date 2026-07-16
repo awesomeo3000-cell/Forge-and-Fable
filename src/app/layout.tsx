@@ -16,6 +16,10 @@ import "./arcane-observatory.css";
 // Carded Observatory character-sheet presentation — must stay after
 // arcane-observatory.css so its card rules win ties by cascade order.
 import "./character-sheet-carded-observatory.css";
+// AO-17 campaign workspace (Option C) — the full-page campaign home.
+// After arcane-observatory.css so its .ao-campaign-main / .ao-cw styles win
+// ties by cascade order.
+import "./ao17-campaign.css";
 import { BRAND_NAME } from "@/lib/brand";
 
 const fraunces = Fraunces({

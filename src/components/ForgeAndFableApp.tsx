@@ -54,7 +54,6 @@ import {
 import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
-import OnboardingPanel from "@/components/OnboardingPanel";
 import AdminPanel from "@/components/AdminPanel";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
@@ -79,6 +78,7 @@ import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
 import { patchFromSnapshot } from "@/lib/characterSnapshots";
 import { encodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
+import { formatCampaignHash, parseCampaignHash, type CampaignSection } from "@/lib/campaignRoute";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import { longRestRecovery } from "@/lib/restRecovery";
 import { deathSavePatch, type DeathSaveAction } from "@/lib/deathSaves";
@@ -86,6 +86,7 @@ import { deathSavePatch, type DeathSaveAction } from "@/lib/deathSaves";
 const CreatorPanel = dynamic(() => import("@/components/CreatorPanel"), { ssr: false });
 const FeedbackModal = dynamic(() => import("@/components/FeedbackModal"), { ssr: false });
 const CampaignPanel = dynamic(() => import("@/components/CampaignPanel"), { ssr: false });
+const CampaignWorkspacePage = dynamic(() => import("@/components/campaign/CampaignWorkspacePage"), { ssr: false });
 const DMTablePanel = dynamic(() => import("@/components/DMTablePanel"), { ssr: false });
 const CharacterImportModal = dynamic(() => import("@/components/CharacterImportModal"), { ssr: false });
 const QuickbuilderPanel = dynamic(() => import("@/components/QuickbuilderPanel"), { ssr: false });
@@ -180,11 +181,24 @@ export default function ForgeAndFableApp() {
     }, kind === "announce" ? 9000 : 6000);
   }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [campaignOpen, setCampaignOpen] = useState(false);
+  // A #/campaigns/<id>[/<section>] deep link (handoff §1, §20) opens the
+  // campaign workspace directly — the hash beats the remembered campaign.
+  const [campaignOpen, setCampaignOpen] = useState(
+    () => typeof window !== "undefined" && parseCampaignHash(window.location.hash) !== null,
+  );
+  // The DM's live table (DMTablePanel) is an overlay above the campaign
+  // workspace, launched by "Prepare Session" / "Open DM Screen" (handoff §2.3:
+  // live controls belong at the Table, not on the campaign page).
+  const [dmTableOpen, setDmTableOpen] = useState(false);
+  const [campaignSection, setCampaignSection] = useState<CampaignSection>(
+    () => (typeof window !== "undefined" ? parseCampaignHash(window.location.hash)?.section : undefined) ?? "overview",
+  );
   const [adminOpen, setAdminOpen] = useState(false);
   const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
-    () => typeof window !== "undefined" ? localStorage.getItem("forge-and-fable-active-campaign") : null,
+    () => typeof window !== "undefined"
+      ? parseCampaignHash(window.location.hash)?.campaignId ?? localStorage.getItem("forge-and-fable-active-campaign")
+      : null,
   );
   const [campaignSync, setCampaignSync] = useState<CampaignSyncPayload | null>(null);
   const [campaignEvents, setCampaignEvents] = useState<CampaignEvent[]>([]);
@@ -541,19 +555,49 @@ export default function ForgeAndFableApp() {
   // a DM (or player) can create/join/delete/leave without detaching first.
   const [campaignListOpen, setCampaignListOpen] = useState(false);
   const [scheduleSessionOpen, setScheduleSessionOpen] = useState(false);
-  // Bumped whenever the campaign/workshop panel closes so the home dashboard
-  // refetches sessions — a session scheduled in the workshop must appear on the
-  // front page without a full reload.
-  const [homeRefreshKey, setHomeRefreshKey] = useState(0);
+
+  // Back/forward navigation (handoff §20): the campaign workspace mirrors
+  // itself into the URL hash as #/campaigns/<id>[/<section>], so popstate
+  // re-applies whatever route the history entry holds. Initial deep links are
+  // adopted in the state initialisers where campaignOpen / campaignSection /
+  // activeCampaignId are declared.
+  const applyCampaignRoute = useEffectEvent((hash: string) => {
+    const route = parseCampaignHash(hash);
+    if (route) {
+      if (route.campaignId !== activeCampaignId) setActiveCampaign(route.campaignId);
+      setCampaignSection(route.section);
+      setCampaignOpen(true);
+      setCampaignListOpen(false);
+    } else {
+      setCampaignOpen(false);
+      setDmTableOpen(false);
+    }
+  });
   useEffect(() => {
-    if (!campaignOpen) setHomeRefreshKey((key) => key + 1);
-  }, [campaignOpen]);
+    const onPop = () => applyCampaignRoute(window.location.hash);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    const current = window.location.hash;
+    if (campaignOpen && activeCampaignId) {
+      const next = formatCampaignHash(activeCampaignId, campaignSection);
+      if (current !== next) window.history.pushState(null, "", next);
+    } else if (parseCampaignHash(current)) {
+      window.history.pushState(null, "", window.location.pathname + window.location.search);
+    }
+  }, [campaignOpen, activeCampaignId, campaignSection]);
+  // Derived from the campaign/workshop panel's open state: when it closes the
+  // value flips, so the home dashboard refetches sessions and a session
+  // scheduled in the workshop appears on the front page without a full reload.
+  // (Derivation avoids a set-state-in-effect; the panel renders behind Home.)
+  const homeRefreshKey = campaignOpen ? 1 : 0;
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
-  // Onboarding panel replaces forced character creation when the roster is empty
-  // and the user hasn't explicitly chosen a path yet.
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const showOnboarding = Boolean(user && !charactersLoading && characters.length === 0 && !creatorOpen && !creationPromptOpen && !onboardingDismissed);
+  // The context-aware home dashboard (AO-16) is the login destination for
+  // every account, including empty ones — the old "What brings you to the
+  // table?" role-choice gate was retired so returning users are never asked
+  // to pick a role again. The dashboard's new-user state covers first use.
   const showCreator = creatorOpen;
   const selectedFinalAbilities = useMemo(() => {
     if (!selected || !ruleset) {
@@ -624,6 +668,7 @@ export default function ForgeAndFableApp() {
           if (!cancelled && (res.status === 404 || res.status === 403 || res.status === 401)) {
             setActiveCampaign(null);
             setCampaignOpen(false);
+            setDmTableOpen(false);
           }
           return;
         }
@@ -1934,8 +1979,7 @@ export default function ForgeAndFableApp() {
 
   const characterSheetOpen = Boolean(!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen && selected);
   const dmScreenOpen = Boolean(
-    campaignOpen &&
-    !campaignListOpen &&
+    dmTableOpen &&
     campaignSync &&
     campaignSync.campaign.dmUserId === user?.id,
   );
@@ -2069,81 +2113,36 @@ export default function ForgeAndFableApp() {
         onClose={() => setImportOpen(false)}
       />
     ) : null}
-    {campaignOpen ? (
-      campaignListOpen ? <CampaignPanel
-        characters={characters}
-        currentUserId={user.id}
-        activeCampaignId={activeCampaignId}
-        campaignSync={campaignSync}
-        campaignEvents={campaignEvents}
-        resolvedEventIds={resolvedCampaignEvents}
-        onActiveCampaignChange={(id) => { setActiveCampaign(id); if (id) setCampaignListOpen(false); }}
-        onPostEvent={postCampaignEvent}
-        onRespondRollRequest={handleCampaignRollRequest}
-        onAcceptRest={applyCampaignRest}
-        onRespondLoot={respondToLoot}
-        onResolveEvent={resolveCampaignEvent}
-        onOpenSheet={(character) => setReadOnlyViewChar(character)}
-        onCreateCharacter={() => { setCampaignListOpen(false); setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => { setCampaignListOpen(false); setCampaignOpen(false); }}
-        theme={selected?.theme ?? null}
-        initialView="list"
-      /> :
-      campaignSync ? (campaignSync.campaign.dmUserId === user.id ? <DMTablePanel
-        campaign={campaignSync}
-        events={campaignEvents}
-        theme={selected?.theme ?? null}
-        onClose={() => setCampaignOpen(false)}
-        onOpenSheet={(character) => setReadOnlyViewChar(character)}
-        onPostEvent={postCampaignEvent}
-        onInitiativeUpdate={updateCampaignInitiative}
-        onOpenCampaigns={() => setCampaignListOpen(true)}
-        openScheduleSession={scheduleSessionOpen}
-        onScheduleSessionOpened={() => setScheduleSessionOpen(false)}
-      /> : <CampaignPanel
-        characters={characters}
-        currentUserId={user.id}
-        activeCampaignId={activeCampaignId}
-        campaignSync={campaignSync}
-        campaignEvents={campaignEvents}
-        resolvedEventIds={resolvedCampaignEvents}
-        onActiveCampaignChange={setActiveCampaign}
-        onPostEvent={postCampaignEvent}
-        onRespondRollRequest={handleCampaignRollRequest}
-        onAcceptRest={applyCampaignRest}
-        onRespondLoot={respondToLoot}
-        onResolveEvent={resolveCampaignEvent}
-        onOpenSheet={(character) => setReadOnlyViewChar(character)}
-        onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => setCampaignOpen(false)}
-        theme={selected?.theme ?? null}
-      />) : !activeCampaignId ? <CampaignPanel
-        characters={characters}
-        currentUserId={user.id}
-        activeCampaignId={null}
-        campaignSync={null}
-        campaignEvents={campaignEvents}
-        resolvedEventIds={resolvedCampaignEvents}
-        onActiveCampaignChange={setActiveCampaign}
-        onPostEvent={postCampaignEvent}
-        onRespondRollRequest={handleCampaignRollRequest}
-        onAcceptRest={applyCampaignRest}
-        onRespondLoot={respondToLoot}
-        onResolveEvent={resolveCampaignEvent}
-        onOpenSheet={(character) => setReadOnlyViewChar(character)}
-        onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
-        onClose={() => setCampaignOpen(false)}
-        theme={selected?.theme ?? null}
-      /> : (
-        <div className="modal-scrim" role="presentation" onMouseDown={() => { setCampaignOpen(false); setActiveCampaign(null); }}>
-          <section className="campaign-panel campaign-loading-panel" aria-label="Loading campaign" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="glass-icon modal-close" type="button" aria-label="Close campaign loading" onClick={() => { setCampaignOpen(false); setActiveCampaign(null); }}>×</button>
-            <p className="cs-muted">Opening campaign...</p>
-          </section>
-        </div>
-      )
-    ) : null}
-    {campaignSync && campaignSync.campaign.dmUserId !== user.id ? <CampaignTableStrip
+    {campaignListOpen ? <CampaignPanel
+      characters={characters}
+      activeCampaignId={activeCampaignId}
+      onActiveCampaignChange={(id) => {
+        if (id) {
+          if (id !== activeCampaignId) setActiveCampaign(id);
+          setCampaignSection("overview");
+          setCampaignListOpen(false);
+          setCampaignOpen(true);
+        } else {
+          setActiveCampaign(null);
+        }
+      }}
+      onCreateCharacter={() => { setCampaignListOpen(false); setCampaignOpen(false); beginBuild("standard"); }}
+      onClose={() => setCampaignListOpen(false)}
+      theme={selected?.theme ?? null}
+    /> : null}
+    {dmTableOpen && campaignSync && campaignSync.campaign.dmUserId === user.id ? <DMTablePanel
+      campaign={campaignSync}
+      events={campaignEvents}
+      theme={selected?.theme ?? null}
+      onClose={() => setDmTableOpen(false)}
+      onOpenSheet={(character) => setReadOnlyViewChar(character)}
+      onPostEvent={postCampaignEvent}
+      onInitiativeUpdate={updateCampaignInitiative}
+      onOpenCampaigns={() => setCampaignListOpen(true)}
+      openScheduleSession={scheduleSessionOpen}
+      onScheduleSessionOpened={() => setScheduleSessionOpen(false)}
+    /> : null}
+    {campaignSync && !campaignOpen && campaignSync.campaign.dmUserId !== user.id ? <CampaignTableStrip
       campaign={campaignSync}
       events={campaignEvents}
       currentUserId={user.id}
@@ -2217,9 +2216,15 @@ export default function ForgeAndFableApp() {
             type="button"
             className={`ao-nav-item${campaignOpen ? " active" : ""}`}
             aria-current={campaignOpen ? "page" : undefined}
-            onClick={() => setCampaignOpen(true)}
+            onClick={() => {
+              if (activeCampaignId) {
+                setCampaignOpen(true);
+              } else {
+                setCampaignListOpen(true);
+              }
+            }}
           >
-            <Swords size={19} /><span>Table</span>
+            <Swords size={19} /><span>Campaign</span>
           </button>
         </div>
         <div className="ao-nav-spacer" />
@@ -2230,7 +2235,7 @@ export default function ForgeAndFableApp() {
           <div>
             <span>Dreamwright</span>
             <strong>
-              {campaignOpen ? "The Table"
+              {campaignOpen ? campaignSync?.campaign.name ?? "Campaign"
                 : homeOpen ? "The Hearth"
                 : creationPromptOpen || creatorOpen ? "The Forge"
                 : selected ? selected.name
@@ -2242,7 +2247,7 @@ export default function ForgeAndFableApp() {
           {status ? <span className="system-status">{status}</span> : null}
           <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
-          <button className="glass-icon ink-action" type="button" onClick={() => { setCampaignListOpen(true); setCampaignOpen(true); }} title="Campaigns">
+          <button className="glass-icon ink-action" type="button" onClick={() => setCampaignListOpen(true)} title="Campaigns">
             <Swords size={18} />
           </button>
           {selected ? (
@@ -2264,7 +2269,63 @@ export default function ForgeAndFableApp() {
         </div>
       </header>
 
-      {homeOpen && !showOnboarding ? (
+      {campaignOpen && activeCampaignId ? (
+      <section className="ao-campaign-main">
+        {campaignSync && campaignSync.campaign.id === activeCampaignId ? (
+          <CampaignWorkspacePage
+            detail={campaignSync}
+            characters={characters}
+            currentUserId={user.id}
+            campaignEvents={campaignEvents}
+            resolvedEventIds={resolvedCampaignEvents}
+            section={campaignSection}
+            onSectionChange={setCampaignSection}
+            onBackToList={() => setCampaignListOpen(true)}
+            onCampaignClosed={() => { setActiveCampaign(null); setCampaignOpen(false); setDmTableOpen(false); setCampaignListOpen(true); }}
+            onActiveCampaignChange={setActiveCampaign}
+            onOpenSheet={(character) => {
+              // The viewer's own character opens the live, editable sheet —
+              // that is the player's seat at the table. Other members stay
+              // read-only.
+              const mine = characters.find((c) => c.id === character.id);
+              if (mine) {
+                setSelectedId(mine.id);
+                setCampaignOpen(false);
+                setHomeOpen(false);
+                setCreationPromptOpen(false);
+                setCreatorOpen(false);
+              } else {
+                setReadOnlyViewChar(character);
+              }
+            }}
+            onCreateCharacter={() => { setCampaignOpen(false); beginBuild("standard"); }}
+            onRespondRollRequest={handleCampaignRollRequest}
+            onAcceptRest={applyCampaignRest}
+            onRespondLoot={respondToLoot}
+            onResolveEvent={resolveCampaignEvent}
+            onPostEvent={postCampaignEvent}
+            onOpenTable={() => setDmTableOpen(true)}
+            onScheduleSession={() => { setScheduleSessionOpen(true); setDmTableOpen(true); }}
+          />
+        ) : (
+          /* Campaign-page skeleton (handoff §20.1): header, status row and a
+             content block hold their shape — no full-page spinner. */
+          <div className="ao-cw ao-cw-skeleton" aria-busy="true" aria-label="Opening campaign">
+            <div className="ao-cw-skeleton-hero" />
+            <div className="ao-cw-status-grid" aria-hidden="true">
+              <div className="ao-cw-skeleton-card" />
+              <div className="ao-cw-skeleton-card" />
+              <div className="ao-cw-skeleton-card" />
+              <div className="ao-cw-skeleton-card" />
+            </div>
+            <div className="ao-cw-skeleton-panel" aria-hidden="true" />
+            <button className="ao-cw-btn ao-cw-skeleton-escape" type="button" onClick={() => { setCampaignOpen(false); setCampaignListOpen(true); }}>
+              Back to Campaigns
+            </button>
+          </div>
+        )}
+      </section>
+      ) : homeOpen ? (
       <section className="ao-home-main">
         <HomeDashboard
           userName={user.name}
@@ -2274,9 +2335,9 @@ export default function ForgeAndFableApp() {
           campaignSync={campaignSync}
           campaignEvents={campaignEvents}
           refreshKey={homeRefreshKey}
-          onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setCampaignOpen(true); }}
-          onScheduleSession={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setScheduleSessionOpen(true); setCampaignOpen(true); }}
-          onOpenCampaigns={() => { setCampaignListOpen(true); setCampaignOpen(true); }}
+          onResumeCampaign={(campaignId) => { if (campaignId !== activeCampaignId) setActiveCampaign(campaignId); setCampaignSection("overview"); setCampaignListOpen(false); setCampaignOpen(true); }}
+          onScheduleSession={(campaignId) => { if (campaignId !== activeCampaignId) setActiveCampaign(campaignId); setCampaignSection("sessions"); setCampaignListOpen(false); setCampaignOpen(true); setScheduleSessionOpen(true); setDmTableOpen(true); }}
+          onOpenCampaigns={() => setCampaignListOpen(true)}
           onOpenCharacter={(characterId) => {
             setSelectedId(characterId);
             setHomeOpen(false);
@@ -2288,6 +2349,7 @@ export default function ForgeAndFableApp() {
             setCreationPromptOpen(true);
             setCreatorOpen(false);
           }}
+          onImportCharacter={() => { setHomeOpen(false); setImportOpen(true); }}
         />
       </section>
       ) : (
@@ -2362,43 +2424,13 @@ export default function ForgeAndFableApp() {
             <div className="paper-surface dj-start" style={{ display: "grid", placeItems: "center", padding: 48 }}>
               <p className="cs-muted">Loading your ledger...</p>
             </div>
-          ) : showOnboarding ? (
-            <OnboardingPanel
-              theme={selected?.theme ?? null}
-              onStartBuilding={() => {
-                setOnboardingDismissed(true);
-                setCreationPromptOpen(true);
-              }}
-              onRunCampaign={async (name) => {
-                try {
-                  const res = await fetch("/api/campaigns", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name }),
-                  });
-                  const data = await res.json() as { campaign?: { id: string }; error?: string };
-                  if (!res.ok || !data.campaign) {
-                    setStatus(data.error ?? "Campaign could not be created.");
-                    return false;
-                  }
-                  setOnboardingDismissed(true);
-                  setActiveCampaign(data.campaign.id);
-                  setCampaignOpen(true);
-                  setStatus("Campaign created");
-                  return true;
-                } catch {
-                  setStatus("Campaign could not be created.");
-                  return false;
-                }
-              }}
-            />
           ) : showCreationPrompt ? (
             <CharacterStartPanel
               onSelectBuild={beginBuild}
-              onBack={characters.length === 0 ? () => {
+              onBack={() => {
                 setCreationPromptOpen(false);
-                setOnboardingDismissed(false);
-              } : undefined}
+                setHomeOpen(true);
+              }}
               rosterEmpty={characters.length === 0}
             />
           ) : showCreator && draftFinalAbilities ? (

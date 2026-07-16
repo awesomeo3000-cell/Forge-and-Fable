@@ -1,0 +1,1092 @@
+/* ════════════════════════════════════════════════════════════════════════
+   AO-17 — Campaign Workspace (Option C, the shared campaign home).
+
+   Styles the CampaignWorkspacePage surface: CampaignWorkspace,
+   CampaignPartyGrid, CampaignSettingsSection and the focused-action sheets.
+   The workspace is a full page in the app's main slot (.ao-campaign-main,
+   beside the nav rail, under the product header — handoff §5.1), NOT a
+   modal. Everything is scoped under [data-theme="arcane-observatory"] and
+   uses the AO surface, text and border tokens, NOT the character-skin
+   paper/ink vars — the workspace is app chrome, not a skinned document.
+
+   NOTE: authored to complete the campaign-workspace handoff; every class
+   here maps to markup under src/components/campaign/.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Main-slot page container (same grid cell as .ao-home-main) ── */
+[data-theme="arcane-observatory"] .ao-campaign-main {
+  grid-column: 2;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-app);
+}
+/* Below 760px the shell collapses to one column and shows the fixed bottom
+   nav bar (matches .ao-home-main): full-bleed, and the scroll content clears
+   the bar. */
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .ao-campaign-main {
+    grid-column: 1;
+    border: 0;
+    border-radius: 0;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Page root: header is full-bleed, everything else is centred content
+      (width min(1480px, 100% - margins) per handoff §5.1) ── */
+[data-theme="arcane-observatory"] .ao-cw {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--surface-app);
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-cw > *:not(.ao-cw-hero) {
+  width: min(1480px, 100%);
+  margin-inline: auto;
+}
+[data-theme="arcane-observatory"] .ao-cw-hero-inner {
+  max-width: 1480px;
+  margin-inline: auto;
+}
+[data-theme="arcane-observatory"] .ao-cw-error-banner {
+  margin: var(--space-4) auto 0;
+  padding: 10px 14px;
+  border: 1px solid var(--state-danger);
+  border-radius: var(--radius-sm);
+  background: var(--state-danger-soft, rgba(195, 100, 100, 0.12));
+  color: var(--state-danger);
+  font-size: 0.86rem;
+}
+
+/* ── Immersive identity header ── */
+[data-theme="arcane-observatory"] .ao-cw-hero {
+  position: relative;
+  flex: none;
+  padding: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 13, 22, 0.55) 0%, rgba(7, 13, 22, 0.82) 62%, var(--surface-app) 100%),
+    var(--campaign-art, linear-gradient(135deg, #1a2b40, #0f1b2a));
+  background-size: cover;
+  background-position: center 30%;
+  border-bottom: 1px solid var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-cw-hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-7) var(--space-6);
+}
+[data-theme="arcane-observatory"] .ao-cw-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-role-label);
+  font-size: 0.72rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-breadcrumb button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--border-brass-bright);
+  font: inherit;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-breadcrumb button:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-cw-breadcrumb span[aria-current] { color: var(--text-primary); }
+
+[data-theme="arcane-observatory"] .ao-cw-hero-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+[data-theme="arcane-observatory"] .ao-cw-hero-copy { min-width: 0; max-width: 62ch; }
+[data-theme="arcane-observatory"] .ao-cw-hero-copy h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-role-display);
+  font-size: 2.3rem;
+  font-weight: 600;
+  line-height: 1.08;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.5);
+}
+[data-theme="arcane-observatory"] .ao-cw-hero-desc {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+[data-theme="arcane-observatory"] .ao-cw-hero-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--space-4);
+}
+[data-theme="arcane-observatory"] .ao-cw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: rgba(10, 17, 28, 0.55);
+  color: var(--text-secondary);
+  font-family: var(--font-role-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-chip svg { color: var(--border-brass-bright); }
+
+[data-theme="arcane-observatory"] .ao-cw-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+/* ── Buttons ── */
+[data-theme="arcane-observatory"] .ao-cw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font-family: var(--font-role-label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+[data-theme="arcane-observatory"] .ao-cw-btn:hover {
+  background: #21334a;
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-cw-btn:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-cw-btn-primary {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.16);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-cw-btn-primary:hover {
+  background: rgba(179, 146, 74, 0.26);
+  border-color: var(--border-brass-bright);
+  color: var(--text-primary);
+}
+
+/* ── Overflow menu ── */
+[data-theme="arcane-observatory"] .ao-cw-overflow { position: relative; }
+[data-theme="arcane-observatory"] .ao-cw-overflow > summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-secondary);
+  list-style: none;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-overflow > summary::-webkit-details-marker { display: none; }
+[data-theme="arcane-observatory"] .ao-cw-overflow > summary:hover { color: var(--text-primary); border-color: var(--border-strong); }
+[data-theme="arcane-observatory"] .ao-cw-overflow-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-overlay);
+}
+[data-theme="arcane-observatory"] .ao-cw-overflow-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-overflow-menu button:hover { background: var(--state-selected-soft); }
+[data-theme="arcane-observatory"] .ao-cw-overflow-switch {
+  display: grid;
+  gap: 2px;
+  padding: 6px 4px 4px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .ao-cw-overflow-switch > span {
+  padding: 2px 6px;
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.64rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-overflow-danger { color: var(--state-danger) !important; }
+[data-theme="arcane-observatory"] .ao-cw-overflow-danger:hover { background: var(--state-danger-soft) !important; }
+
+/* ── Four-card status row ── */
+[data-theme="arcane-observatory"] .ao-cw-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-7) 0;
+}
+[data-theme="arcane-observatory"] .ao-cw-status-card {
+  display: grid;
+  gap: 3px;
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-cw-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--surface-panel-recessed);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-cw-status-portrait { border-radius: 50%; }
+[data-theme="arcane-observatory"] .ao-cw-status-label {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-status-card strong {
+  color: var(--text-primary);
+  font-family: var(--font-role-section);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+[data-theme="arcane-observatory"] .ao-cw-status-sub {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+[data-theme="arcane-observatory"] .ao-cw-status-link {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--state-selected);
+  font-family: var(--font-role-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-status-link:hover { color: var(--border-brass-bright); }
+
+/* ── Section navigation ── */
+[data-theme="arcane-observatory"] .ao-cw-nav {
+  display: flex;
+  gap: 2px;
+  padding: var(--space-5) var(--space-7) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-5);
+}
+[data-theme="arcane-observatory"] .ao-cw-nav-item {
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-role-label);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms, border-color 140ms;
+}
+[data-theme="arcane-observatory"] .ao-cw-nav-item:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-cw-nav-item.active {
+  color: var(--border-brass-bright);
+  border-bottom-color: var(--border-brass);
+}
+
+/* ── Overview grid ── */
+[data-theme="arcane-observatory"] .ao-cw-overview {
+  padding: 0 var(--space-7) var(--space-7);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .ao-cw-live-strip,
+[data-theme="arcane-observatory"] .ao-cw-overview-primary,
+[data-theme="arcane-observatory"] .ao-cw-party-panel { grid-column: 1 / -1; }
+[data-theme="arcane-observatory"] .ao-cw-overview-primary,
+[data-theme="arcane-observatory"] .ao-cw-overview-secondary {
+  display: grid;
+  gap: var(--space-4);
+}
+[data-theme="arcane-observatory"] .ao-cw-overview-primary { grid-template-columns: 1.4fr 1fr; }
+
+/* ── Live "at the table" strip ── */
+[data-theme="arcane-observatory"] .ao-cw-live-strip {
+  display: grid;
+  gap: 8px;
+  padding: var(--space-4);
+  border: 1px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  background: rgba(179, 146, 74, 0.08);
+}
+[data-theme="arcane-observatory"] .ao-cw-live-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--border-brass-bright);
+  font-family: var(--font-role-label);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-live-events { display: grid; gap: 6px; }
+[data-theme="arcane-observatory"] .ao-cw-live-event {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+[data-theme="arcane-observatory"] .ao-cw-live-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+[data-theme="arcane-observatory"] .ao-cw-live-actions .ao-cw-btn { min-height: 30px; padding: 5px 12px; font-size: 0.72rem; }
+
+/* ── Panels ── */
+[data-theme="arcane-observatory"] .ao-cw-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-cw-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+[data-theme="arcane-observatory"] .ao-cw-panel-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-role-section);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+[data-theme="arcane-observatory"] .ao-cw-panel-head h3 svg { color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .ao-cw-panel-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ── Briefing ── */
+[data-theme="arcane-observatory"] .ao-cw-briefing-body {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+[data-theme="arcane-observatory"] .ao-cw-briefing-meta {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Empty module ── */
+[data-theme="arcane-observatory"] .ao-cw-empty-module { justify-content: flex-start; }
+[data-theme="arcane-observatory"] .ao-cw-empty-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-cw-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-cw-empty-body p { margin: 0; font-size: 0.86rem; font-style: italic; line-height: 1.5; }
+
+/* ── Inline link ── */
+[data-theme="arcane-observatory"] .ao-cw-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--state-selected);
+  font-family: var(--font-role-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-link:hover { color: var(--border-brass-bright); }
+
+/* ── Session detail / list ── */
+[data-theme="arcane-observatory"] .ao-cw-session-detail { display: grid; gap: 5px; }
+[data-theme="arcane-observatory"] .ao-cw-session-detail strong { color: var(--text-primary); font-family: var(--font-role-section); font-size: 1rem; }
+[data-theme="arcane-observatory"] .ao-cw-session-detail span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+[data-theme="arcane-observatory"] .ao-cw-session-detail span svg { color: var(--border-brass-bright); }
+
+[data-theme="arcane-observatory"] .ao-cw-count {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-session-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+[data-theme="arcane-observatory"] .ao-cw-session-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-cw-session-cal {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border: 1px solid var(--border-brass);
+  border-radius: var(--radius-sm);
+  background: rgba(179, 146, 74, 0.1);
+}
+[data-theme="arcane-observatory"] .ao-cw-session-cal span {
+  color: var(--border-brass-bright);
+  font-family: var(--font-role-label);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+[data-theme="arcane-observatory"] .ao-cw-session-cal strong {
+  color: var(--text-primary);
+  font-family: var(--font-role-numeric);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+[data-theme="arcane-observatory"] .ao-cw-row-main { display: grid; gap: 2px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-cw-row-main strong { color: var(--text-primary); font-size: 0.95rem; }
+[data-theme="arcane-observatory"] .ao-cw-row-main small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* ── Activity feed ── */
+[data-theme="arcane-observatory"] .ao-cw-activity { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+[data-theme="arcane-observatory"] .ao-cw-activity li { display: flex; align-items: flex-start; gap: 10px; }
+[data-theme="arcane-observatory"] .ao-cw-activity-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-cw-activity-dot[data-kind="announce"] { background: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .ao-cw-activity-dot[data-kind="handout"] { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .ao-cw-activity-dot[data-kind="rest"] { background: var(--state-success); }
+[data-theme="arcane-observatory"] .ao-cw-activity-dot[data-kind="roll"] { background: var(--state-warning); }
+[data-theme="arcane-observatory"] .ao-cw-activity-dot[data-kind="loot"] { background: var(--state-active); }
+[data-theme="arcane-observatory"] .ao-cw-activity-main { display: grid; gap: 1px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-cw-activity-main span { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.4; }
+[data-theme="arcane-observatory"] .ao-cw-activity-main small {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── Standalone section (party/sessions/handouts/activity tabs) ── */
+[data-theme="arcane-observatory"] .ao-cw > .ao-cw-panel,
+[data-theme="arcane-observatory"] .ao-cw > .ao-cw-journal,
+[data-theme="arcane-observatory"] .ao-cw > .ao-cw-settings {
+  width: min(1480px, calc(100% - 2 * var(--space-7)));
+  margin: 0 auto var(--space-7);
+}
+
+/* ── Party grid ── */
+[data-theme="arcane-observatory"] .ao-cw-party-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
+[data-theme="arcane-observatory"] .ao-cw-party-card {
+  display: grid;
+  gap: 10px;
+  height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-cw-party-card.is-viewer {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+}
+[data-theme="arcane-observatory"] .ao-cw-party-art { position: relative; display: block; }
+[data-theme="arcane-observatory"] .ao-cw-party-portrait {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+}
+[data-theme="arcane-observatory"] .ao-cw-ready {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(10, 17, 28, 0.85);
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-ready.is-ready { color: var(--state-success); }
+[data-theme="arcane-observatory"] .ao-cw-party-copy { display: grid; gap: 3px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-cw-party-copy strong {
+  color: var(--text-primary);
+  font-family: var(--font-role-section);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .ao-cw-party-copy small { color: var(--text-muted); font-size: 0.74rem; }
+[data-theme="arcane-observatory"] .ao-cw-party-class {
+  color: var(--text-secondary);
+  font-family: var(--font-role-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── HP bar ── */
+[data-theme="arcane-observatory"] .ao-cw-hp { display: grid; gap: 3px; margin-top: 2px; }
+[data-theme="arcane-observatory"] .ao-cw-hp-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-panel);
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .ao-cw-hp-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-cw-hp small { color: var(--text-muted); font-size: 0.72rem; }
+[data-theme="arcane-observatory"] .ao-cw-conditions {
+  color: var(--state-warning);
+  font-size: 0.74rem;
+  font-style: italic;
+}
+
+/* ── Live-session chip ── */
+[data-theme="arcane-observatory"] .ao-cw-chip-live {
+  border-color: var(--state-success);
+  color: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-cw-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--state-success);
+  animation: ao-cw-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ao-cw-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .ao-cw-live-dot { animation: none; }
+}
+
+/* ── Danger + quiet button variants ── */
+[data-theme="arcane-observatory"] .ao-cw-btn-danger {
+  border-color: var(--state-danger);
+  background: rgba(195, 100, 100, 0.12);
+  color: var(--state-danger);
+}
+[data-theme="arcane-observatory"] .ao-cw-btn-danger:hover {
+  background: rgba(195, 100, 100, 0.22);
+  border-color: var(--state-danger);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-cw-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Overview side column (objectives + attention stack) ── */
+[data-theme="arcane-observatory"] .ao-cw-overview-side {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+/* ── No-character guidance strip (§14.2) ── */
+[data-theme="arcane-observatory"] .ao-cw-guidance {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+}
+[data-theme="arcane-observatory"] .ao-cw-guidance > svg { color: var(--border-brass-bright); flex: none; }
+[data-theme="arcane-observatory"] .ao-cw-guidance p { flex: 1; min-width: 220px; margin: 0; color: var(--text-secondary); font-size: 0.92rem; }
+[data-theme="arcane-observatory"] .ao-cw-guidance-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Briefing heading + panel-head grouping ── */
+[data-theme="arcane-observatory"] .ao-cw-briefing-heading {
+  color: var(--text-primary);
+  font-family: var(--font-role-section);
+  font-size: 1rem;
+}
+[data-theme="arcane-observatory"] .ao-cw-briefing-meta { display: flex; align-items: center; gap: 10px; }
+[data-theme="arcane-observatory"] .ao-cw-panel-empty-block { display: grid; gap: 8px; }
+
+/* ── Objectives (§9) ── */
+[data-theme="arcane-observatory"] .ao-cw-objectives { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+[data-theme="arcane-observatory"] .ao-cw-objectives li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .ao-cw-objective-mark {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  flex: none;
+  border: 1px solid var(--border-brass-bright);
+  border-radius: 50%;
+}
+[data-theme="arcane-observatory"] .ao-cw-objectives li[data-status="completed"] .ao-cw-objective-mark {
+  border-color: var(--state-success);
+  background: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-cw-objective-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
+[data-theme="arcane-observatory"] .ao-cw-objective-copy strong { color: var(--text-primary); font-size: 0.9rem; }
+[data-theme="arcane-observatory"] .ao-cw-objectives li[data-status="completed"] .ao-cw-objective-copy strong {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--border-default);
+}
+[data-theme="arcane-observatory"] .ao-cw-objective-copy small { color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; }
+[data-theme="arcane-observatory"] .ao-cw-objective-status {
+  flex: none;
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-objectives li[data-status="active"] .ao-cw-objective-status { color: var(--border-brass-bright); }
+
+/* ── Needs Attention (§15.2) ── */
+[data-theme="arcane-observatory"] .ao-cw-attention-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+[data-theme="arcane-observatory"] .ao-cw-attention-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-cw-attention-list li > span { color: var(--text-secondary); font-size: 0.85rem; }
+[data-theme="arcane-observatory"] .ao-cw-attention .ao-cw-panel-head h3 svg { color: var(--state-warning); }
+
+/* ── Handouts (§11) ── */
+[data-theme="arcane-observatory"] .ao-cw-handout-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+[data-theme="arcane-observatory"] .ao-cw-handout-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-row:hover { border-color: var(--border-strong); background: var(--surface-panel-raised); }
+[data-theme="arcane-observatory"] .ao-cw-handout-row > svg:last-child { color: var(--text-muted); flex: none; }
+[data-theme="arcane-observatory"] .ao-cw-handout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-card {
+  display: grid;
+  gap: 10px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-thumb {
+  display: grid;
+  place-items: center;
+  height: 76px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-copy { display: grid; gap: 4px; }
+[data-theme="arcane-observatory"] .ao-cw-handout-copy strong { color: var(--text-primary); font-family: var(--font-role-section); font-size: 0.95rem; }
+[data-theme="arcane-observatory"] .ao-cw-handout-copy small {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-copy p { margin: 0; color: var(--text-secondary); font-size: 0.84rem; line-height: 1.5; }
+[data-theme="arcane-observatory"] .ao-cw-handout-body {
+  padding: 8px 10px;
+  border-left: 2px solid var(--border-brass);
+  background: var(--surface-panel);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic;
+}
+
+/* ── Session list status labels ── */
+[data-theme="arcane-observatory"] .ao-cw-session-live,
+[data-theme="arcane-observatory"] .ao-cw-session-done {
+  margin-left: 8px;
+  font-family: var(--font-role-label);
+  font-size: 0.62rem;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-session-live { color: var(--state-success); }
+[data-theme="arcane-observatory"] .ao-cw-session-done { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-cw-session-row[data-status="completed"] { opacity: 0.72; }
+
+/* ── Settings (§4.10, §16) ── */
+[data-theme="arcane-observatory"] .ao-cw-settings { display: grid; gap: var(--space-4); }
+[data-theme="arcane-observatory"] .ao-cw-settings-hint { margin: 0; color: var(--text-muted); font-size: 0.86rem; line-height: 1.5; }
+[data-theme="arcane-observatory"] .ao-cw-settings-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+[data-theme="arcane-observatory"] .ao-cw-save-note { color: var(--state-success); font-size: 0.8rem; }
+[data-theme="arcane-observatory"] .ao-cw-save-note.is-error { color: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-cw-theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-option {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-option.is-selected {
+  border-color: var(--border-brass-bright);
+  background: rgba(179, 146, 74, 0.1);
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-option:has(input:focus-visible) {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-image {
+  height: 92px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background-size: cover;
+  background-position: center;
+}
+[data-theme="arcane-observatory"] .ao-cw-theme-copy { display: grid; gap: 2px; }
+[data-theme="arcane-observatory"] .ao-cw-theme-copy strong { color: var(--text-primary); font-size: 0.9rem; }
+[data-theme="arcane-observatory"] .ao-cw-theme-copy small { color: var(--text-muted); font-size: 0.76rem; }
+[data-theme="arcane-observatory"] .ao-cw-field { display: grid; gap: 5px; max-width: 520px; }
+[data-theme="arcane-observatory"] .ao-cw-field > span {
+  color: var(--text-muted);
+  font-family: var(--font-role-label);
+  font-size: 0.66rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-cw-field input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  font-size: 0.9rem;
+}
+[data-theme="arcane-observatory"] .ao-cw-field input:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 1px;
+}
+[data-theme="arcane-observatory"] .ao-cw-invite-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+[data-theme="arcane-observatory"] .ao-cw-invite-code {
+  padding: 8px 16px;
+  border: 1px dashed var(--border-brass);
+  border-radius: var(--radius-sm);
+  background: rgba(179, 146, 74, 0.08);
+  color: var(--border-brass-bright);
+  font-family: var(--font-role-numeric);
+  font-size: 1.3rem;
+  letter-spacing: 0.2em;
+}
+[data-theme="arcane-observatory"] .ao-cw-danger-zone { border-color: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-cw-danger-zone .ao-cw-panel-head h3 svg { color: var(--state-danger); }
+[data-theme="arcane-observatory"] .ao-cw-danger-zone .ao-cw-btn-danger { align-self: flex-start; }
+[data-theme="arcane-observatory"] .ao-cw-danger-confirm { display: grid; gap: var(--space-3); }
+
+/* ── Focused-action sheets (composer, choose character, confirm) ── */
+[data-theme="arcane-observatory"] .ao-cw-sheet {
+  display: grid;
+  gap: var(--space-3);
+  width: min(480px, calc(100vw - 32px));
+  padding: var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-cw-sheet h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-role-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+[data-theme="arcane-observatory"] .ao-cw-sheet-hint { margin: 0; color: var(--text-secondary); font-size: 0.86rem; line-height: 1.5; }
+[data-theme="arcane-observatory"] .ao-cw-sheet-error { margin: 0; color: var(--state-danger); font-size: 0.84rem; }
+[data-theme="arcane-observatory"] .ao-cw-sheet textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  font-family: var(--font-role-body);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+[data-theme="arcane-observatory"] .ao-cw-sheet textarea:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 1px;
+}
+[data-theme="arcane-observatory"] .ao-cw-sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+[data-theme="arcane-observatory"] .ao-cw-confirm p { margin: 0; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; }
+[data-theme="arcane-observatory"] .ao-cw-choose-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 320px;
+  overflow: auto;
+}
+[data-theme="arcane-observatory"] .ao-cw-choose-list button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-cw-choose-list button:hover { border-color: var(--border-brass); background: var(--surface-panel-raised); }
+[data-theme="arcane-observatory"] .ao-cw-choose-list strong { font-family: var(--font-role-section); font-size: 0.95rem; }
+[data-theme="arcane-observatory"] .ao-cw-choose-list small { color: var(--text-muted); font-size: 0.76rem; }
+
+/* ── Loading skeleton (§20.1): page keeps its shape, no spinner ── */
+[data-theme="arcane-observatory"] .ao-cw-skeleton { gap: var(--space-5); padding-bottom: var(--space-7); }
+[data-theme="arcane-observatory"] .ao-cw-skeleton-hero,
+[data-theme="arcane-observatory"] .ao-cw-skeleton-card,
+[data-theme="arcane-observatory"] .ao-cw-skeleton-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: linear-gradient(100deg, var(--surface-panel) 40%, var(--surface-panel-raised) 50%, var(--surface-panel) 60%);
+  background-size: 200% 100%;
+  animation: ao-cw-shimmer 1.4s linear infinite;
+}
+[data-theme="arcane-observatory"] .ao-cw-skeleton-hero { height: 280px; border-radius: 0; width: 100% !important; }
+[data-theme="arcane-observatory"] .ao-cw-skeleton-card { height: 104px; }
+[data-theme="arcane-observatory"] .ao-cw-skeleton-panel { height: 260px; width: min(1480px, calc(100% - 2 * var(--space-7))); margin-inline: auto; }
+[data-theme="arcane-observatory"] .ao-cw-skeleton-escape { justify-self: center; margin-inline: auto; width: auto !important; }
+@keyframes ao-cw-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .ao-cw-skeleton-hero,
+  [data-theme="arcane-observatory"] .ao-cw-skeleton-card,
+  [data-theme="arcane-observatory"] .ao-cw-skeleton-panel { animation: none; }
+}
+
+/* ── Responsive (§24) ── */
+@media (max-width: 1100px) {
+  [data-theme="arcane-observatory"] .ao-cw-overview-secondary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  [data-theme="arcane-observatory"] .ao-cw-status-grid { grid-template-columns: 1fr 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-overview { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-overview-primary { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-overview-secondary { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-hero-inner { padding: var(--space-4) var(--space-4) var(--space-5); }
+  [data-theme="arcane-observatory"] .ao-cw-status-grid,
+  [data-theme="arcane-observatory"] .ao-cw-nav,
+  [data-theme="arcane-observatory"] .ao-cw-overview { padding-inline: var(--space-4); }
+  [data-theme="arcane-observatory"] .ao-cw > .ao-cw-panel,
+  [data-theme="arcane-observatory"] .ao-cw > .ao-cw-journal,
+  [data-theme="arcane-observatory"] .ao-cw > .ao-cw-settings { width: calc(100% - 2 * var(--space-4)); }
+  [data-theme="arcane-observatory"] .ao-cw-hero-copy h1 { font-size: 1.7rem; }
+  [data-theme="arcane-observatory"] .ao-cw-hero-body { align-items: flex-start; flex-direction: column; }
+  [data-theme="arcane-observatory"] .ao-cw-nav { overflow-x: auto; }
+  [data-theme="arcane-observatory"] .ao-cw-nav-item { flex: none; }
+}
+@media (max-width: 560px) {
+  [data-theme="arcane-observatory"] .ao-cw-status-grid { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-party-grid { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-handout-grid { grid-template-columns: 1fr; }
+  [data-theme="arcane-observatory"] .ao-cw-hero-actions { flex-wrap: wrap; }
+}

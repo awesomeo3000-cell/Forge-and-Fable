@@ -1,0 +1,40 @@
+{
+  "log": [
+    {
+      "step": "register + verify + login",
+      "status": "ok",
+      "detail": "ao_dash_1784227700300@forge.test"
+    },
+    {
+      "step": "new-user dashboard",
+      "status": "ok",
+      "detail": "title=\"Welcome to the Hearth\" cards=4 primary=1 featureEmpty=1 heroesEmpty=1 roleChoice=0"
+    },
+    {
+      "step": "action select-then-act",
+      "status": "ok",
+      "detail": "primaryDefault=true thirdSelected=true selectedCount=1 stayed=true acted=true"
+    },
+    {
+      "step": "dm dashboard",
+      "status": "ok",
+      "detail": "created=true feature=\"The Shattered Vale\" primary=\"Open Active Campaign\" role=\"Dungeon Master\" welcome=\"Good afternoon, Ao Dash 1784227700300.\""
+    },
+    {
+      "step": "responsive @ 768x1024",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "responsive @ 390x844",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "console errors",
+      "status": "ok",
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}
