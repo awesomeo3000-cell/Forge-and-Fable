@@ -88,7 +88,6 @@ export default memo(function CreatorPanel(props: {
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
   const [inspectedSpeciesId, setInspectedSpeciesId] = useState<string | null>(null);
-  const [forgeError, setForgeError] = useState<string | null>(null);
   // "Use an image link" fallback on the Likeness step (AO-7b) — reuses the
   // selector modal, which owns link validation.
   const [portraitLinkOpen, setPortraitLinkOpen] = useState(false);
@@ -232,6 +231,18 @@ export default memo(function CreatorPanel(props: {
       classStepComplete &&
       Boolean(props.draft.background) &&
       Boolean(props.draft.raceId),
+  ];
+
+  // Live prerequisite check for the Finalize seal. Because it is derived from
+  // the draft every render, the warning clears itself the moment a requirement
+  // is satisfied — no stale message survives to the last page. Each entry
+  // carries the builder step to jump back to.
+  const missingRequirements: { label: string; step: number }[] = [
+    ...(props.draft.name.trim() ? [] : [{ label: "Character name", step: 0 }]),
+    ...(props.draft.sourceIds.length > 0 ? [] : [{ label: "At least one source", step: 0 }]),
+    ...(props.draft.classId ? [] : [{ label: "A class", step: 2 }]),
+    ...(props.draft.background ? [] : [{ label: "A background", step: 3 }]),
+    ...(props.draft.raceId ? [] : [{ label: "A species", step: 4 }]),
   ];
 
   // TOC marginalia: the decided value each completed chapter shows (18c pass 1).
@@ -729,27 +740,39 @@ export default memo(function CreatorPanel(props: {
               </>
             ) : (
               <>
+                {missingRequirements.length > 0 ? (
+                  <div className="forge-missing" aria-live="polite">
+                    <p className="forge-error">Finish these chapters before the hero can be forged:</p>
+                    <ul className="forge-missing-list">
+                      {missingRequirements.map((req) => (
+                        <li key={req.label}>
+                          <button
+                            type="button"
+                            className="forge-missing-jump"
+                            onClick={() => props.onStepChange(req.step)}
+                          >
+                            {req.label} — return to {steps[req.step]} ⟶
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <button
                   className="ledger-button ledger-button-primary"
                   type="button"
                   onClick={() => {
-                    const missing: string[] = [];
-                    if (!props.draft.name.trim()) missing.push("Character name");
-                    if (props.draft.sourceIds.length === 0) missing.push("at least one source");
-                    if (!props.draft.classId) missing.push("a class");
-                    if (!props.draft.background) missing.push("a background");
-                    if (!props.draft.raceId) missing.push("a species");
-                    if (missing.length > 0) {
-                      setForgeError(`Missing: ${missing.join(", ")}`);
+                    // Missing prerequisites send the builder back to the first
+                    // unfinished chapter instead of only flashing a message.
+                    if (missingRequirements.length > 0) {
+                      props.onStepChange(missingRequirements[0].step);
                       return;
                     }
-                    setForgeError(null);
                     props.onCreate();
                   }}
                 >
                   {CHAPTERS[6].action}
                 </button>
-                {forgeError ? <p className="forge-error">{forgeError}</p> : null}
               </>
             )}
           </div>

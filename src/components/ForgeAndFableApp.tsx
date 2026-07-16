@@ -541,6 +541,13 @@ export default function ForgeAndFableApp() {
   // a DM (or player) can create/join/delete/leave without detaching first.
   const [campaignListOpen, setCampaignListOpen] = useState(false);
   const [scheduleSessionOpen, setScheduleSessionOpen] = useState(false);
+  // Bumped whenever the campaign/workshop panel closes so the home dashboard
+  // refetches sessions — a session scheduled in the workshop must appear on the
+  // front page without a full reload.
+  const [homeRefreshKey, setHomeRefreshKey] = useState(0);
+  useEffect(() => {
+    if (!campaignOpen) setHomeRefreshKey((key) => key + 1);
+  }, [campaignOpen]);
 
   const showCreationPrompt = creationPromptOpen || (!creatorOpen && characters.length === 0);
   // Onboarding panel replaces forced character creation when the roster is empty
@@ -1172,6 +1179,9 @@ export default function ForgeAndFableApp() {
 
   async function deleteSelected() {
     if (!user || !selected) {
+      return;
+    }
+    if (!window.confirm(`Delete ${selected.name || "this character"}? This permanently removes the character and cannot be undone.`)) {
       return;
     }
 
@@ -2193,14 +2203,16 @@ export default function ForgeAndFableApp() {
           >
             <Hammer size={19} /><span>Forge</span>
           </button>
+          {characters.length > 0 ? (
           <button
             type="button"
             className={`ao-nav-item${!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen ? " active" : ""}`}
             aria-current={!homeOpen && !campaignOpen && !creationPromptOpen && !creatorOpen ? "page" : undefined}
-            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setCreationPromptOpen(false); setCreatorOpen(false); }}
+            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setCreationPromptOpen(false); setCreatorOpen(false); if (!selected) setSelectedId(characters[0].id); }}
           >
             <UserIcon size={19} /><span>Hero</span>
           </button>
+          ) : null}
           <button
             type="button"
             className={`ao-nav-item${campaignOpen ? " active" : ""}`}
@@ -2252,7 +2264,7 @@ export default function ForgeAndFableApp() {
         </div>
       </header>
 
-      {homeOpen ? (
+      {homeOpen && !showOnboarding ? (
       <section className="ao-home-main">
         <HomeDashboard
           userName={user.name}
@@ -2261,6 +2273,7 @@ export default function ForgeAndFableApp() {
           activeCampaignId={activeCampaignId}
           campaignSync={campaignSync}
           campaignEvents={campaignEvents}
+          refreshKey={homeRefreshKey}
           onResumeCampaign={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setCampaignOpen(true); }}
           onScheduleSession={(campaignId) => { setActiveCampaign(campaignId); setCampaignListOpen(false); setScheduleSessionOpen(true); setCampaignOpen(true); }}
           onOpenCampaigns={() => { setCampaignListOpen(true); setCampaignOpen(true); }}

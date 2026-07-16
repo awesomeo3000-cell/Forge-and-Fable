@@ -286,9 +286,16 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
         length: generator.length,
         reinforcements: generator.reinforcements,
       });
-      setEncounterDraft(result.encounter);
+      // The generator assigns a client-side id, but the draft is not yet
+      // persisted. Clear it so Save routes to create (not update, which would
+      // fail with "Encounter not found").
+      setEncounterDraft({ ...result.encounter, id: "" });
       setTab("encounters");
-      setStatus("Generated result is editable. Save it when ready.");
+      setStatus(
+        result.encounter.combatants.length
+          ? "Generated result is editable. Save it when ready."
+          : "Generated with no enemies — seat a party with characters so the budget can size the fight.",
+      );
     });
   const createHandout = () =>
     run(async () => {
@@ -412,7 +419,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                   <span>{filteredCreatures.length} records</span>
                 </div>
                 <div className="dm-library-list">
-                  {filteredCreatures.map((creature) => (
+                  {(search.trim() ? filteredCreatures : filteredCreatures.slice(0, 10)).map((creature) => (
                     <article key={creature.id}>
                       <div>
                         <strong>{creature.name}</strong>
@@ -452,6 +459,12 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                       ) : null}
                     </article>
                   ))}
+                  {!search.trim() && filteredCreatures.length > 10 ? (
+                    <p className="dm-library-more">Showing 10 of {filteredCreatures.length} — search to find more.</p>
+                  ) : null}
+                  {filteredCreatures.length === 0 ? (
+                    <p className="dm-library-more">No creatures match “{search}”.</p>
+                  ) : null}
                 </div>
               </section>
               <section className="dm-editor">

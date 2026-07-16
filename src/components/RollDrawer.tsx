@@ -157,6 +157,23 @@ const ROLL_MODES: { id: RollMode; label: string; title: string }[] = [
   { id: "advantage", label: "Adv", title: "Advantage: next d20 rolls twice, keeps the higher" },
 ];
 
+/* Categorise a roll from its label so the history can colour-code by type —
+   saves, attacks, damage, skills, ability checks all read at a glance instead
+   of blurring into one column. Each category maps to an accent in CSS via the
+   data-roll-cat attribute. */
+const SKILL_WORDS = /perception|insight|investigation|stealth|athletics|acrobatics|arcana|history|nature|religion|survival|medicine|persuasion|deception|intimidation|performance|sleight|animal handling/;
+function rollCategory(label: string): string {
+  const l = label.toLowerCase();
+  if (/death\s*save/.test(l)) return "death";
+  if (/initiative/.test(l)) return "initiative";
+  if (/sav(e|ing)/.test(l)) return "save";
+  if (/attack|to hit/.test(l)) return "attack";
+  if (/damage|heal|hit die|hit dice/.test(l)) return "damage";
+  if (SKILL_WORDS.test(l)) return "skill";
+  if (/strength|dexterity|constitution|intelligence|wisdom|charisma|\bcheck\b/.test(l)) return "check";
+  return "other";
+}
+
 export default memo(function RollDrawer(props: {
   history: RollHistoryEntry[];
   theme?: CharacterTheme | null;
@@ -600,9 +617,10 @@ export default memo(function RollDrawer(props: {
                 ) : (
                   <ul className="roll-history-list">
                     {props.history.map((entry) => (
-                      <li key={entry.id}>
+                      <li key={entry.id} data-roll-cat={rollCategory(entry.label)}>
                         <div className="roll-history-top">
                           <span className="roll-history-label">
+                            <span className="roll-cat-dot" aria-hidden="true" />
                             {entry.label}
                             {entry.adv ? <em className={`roll-history-badge ${entry.adv.mode}`}>{entry.adv.mode === "advantage" ? "ADV" : "DIS"}</em> : null}
                             {entry.nat ? <em className={`roll-history-badge nat ${entry.nat}`}>{entry.nat === "crit" ? "NAT 20" : "NAT 1"}</em> : null}

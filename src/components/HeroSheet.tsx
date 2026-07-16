@@ -12,7 +12,6 @@ import {
   Shield,
   Skull,
   Swords,
-  Terminal,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -2003,9 +2002,7 @@ export default memo(function HeroSheet(props: {
           </section>
         );
       }
-      case "console": return (
-        <section className="cs-block"><h3 className="cs-section-eyebrow"><Terminal size={12} />Console</h3><form className="cs-console-form" onSubmit={props.onConsoleSubmit}><label className="cs-console-label"><Terminal size={14} />Command<input value={props.consoleInput} onChange={(e) => props.onConsoleInput(e.target.value)} className="cs-console-input" /></label><button className="cs-glass-btn" type="submit">Execute</button><div className="cs-console-log">{props.consoleLog.map((entry, i) => (<span key={`${entry}-${i}`}>{entry}</span>))}</div></form></section>
-      );
+      case "console": return null; // Console module retired from the character sheet.
       default: return null;
     }
   };
@@ -2221,8 +2218,8 @@ export default memo(function HeroSheet(props: {
                   <button type="button" className="cs-roll-btn cs-roll-btn--compact character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}><DieIcon />Roll</button>
                 </p>
               </div>
-              <div className="character-header__saves">
-                <span className="character-header__label"><Skull size={12} aria-hidden="true" /> Death Saves</span>
+              <div className="character-header__saves" data-dying={props.character.currentHp <= 0 ? "true" : undefined}>
+                <span className="character-header__label"><Skull size={13} aria-hidden="true" /> Death Saves</span>
                 <div className="character-header__saves-row">
                   <span>Successes</span>
                   {[0, 1, 2].map((i) => (

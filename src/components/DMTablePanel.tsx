@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
+import { Check, Command, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, removeCampaignMember, updateCampaignAudio } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import DMPrepPanel from "@/components/DMPrepPanel";
@@ -106,7 +106,8 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [customCondition, setCustomCondition] = useState<Record<string, string>>({});
   const [handoutTitle, setHandoutTitle] = useState("");
   const [handoutUrl, setHandoutUrl] = useState("");
-  const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" as CampaignCombatant["kind"] });
+  // Enemies/neutrals default to hidden-from-players; players/allies default visible.
+  const [combatant, setCombatant] = useState({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: true, kind: "enemy" as CampaignCombatant["kind"] });
   const [recordFilter, setRecordFilter] = useState<"all" | "rolls" | "table">("all");
   // Request cards have a lifecycle: open cards stay, completed cards linger
   // two minutes (long enough to read the result), dismiss always available.
@@ -196,6 +197,18 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     [campaign.initiative.data.combatants],
   );
   const currentTurnId = sortedCombatants[campaign.initiative.data.turnIndex]?.id ?? null;
+  // Party members who have not yet rolled into initiative. Shown as pending
+  // placeholder rows so the DM sees the whole table before any dice land; each
+  // is replaced by a real combatant the moment its roll comes in. These never
+  // enter `sortedCombatants`, so turn/round logic is untouched.
+  const pendingParty = useMemo(() => {
+    const seated = new Set(
+      campaign.initiative.data.combatants
+        .filter((item) => item.kind === "player" && item.memberUserId)
+        .map((item) => item.memberUserId),
+    );
+    return campaign.members.filter((member) => member.characterId && !seated.has(member.userId));
+  }, [campaign.initiative.data.combatants, campaign.members]);
   const dueReminders = useMemo(() => {
     if (!activeEncounter) return [];
     const current = sortedCombatants[campaign.initiative.data.turnIndex];
@@ -387,7 +400,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     if (Number.isFinite(ac) && ac >= 0) next.ac = Math.trunc(ac);
     if (combatant.note.trim()) next.privateNote = combatant.note.trim();
     void replaceInitiative([...campaign.initiative.data.combatants, next]);
-    setCombatant({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: false, kind: "enemy" });
+    setCombatant({ name: "", initiative: "", hp: "", ac: "", note: "", hidden: true, kind: "enemy" });
   };
 
   const updateCombatant = (id: string, patch: Partial<CampaignCombatant>) => {
@@ -617,7 +630,21 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
                 </div>
               </div>
             )})}
-            {sortedCombatants.length === 0 ? <p className="dm-empty">No combatants yet — add one below, or let the party roll in.</p> : null}
+            {pendingParty.map((member) => (
+              <div key={`pending-${member.userId}`} className="dm-combatant is-pending" data-kind="player">
+                <span className="dm-init-chip is-pending" aria-hidden="true">—</span>
+                {rowDensity === "standard" ? (
+                  <span className="dm-identity-disc"><CharacterPortraitBase portraitId={member.characterJson?.portraitUrl?.trim() || null} characterName={member.characterName ?? member.userName} size={34} shape="circle" decorative /></span>
+                ) : null}
+                <span className="dm-combatant-name">
+                  <span className="dm-combatant-title">
+                    <strong>{member.characterName ?? member.userName}</strong>
+                    <em className="dm-pending-label">Awaiting initiative</em>
+                  </span>
+                </span>
+              </div>
+            ))}
+            {sortedCombatants.length === 0 && pendingParty.length === 0 ? <p className="dm-empty">No combatants yet — add one below, or let the party roll in.</p> : null}
           </div>
   );
 
@@ -643,7 +670,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           </>}
         </div>
         <div>
-          <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact}>Compact</button>
+          <button type="button" className={`dm-btn${compactTable ? " is-active" : ""}`} aria-pressed={compactTable} onClick={toggleCompact} title="Condense the party rail cards and initiative rows to fit more on screen">Compact</button>
           <button type="button" className="dm-btn" onClick={() => setPrepOpen(true)}>Tools</button>
           {onOpenCampaigns ? <button type="button" className="dm-btn" onClick={onOpenCampaigns}>Campaigns</button> : null}
           <button type="button" className="dm-btn" onClick={() => setCommandOpen(true)}>Command <kbd>Ctrl K</kbd></button>
@@ -651,7 +678,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           <button type="button" className="glass-icon" onClick={onClose} aria-label="Close table"><X size={18} /></button>
         </div>
       </header>
-      {commandOpen ? <div className="dm-command-palette" role="dialog" aria-label="DM command palette"><div><input autoFocus aria-label="Search commands and rules" placeholder="Type a command or rule…" value={commandQuery} onChange={(event)=>{setCommandQuery(event.target.value);setCommandIndex(0);}} onKeyDown={(event)=>{if(event.key==="ArrowDown"){event.preventDefault();setCommandIndex((index)=>Math.min(paletteItems.length-1,index+1));}if(event.key==="ArrowUp"){event.preventDefault();setCommandIndex((index)=>Math.max(0,index-1));}if(event.key==="Enter"){const item=paletteItems[commandIndex];if(item&&!item.disabled){item.run();setCommandOpen(false);setCommandQuery("");}}}}/><small>Commands and rules · ↑↓ navigate · Enter run · Esc close</small><ul>{paletteItems.slice(0,12).map((item,index)=><li key={`${item.kind}-${item.label}`}><button type="button" className={index===commandIndex?"is-active":""} disabled={item.disabled} onMouseEnter={()=>setCommandIndex(index)} onClick={()=>{item.run();setCommandOpen(false);setCommandQuery("");}}><span>{item.kind}</span><strong>{item.label}</strong>{"detail" in item?<small>{item.detail}</small>:item.disabled?<small>Unavailable in the current context</small>:null}</button></li>)}</ul></div></div> : null}
+      {commandOpen ? <div className="dm-command-palette" role="dialog" aria-modal="true" aria-label="DM command palette" onMouseDown={(event)=>{if(event.target===event.currentTarget){setCommandOpen(false);setCommandQuery("");}}}><div><header className="dm-command-head"><Command size={18} aria-hidden="true" /><strong>Command palette</strong><kbd>Ctrl K</kbd></header><input autoFocus aria-label="Search commands and rules" placeholder="Type a command or rule…" value={commandQuery} onChange={(event)=>{setCommandQuery(event.target.value);setCommandIndex(0);}} onKeyDown={(event)=>{if(event.key==="Escape"){event.preventDefault();setCommandOpen(false);setCommandQuery("");}if(event.key==="ArrowDown"){event.preventDefault();setCommandIndex((index)=>Math.min(paletteItems.length-1,index+1));}if(event.key==="ArrowUp"){event.preventDefault();setCommandIndex((index)=>Math.max(0,index-1));}if(event.key==="Enter"){const item=paletteItems[commandIndex];if(item&&!item.disabled){item.run();setCommandOpen(false);setCommandQuery("");}}}}/><small className="dm-command-hint">↑↓ navigate · Enter run · Esc close</small><ul>{paletteItems.slice(0,12).map((item,index)=><li key={`${item.kind}-${item.label}`}><button type="button" className={index===commandIndex?"is-active":""} disabled={item.disabled} onMouseEnter={()=>setCommandIndex(index)} onClick={()=>{item.run();setCommandOpen(false);setCommandQuery("");}}><span>{item.kind}</span><strong>{item.label}</strong>{"detail" in item?<small>{item.detail}</small>:item.disabled?<small>Unavailable in the current context</small>:null}</button></li>)}</ul></div></div> : null}
       {error ? <p className="dm-table-error">{error}</p> : null}
       {tourOpen ? <aside className="dm-first-tour" aria-label="DM Table quick tour"><strong>Your Table workspace</strong><ol><li>Party state stays in the left command rail.</li><li>The center changes between Scene, Encounter, Preparation, and Review.</li><li>Select a character to open the right inspector.</li><li>Tools and Ctrl/Cmd+K expose the full command set.</li></ol><button type="button" className="dm-btn dm-btn-primary" onClick={()=>{window.localStorage.setItem("forge-dm-table-tour","done");setTourOpen(false);}}>Got it</button></aside> : null}
       <div className="dm-table-grid">
@@ -1019,7 +1046,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
             <div className="dm-inline-form">
               <input placeholder="Combatant" value={combatant.name} onChange={(event) => setCombatant({ ...combatant, name: event.target.value })} />
               <input placeholder="Init" type="number" value={combatant.initiative} onChange={(event) => setCombatant({ ...combatant, initiative: event.target.value })} />
-              <select aria-label="Kind" value={combatant.kind} onChange={(event) => setCombatant({ ...combatant, kind: event.target.value as CampaignCombatant["kind"] })}>
+              <select aria-label="Kind" value={combatant.kind} onChange={(event) => { const kind = event.target.value as CampaignCombatant["kind"]; setCombatant({ ...combatant, kind, hidden: kind === "enemy" || kind === "neutral" }); }}>
                 <option value="enemy">Enemy</option><option value="ally">Ally</option><option value="neutral">Neutral</option>
               </select>
               <input placeholder="HP" type="number" value={combatant.hp} onChange={(event) => setCombatant({ ...combatant, hp: event.target.value })} />

@@ -9,7 +9,9 @@ export const SECTION_TITLES: Record<SheetSectionId, string> = {
 };
 
 export const PINNED_TOP: SheetSectionId[] = ["identity", "vitals"];
-export const PINNED_BOTTOM: SheetSectionId[] = ["console"];
+// The console module was retired from the character sheet — nothing is pinned
+// to the bottom now. (SECTION_TITLES keeps the "console" key for type coverage.)
+export const PINNED_BOTTOM: SheetSectionId[] = [];
 const PINNED = new Set<SheetSectionId>([...PINNED_TOP, ...PINNED_BOTTOM]);
 const PREFERRED_TABS: Partial<Record<SheetSectionId, SheetSectionId[]>> = {
   attacks: ["attacks", "actions", "bonus-actions", "reactions"],

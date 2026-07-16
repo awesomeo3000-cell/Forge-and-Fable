@@ -48,9 +48,10 @@ export default memo(function PortraitField({
         <CharacterPortrait
           portraitId={value || null}
           characterName={characterName}
-          size={48}
-          shape="circle"
+          size={96}
+          shape="rounded"
           decorative
+          className="portrait-field-preview"
         />
         <div className="portrait-field-info">
           <span className="portrait-field-label">Character Portrait</span>

@@ -1783,6 +1783,22 @@
   margin-top: 4px;
 }
 
+/* Readability pass: the dashboard widgets/text read a touch larger overall.
+   These override the sizes above (equal specificity, declared later). */
+[data-theme="arcane-observatory"] .ao-home-heading h1 { font-size: 2.2rem; }
+[data-theme="arcane-observatory"] .ao-home-heading p { font-size: 1rem; }
+[data-theme="arcane-observatory"] .ao-home-widget-header h2 { font-size: 1.42rem; }
+[data-theme="arcane-observatory"] .ao-home-panel-header h2 { font-size: 1.14rem; }
+[data-theme="arcane-observatory"] .ao-home-session-copy > strong { font-size: 1.26rem; }
+[data-theme="arcane-observatory"] .ao-home-session-copy > span { font-size: 0.9rem; }
+[data-theme="arcane-observatory"] .ao-home-session-copy p { font-size: 0.85rem; }
+[data-theme="arcane-observatory"] .ao-home-quick strong { font-size: 0.8rem; }
+[data-theme="arcane-observatory"] .ao-home-quick span { font-size: 0.85rem; }
+[data-theme="arcane-observatory"] .ao-home-party-copy strong { font-size: 1.04rem; }
+[data-theme="arcane-observatory"] .ao-home-party-copy small { font-size: 0.84rem; }
+[data-theme="arcane-observatory"] .ao-home-readiness-copy strong { font-size: 1.02rem; }
+[data-theme="arcane-observatory"] .ao-dash-eyebrow { font-size: 0.72rem; }
+
 [data-theme="arcane-observatory"] .ao-home-activity {
   list-style: none;
   margin: 0;
@@ -2264,7 +2280,15 @@
   background: var(--surface-overlay);
   border-color: var(--border-strong);
   color: var(--text-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel), 0 24px 70px rgba(0, 0, 0, 0.5);
 }
+/* Echo the dashboard's brass eyebrow so the entry reads as the same product. */
+[data-theme="arcane-observatory"] .level-rite-eyebrow,
+[data-theme="arcane-observatory"] .level-rite-rail-label { color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .level-rite-header { border-bottom-color: var(--border-default); }
+[data-theme="arcane-observatory"] .level-rite-header::after { border-top-color: var(--border-brass); opacity: 0.5; }
+[data-theme="arcane-observatory"] .level-rite-seal { box-shadow: inset 0 0 0 2px rgba(216, 184, 120, 0.35); }
 
 /* Flying result labels inherit the same shell language as the dice drawer. */
 [data-theme="arcane-observatory"] .die-roll-label {
@@ -2808,10 +2832,27 @@
 /* Death saves: labeled, compact diamonds, state never color-only. */
 [data-theme="arcane-observatory"] .character-header__saves {
   display: grid;
-  gap: 7px;
+  gap: 8px;
   justify-items: start;
-  padding-bottom: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle, rgba(120, 96, 60, 0.28));
+  border-radius: var(--radius-sm, 6px);
+  background: color-mix(in srgb, var(--ink-3, #8a7a5c) 6%, transparent);
 }
+/* When the hero is actually at 0 HP the block lights up so it can't be missed. */
+[data-theme="arcane-observatory"] .character-header__saves[data-dying="true"] {
+  border-color: #a75f5b;
+  background: rgba(167, 95, 91, 0.12);
+  box-shadow: 0 0 0 1px rgba(167, 95, 91, 0.35), 0 4px 18px rgba(167, 95, 91, 0.2);
+}
+[data-theme="arcane-observatory"] .character-header__saves > .character-header__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+}
+[data-theme="arcane-observatory"] .character-header__saves[data-dying="true"] > .character-header__label { color: #d08a86; }
 [data-theme="arcane-observatory"] .character-header__saves-row {
   display: flex;
   align-items: center;
@@ -2825,26 +2866,30 @@
   text-transform: uppercase;
 }
 [data-theme="arcane-observatory"] .character-header__save {
-  width: 13px;
-  height: 13px;
+  width: 17px;
+  height: 17px;
   padding: 0;
-  border: 1px solid var(--ink-3);
-  border-radius: 1px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 2px;
   background: transparent;
   transform: rotate(45deg);
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+[data-theme="arcane-observatory"] .character-header__save:hover { transform: rotate(45deg) scale(1.12); }
 [data-theme="arcane-observatory"] .character-header__save:focus-visible {
   outline: 2px solid var(--doc-select);
   outline-offset: 3px;
 }
 [data-theme="arcane-observatory"] .character-header__save.is-success {
-  background: #7f9f83;
-  border-color: #7f9f83;
+  background: #8fb894;
+  border-color: #8fb894;
+  box-shadow: 0 0 6px rgba(143, 184, 148, 0.5);
 }
 [data-theme="arcane-observatory"] .character-header__save.is-fail {
-  background: #a75f5b;
-  border-color: #a75f5b;
+  background: #c76a65;
+  border-color: #c76a65;
+  box-shadow: 0 0 6px rgba(199, 106, 101, 0.55);
 }
 [data-theme="arcane-observatory"] .character-header__saves-reset {
   padding: 3px 0;

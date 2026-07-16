@@ -24,6 +24,9 @@ type Props = {
   activeCampaignId: string | null;
   campaignSync: CampaignSyncPayload | null;
   campaignEvents: CampaignEvent[];
+  /** Bumped by the parent when the campaign/workshop panel closes, so a
+   *  freshly scheduled session is refetched into the Next session module. */
+  refreshKey?: number;
   onResumeCampaign: (campaignId: string) => void;
   onScheduleSession: (campaignId: string) => void;
   onOpenCampaigns: () => void;
@@ -51,6 +54,7 @@ export default memo(function HomeDashboard({
   activeCampaignId,
   campaignSync,
   campaignEvents,
+  refreshKey,
   onResumeCampaign,
   onScheduleSession,
   onOpenCampaigns,
@@ -101,7 +105,7 @@ export default memo(function HomeDashboard({
       })
       .catch(() => { if (!cancelled) setNextSession(null); });
     return () => { cancelled = true; };
-  }, [featured?.id]);
+  }, [featured?.id, refreshKey]);
 
   const recentEvents = useMemo(
     () => (campaignSync ? campaignEvents.slice(-3).reverse() : []),
@@ -318,6 +322,11 @@ export default memo(function HomeDashboard({
               <Users className="ao-home-quick-icon" size={18} />
               <strong>Invite players</strong>
               <span>Share your campaign code</span>
+            </button>
+            <button type="button" onClick={() => (featured ? onResumeCampaign(featured.id) : onOpenCampaigns())}>
+              <BookOpen className="ao-home-quick-icon" size={18} />
+              <strong>{featured ? (featured.myRole === "dm" ? "Open the Table" : "Resume campaign") : "Join a campaign"}</strong>
+              <span>{featured ? "Jump back into your game" : "Enter a code from your DM"}</span>
             </button>
           </div>
         </section>

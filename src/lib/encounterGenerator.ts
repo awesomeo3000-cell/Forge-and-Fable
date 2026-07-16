@@ -64,6 +64,12 @@ export function generateEncounter(input: GenerateEncounterInput, party: Encounte
     if (existing) existing.quantity += 1; else picked.push({ creature, quantity: 1 });
     remaining -= creature.experienceValue ?? 0;
   }
+  // Guarantee at least one enemy even when the party budget is zero (e.g. no
+  // seated party yet) — an encounter with no combatants is never useful.
+  if (picked.length === 0 && candidates.length) {
+    const creature = candidates[Math.floor(rng() * candidates.length)] ?? candidates[0];
+    picked.push({ creature, quantity: 1 });
+  }
   const encounterTypes = ["straight-combat", "ambush", "hold-position", "rescue", "stop-ritual", "survive-rounds", "retrieve-item", "negotiation"];
   const encounterType = input.encounterType ?? encounterTypes[Math.floor(rng() * encounterTypes.length)];
   const objectiveByType: Record<string, string> = { "hold-position":"Hold the position until help arrives.", rescue:"Reach and extract the captive.", "stop-ritual":"Disrupt the ritual before it completes.", "survive-rounds":"Survive until the end of round 5.", "retrieve-item":"Secure the objective and escape.", negotiation:"Find a peaceful resolution or survive the breakdown.", ambush:"Break the ambush and reach defensible ground.", "straight-combat":"Defeat or drive off the opposition." };
