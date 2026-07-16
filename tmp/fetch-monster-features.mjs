@@ -128,7 +128,7 @@ async function main() {
   let creaturesWithAttackBonus = 0;
   let creaturesWithDamage = 0;
 
-  for (const [name, data] of Object.entries(features)) {
+  for (const data of Object.values(features)) {
     totalTraits += data.traits.length;
     totalActions += data.actions.length;
     totalReactions += data.reactions.length;

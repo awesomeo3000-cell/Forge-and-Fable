@@ -8,10 +8,10 @@ type BuildMode = "standard" | "quickbuilder" | "premade";
 
 /* These plates are intentionally swappable: the commission screen can take
    new owner art without changing the build flow or its callbacks. */
-const BUILD_MODES: Array<{ mode: BuildMode; label: string; plate: string; art: string }> = [
-  { mode: "standard", label: "Standard", plate: "PLATE I", art: "/Start/start-standard.webp" },
-  { mode: "quickbuilder", label: "Quickbuilder", plate: "PLATE II", art: "/Start/start-quick.webp" },
-  { mode: "premade", label: "Premade", plate: "PLATE III", art: "/Start/start-premade.webp" },
+const BUILD_MODES: Array<{ mode: BuildMode; label: string; art: string }> = [
+  { mode: "standard", label: "Standard", art: "/Start/start-standard.webp" },
+  { mode: "quickbuilder", label: "Quickbuilder", art: "/Start/start-quick.webp" },
+  { mode: "premade", label: "Premade", art: "/Start/start-premade.webp" },
 ];
 
 export default memo(function CharacterStartPanel(props: {
@@ -70,12 +70,13 @@ export default memo(function CharacterStartPanel(props: {
                   onError={(event) => { event.currentTarget.style.display = "none"; }}
                 />
               </span>
-              <span className="commission-tag">{item.plate}</span>
               <span className="commission-caption">
                 <span className="commission-caption-rule" aria-hidden="true" />
                 <span className="commission-label">{item.label}</span>
                 <span className="commission-desc">{BUILD_MODE_DESCRIPTORS[item.mode]}</span>
-                {chosen ? <em className="commission-state">Chosen ✦</em> : null}
+                <em className="commission-state commission-cue">
+                  {chosen ? "Selected ✦" : "Choose this path →"}
+                </em>
               </span>
             </button>
           );

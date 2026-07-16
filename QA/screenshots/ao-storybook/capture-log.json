@@ -3,12 +3,47 @@
     {
       "step": "register + verify + login",
       "status": "ok",
-      "detail": "ao_storybook_1784183230103@forge.test"
+      "detail": "ao_storybook_1784208474229@forge.test"
+    },
+    {
+      "step": "entry triptych",
+      "status": "ok",
+      "detail": "plates=3 art=true disabledBefore=true chosen=1 cue=\"Selected ✦\""
     },
     {
       "step": "open standard creator",
       "status": "ok",
       "detail": ""
+    },
+    {
+      "step": "fresh progress count",
+      "status": "ok",
+      "detail": "0 of 6 choices complete"
+    },
+    {
+      "step": "provenance workspace",
+      "status": "ok",
+      "detail": "summary=\"Storybook Regression\" sources=5 toggle=false->true"
+    },
+    {
+      "step": "origin preview/confirm",
+      "status": "ok",
+      "detail": "feature=\"Custom Background\" recorded=1"
+    },
+    {
+      "step": "lineage preview/seal",
+      "status": "ok",
+      "detail": "family=false sealed=1"
+    },
+    {
+      "step": "attributes method-first",
+      "status": "ok",
+      "detail": "methods=4 before=0 after=1 abilities=6 roll=true"
+    },
+    {
+      "step": "seal portrait",
+      "status": "ok",
+      "detail": "portraits=1"
     },
     {
       "step": "chapter 1 (provenance) banner",

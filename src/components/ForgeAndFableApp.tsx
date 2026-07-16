@@ -157,7 +157,9 @@ export default function ForgeAndFableApp() {
   const [creatorStep, setCreatorStep] = useState(0);
   const [buildMode, setBuildMode] = useState<BuildMode>("standard");
   const [draft, setDraft] = useState<DraftCharacter | null>(null);
-  const [statMethod, setStatMethod] = useState<StatMethod>("point-buy");
+  // null = the player has not chosen an attribute method yet (Chapter VI
+  // starts at the method decision; an untouched chapter is not "decided").
+  const [statMethod, setStatMethod] = useState<StatMethod | null>(null);
   const [standardAssignments, setStandardAssignments] = useState(defaultAssignments);
   const [rolledScores, setRolledScores] = useState([15, 14, 13, 12, 10, 8]);
   const [rolledAssignments, setRolledAssignments] = useState(defaultAssignments);
@@ -800,7 +802,7 @@ export default function ForgeAndFableApp() {
     setBuildMode(mode);
     if (mode === "standard") {
       setDraft(createInitialDraft(ruleset) as DraftCharacter);
-      setStatMethod("point-buy");
+      setStatMethod(null);
       setCreatorStep(0);
       setCreatorOpen(true);
     } else {
@@ -1093,7 +1095,7 @@ export default function ForgeAndFableApp() {
       setCreatorOpen(false);
       setCreatorStep(0);
       setDraft(createInitialDraft(ruleset) as DraftCharacter);
-      setStatMethod("point-buy");
+      setStatMethod(null);
       setCreationSeq(null);
       setStatus(`${data.character.name} forged`);
     } catch {

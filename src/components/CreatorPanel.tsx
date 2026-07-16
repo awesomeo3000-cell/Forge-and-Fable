@@ -7,7 +7,6 @@ import type {
   BuildMode,
   CharacterSettings,
   DraftCharacter,
-  Race,
   Ruleset,
   StatMethod,
 } from "@/types/game";
@@ -15,35 +14,32 @@ import {
   abilityKeys,
   abilityLabels,
   abilityModifier,
-  abilityNames,
   signed,
   sourceOptions,
-  standardArray,
 } from "@/lib/utils";
 import { firstLevelHp, fixedHpGain, rolledHpGain } from "@/lib/hitPoints";
 import ClassIconPlaceholder from "@/components/icons/ClassIcon";
-import SpeciesIconPlaceholder from "@/components/icons/SpeciesIcon";
-import SourceSettingsPanel from "@/components/SourceSettingsPanel";
+import ProvenanceChapter from "@/components/commission/provenance/ProvenanceChapter";
 import ClassLearnModal from "@/components/ClassLearnModal";
 import SpeciesLearnModal from "@/components/SpeciesLearnModal";
-import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
 import ClassChapter from "@/components/commission/class/ClassChapter";
+import OriginChapter from "@/components/commission/origin/OriginChapter";
+import AttributesChapter from "@/components/commission/attributes/AttributesChapter";
+import LineageChapter from "@/components/commission/lineage/LineageChapter";
+import { parseSpeciesName, speciesDetailLine } from "@/components/commission/lineage/lineagePresentation";
 import CommissionChapterBanner from "@/components/commission/CommissionChapterBanner";
 import { COMMISSION_CHAPTER_ARTWORK } from "@/lib/commissionChapterArtwork";
 import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
 
-import { CHAPTERS, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
+import { CHAPTERS, ordinalLevel } from "@/lib/ledgerCopy";
 import {
   CLASS_SKILL_CHOICES,
   SKILLS,
-  BACKGROUND_SKILLS,
   CLASS_TOOL_CHOICES,
-  BACKGROUND_TOOL_GRANTS,
   BACKGROUND_TOOL_CHOICES,
   BACKGROUND_LANGUAGE_CHOICES,
-  LANGUAGES,
 } from "@/lib/srd";
 
 const ALL_CLASS_TOOL_OPTIONS = new Set(Object.values(CLASS_TOOL_CHOICES).flatMap((c) => c.options));
@@ -53,87 +49,11 @@ type AssignmentMap = Record<AbilityKey, number>;
 
 const steps = ["Setup", "Portrait", "Class", "Origin", "Species", "Attributes", "Finalize"];
 
-const FAMILY_LABELS: Record<string, { name: string; summary: string }> = {
-  "dwarf-legacy": { name: "Dwarf (Legacy)", summary: "Hill or Mountain dwarf traditions." },
-  "elf-legacy": { name: "Elf (Legacy)", summary: "High, Wood, or Drow elf traditions." },
-  "halfling-legacy": { name: "Halfling (Legacy)", summary: "Lightfoot or Stout halfling families." },
-  "gnome-legacy": { name: "Gnome (Legacy)", summary: "Rock, Deep, or Forest gnome traditions." },
-  "genasi-legacy": { name: "Genasi (Legacy)", summary: "Air, Earth, Fire, or Water elemental heritage." },
-};
-
-/** Groups races sharing a familyId into one family entry (first-seen order);
-    races without a familyId pass through as their own single-race entry. */
-function groupSpeciesByFamily(
-  races: Race[],
-): ({ kind: "single"; race: Race } | { kind: "family"; familyId: string; members: Race[] })[] {
-  const items: ({ kind: "single"; race: Race } | { kind: "family"; familyId: string; members: Race[] })[] = [];
-  const familyIndex = new Map<string, number>();
-
-  for (const race of races) {
-    if (!race.familyId) {
-      items.push({ kind: "single", race });
-      continue;
-    }
-    const existingIndex = familyIndex.get(race.familyId);
-    if (existingIndex !== undefined) {
-      const entry = items[existingIndex];
-      if (entry.kind === "family") entry.members.push(race);
-      continue;
-    }
-    familyIndex.set(race.familyId, items.length);
-    items.push({ kind: "family", familyId: race.familyId, members: [race] });
-  }
-
-  return items;
-}
-
-function speciesDetailLine(race: Race) {
-  return `${race.creatureType} / ${race.size} / ${race.speed}`;
-}
-
-function parseSpeciesName(name: string): { displayName: string; subspeciesLabel: string | null } {
-  const match = name.match(/^(.+)\s+\((\d+)\)$/);
-  if (match) {
-    const count = parseInt(match[2], 10);
-    return { displayName: match[1], subspeciesLabel: `${count} subspecies` };
-  }
-  return { displayName: name, subspeciesLabel: null };
-}
-
 function StepSlot(props: { value?: string | null; label: string }) {
   return props.value ? (
     <span className="dj-header-value">{props.value}</span>
   ) : (
     <span className="dj-header-slot">{props.label}</span>
-  );
-}
-
-function DossierStamp(props: {
-  type: "class" | "species" | "origin";
-  label: string;
-  detail: string;
-  classId?: string;
-  speciesId?: string;
-}) {
-  return (
-    <div className="dj-stamp-row ledger-stamp" data-class={props.classId} data-species={props.speciesId} data-kind={props.type}>
-      {props.type === "class" && props.classId ? (
-        <span className="dj-stamp-icon" data-class={props.classId}>
-          <ClassIconPlaceholder classId={props.classId} size={26} strokeWidth={1.5} />
-        </span>
-      ) : null}
-      {props.type === "species" && props.speciesId ? (
-        <span className="dj-stamp-icon" data-species={props.speciesId}>
-          <SpeciesIconPlaceholder speciesId={props.speciesId} size={26} strokeWidth={1.5} />
-        </span>
-      ) : null}
-      {props.type === "origin" ? <span className="dj-stamp-seal">OR</span> : null}
-      <span>
-        <strong>{props.label}</strong>
-        <small>{props.detail}</small>
-      </span>
-      <em>chosen ✦</em>
-    </div>
   );
 }
 
@@ -143,7 +63,7 @@ export default memo(function CreatorPanel(props: {
   ruleset: Ruleset;
   buildMode: BuildMode;
   step: number;
-  statMethod: StatMethod;
+  statMethod: StatMethod | null;
   pointRemaining: number;
   standardAssignments: AssignmentMap;
   rolledScores: number[];
@@ -176,11 +96,6 @@ export default memo(function CreatorPanel(props: {
     ? props.ruleset.classes.find((item) => item.id === props.draft.classId) ?? null
     : null;
   const race = props.ruleset.races.find((item) => item.id === props.draft.raceId) ?? null;
-  const [familyPickerId, setFamilyPickerId] = useState<string | null>(null);
-  const speciesGroups = groupSpeciesByFamily(props.ruleset.races);
-  const pickedFamily = familyPickerId
-    ? speciesGroups.find((item) => item.kind === "family" && item.familyId === familyPickerId)
-    : null;
   const inspectedClass = props.ruleset.classes.find((item) => item.id === inspectedClassId) ?? null;
   const inspectedSpecies = props.ruleset.races.find((item) => item.id === inspectedSpeciesId) ?? null;
 
@@ -188,8 +103,6 @@ export default memo(function CreatorPanel(props: {
   const chosenSkillCount = props.draft.skillProficiencies.length;
   const skillsComplete = !skillChoice || chosenSkillCount >= skillChoice.count;
 
-  const backgroundToolGrants = BACKGROUND_TOOL_GRANTS[props.draft.background] ?? [];
-  const backgroundToolChoice = BACKGROUND_TOOL_CHOICES[props.draft.background];
   const backgroundLanguageCount = BACKGROUND_LANGUAGE_CHOICES[props.draft.background] ?? 0;
   const extraHpLevels = Math.max(0, props.draft.level - 1);
   const startingHpRolls = props.draft.startingHpRolls.slice(0, extraHpLevels);
@@ -350,7 +263,7 @@ export default memo(function CreatorPanel(props: {
     selectedClass?.name ?? "",
     props.draft.background,
     race ? parseSpeciesName(race.name).displayName : "",
-    methodLabels[props.statMethod] ?? "",
+    props.statMethod ? methodLabels[props.statMethod] : "",
     "",
   ];
 
@@ -498,24 +411,13 @@ export default memo(function CreatorPanel(props: {
             ) : null}
 
             {props.step === 0 ? (
-              <div className="dj-setup">
-                <label className="dj-name-field">
-                  <span>Character name</span>
-                  <input
-                    value={props.draft.name}
-                    placeholder="Write a name"
-                    onChange={(event) => props.onDraftChange({ ...props.draft, name: event.target.value })}
-                  />
-                </label>
-                <div className="dj-settings-panel">
-                  <SourceSettingsPanel
-                    selectedSourceIds={props.draft.sourceIds}
-                    settings={props.draft.settings}
-                    onToggleSource={toggleSource}
-                    onSettingsChange={updateSettings}
-                  />
-                </div>
-              </div>
+              <ProvenanceChapter
+                draft={props.draft}
+                onDraftChange={props.onDraftChange}
+                onToggleSource={toggleSource}
+                onSettingsChange={updateSettings}
+                onChangeLevel={changeStartingLevel}
+              />
             ) : null}
 
             {props.step === 1 ? (
@@ -631,408 +533,53 @@ export default memo(function CreatorPanel(props: {
             ) : null}
 
             {props.step === 3 ? (
-              <div className="dj-option-stack">
-                {props.draft.background ? (
-                  <>
-                    <DossierStamp
-                      type="origin"
-                      label={props.draft.background}
-                      detail={
-                        props.draft.background === "Custom Background"
-                          ? "Personal origin and campaign notes"
-                          : `A ${props.draft.background.toLowerCase()} starting story`
-                      }
-                    />
-                    {(() => {
-                      const granted = BACKGROUND_SKILLS[props.draft.background];
-                      if (granted && granted.length > 0) {
-                        return (
-                          <div className="dj-background-skills">
-                            <span className="dj-eyebrow">Background skill proficiencies</span>
-                            <div className="dj-skill-chips" style={{ pointerEvents: "none" }}>
-                              {granted.map((skillId) => {
-                                const skill = SKILLS.find((sk) => sk.id === skillId);
-                                return skill ? (
-                                  <span key={skillId} className="dj-skill-chip picked">{skill.name}</span>
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {backgroundToolGrants.length > 0 ? (
-                      <div className="dj-background-skills">
-                        <span className="dj-eyebrow">Background tool proficiencies</span>
-                        <div className="dj-skill-chips" style={{ pointerEvents: "none" }}>
-                          {backgroundToolGrants.map((tool) => (
-                            <span key={tool} className="dj-skill-chip picked">{tool}</span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    {backgroundToolChoice ? (
-                      <div className="dj-skill-pick">
-                        <div className="dj-skill-pick-head">
-                          <span className="dj-eyebrow">Choose a tool</span>
-                        </div>
-                        <div className="dj-skill-chips">
-                          {backgroundToolChoice.options.map((tool) => {
-                            const picked = props.draft.toolProficiencies.includes(tool);
-                            const chosenInPool = props.draft.toolProficiencies.filter((t) =>
-                              backgroundToolChoice.options.includes(t),
-                            ).length;
-                            const full = !picked && chosenInPool >= backgroundToolChoice.count;
-                            return (
-                              <button
-                                key={tool}
-                                type="button"
-                                className={`dj-skill-chip${picked ? " picked" : ""}`}
-                                aria-pressed={picked}
-                                disabled={full}
-                                onClick={() => toggleToolChoice(tool, backgroundToolChoice.options, backgroundToolChoice.count)}
-                              >
-                                {tool}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                    {backgroundLanguageCount > 0 ? (
-                      <div className="dj-skill-pick">
-                        <div className="dj-skill-pick-head">
-                          <span className="dj-eyebrow">Languages</span>
-                          <span className={`dj-skill-count${props.draft.languages.length >= backgroundLanguageCount ? " done" : ""}`}>
-                            {props.draft.languages.length}/{backgroundLanguageCount} chosen
-                          </span>
-                        </div>
-                        <div className="dj-skill-chips">
-                          {LANGUAGES.map((language) => {
-                            const picked = props.draft.languages.includes(language);
-                            const full = !picked && props.draft.languages.length >= backgroundLanguageCount;
-                            return (
-                              <button
-                                key={language}
-                                type="button"
-                                className={`dj-skill-chip${picked ? " picked" : ""}`}
-                                aria-pressed={picked}
-                                disabled={full}
-                                onClick={() => toggleLanguageChoice(language)}
-                              >
-                                {language}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
-                <div className="ledger-option-list">
-                  {props.ruleset.backgrounds.map((background) => (
-                    <button
-                      type="button"
-                      key={background}
-                      className={`ledger-option has-dot ${
-                        background === props.draft.background ? "active" : ""
-                      }`}
-                      data-origin-tone={originTone(background)}
-                      onClick={() =>
-                        props.onDraftChange({
-                          ...props.draft,
-                          background,
-                          toolProficiencies: props.draft.toolProficiencies.filter(
-                            (t) => !ALL_BACKGROUND_TOOL_OPTIONS.has(t),
-                          ),
-                          languages: [],
-                        })
-                      }
-                      aria-pressed={background === props.draft.background}
-                    >
-                      <span className="ledger-option-dot" aria-hidden="true" />
-                      <span className="ledger-option-name">{background}</span>
-                      <span className="ledger-option-desc">
-                        {background === "Custom Background"
-                          ? "a personal story, written at the table"
-                          : `a ${background.toLowerCase()} starting story`}
-                      </span>
-                      {background === props.draft.background ? (
-                        <em className="ledger-option-state">Chosen ✦</em>
-                      ) : null}
-                    </button>
-                  ))}
-                </div>
-                <label className="control-field">
-                  <span>Alignment</span>
-                  <select
-                    value={props.draft.alignment}
-                    onChange={(event) =>
-                      props.onDraftChange({ ...props.draft, alignment: event.target.value })
-                    }
-                  >
-                    {props.ruleset.alignments.map((alignment) => (
-                      <option key={alignment} value={alignment}>
-                        {alignment}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="dj-notes-grid">
-                  <label className="control-field narrative-field">
-                    <span>Physical characteristics</span>
-                    <textarea
-                      value={props.draft.physicalCharacteristics}
-                      placeholder="Appearance, age, clothing, scars, posture, voice..."
-                      onChange={(event) =>
-                        props.onDraftChange({
-                          ...props.draft,
-                          physicalCharacteristics: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="control-field narrative-field">
-                    <span>Personal characteristics</span>
-                    <textarea
-                      value={props.draft.personalCharacteristics}
-                      placeholder="Ideals, bonds, flaws, habits, fears, mannerisms..."
-                      onChange={(event) =>
-                        props.onDraftChange({
-                          ...props.draft,
-                          personalCharacteristics: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="control-field narrative-field wide">
-                    <span>General notes</span>
-                    <textarea
-                      value={props.draft.generalNotes}
-                      placeholder="Backstory hooks, goals, campaign notes, table reminders..."
-                      onChange={(event) =>
-                        props.onDraftChange({
-                          ...props.draft,
-                          generalNotes: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
+              <OriginChapter
+                backgrounds={props.ruleset.backgrounds}
+                alignments={props.ruleset.alignments}
+                draft={props.draft}
+                onDraftChange={props.onDraftChange}
+                onSelectBackground={(background) =>
+                  props.onDraftChange({
+                    ...props.draft,
+                    background,
+                    toolProficiencies: props.draft.toolProficiencies.filter(
+                      (t) => !ALL_BACKGROUND_TOOL_OPTIONS.has(t),
+                    ),
+                    languages: [],
+                  })
+                }
+                onToggleTool={toggleToolChoice}
+                onToggleLanguage={toggleLanguageChoice}
+              />
             ) : null}
 
             {props.step === 4 ? (
-              <div className="dj-option-stack">
-                {race ? (
-                  <DossierStamp
-                    type="species"
-                    speciesId={race.id}
-                    label={parseSpeciesName(race.name).displayName}
-                    detail={speciesDetailLine(race)}
-                  />
-                ) : null}
-                <div className="ledger-option-list species-list">
-                  {speciesGroups.map((item) => {
-                    if (item.kind === "single") {
-                      const candidate = item.race;
-                      return (
-                        <button
-                          type="button"
-                          key={candidate.id}
-                          className={`ledger-option has-dot ${
-                            candidate.id === props.draft.raceId ? "active" : ""
-                          }`}
-                          data-species={candidate.id}
-                          aria-haspopup="dialog"
-                          aria-pressed={candidate.id === props.draft.raceId}
-                          onClick={() => setInspectedSpeciesId(candidate.id)}
-                        >
-                          <span className="ledger-option-dot neutral" aria-hidden="true" />
-                          <span className="ledger-option-name">{candidate.name}</span>
-                          <span className="ledger-option-desc">{firstSentence(candidate.summary, 60)}</span>
-                          {candidate.id === props.draft.raceId ? (
-                            <em className="ledger-option-state">Chosen ✦</em>
-                          ) : null}
-                        </button>
-                      );
-                    }
-
-                    const family = FAMILY_LABELS[item.familyId] ?? { name: item.familyId, summary: "" };
-                    const familyHasSelection = item.members.some((m) => m.id === props.draft.raceId);
-
-                    return (
-                      <button
-                        type="button"
-                        key={item.familyId}
-                        className={`ledger-option has-dot ${familyHasSelection ? "active" : ""}`}
-                        aria-haspopup="dialog"
-                        onClick={() => setFamilyPickerId(item.familyId)}
-                      >
-                        <span className="ledger-option-dot neutral" aria-hidden="true" />
-                        <span className="ledger-option-name">{family.name}</span>
-                        <span className="ledger-option-desc">{firstSentence(family.summary, 60)}</span>
-                        {familyHasSelection ? (
-                          <em className="ledger-option-state">Chosen ✦</em>
-                        ) : (
-                          <em className="ledger-option-state quiet">{`${item.members.length} subspecies`}</em>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <LineageChapter
+                races={props.ruleset.races}
+                draft={props.draft}
+                onSelectRace={(raceId) => props.onDraftChange({ ...props.draft, raceId })}
+                onInspectRace={setInspectedSpeciesId}
+              />
             ) : null}
 
             {props.step === 5 ? (
-              <div className="attribute-builder dj-attribute-builder">
-                <div className="dj-stat-strip">
-                  {abilityKeys.map((key) => (
-                    <span key={key}>
-                      {abilityLabels[key]}
-                      <strong>{props.finalAbilities[key]}</strong>
-                    </span>
-                  ))}
-                </div>
-                <div className="method-row">
-                  <button
-                    type="button"
-                    className={props.statMethod === "point-buy" ? "active" : ""}
-                    onClick={() => props.onMethodChange("point-buy")}
-                  >
-                    Point Buy
-                  </button>
-                  <button
-                    type="button"
-                    className={props.statMethod === "standard-array" ? "active" : ""}
-                    onClick={() => props.onMethodChange("standard-array")}
-                  >
-                    Array
-                  </button>
-                  <button
-                    type="button"
-                    className={props.statMethod === "roll" ? "active" : ""}
-                    onClick={() => props.onMethodChange("roll")}
-                  >
-                    Roll
-                  </button>
-                  <button
-                    type="button"
-                    className={props.statMethod === "manual" ? "active" : ""}
-                    onClick={() => props.onMethodChange("manual")}
-                  >
-                    Manual
-                  </button>
-                  <span className="points-pill">{props.statMethod === "manual" ? "Manual" : `${props.pointRemaining} pts`}</span>
-                </div>
-                {props.statMethod === "roll" ? (
-                  <button className="ledger-button small" type="button" onClick={props.onRollStats}>
-                    Roll 4d6
-                  </button>
-                ) : null}
-                <div className="attribute-grid">
-                  {abilityKeys.map((key) => {
-                    const raceBonus = race?.bonuses[key] ?? 0;
-                    return (
-                      <div className="attribute-card" key={key}>
-                        <span>{abilityNames[key]}</span>
-                        <strong>{props.finalAbilities[key]}</strong>
-                        <small>
-                          {props.draft.abilities[key]}
-                          {raceBonus ? ` ${signed(raceBonus)}` : ""}
-                        </small>
-                        {props.statMethod === "point-buy" ? (
-                          <div className="mini-stepper">
-                            <button type="button" aria-label={`Decrease ${abilityNames[key]}`} onClick={() => props.onPointBuyChange(key, -1)}>
-                              −
-                            </button>
-                            <b>{props.draft.abilities[key]}</b>
-                            <button type="button" aria-label={`Increase ${abilityNames[key]}`} onClick={() => props.onPointBuyChange(key, 1)}>
-                              +
-                            </button>
-                          </div>
-                        ) : props.statMethod === "manual" ? (
-                          <input
-                            type="number"
-                            className="dj-manual-stat"
-                            min={3}
-                            max={20}
-                            value={props.draft.abilities[key]}
-                            onChange={(e) => {
-                              const v = parseInt(e.target.value, 10);
-                              if (!isNaN(v)) props.onManualAbilityChange(key, v);
-                            }}
-                            aria-label={`${abilityNames[key]} score`}
-                          />
-                        ) : (
-                          <select
-                            value={
-                              props.statMethod === "standard-array"
-                                ? props.standardAssignments[key]
-                                : props.rolledAssignments[key]
-                            }
-                            onChange={(event) =>
-                              props.onAssignmentChange(
-                                props.statMethod === "standard-array" ? "standard" : "rolled",
-                                key,
-                                Number(event.target.value),
-                              )
-                            }
-                          >
-                            {(props.statMethod === "standard-array" ? standardArray : props.rolledScores).map(
-                              (score, index) => (
-                                <option value={index} key={`${score}-${index}`}>
-                                  {score}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {race?.bonusChoices && race.bonusChoices > 0 ? (() => {
-                  const currentChoices = props.draft.raceBonusChoices ?? {};
-                  const chosenCount = abilityKeys.reduce((sum, k) => sum + (currentChoices[k] ?? 0), 0);
-                  const remaining = race.bonusChoices - chosenCount;
-                  return (
-                    <div className="dj-race-bonus-choices" style={{ marginTop: 12 }}>
-                      <p style={{ fontSize: "0.85em", marginBottom: 6 }}>
-                        {race.name}: choose <strong>{race.bonusChoices}</strong> ability{race.bonusChoices > 1 ? " scores" : ""} to receive +1 each{" "}
-                        <small style={{ color: "var(--ink-faint)" }}>({remaining} remaining)</small>
-                      </p>
-                      <div className="attribute-grid" style={{ gap: 6 }}>
-                        {abilityKeys.map((key) => (
-                          <div className="attribute-card" key={`bc-${key}`} style={{ padding: "4px 8px" }}>
-                            <span>{abilityNames[key]}</span>
-                            <small>{props.finalAbilities[key]}{(currentChoices[key] ?? 0) > 0 ? " (+1)" : ""}</small>
-                            <button
-                              type="button"
-                              className={`cs-prof-marker cs-prof-click${(currentChoices[key] ?? 0) > 0 ? " cs-prof" : ""}`}
-                              disabled={remaining <= 0 && (currentChoices[key] ?? 0) === 0}
-                              onClick={() => {
-                                const cur = currentChoices[key] ?? 0;
-                                const updated = { ...currentChoices };
-                                if (cur > 0) {
-                                  updated[key] = 0;
-                                } else if (remaining > 0) {
-                                  updated[key] = 1;
-                                }
-                                props.onDraftChange({ ...props.draft, raceBonusChoices: updated });
-                              }}
-                              aria-label={`Toggle +1 ${abilityNames[key]}`}
-                            >
-                              {(currentChoices[key] ?? 0) > 0 ? "\u25CF" : "\u25CB"}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })() : null}
-              </div>
+              <AttributesChapter
+                draft={props.draft}
+                finalAbilities={props.finalAbilities}
+                race={race}
+                selectedClass={selectedClass}
+                statMethod={props.statMethod}
+                pointRemaining={props.pointRemaining}
+                standardAssignments={props.standardAssignments}
+                rolledScores={props.rolledScores}
+                rolledAssignments={props.rolledAssignments}
+                onMethodChange={props.onMethodChange}
+                onPointBuyChange={props.onPointBuyChange}
+                onManualAbilityChange={props.onManualAbilityChange}
+                onAssignmentChange={props.onAssignmentChange}
+                onRollStats={props.onRollStats}
+                onDraftChange={props.onDraftChange}
+              />
             ) : null}
             {props.step === 6 ? (
               <div className="ledger-certificate">
@@ -1040,6 +587,16 @@ export default memo(function CreatorPanel(props: {
                   <span className="ledger-cert-chapter" id="dj-section-title">
                     {`Chapter ${CHAPTERS[6].numeral} · ${CHAPTERS[6].name}`}
                   </span>
+                  {/* The finished hero, not another settings page (complete-
+                      commission handoff §9): the likeness leads the record. */}
+                  <CharacterPortrait
+                    portraitId={props.draft.portraitUrl || null}
+                    characterName={props.draft.name || "Adventurer"}
+                    size={96}
+                    shape="circle"
+                    decorative
+                    className="ao-cert-portrait"
+                  />
                   <h3 className="ledger-cert-name">{props.draft.name.trim() || "Unwritten"}</h3>
                   {selectedClass ? (
                     <span className="ledger-cert-seal" data-class={selectedClass.id} aria-hidden="true">
@@ -1237,19 +794,6 @@ export default memo(function CreatorPanel(props: {
           onSelect={() => {
             props.onDraftChange({ ...props.draft, raceId: inspectedSpecies.id });
             setInspectedSpeciesId(null);
-          }}
-        />
-      ) : null}
-      {pickedFamily && pickedFamily.kind === "family" ? (
-        <SpeciesFamilyModal
-          familyName={FAMILY_LABELS[pickedFamily.familyId]?.name ?? pickedFamily.familyId}
-          familySummary={FAMILY_LABELS[pickedFamily.familyId]?.summary ?? ""}
-          members={pickedFamily.members}
-          selectedId={props.draft.raceId}
-          onClose={() => setFamilyPickerId(null)}
-          onPick={(raceId) => {
-            setFamilyPickerId(null);
-            setInspectedSpeciesId(raceId);
           }}
         />
       ) : null}

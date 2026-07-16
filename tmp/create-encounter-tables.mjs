@@ -564,9 +564,6 @@ function buildEncounterTables() {
   for (const envKey of Object.keys(ENVS)) {
     const envFull = ENVS[envKey];
     for (const band of CR_BANDS) {
-      const [minStr, maxStr] = band.split("-");
-      const minCr = parseFloat(minStr);
-      const maxCr = maxStr === "+" ? 999 : parseFloat(maxStr);
 
       const creatures = CREATURES.filter((c) => {
         if (!c.env.includes(envKey)) return false;

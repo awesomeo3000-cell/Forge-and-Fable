@@ -5350,3 +5350,850 @@
     min-height: 210px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-15 — Complete commission handoff (2026-07-16).
+   Part 1: entry triptych, "Observatory Storybook" treatment — the three
+   build-mode plates read as one framed art set: brass frames, rounded
+   plates, inset ring, art brightens on hover/selection, and an explicit
+   choose/selected cue. Selection never relies on desaturation alone.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .commission-strip {
+  gap: 18px;
+  padding: 6px 28px 26px;
+  border-top: 0;
+}
+[data-theme="arcane-observatory"] .commission-panel,
+[data-theme="arcane-observatory"] .commission-panel:first-child {
+  max-width: 400px;
+  border: 1px solid rgba(185, 145, 67, 0.5);
+  border-radius: 10px;
+  background: #091321;
+  box-shadow: inset 0 0 0 5px rgba(5, 12, 20, 0.66), 0 18px 42px rgba(0, 0, 0, 0.22);
+  transition: border-color 0.22s ease, transform 0.22s ease;
+}
+[data-theme="arcane-observatory"] .commission-plate {
+  border-radius: 9px;
+  overflow: hidden;
+}
+[data-theme="arcane-observatory"] .commission-panel:hover,
+[data-theme="arcane-observatory"] .commission-panel.chosen {
+  border-color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .commission-panel.chosen::before {
+  inset: 12px;
+  border-radius: 6px;
+}
+/* The cue line: invisible at rest, revealed by hover, focus or selection. */
+[data-theme="arcane-observatory"] .commission-cue {
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+[data-theme="arcane-observatory"] .commission-panel:hover .commission-cue,
+[data-theme="arcane-observatory"] .commission-panel:focus-visible .commission-cue,
+[data-theme="arcane-observatory"] .commission-panel.chosen .commission-cue {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .commission-cue {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .commission-strip {
+    gap: 14px;
+    padding: 4px 16px 20px;
+  }
+  [data-theme="arcane-observatory"] .commission-panel,
+  [data-theme="arcane-observatory"] .commission-panel:first-child {
+    max-width: none;
+    border: 1px solid rgba(185, 145, 67, 0.5);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-15 part 2 — chapter workspaces (complete-commission handoff §5–§10).
+   Shared card hierarchy: chapter workspace → major cards → decision cards →
+   rows/controls, differentiated by surface, border strength and padding.
+   Brass = confirmation/primary, blue = previews, amber = incomplete,
+   verdigris = valid completion (§10 color grammar).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .ao-commission-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+[data-theme="arcane-observatory"] .ao-major-card {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-card-title {
+  margin: 0 0 4px;
+  font: 600 0.72rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-card-sub {
+  margin: 0 0 14px;
+  max-width: 68ch;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+[data-theme="arcane-observatory"] .ao-catalog {
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-catalog-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+[data-theme="arcane-observatory"] .ao-catalog-search {
+  flex: 1;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-catalog-count {
+  flex: none;
+  font: 600 0.68rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card:hover {
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-catalog-card:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card.previewed {
+  border-color: var(--state-selected);
+  box-shadow: inset 0 0 0 1px rgba(92, 148, 200, 0.35);
+}
+[data-theme="arcane-observatory"] .ao-catalog-card.selected {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(217, 185, 103, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-head strong {
+  font: 500 0.98rem/1.2 var(--font-role-display);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--class-a, var(--border-brass));
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-state {
+  margin-left: auto;
+  flex: none;
+  color: var(--border-brass-bright);
+  font: 600 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-style: normal;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-desc {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+[data-theme="arcane-observatory"] .ao-catalog-card-grants {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+[data-theme="arcane-observatory"] .ao-detail-stack {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-detail-empty {
+  display: grid;
+  gap: 6px;
+  place-content: center;
+  min-height: 260px;
+  padding: 24px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-detail-empty strong {
+  font: 500 1.15rem/1.2 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-feature-card {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ao-feature-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-feature-title {
+  margin: 0;
+  font: 500 1.7rem/1.05 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-feature-sub {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+[data-theme="arcane-observatory"] .ao-feature-facts {
+  display: grid;
+  gap: 0;
+  margin: 14px 0 0;
+}
+[data-theme="arcane-observatory"] .ao-feature-facts > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.4fr) 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .ao-feature-facts dt {
+  font: 600 0.66rem/1.5 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-feature-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+[data-theme="arcane-observatory"] .ao-feature-confirm {
+  margin-top: 16px;
+}
+[data-theme="arcane-observatory"] .ao-feature-confirmed {
+  margin: 16px 0 0;
+  color: var(--state-success);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+}
+[data-theme="arcane-observatory"] .ao-feature-actions .ao-feature-confirmed {
+  margin: 0;
+}
+[data-theme="arcane-observatory"] .ao-decision-card {
+  padding: 14px 16px 16px;
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--state-selected);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-decision-head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+[data-theme="arcane-observatory"] .ao-decision-head h5 {
+  margin: 0;
+  font: 600 0.72rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-decision-count {
+  flex: none;
+  color: var(--state-warning);
+  font: 600 0.68rem/1.3 var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .ao-decision-count.done {
+  color: var(--state-success);
+}
+
+[data-theme="arcane-observatory"] .ao-summary-card {
+  padding: 16px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-summary-rows {
+  display: grid;
+  margin: 4px 0 0;
+}
+[data-theme="arcane-observatory"] .ao-summary-rows > div {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .ao-summary-rows dt {
+  font: 600 0.66rem/1.5 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-summary-rows dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-summary-rows dd.missing {
+  color: var(--state-warning);
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-summary-status {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+[data-theme="arcane-observatory"] .ao-summary-status.done {
+  color: var(--state-success);
+}
+
+[data-theme="arcane-observatory"] .ao-provenance {
+  display: grid;
+  gap: 16px;
+}
+[data-theme="arcane-observatory"] .ao-provenance-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+[data-theme="arcane-observatory"] .ao-identity-card {
+  display: grid;
+  gap: 16px;
+}
+[data-theme="arcane-observatory"] .ao-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font: 600 0.7rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-identity-name input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font: 500 1.25rem/1.2 var(--font-role-display);
+}
+[data-theme="arcane-observatory"] .ao-identity-level input {
+  width: 110px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font: 600 1.05rem/1 var(--font-role-numeric);
+}
+[data-theme="arcane-observatory"] .ao-field-note {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+[data-theme="arcane-observatory"] .ao-field-note.pending {
+  color: var(--state-warning);
+}
+[data-theme="arcane-observatory"] .ao-source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+[data-theme="arcane-observatory"] .ao-source-card,
+[data-theme="arcane-observatory"] .ao-pref-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 13px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-source-card:hover,
+[data-theme="arcane-observatory"] .ao-pref-card:hover {
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-source-card.enabled,
+[data-theme="arcane-observatory"] .ao-pref-card.enabled {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+}
+[data-theme="arcane-observatory"] .ao-source-card input[type="checkbox"],
+[data-theme="arcane-observatory"] .ao-pref-card input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-source-card:has(input:focus-visible),
+[data-theme="arcane-observatory"] .ao-pref-card:has(input:focus-visible),
+[data-theme="arcane-observatory"] .ao-pref-card:has(select:focus-visible) {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-source-card-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-source-card-copy strong {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-source-card-copy small {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+[data-theme="arcane-observatory"] .ao-source-card-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+[data-theme="arcane-observatory"] .ao-source-marker {
+  flex: none;
+  padding: 2px 7px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  font: 600 0.6rem/1.4 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-style: normal;
+}
+[data-theme="arcane-observatory"] .ao-pref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+[data-theme="arcane-observatory"] .ao-pref-select {
+  grid-template-columns: 1fr;
+}
+[data-theme="arcane-observatory"] .ao-pref-select select {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-pref-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+[data-theme="arcane-observatory"] .ao-origin {
+  display: grid;
+  gap: 16px;
+}
+[data-theme="arcane-observatory"] .ao-origin-alignment {
+  max-width: 300px;
+  margin-bottom: 12px;
+}
+
+[data-theme="arcane-observatory"] .ao-lineage-card-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-lineage-feature-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 2px;
+}
+[data-theme="arcane-observatory"] .ao-lineage-feature-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--border-brass);
+  border-radius: 50%;
+  background: var(--surface-panel-recessed);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits {
+  margin-top: 14px;
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits-title {
+  margin: 0 0 4px;
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits li strong {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-lineage-traits li span {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+[data-theme="arcane-observatory"] .ao-lineage-note {
+  margin: 14px 0 0;
+  color: var(--state-warning);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-lineage-variants {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 11px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant:hover {
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant.selected {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant strong {
+  font: 500 0.98rem/1.2 var(--font-role-display);
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant span {
+  grid-row: 2;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+[data-theme="arcane-observatory"] .ao-lineage-variant em {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  color: var(--border-brass-bright);
+  font: 600 0.64rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-style: normal;
+}
+
+[data-theme="arcane-observatory"] .ao-attributes {
+  display: grid;
+  gap: 16px;
+}
+[data-theme="arcane-observatory"] .ao-method-picker {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-method-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+[data-theme="arcane-observatory"] .ao-method-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 132px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-method-card:hover {
+  border-color: var(--border-strong);
+}
+[data-theme="arcane-observatory"] .ao-method-card:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-method-card.selected {
+  border-color: var(--border-brass);
+  background: rgba(179, 146, 74, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(217, 185, 103, 0.22);
+}
+[data-theme="arcane-observatory"] .ao-method-card strong {
+  font: 500 1.08rem/1.2 var(--font-role-display);
+}
+[data-theme="arcane-observatory"] .ao-method-card > span:not(.ao-catalog-card-state) {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+[data-theme="arcane-observatory"] .ao-method-card em {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-method-card .ao-catalog-card-state {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin: 0;
+}
+[data-theme="arcane-observatory"] .ao-method-random {
+  justify-self: start;
+  padding: 2px 7px;
+  border: 1px solid rgba(189, 150, 84, 0.5);
+  border-radius: var(--radius-xs);
+  color: var(--state-warning);
+  font: 600 0.6rem/1.4 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-method-hint {
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-attributes-workspace {
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.6fr);
+}
+[data-theme="arcane-observatory"] .ao-ability-workspace-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+[data-theme="arcane-observatory"] .ao-ability-workspace-head .ao-card-title {
+  margin: 0;
+}
+[data-theme="arcane-observatory"] .ao-ability-roll-note {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+[data-theme="arcane-observatory"] .ao-ability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .ao-ability-card {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ao-ability-card-name {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font: 600 0.72rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-ability-card-name em {
+  color: var(--text-muted);
+  font-style: normal;
+  font-size: 0.62rem;
+}
+[data-theme="arcane-observatory"] .ao-ability-card-score {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+[data-theme="arcane-observatory"] .ao-ability-card-score b {
+  font: 600 1.65rem/1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-ability-card-score i {
+  color: var(--border-brass-bright);
+  font: 600 0.92rem/1 var(--font-role-numeric);
+  font-style: normal;
+}
+[data-theme="arcane-observatory"] .ao-ability-card-base {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+[data-theme="arcane-observatory"] .ao-ability-card select,
+[data-theme="arcane-observatory"] .ao-ability-card .dj-manual-stat {
+  width: 100%;
+  min-height: 38px;
+}
+[data-theme="arcane-observatory"] .ao-lineage-bonus {
+  margin-top: 14px;
+}
+[data-theme="arcane-observatory"] .ao-attr-summary {
+  position: sticky;
+  top: 12px;
+}
+[data-theme="arcane-observatory"] .ao-attr-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+[data-theme="arcane-observatory"] .ao-attr-summary-cell {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 9px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ao-attr-summary-cell span {
+  font: 600 0.6rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-attr-summary-cell b {
+  font: 600 1.15rem/1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-attr-summary-cell i {
+  color: var(--text-secondary);
+  font: 600 0.72rem/1 var(--font-role-numeric);
+  font-style: normal;
+}
+
+[data-theme="arcane-observatory"] .ao-cert-portrait {
+  margin: 12px auto 6px;
+  border: 2px solid var(--border-brass);
+  box-shadow: 0 0 0 5px rgba(179, 146, 74, 0.12);
+}
+
+@media (max-width: 1240px) {
+  [data-theme="arcane-observatory"] .ao-catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 980px) {
+  [data-theme="arcane-observatory"] .ao-commission-workspace,
+  [data-theme="arcane-observatory"] .ao-provenance-top,
+  [data-theme="arcane-observatory"] .ao-attributes-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-attr-summary {
+    position: static;
+  }
+  [data-theme="arcane-observatory"] .ao-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  [data-theme="arcane-observatory"] .ao-catalog-grid,
+  [data-theme="arcane-observatory"] .ao-source-grid,
+  [data-theme="arcane-observatory"] .ao-pref-grid,
+  [data-theme="arcane-observatory"] .ao-method-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

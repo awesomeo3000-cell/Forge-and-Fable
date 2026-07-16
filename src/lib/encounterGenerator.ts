@@ -12,15 +12,31 @@ export function calculateEncounterBudget(party: EncounterPartyProfile, difficult
 function hashSeed(input: string) { let h = 2166136261; for (const char of input) { h ^= char.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function randomFrom(seed: string) { let state = hashSeed(seed) || 1; return () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; }; }
 
+/* The SRD catalog (src/data/creatures.json) carries role tags (Brute,
+   Skirmisher…), not capability tags — capabilities are derived from the
+   stat block itself. Explicit capability tags on custom creatures still
+   count via the tag checks. */
+function creatureFlies(creature: CreatureLibraryRecord) {
+  return creature.tags.includes("flying") || /\bfly\b/i.test(creature.speed ?? "");
+}
+function creatureHasAreaDamage(creature: CreatureLibraryRecord) {
+  if (creature.tags.includes("area-damage")) return true;
+  return [...(creature.actions ?? []), ...(creature.legendaryActions ?? [])].some((action) => /each creature (?:in|within)/i.test(action.description ?? ""));
+}
+function creatureHasHardControl(creature: CreatureLibraryRecord) {
+  if (creature.tags.includes("paralysis") || creature.tags.includes("stun")) return true;
+  return [...(creature.actions ?? []), ...(creature.traits ?? [])].some((action) => /\bparalyzed\b|\bstunned\b/i.test(action.description ?? ""));
+}
+
 export function encounterSafetyWarnings(party: EncounterPartyProfile, creatures: Array<{ creature: CreatureLibraryRecord; quantity: number }>): EncounterWarning[] {
   const warnings: EncounterWarning[] = [];
   const total = creatures.reduce((sum, entry) => sum + entry.quantity, 0);
   const highestHit = Math.max(0, ...creatures.flatMap((entry) => [...(entry.creature.actions ?? []), ...(entry.creature.traits ?? [])].map((action) => action.averageDamage ?? 0)));
   if (party.averageMaxHp && highestHit >= party.averageMaxHp * 0.5) warnings.push({ code: "one-hit", severity: "warning", message: "A creature may remove half of an average party member's hit points with one action." });
   if (total > Math.max(8, party.memberCount * 2.5)) warnings.push({ code: "action-economy", severity: "warning", message: "The enemy action economy is severe and may make the encounter slow or swingy." });
-  if (creatures.some((entry) => entry.creature.tags.includes("flying")) && party.rangedCapacity === "low") warnings.push({ code: "flying", severity: "warning", message: "Flying enemies may be difficult for this party's limited ranged capacity." });
-  if (creatures.filter((entry) => entry.creature.tags.includes("area-damage")).reduce((sum, entry) => sum + entry.quantity, 0) > 1) warnings.push({ code: "area-damage", severity: "warning", message: "Multiple enemies have area damage; clustered characters may take heavy damage." });
-  if (creatures.some((entry) => entry.creature.tags.includes("paralysis") || entry.creature.tags.includes("stun"))) warnings.push({ code: "hard-control", severity: "warning", message: "Hard-control effects may leave players unable to act." });
+  if (creatures.some((entry) => creatureFlies(entry.creature)) && party.rangedCapacity === "low") warnings.push({ code: "flying", severity: "warning", message: "Flying enemies may be difficult for this party's limited ranged capacity." });
+  if (creatures.filter((entry) => creatureHasAreaDamage(entry.creature)).reduce((sum, entry) => sum + entry.quantity, 0) > 1) warnings.push({ code: "area-damage", severity: "warning", message: "Multiple enemies have area damage; clustered characters may take heavy damage." });
+  if (creatures.some((entry) => creatureHasHardControl(entry.creature))) warnings.push({ code: "hard-control", severity: "warning", message: "Hard-control effects may leave players unable to act." });
   return warnings;
 }
 
@@ -29,7 +45,10 @@ export type GenerateEncounterInput = { seed: string; campaignId: string; difficu
 export function generateEncounter(input: GenerateEncounterInput, party: EncounterPartyProfile, library: CreatureLibraryRecord[], ownerUserId: string): SavedEncounter {
   const rng = randomFrom(input.seed);
   const budget = calculateEncounterBudget(party, input.difficulty);
-  const eligible = library.filter((creature) => !creature.archived && (creature.experienceValue ?? 0) > 0 && (!input.environment || creature.environments?.includes(input.environment)) && (!input.source || creature.source === input.source));
+  // Environment matching is case-insensitive: the catalog capitalizes
+  // ("Forest") while the generator UI accepts free text ("forest").
+  const wantedEnvironment = input.environment?.trim().toLowerCase();
+  const eligible = library.filter((creature) => !creature.archived && (creature.experienceValue ?? 0) > 0 && (!wantedEnvironment || creature.environments?.some((environment) => environment.toLowerCase() === wantedEnvironment)) && (!input.source || creature.source === input.source));
   if (eligible.length === 0) throw new Error("No creatures match the generator filters.");
   const sorted = [...eligible].sort((a, b) => (a.experienceValue ?? 0) - (b.experienceValue ?? 0));
   const withinBudget = sorted.filter((creature) => (creature.experienceValue ?? 0) <= budget.maximum);
