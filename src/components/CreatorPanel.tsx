@@ -1,14 +1,12 @@
 "use client";
 
 import { memo, useState } from "react";
-import Image from "next/image";
 import type {
   AbilityKey,
   AbilityScores,
   BuildMode,
   CharacterSettings,
   DraftCharacter,
-  HeroClass,
   Race,
   Ruleset,
   StatMethod,
@@ -18,7 +16,6 @@ import {
   abilityLabels,
   abilityModifier,
   abilityNames,
-  proficiencyBonus,
   signed,
   sourceOptions,
   standardArray,
@@ -32,15 +29,14 @@ import SpeciesLearnModal from "@/components/SpeciesLearnModal";
 import SpeciesFamilyModal from "@/components/SpeciesFamilyModal";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
 import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
+import ClassChapter from "@/components/commission/class/ClassChapter";
 import { PORTRAITS, isCatalogPortrait, portraitFrameCss, suggestPortraitAncestry } from "@/data/portraits";
 
-import { CHAPTERS, classDescriptor, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
-import { CLASS_ART_IDS, classArtSrc } from "@/lib/classArt";
+import { CHAPTERS, firstSentence, ordinalLevel, originTone } from "@/lib/ledgerCopy";
 import {
   CLASS_SKILL_CHOICES,
   SKILLS,
   BACKGROUND_SKILLS,
-  CLASS_TOOL_GRANTS,
   CLASS_TOOL_CHOICES,
   BACKGROUND_TOOL_GRANTS,
   BACKGROUND_TOOL_CHOICES,
@@ -54,35 +50,6 @@ const ALL_BACKGROUND_TOOL_OPTIONS = new Set(Object.values(BACKGROUND_TOOL_CHOICE
 type AssignmentMap = Record<AbilityKey, number>;
 
 const steps = ["Setup", "Portrait", "Class", "Origin", "Species", "Attributes", "Finalize"];
-const levelOptions = Array.from({ length: 20 }, (_, index) => index + 1);
-
-const CLASS_SELECTOR_COPY: Record<string, { description: string; role: string }> = {
-  artificer: { description: "Clever inventor and magical engineer", role: "Support & Utility" },
-  barbarian: { description: "Relentless frontline bruiser", role: "Durability & Damage" },
-  bard: { description: "Charismatic performer and versatile ally", role: "Support & Control" },
-  cleric: { description: "Divine champion and steadfast healer", role: "Support & Healing" },
-  druid: { description: "Wild spellcaster and shapeshifter", role: "Control & Support" },
-  fighter: { description: "Versatile master of weapons and armor", role: "Martial Damage" },
-  monk: { description: "Swift martial artist and skirmisher", role: "Mobility & Damage" },
-  paladin: { description: "Armored champion bound by an oath", role: "Defense & Support" },
-  ranger: { description: "Wilderness hunter and deadly scout", role: "Ranged Damage" },
-  rogue: { description: "Elusive expert and precision striker", role: "Precision Damage" },
-  sorcerer: { description: "Unstable & explosive spellcaster", role: "Arcane Damage" },
-  warlock: { description: "Pact-bound caster with forbidden power", role: "Arcane Damage" },
-  wizard: { description: "Studied master of arcane magic", role: "Control & Utility" },
-};
-
-
-function casterLabel(heroClass: HeroClass) {
-  if (!heroClass.casterType || heroClass.casterType === "none") return "martial";
-  if (heroClass.casterType === "pact") return "pact magic";
-  if (heroClass.spellcastingAbility) return `${abilityLabels[heroClass.spellcastingAbility]} caster`;
-  return `${heroClass.casterType} caster`;
-}
-
-function classDetailLine(heroClass: HeroClass) {
-  return [`d${heroClass.hitDie} hit die`, casterLabel(heroClass)].join(" / ");
-}
 
 const FAMILY_LABELS: Record<string, { name: string; summary: string }> = {
   "dwarf-legacy": { name: "Dwarf (Legacy)", summary: "Hill or Mountain dwarf traditions." },
@@ -219,8 +186,6 @@ export default memo(function CreatorPanel(props: {
   const chosenSkillCount = props.draft.skillProficiencies.length;
   const skillsComplete = !skillChoice || chosenSkillCount >= skillChoice.count;
 
-  const classToolGrants = props.draft.classId ? CLASS_TOOL_GRANTS[props.draft.classId] ?? [] : [];
-  const classToolChoice = props.draft.classId ? CLASS_TOOL_CHOICES[props.draft.classId] : undefined;
   const backgroundToolGrants = BACKGROUND_TOOL_GRANTS[props.draft.background] ?? [];
   const backgroundToolChoice = BACKGROUND_TOOL_CHOICES[props.draft.background];
   const backgroundLanguageCount = BACKGROUND_LANGUAGE_CHOICES[props.draft.background] ?? 0;
@@ -285,6 +250,22 @@ export default memo(function CreatorPanel(props: {
           startingHpRolls: rolls.slice(0, extraHpLevels),
         });
       },
+    });
+  };
+
+  /** Commit a class to the draft. Changing class clears exactly the
+      class-dependent choices the previous implementation cleared: skill
+      picks, class tool picks, and starting HP rolls. */
+  const selectClass = (classId: string) => {
+    if (classId === props.draft.classId) {
+      return;
+    }
+    props.onDraftChange({
+      ...props.draft,
+      classId,
+      skillProficiencies: [],
+      toolProficiencies: props.draft.toolProficiencies.filter((t) => !ALL_CLASS_TOOL_OPTIONS.has(t)),
+      startingHpRolls: [],
     });
   };
 
@@ -365,6 +346,17 @@ export default memo(function CreatorPanel(props: {
   // far — the seventh chapter is the seal, not a decision.
   const decidedCount = stepComplete.slice(0, 6).filter(Boolean).length;
 
+  // Orrery Path §17: a disabled Continue must say why. Only the Class
+  // chapter has multi-part completion, so only it gets a derived reason.
+  const skillsRemaining = skillChoice ? Math.max(0, skillChoice.count - chosenSkillCount) : 0;
+  const classContinueHint = !classStepComplete
+    ? !props.draft.classId
+      ? "Choose a class to continue."
+      : !skillsComplete
+        ? `Choose ${skillsRemaining} more skill${skillsRemaining === 1 ? "" : "s"} to continue.`
+        : "Complete the starting HP rolls to continue."
+    : null;
+
   const canContinue =
     props.step === 0
       ? stepComplete[0]
@@ -400,11 +392,10 @@ export default memo(function CreatorPanel(props: {
 
   return (
     <>
-      <div className="creator-panel paper-surface dj-dossier ledger-spread">
-        <nav className="dj-rail ledger-toc" aria-label="Character builder steps">
-          <span className="dj-rail-label">The Commission</span>
-          <div className="ao-forge-progress">
-            <strong>{decidedCount} of 6 decided</strong>
+      <div className="creator-panel paper-surface dj-dossier ledger-spread ao-orrery">
+        <nav className="ao-orrery-path" aria-label="Character builder steps">
+          <div className="ao-orrery-brand">
+            <span className="ao-orrery-brand-label">The Commission</span>
             <span
               className="ao-forge-meter"
               role="progressbar"
@@ -415,26 +406,37 @@ export default memo(function CreatorPanel(props: {
             >
               <span style={{ width: `${(decidedCount / 6) * 100}%` }} />
             </span>
+            <small className="ao-orrery-brand-count">{decidedCount} of 6 decided</small>
           </div>
-          {steps.map((step, index) => {
-            const active = index === props.step;
-            const complete = stepComplete[index];
-            const chapter = CHAPTERS[index];
-            const decided = complete ? decidedValues[index] : "";
+          <ol className="ao-orrery-steps">
+            {steps.map((step, index) => {
+              const active = index === props.step;
+              const complete = stepComplete[index];
+              const chapter = CHAPTERS[index];
+              const decided = complete ? decidedValues[index] : "";
 
-            return (
-              <button
-                type="button"
-                key={step}
-                className={`dj-rail-step ${active ? "active" : ""} ${complete ? "complete" : ""}`}
-                onClick={() => props.onStepChange(index)}
-                aria-current={active ? "step" : undefined}
-              >
-                <span className="ledger-toc-chapter">{`${chapter.numeral}. ${chapter.name}`}</span>
-                {decided ? <em className="ledger-toc-decided">{decided} ✓</em> : null}
-              </button>
-            );
-          })}
+              return (
+                <li key={step}>
+                  <button
+                    type="button"
+                    className={`ao-orrery-step${active ? " active" : ""}${complete ? " complete" : ""}`}
+                    onClick={() => props.onStepChange(index)}
+                    aria-current={active ? "step" : undefined}
+                    aria-label={`${chapter.numeral}. ${chapter.name}${decided ? ` — decided: ${decided}` : ""}`}
+                    title={decided || undefined}
+                  >
+                    <span className="ao-orrery-step-numeral" aria-hidden="true">
+                      {chapter.numeral}
+                    </span>
+                    <span className="ao-orrery-step-name" aria-hidden="true">
+                      {chapter.name}
+                      {complete ? <span className="ao-orrery-step-check"> ✓</span> : null}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
         </nav>
 
         <section className="dj-document">
@@ -546,209 +548,29 @@ export default memo(function CreatorPanel(props: {
             ) : null}
 
             {props.step === 2 ? (
-              <div className="dj-option-stack">
-                {selectedClass ? (
-                  <DossierStamp
-                    type="class"
-                    classId={selectedClass.id}
-                    label={selectedClass.name}
-                    detail={classDetailLine(selectedClass)}
-                  />
-                ) : null}
-                {selectedClass?.subclassLevel ? (
-                  <p className="ledger-footnote">
-                    {`† Subclass is chosen at ${ordinalLevel(selectedClass.subclassLevel)} level; the ledger will prompt you.`}
-                  </p>
-                ) : null}
-                {selectedClass && skillChoice ? (
-                  <div className="dj-class-training" data-class={selectedClass.id}>
-                    <div className="dj-level-pick">
-                      <span className="dj-eyebrow">Starting level</span>
-                      <label>
-                        <span>Level</span>
-                        <select
-                          value={props.draft.level}
-                          onChange={(event) => changeStartingLevel(Number(event.target.value))}
-                        >
-                          {levelOptions.map((level) => (
-                            <option value={level} key={level}>
-                              Level {level}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span>HP method</span>
-                        <select
-                          value={props.draft.settings.hitPointType}
-                          onChange={(event) => changeHitPointType(event.target.value as CharacterSettings["hitPointType"])}
-                        >
-                          <option value="fixed">Fixed</option>
-                          <option value="rolled">Rolled</option>
-                          <option value="manual">Manual</option>
-                        </select>
-                      </label>
-                      <small>
-                        Proficiency bonus {signed(proficiencyBonus(props.draft.level))} / starting HP{" "}
-                        {startingHpDisplay}
-                      </small>
-                      <small>
-                        Level 1: {firstLevelHP} HP. Later levels use {hpMethodLabel} d{selectedClass.hitDie}
-                        {constitutionModifier !== 0 ? ` ${signed(constitutionModifier)}` : ""}.
-                      </small>
-                      {usesRolledStartingHp ? (
-                        <div className="dj-hp-roll-panel">
-                          <button type="button" className="ledger-button small" onClick={rollStartingHp}>
-                            Roll {extraHpLevels}d{selectedClass.hitDie} HP
-                          </button>
-                          <span className={`dj-hp-roll-status${startingHpComplete ? " done" : ""}`}>
-                            {startingHpComplete
-                              ? `${startingHpRolls.join(", ")} -> +${rolledHpGains.reduce((sum, gain) => sum + gain, 0)} HP`
-                              : `${startingHpRolls.length}/${extraHpLevels} rolled`}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="dj-skill-pick">
-                      <div className="dj-skill-pick-head">
-                        <span className="dj-eyebrow">Skill proficiencies</span>
-                        <span className={`dj-skill-count${skillsComplete ? " done" : ""}`}>
-                          {chosenSkillCount}/{skillChoice.count} chosen
-                        </span>
-                      </div>
-                      <p className="dj-skill-hint">
-                        {skillsComplete
-                          ? `Trained in ${props.draft.skillProficiencies.map((id) => SKILLS.find((sk) => sk.id === id)?.name ?? id).join(", ")}.`
-                          : `Choose ${skillChoice.count} skills the ${selectedClass.name.toLowerCase()} is trained in.`}
-                      </p>
-                      <div className="dj-skill-chips">
-                        {skillChoice.options.map((skillId) => {
-                          const skill = SKILLS.find((sk) => sk.id === skillId);
-                          if (!skill) return null;
-                          const picked = props.draft.skillProficiencies.includes(skillId);
-                          const full = !picked && skillsComplete;
-                          return (
-                            <button
-                              key={skillId}
-                              type="button"
-                              className={`dj-skill-chip${picked ? " picked" : ""}`}
-                              aria-pressed={picked}
-                              disabled={full}
-                              onClick={() => toggleSkillChoice(skillId)}
-                            >
-                              {skill.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {classToolGrants.length > 0 || classToolChoice ? (
-                      <div className="dj-skill-pick">
-                        <div className="dj-skill-pick-head">
-                          <span className="dj-eyebrow">Tool proficiencies</span>
-                        </div>
-                        {classToolGrants.length > 0 ? (
-                          <p className="dj-skill-hint">Automatically trained in {classToolGrants.join(", ")}.</p>
-                        ) : null}
-                        {classToolChoice ? (
-                          <>
-                            <p className="dj-skill-hint">
-                              Choose {classToolChoice.count} tool{classToolChoice.count > 1 ? "s" : ""} the{" "}
-                              {selectedClass.name.toLowerCase()} is trained in.
-                            </p>
-                            <div className="dj-skill-chips">
-                              {classToolChoice.options.map((tool) => {
-                                const picked = props.draft.toolProficiencies.includes(tool);
-                                const chosenInPool = props.draft.toolProficiencies.filter((t) =>
-                                  classToolChoice.options.includes(t),
-                                ).length;
-                                const full = !picked && chosenInPool >= classToolChoice.count;
-                                return (
-                                  <button
-                                    key={tool}
-                                    type="button"
-                                    className={`dj-skill-chip${picked ? " picked" : ""}`}
-                                    aria-pressed={picked}
-                                    disabled={full}
-                                    onClick={() => toggleToolChoice(tool, classToolChoice.options, classToolChoice.count)}
-                                  >
-                                    {tool}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div className="ledger-option-list ledger-class-grid">
-                  {props.ruleset.classes.map((candidate) => {
-                    const selected = candidate.id === props.draft.classId;
-                    const cardCopy = CLASS_SELECTOR_COPY[candidate.id] ?? {
-                      description: classDescriptor(candidate.id),
-                      role: classDetailLine(candidate),
-                    };
-
-                    return (
-                      <div
-                        key={candidate.id}
-                        className={`ledger-option ledger-class-card ${selected ? "active" : ""}`}
-                        data-class={candidate.id}
-                      >
-                        {CLASS_ART_IDS.has(candidate.id) ? (
-                          <Image
-                            className="ledger-class-card-art"
-                            src={classArtSrc(candidate.id)}
-                            alt=""
-                            fill
-                            sizes="(max-width: 900px) 100vw, 440px"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <span className="ledger-class-card-fallback" aria-hidden="true">
-                            <ClassIconPlaceholder classId={candidate.id} size={74} strokeWidth={1.25} />
-                          </span>
-                        )}
-                        <button
-                          className="dj-card-select"
-                          type="button"
-                          aria-label={`Select ${candidate.name}`}
-                          aria-pressed={selected}
-                          onClick={() => {
-                            if (candidate.id !== props.draft.classId) {
-                              props.onDraftChange({
-                                ...props.draft,
-                                classId: candidate.id,
-                                skillProficiencies: [],
-                                toolProficiencies: props.draft.toolProficiencies.filter(
-                                  (t) => !ALL_CLASS_TOOL_OPTIONS.has(t),
-                                ),
-                                startingHpRolls: [],
-                              });
-                            }
-                          }}
-                        />
-                        <span className="ledger-class-card-copy">
-                          <strong className="ledger-class-card-name">{candidate.name}</strong>
-                          <span className="ledger-class-card-desc">{cardCopy.description}</span>
-                          <small className="ledger-class-card-role">{cardCopy.role}</small>
-                        </span>
-                        <button
-                          className="dj-card-link ledger-class-card-link"
-                          type="button"
-                          aria-haspopup="dialog"
-                          onClick={() => setInspectedClassId(candidate.id)}
-                        >
-                          Details
-                        </button>
-                        {selected ? <em className="ledger-class-card-state">Chosen ✦</em> : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <ClassChapter
+                classes={props.ruleset.classes}
+                draft={props.draft}
+                hp={{
+                  firstLevelHP,
+                  extraHpLevels,
+                  rolls: startingHpRolls,
+                  rolledGains: rolledHpGains,
+                  usesRolled: usesRolledStartingHp,
+                  complete: startingHpComplete,
+                  display: startingHpDisplay,
+                  methodLabel: hpMethodLabel,
+                  constitutionModifier,
+                }}
+                skills={{ chosenCount: chosenSkillCount, complete: skillsComplete }}
+                onSelectClass={selectClass}
+                onInspectClass={setInspectedClassId}
+                onChangeLevel={changeStartingLevel}
+                onChangeHitPointType={changeHitPointType}
+                onRollStartingHp={rollStartingHp}
+                onToggleSkill={toggleSkillChoice}
+                onToggleTool={toggleToolChoice}
+              />
             ) : null}
 
             {props.step === 3 ? (
@@ -1261,14 +1083,21 @@ export default memo(function CreatorPanel(props: {
               Previous chapter
             </button>
             {props.step < steps.length - 1 ? (
-              <button
-                className="ledger-button ledger-button-primary"
-                type="button"
-                disabled={!canContinue}
-                onClick={() => props.onStepChange(Math.min(steps.length - 1, props.step + 1))}
-              >
-                {CHAPTERS[props.step].action}
-              </button>
+              <>
+                {props.step === 2 && !canContinue && classContinueHint ? (
+                  <p className="ao-continue-hint" aria-live="polite">
+                    {classContinueHint}
+                  </p>
+                ) : null}
+                <button
+                  className="ledger-button ledger-button-primary"
+                  type="button"
+                  disabled={!canContinue}
+                  onClick={() => props.onStepChange(Math.min(steps.length - 1, props.step + 1))}
+                >
+                  {CHAPTERS[props.step].action}
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -1297,56 +1126,26 @@ export default memo(function CreatorPanel(props: {
           </div>
         </section>
 
-        <aside className="ao-forge-preview" aria-label="Character preview">
-          <div className="ao-forge-art">
-            <CharacterPortrait
-              portraitId={props.draft.portraitUrl || null}
-              characterName={props.draft.name || "Adventurer"}
-              size={176}
-              shape="circle"
-              decorative
-              className="ao-forge-portrait"
-            />
-          </div>
-          <div className="ao-forge-title">
-            <span className="dj-eyebrow">The adventurer</span>
+        <aside className="ao-forge-preview ao-orrery-preview" aria-label="Character preview">
+          <CharacterPortrait
+            portraitId={props.draft.portraitUrl || null}
+            characterName={props.draft.name || "Adventurer"}
+            size={62}
+            shape="circle"
+            decorative
+            className="ao-forge-portrait"
+          />
+          <div className="ao-orrery-preview-copy">
             <strong>{props.draft.name.trim() || "Unwritten"}</strong>
-            <p>
-              {[
-                race ? parseSpeciesName(race.name).displayName : null,
-                selectedClass?.name,
-                props.draft.background || null,
-              ]
+            <span>
+              {`Level ${props.draft.level}`}
+              {selectedClass ? ` ${selectedClass.name}` : ""}
+            </span>
+            <small>
+              {[race ? parseSpeciesName(race.name).displayName : null, props.draft.background || null]
                 .filter(Boolean)
                 .join(" · ") || "The forge awaits its commission."}
-            </p>
-          </div>
-          <div className="ao-forge-facts">
-            <div className="ao-forge-fact">
-              <small>Class</small>
-              <strong>{selectedClass?.name ?? "—"}</strong>
-            </div>
-            <div className="ao-forge-fact">
-              <small>Species</small>
-              <strong>{race ? parseSpeciesName(race.name).displayName : "—"}</strong>
-            </div>
-            <div className="ao-forge-fact">
-              <small>Origin</small>
-              <strong>{props.draft.background || "—"}</strong>
-            </div>
-            <div className="ao-forge-fact">
-              <small>Level</small>
-              <strong>{props.draft.level}</strong>
-            </div>
-          </div>
-          <div className="ao-forge-abilities" aria-label="Ability scores">
-            {abilityKeys.map((key) => (
-              <span key={key}>
-                <small>{abilityLabels[key]}</small>
-                <b>{props.finalAbilities[key]}</b>
-                <i>{signed(abilityModifier(props.finalAbilities[key]))}</i>
-              </span>
-            ))}
+            </small>
           </div>
         </aside>
       </div>
@@ -1365,12 +1164,7 @@ export default memo(function CreatorPanel(props: {
           selected={inspectedClass.id === props.draft.classId}
           onClose={() => setInspectedClassId(null)}
           onSelect={() => {
-            props.onDraftChange({
-              ...props.draft,
-              classId: inspectedClass.id,
-              skillProficiencies: inspectedClass.id === props.draft.classId ? props.draft.skillProficiencies : [],
-              startingHpRolls: inspectedClass.id === props.draft.classId ? props.draft.startingHpRolls : [],
-            });
+            selectClass(inspectedClass.id);
             setInspectedClassId(null);
           }}
         />

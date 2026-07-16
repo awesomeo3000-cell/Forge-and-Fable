@@ -9,8 +9,8 @@ import {
 } from "@/data/portraits";
 
 describe("Portrait catalog", () => {
-  it("contains all 20 portraits", () => {
-    expect(PORTRAITS).toHaveLength(20);
+  it("contains the 20 built-in portraits and any synced drop-ins", () => {
+    expect(PORTRAITS.length).toBeGreaterThanOrEqual(20);
   });
 
   it("has unique opaque IDs", () => {
@@ -18,9 +18,9 @@ describe("Portrait catalog", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("uses the opaque id convention (portrait-ancestry-NN)", () => {
+  it("uses stable opaque IDs for built-in and synced portraits", () => {
     for (const p of PORTRAITS) {
-      expect(p.id).toMatch(/^portrait-[a-z-]+-\d{2}$/);
+      expect(p.id).toMatch(/^portrait-(?:[a-z-]+-\d{2}|auto-[a-z0-9-]+-[a-f0-9]{8})$/);
     }
   });
 

@@ -2039,8 +2039,10 @@
 [data-theme="arcane-observatory"] .ao-forge-art {
   position: relative;
   display: grid;
-  place-items: center;
-  min-height: 252px;
+  place-items: stretch;
+  min-height: 0;
+  aspect-ratio: 1;
+  overflow: hidden;
   background-color: var(--surface-panel-recessed);
   background-image:
     linear-gradient(rgba(179, 146, 74, 0.04) 1px, transparent 1px),
@@ -2048,15 +2050,16 @@
   background-size: 24px 24px;
   border-bottom: 1px solid var(--border-default);
 }
-/* The likeness itself is the container: a circular portrait on the same
-   rim recipe as the library, sized to command the panel. */
+/* The likeness fills the complete preview plate; character details begin
+   beneath it instead of surrounding a smaller medallion. */
 [data-theme="arcane-observatory"] .ao-forge-portrait {
   position: relative;
   z-index: 1;
-  border: 2px solid var(--border-strong);
-  box-shadow:
-    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
-    0 10px 24px rgba(0, 0, 0, 0.34);
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
   background: #0d1826;
 }
 [data-theme="arcane-observatory"] .ao-forge-title {
@@ -2331,52 +2334,56 @@
 }
 [data-theme="arcane-observatory"] .ao-portrait-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  gap: 11px;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 3px;
+  isolation: isolate;
 }
-/* The portrait IS the control: a circular likeness with the selection ring
-   on the circle itself — no card chrome around it. */
+/* The portrait is the control: a flush, image-first gallery with no card chrome. */
 [data-theme="arcane-observatory"] .ao-portrait-choice {
-  display: grid;
-  justify-items: center;
-  gap: 9px;
-  padding: 6px 2px 8px;
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 0.18s ease;
+  z-index: 0;
 }
 [data-theme="arcane-observatory"] .ao-portrait-art {
   position: relative;
   display: block;
-  width: min(100%, 148px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 2px solid var(--border-strong);
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: 0;
   background-color: #0d1826;
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 0 2px rgba(3, 8, 14, 0.55), 0 6px 14px rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  overflow: hidden;
+  transition: box-shadow 0.16s ease;
+}
+[data-theme="arcane-observatory"] .ao-portrait-choice:hover {
+  transform: scale(1.055);
+  z-index: 3;
 }
 [data-theme="arcane-observatory"] .ao-portrait-choice:hover .ao-portrait-art {
-  border-color: var(--border-brass);
   box-shadow:
-    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
-    0 0 0 4px rgba(179, 146, 74, 0.14),
-    0 8px 18px rgba(0, 0, 0, 0.3);
+    inset 0 0 0 2px var(--border-brass),
+    0 10px 24px rgba(0, 0, 0, 0.38);
 }
 [data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible {
   outline: none;
 }
 [data-theme="arcane-observatory"] .ao-portrait-choice:focus-visible .ao-portrait-art {
   outline: 2px solid var(--state-selected);
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 [data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-art {
-  border-color: var(--state-selected);
   box-shadow:
-    inset 0 0 0 2px rgba(3, 8, 14, 0.55),
-    0 0 0 4px var(--state-selected-soft),
-    0 0 0 5px rgba(92, 148, 200, 0.45),
-    0 8px 18px rgba(0, 0, 0, 0.3);
+    inset 0 0 0 3px var(--state-selected),
+    inset 0 0 0 4px rgba(3, 8, 14, 0.7);
 }
 [data-theme="arcane-observatory"] .ao-portrait-mark {
   position: absolute;
@@ -2387,7 +2394,7 @@
   width: 22px;
   height: 22px;
   border: 1px solid var(--surface-app);
-  border-radius: 50%;
+  border-radius: 3px;
   background: var(--state-selected);
   color: var(--text-on-accent);
   font-size: 12px;
@@ -2398,6 +2405,17 @@
 [data-theme="arcane-observatory"] .ao-portrait-choice.selected .ao-portrait-mark {
   opacity: 1;
   transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .ao-portrait-choice { transition: none; }
+  [data-theme="arcane-observatory"] .ao-portrait-choice:hover { transform: none; }
+}
+
+@media (max-width: 600px) {
+  [data-theme="arcane-observatory"] .ao-portrait-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
 
 /* ── Forge responsive ── */
@@ -4002,5 +4020,845 @@
     background-size: 56px 56px, 56px 56px, cover;
     background-position: 0 0, 0 0, center;
     background-repeat: repeat, repeat, no-repeat;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-12 — Orrery Path class chapter (Chapter III redesign)
+   Proposal: orrery-path-class-selection-proposal.md. Two-region workspace:
+   a scalable class catalog on the left, the selected-class feature +
+   mechanical essentials + commission details on the right. Brass = earned
+   emphasis (a confirmed calling); arcane blue stays the focus/inspection
+   color per the token grammar. All creation logic is untouched — these
+   rules style ClassChapter and friends (src/components/commission/class).
+   The chapter sizes against its own width (container query) because the
+   document column's available width is not monotonic in viewport width
+   (the preview column drops out at 1280px).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .ao-class-chapter {
+  container-type: inline-size;
+}
+[data-theme="arcane-observatory"] .ao-class-workspace {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.88fr) minmax(340px, 1.12fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Left region: catalog shell ── */
+[data-theme="arcane-observatory"] .ao-class-catalog {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  box-shadow: var(--inset-recessed);
+}
+[data-theme="arcane-observatory"] .ao-class-catalog-tools {
+  display: grid;
+  gap: 6px;
+}
+[data-theme="arcane-observatory"] .ao-class-search {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: 400 0.88rem var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-class-search::placeholder {
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-class-search:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 1px;
+}
+[data-theme="arcane-observatory"] .ao-class-count {
+  margin: 0;
+  color: var(--text-muted);
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-class-catalog-scroll {
+  max-height: calc(100vh - 340px);
+  min-height: 220px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+[data-theme="arcane-observatory"] .ao-class-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .ao-class-catalog-empty {
+  margin: 0;
+  padding: 28px 14px;
+  color: var(--text-muted);
+  font: 400 0.88rem/1.5 var(--font-role-body);
+  text-align: center;
+}
+
+/* ── Catalog cards: browsing, not configuration ── */
+[data-theme="arcane-observatory"] .ao-class-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 96px;
+  padding: 12px 14px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+/* Existing class art occupies the card's right side; the gradient below is
+   a CSS readability treatment over it, never baked into the image. */
+[data-theme="arcane-observatory"] .ao-class-card-art {
+  position: absolute;
+  inset: 0 0 0 42%;
+  overflow: hidden;
+  z-index: 0;
+}
+[data-theme="arcane-observatory"] .ao-class-card-art img {
+  object-fit: cover;
+  object-position: center 22%;
+}
+[data-theme="arcane-observatory"] .ao-class-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 34, 53, 0.99) 0%,
+    rgba(20, 34, 53, 0.92) 44%,
+    rgba(20, 34, 53, 0.4) 72%,
+    rgba(20, 34, 53, 0.12) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="arcane-observatory"] .ao-class-card-fallback {
+  position: absolute;
+  top: 50%;
+  right: 5%;
+  transform: translateY(-50%);
+  color: var(--border-brass);
+  opacity: 0.45;
+  z-index: 0;
+}
+[data-theme="arcane-observatory"] .ao-class-card-emblem {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: var(--surface-panel-recessed);
+  color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-class-card-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 3px;
+  max-width: 68%;
+}
+[data-theme="arcane-observatory"] .ao-class-card-name {
+  font: 600 0.98rem/1.2 var(--font-role-section);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-class-card-desc {
+  font: 400 0.76rem/1.35 var(--font-role-body);
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-class-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ao-class-card:hover::after {
+  background: linear-gradient(
+    90deg,
+    rgba(26, 43, 64, 0.98) 0%,
+    rgba(26, 43, 64, 0.88) 44%,
+    rgba(26, 43, 64, 0.32) 72%,
+    rgba(26, 43, 64, 0.08) 100%
+  );
+}
+[data-theme="arcane-observatory"] .ao-class-card:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+/* Previewed = inspected in the right workspace (arcane blue, inspection). */
+[data-theme="arcane-observatory"] .ao-class-card[data-previewed] {
+  border-color: var(--state-selected);
+  box-shadow: inset 0 0 0 1px var(--state-selected-soft);
+}
+/* Confirmed = committed to the draft (brass, earned emphasis). */
+[data-theme="arcane-observatory"] .ao-class-card[data-selected] {
+  border-color: var(--border-brass);
+  background: var(--surface-panel-raised);
+  box-shadow: inset 0 0 0 1px rgba(179, 146, 74, 0.35);
+}
+[data-theme="arcane-observatory"] .ao-class-card-state {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  padding: 2px 7px;
+  border: 1px solid var(--border-brass);
+  border-radius: var(--radius-sm);
+  background: rgba(7, 13, 22, 0.82);
+  color: var(--border-brass-bright);
+  font: 600 0.58rem/1.4 var(--font-role-label);
+  font-style: normal;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-class-card-state.previewing {
+  border-color: var(--state-selected);
+  color: #a9c7e4;
+}
+
+/* ── Right region: selected-class workspace, stacked cards ── */
+[data-theme="arcane-observatory"] .ao-class-detail {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-class-empty {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-content: center;
+  min-height: 280px;
+  padding: 40px 24px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  text-align: center;
+}
+[data-theme="arcane-observatory"] .ao-class-empty strong {
+  font: 600 1.15rem/1.3 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-class-empty p {
+  margin: 0;
+  max-width: 34ch;
+  color: var(--text-muted);
+  font: 400 0.88rem/1.5 var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-class-detail-note {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--state-selected);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 400 0.85rem/1.5 var(--font-role-body);
+}
+
+/* ── Selected Class Feature: the strongest card in the chapter ── */
+[data-theme="arcane-observatory"] .ao-class-feature {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(250px, 0.95fr) minmax(280px, 1.05fr);
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-raised);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-art {
+  position: relative;
+  min-height: 190px;
+  background: var(--surface-panel-recessed);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-art img {
+  object-fit: cover;
+  object-position: center 20%;
+}
+/* Restrained transition from art into the body surface — no heavy veil. */
+[data-theme="arcane-observatory"] .ao-class-feature-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 66%, rgba(26, 43, 64, 0.92) 100%);
+  pointer-events: none;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-art-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--border-brass);
+  opacity: 0.5;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-body {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px 20px 16px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-emblem {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--border-brass);
+  border-radius: 50%;
+  background: var(--surface-panel-recessed);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-name {
+  margin: 0;
+  font: 600 1.5rem/1.1 var(--font-role-display);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-role {
+  margin: 2px 0 0;
+  font: 600 0.68rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-summary {
+  margin: 0;
+  color: var(--text-secondary);
+  font: 400 0.9rem/1.55 var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-class-feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-tags li {
+  padding: 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+  color: var(--text-secondary);
+  font: 600 0.64rem/1.5 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .ao-class-feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+/* Primary class action: filled brass, unmistakably clickable. */
+[data-theme="arcane-observatory"] .ao-class-cta {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--border-brass-bright);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--border-brass-bright), var(--border-brass));
+  color: var(--text-on-accent);
+  font: 700 0.82rem var(--font-role-label);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.25);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+[data-theme="arcane-observatory"] .ao-class-cta:hover:not(:disabled):not([data-confirmed]) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+[data-theme="arcane-observatory"] .ao-class-cta:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 3px;
+}
+[data-theme="arcane-observatory"] .ao-class-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+/* Confirmed calling: the action calms down into a brass-rimmed record. */
+[data-theme="arcane-observatory"] .ao-class-cta[data-confirmed] {
+  background: var(--surface-panel-recessed);
+  border-color: var(--border-brass);
+  color: var(--border-brass-bright);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Secondary guide action: clearly clickable, visually subordinate. */
+[data-theme="arcane-observatory"] .ao-class-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font: 600 0.8rem var(--font-role-label);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-class-guide:hover {
+  border-color: var(--border-strong);
+  background: #21334a;
+}
+[data-theme="arcane-observatory"] .ao-class-guide:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .ao-class-guide svg {
+  width: 17px;
+  height: 17px;
+  color: var(--text-secondary);
+}
+
+/* ── Section titles shared by mechanics and decisions ── */
+[data-theme="arcane-observatory"] .ao-class-section-title {
+  margin: 0;
+  font: 600 0.7rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+
+/* ── Mechanical Essentials: one quiet raised card, two-column list ── */
+[data-theme="arcane-observatory"] .ao-class-mechanics {
+  padding: 16px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-class-mechanics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 12px 0 0;
+}
+[data-theme="arcane-observatory"] .ao-class-mechanics-item {
+  display: grid;
+  gap: 3px;
+}
+[data-theme="arcane-observatory"] .ao-class-mechanics-item dt {
+  font: 600 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-class-mechanics-item dd {
+  margin: 0;
+  font: 400 0.85rem/1.45 var(--font-role-body);
+  color: var(--text-primary);
+}
+
+/* ── Commission Details: the required decisions ── */
+[data-theme="arcane-observatory"] .ao-class-decisions {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-class-decisions-head {
+  display: grid;
+  gap: 4px;
+}
+[data-theme="arcane-observatory"] .ao-class-decisions-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font: 400 0.82rem/1.4 var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-class-decisions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+[data-theme="arcane-observatory"] .ao-class-decision {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-recessed);
+}
+/* Amber = required and still open; verdigris = settled. Red is reserved
+   for invalid states and is deliberately absent here. */
+[data-theme="arcane-observatory"] .ao-class-decision[data-state="incomplete"] {
+  border-left-color: var(--state-warning);
+}
+[data-theme="arcane-observatory"] .ao-class-decision[data-state="complete"] {
+  border-left-color: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+[data-theme="arcane-observatory"] .ao-class-decision-head strong {
+  font: 600 0.72rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-status {
+  font: 400 0.72rem/1.3 var(--font-role-numeric);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .ao-class-decision[data-state="incomplete"] .ao-class-decision-status {
+  color: var(--state-warning);
+}
+[data-theme="arcane-observatory"] .ao-class-decision[data-state="complete"] .ao-class-decision-status {
+  color: var(--state-success);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-hint {
+  margin: 0;
+  font: 400 0.8rem/1.45 var(--font-role-body);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-note {
+  font: 400 0.74rem/1.4 var(--font-role-body);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-field {
+  display: grid;
+  gap: 4px;
+}
+[data-theme="arcane-observatory"] .ao-class-decision-field span {
+  font: 600 0.62rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-field select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: 400 0.85rem var(--font-role-body);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-field select option {
+  color: var(--text-primary);
+  background: var(--surface-input);
+}
+[data-theme="arcane-observatory"] .ao-class-decision-field select:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 1px;
+}
+
+/* ── Roll-generating control: an action, never a passive chip ── */
+[data-theme="arcane-observatory"] .ao-class-roll-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .ao-roll-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-brass);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel-raised);
+  color: var(--text-primary);
+  font: 700 0.8rem var(--font-role-label);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-roll-action:hover:not(:disabled) {
+  border-color: var(--border-brass-bright);
+  background: #21334a;
+}
+[data-theme="arcane-observatory"] .ao-roll-action:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 3px;
+}
+[data-theme="arcane-observatory"] .ao-roll-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+[data-theme="arcane-observatory"] .ao-roll-action svg {
+  width: 18px;
+  height: 18px;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-roll-status {
+  font: 400 0.75rem/1.4 var(--font-role-numeric);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-roll-status.done {
+  color: var(--state-success);
+}
+
+/* ── Footer: explain a disabled Continue (Orrery Path §17) ── */
+[data-theme="arcane-observatory"] .ao-continue-hint {
+  margin: 0 4px 0 auto;
+  align-self: center;
+  color: var(--state-warning);
+  font: 400 0.8rem/1.4 var(--font-role-body);
+  text-align: right;
+}
+
+/* ── Responsive: the chapter answers to its own width ── */
+@container (max-width: 860px) {
+  [data-theme="arcane-observatory"] .ao-class-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* The selected-class feature rises above the catalog once stacked. */
+  [data-theme="arcane-observatory"] .ao-class-detail {
+    order: -1;
+  }
+  /* No nested scroll traps on narrow layouts. */
+  [data-theme="arcane-observatory"] .ao-class-catalog-scroll {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+}
+@container (max-width: 540px) {
+  [data-theme="arcane-observatory"] .ao-class-catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-class-feature {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  [data-theme="arcane-observatory"] .ao-class-feature-art {
+    min-height: 150px;
+  }
+  [data-theme="arcane-observatory"] .ao-class-feature-art::after {
+    background: linear-gradient(180deg, transparent 45%, rgba(26, 43, 64, 0.94) 100%);
+  }
+  [data-theme="arcane-observatory"] .ao-class-mechanics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-theme="arcane-observatory"] .ao-class-feature-actions .ao-class-cta,
+  [data-theme="arcane-observatory"] .ao-class-feature-actions .ao-class-guide {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="arcane-observatory"] .ao-class-card,
+  [data-theme="arcane-observatory"] .ao-class-cta {
+    transition: none;
+  }
+  [data-theme="arcane-observatory"] .ao-class-cta:hover:not(:disabled):not([data-confirmed]) {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AO-13 — Orrery Path header: horizontal chapter navigator + compact hero
+   preview (owner request 2026-07-15, extending the AO-12 class proposal to
+   the whole creator). The step rail and the tall preview column retire;
+   the document panel takes the full width so chapter workspaces breathe.
+   Same markup contract as AO-7 otherwise: the aside keeps .ao-forge-preview
+   so the :has() guards (dossier layout, phone padding) still key off it.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="arcane-observatory"] .dj-dossier.ledger-spread.ao-orrery {
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-areas:
+    "path preview"
+    "document document";
+  gap: 14px 16px;
+  align-items: stretch;
+}
+[data-theme="arcane-observatory"] .ao-orrery .dj-document {
+  grid-area: document;
+}
+
+/* ── The chapter path: a quiet horizontal instrument strip ── */
+[data-theme="arcane-observatory"] .ao-orrery-path {
+  grid-area: path;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  padding: 10px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .ao-orrery-brand {
+  display: grid;
+  gap: 5px;
+  flex: none;
+  width: 138px;
+  padding-right: 16px;
+  border-right: 1px solid var(--rule-engraved-dark);
+  box-shadow: 1px 0 0 var(--rule-engraved-light);
+}
+[data-theme="arcane-observatory"] .ao-orrery-brand-label {
+  font: 600 0.64rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass);
+}
+[data-theme="arcane-observatory"] .ao-orrery-brand-count {
+  font: 400 0.62rem/1.3 var(--font-role-numeric);
+  color: var(--text-muted);
+}
+[data-theme="arcane-observatory"] .ao-orrery-steps {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+[data-theme="arcane-observatory"] .ao-orrery-step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 5px 10px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+[data-theme="arcane-observatory"] .ao-orrery-step-numeral {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  font: 600 0.74rem/1 var(--font-role-display);
+}
+[data-theme="arcane-observatory"] .ao-orrery-step-name {
+  font: 600 0.58rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .ao-orrery-step:hover {
+  background: rgba(176, 193, 207, 0.05);
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-orrery-step:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
+/* Completed chapters: quiet check, slightly lifted text — no glow. */
+[data-theme="arcane-observatory"] .ao-orrery-step.complete {
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .ao-orrery-step-check {
+  color: var(--state-success);
+}
+/* Active chapter: restrained brass ring on the numeral, brighter label,
+   and a short connecting rule beneath (Orrery Path §5 — no bloom). */
+[data-theme="arcane-observatory"] .ao-orrery-step.active {
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .ao-orrery-step.active .ao-orrery-step-numeral {
+  border-color: var(--border-brass);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-orrery-step.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 2px;
+  background: var(--border-brass);
+}
+
+/* ── Compact hero preview: portrait + the decided essentials ── */
+[data-theme="arcane-observatory"] .ao-orrery .ao-forge-preview {
+  position: static;
+  grid-area: preview;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+[data-theme="arcane-observatory"] .ao-orrery-preview-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+[data-theme="arcane-observatory"] .ao-orrery-preview-copy strong {
+  font: 600 1rem/1.15 var(--font-role-display);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+[data-theme="arcane-observatory"] .ao-orrery-preview-copy span {
+  font: 600 0.66rem/1.3 var(--font-role-label);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .ao-orrery-preview-copy small {
+  font: 400 0.74rem/1.3 var(--font-role-body);
+  color: var(--text-muted);
+}
+
+/* ── Responsive ── */
+@media (max-width: 980px) {
+  [data-theme="arcane-observatory"] .dj-dossier.ledger-spread.ao-orrery {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "path"
+      "preview"
+      "document";
+  }
+}
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .ao-orrery-path {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  [data-theme="arcane-observatory"] .ao-orrery-brand {
+    display: none;
   }
 }

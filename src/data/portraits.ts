@@ -1,3 +1,5 @@
+import { GENERATED_PORTRAITS } from "./portraits.generated";
+
 /**
  * Portrait catalog for the character builder and appearance panel.
  *
@@ -33,7 +35,7 @@ export type PortraitOption = {
 
 /* ── Full catalog ───────────────────────────────────────────────────────── */
 
-export const PORTRAITS: readonly PortraitOption[] = [
+const BUILT_IN_PORTRAITS: readonly PortraitOption[] = [
   { id: "portrait-aasimar-01",    src: "/portraits/aasimar-male.png",    suggestedAncestries: ["aasimar"],          frame: { cx: 256, cy: 249, r: 203 } },
   { id: "portrait-aasimar-02",    src: "/portraits/aasimar-female.png",   suggestedAncestries: ["aasimar"],          frame: { cx: 256, cy: 249, r: 203 } },
   { id: "portrait-dwarf-01",      src: "/portraits/dwarf-male.png",       suggestedAncestries: ["dwarf"],            frame: { cx: 300, cy: 272, r: 190 } },
@@ -55,6 +57,12 @@ export const PORTRAITS: readonly PortraitOption[] = [
   { id: "portrait-tiefling-01",   src: "/portraits/tiefling-male.png",    suggestedAncestries: ["tiefling"],         frame: { cx: 256, cy: 250, r: 205 } },
   { id: "portrait-tiefling-02",   src: "/portraits/tiefling-female.png",  suggestedAncestries: ["tiefling"],         frame: { cx: 256, cy: 249, r: 205 } },
 ] as const;
+
+/** Built-in portraits plus assets created by `npm run portraits:sync`. */
+export const PORTRAITS: readonly PortraitOption[] = [
+  ...BUILT_IN_PORTRAITS,
+  ...GENERATED_PORTRAITS,
+];
 
 /* ── Lookup helpers ────────────────────────────────────────────────────── */
 
@@ -129,6 +137,9 @@ const RACE_TO_ANCESTRY: ReadonlyMap<string, string> = new Map([
 ]);
 
 export function suggestPortraitAncestry(raceId: string): string | undefined {
+  // A drop-in portrait can add a species that previously used a fallback.
+  // Prefer that exact species once it exists in the generated catalog.
+  if (ANCESTRY_LIST.includes(raceId)) return raceId;
   return RACE_TO_ANCESTRY.get(raceId);
 }
 

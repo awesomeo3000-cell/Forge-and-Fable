@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "rules:validate-research": "node scripts/rules/validate-research.mjs",
     "rules:build-actions": "node scripts/build-action-capability-data.mjs",
+    "portraits:sync": "python scripts/sync-portraits.py",
     "db:backup": "node scripts/backup-db.mjs"
   },
   "dependencies": {

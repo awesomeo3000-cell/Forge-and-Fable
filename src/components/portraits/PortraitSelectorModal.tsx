@@ -231,8 +231,8 @@ export default memo(function PortraitSelectorModal({
                 <CharacterPortrait
                   portraitId={pendingId}
                   characterName={characterName}
-                  size={200}
-                  shape="circle"
+                  size={256}
+                  shape="rounded"
                   decorative
                   className="portrait-modal-preview-art"
                 />

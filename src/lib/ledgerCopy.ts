@@ -42,7 +42,7 @@ export const CHAPTERS: Array<{
 }> = [
   { numeral: "I", name: "Provenance", subtitle: "a name, and where the record may draw from", action: "Record the name" },
   { numeral: "II", name: "The Likeness", subtitle: "no labels, no filters — pick the face that feels right", action: "Fix the likeness" },
-  { numeral: "III", name: "Vocation", subtitle: "what craft has shaped this life?", action: "Seal the vocation" },
+  { numeral: "III", name: "Vocation", subtitle: "every legend begins with a calling — choose the class that shapes this hero's path", action: "Seal the vocation" },
   { numeral: "IV", name: "Origin", subtitle: "who were they, before the road?", action: "Record the origin" },
   { numeral: "V", name: "Lineage", subtitle: "blood, and what it carries", action: "Seal the lineage" },
   { numeral: "VI", name: "Attributes", subtitle: "the measure of body and mind", action: "Fix the attributes" },

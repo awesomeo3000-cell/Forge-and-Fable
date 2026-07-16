@@ -13477,60 +13477,64 @@ button.dj-card {
 
 .portrait-modal-grid {
   display: grid;
-  /* Fixed tracks: fr/auto rows let flex height constraints compress the
-     rows so the circles overlapped. Pixel tracks can't be squeezed. */
-  grid-template-columns: repeat(auto-fill, 92px);
-  grid-auto-rows: 92px;
-  gap: 14px;
-  justify-content: center;
-  padding: 18px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 3px;
+  padding: 16px 20px 20px;
   overflow-y: auto;
   flex: 1;
   align-content: start;
   max-height: 380px;
+  isolation: isolate;
 }
 
 .portrait-modal-tile {
   position: relative;
-  width: 92px;
-  height: 92px;
+  width: 100%;
+  aspect-ratio: 1;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--pm-band);
-  box-shadow: 0 0 0 2px var(--pm-ring);
+  box-shadow: inset 0 0 0 1px var(--pm-ring);
   cursor: pointer;
   overflow: hidden;
-  transition: box-shadow 0.15s, transform 0.15s;
+  transform: translateZ(0);
+  transition: box-shadow 0.16s ease, transform 0.18s ease;
+  z-index: 0;
 }
 .portrait-modal-tile-art {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
+  border-radius: 0;
   background-repeat: no-repeat;
 }
 .portrait-modal-tile:hover {
-  box-shadow: 0 0 0 2px var(--pm-gold-deep);
-  transform: translateY(-1px);
+  box-shadow:
+    inset 0 0 0 2px var(--pm-gold-deep),
+    0 8px 24px rgba(0,0,0,.5);
+  transform: scale(1.07);
+  z-index: 3;
 }
 .portrait-modal-tile:focus-visible {
   outline: 2px solid var(--pm-gold);
-  outline-offset: 3px;
+  outline-offset: -3px;
+  z-index: 4;
 }
 .portrait-modal-tile.is-selected {
   box-shadow:
-    0 0 0 2px var(--pm-surface),
-    0 0 0 4px var(--pm-gold);
+    inset 0 0 0 3px var(--pm-gold),
+    inset 0 0 0 4px rgba(20, 15, 8, .75);
+  z-index: 2;
 }
 .portrait-modal-tile-check {
   position: absolute;
-  bottom: 1px;
-  right: 1px;
+  bottom: 6px;
+  right: 6px;
   display: grid;
   place-items: center;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: 3px;
   background: var(--pm-gold);
   color: #241c12;
   font-size: 11px;
@@ -13554,14 +13558,19 @@ button.dj-card {
 }
 
 .portrait-modal-preview-ring {
+  width: 100%;
+  aspect-ratio: 1;
   margin-top: 14px;
-  border-radius: 50%;
+  border-radius: 10px;
+  overflow: hidden;
   box-shadow:
     0 0 0 3px var(--pm-gold),
     0 0 0 8px rgba(201, 162, 90, 0.14),
     0 10px 30px rgba(0,0,0,.45);
 }
 .portrait-modal-preview-ring .cportrait {
+  width: 100% !important;
+  height: 100% !important;
   border: none;
   background: var(--pm-band);
   color: var(--pm-faint);
@@ -13569,9 +13578,9 @@ button.dj-card {
 /* Empty state before any portrait is picked — a blank circle, no initials. */
 .portrait-modal-preview-empty {
   display: block;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
   background: var(--pm-band);
 }
 
@@ -13723,20 +13732,26 @@ button.dj-card {
     width: 140px !important;
     height: 140px !important;
   }
+  .portrait-modal-preview-ring {
+    width: 140px;
+  }
   .portrait-modal-grid {
-    grid-template-columns: repeat(auto-fill, 72px);
-    grid-auto-rows: 72px;
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 2px;
     padding: 12px;
     max-height: none;
   }
   .portrait-modal-tile {
-    width: 72px;
-    height: 72px;
+    width: 100%;
   }
   .portrait-modal-actions {
     padding: 12px 16px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait-modal-tile { transition: box-shadow 0.16s ease; }
+  .portrait-modal-tile:hover { transform: none; }
 }
 
 /* Portrait field inside the creator ledger — match surrounding spacing. */
