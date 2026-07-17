@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestVersion": "999.0.0",
+  "sourceCode": "nonexistent-envelope-source",
+  "researcherAgent": "",
+  "researchedAt": "not-a-date",
+  "candidates": [
+    {
+      "candidateId": "bad-1",
+      "name": "",
+      "normalizedName": "",
+      "rulesVersion": "invalid",
+      "sourceCode": "nonexistent-source",
+      "sourceTitle": "",
+      "category": "",
+      "confidence": 5,
+      "sourceEvidence": {
+        "accessedAt": "bad-date"
+      },
+      "structuredData": {
+        "unexpectedField": "should be rejected",
+        "price": {
+          "costCp": -10,
+          "status": "impossible"
+        },
+        "weapon": {
+          "damageDice": "not-a-dice",
+          "damageType": "invalid-type"
+        }
+      },
+      "unexpectedTopLevel": "should-be-rejected"
+    }
+  ]
+}

@@ -3,11 +3,11 @@
   "schemaVersion": "1.0.0",
   "status": "frozen",
   "researchCutoff": "2026-07-16",
-  "lastRefreshedAt": "2026-07-17T13:22:57.798Z",
-  "totalSources": 71,
-  "includedCount": 51,
+  "lastRefreshedAt": "2026-07-17T15:11:12.640Z",
+  "totalSources": 74,
+  "includedCount": 53,
   "excludedCount": 16,
-  "pendingCount": 4,
+  "pendingCount": 5,
   "sources": [
     {
       "sourceCode": "phb-2014",
@@ -173,7 +173,7 @@
       "sourceCode": "srd-5.2.1",
       "title": "System Reference Document 5.2.1",
       "abbreviation": "SRD 5.2.1",
-      "publicationDate": "2025-04-22",
+      "publicationDate": "2025-05-01",
       "rulesFamily": "2024",
       "sourceType": "core-book",
       "official": true,
@@ -479,8 +479,7 @@
       "expectedCategories": [
         "magic-item",
         "artifact",
-        "god-weapon",
-        "piety-gift"
+        "god-weapon"
       ],
       "notes": "Greek mythology-themed Magic: The Gathering setting. Contains god-weapons, artifacts, and supernatural gifts that function as items.",
       "publisherLane": "wizards-first-party",
@@ -501,7 +500,6 @@
       "exclusionReason": null,
       "expectedCategories": [
         "magic-item",
-        "dark-gift",
         "cursed-item"
       ],
       "notes": "Horror-themed campaign setting covering multiple Domains of Dread. Contains horror-themed magic items, dark gifts, and cursed items.",
@@ -633,7 +631,6 @@
       "exclusionReason": null,
       "expectedCategories": [
         "magic-item",
-        "dark-gift",
         "cursed-item",
         "artifact"
       ],
@@ -969,8 +966,7 @@
       "expectedCategories": [
         "magic-item",
         "frost-item",
-        "artifact",
-        "chwinga-charm"
+        "artifact"
       ],
       "notes": "Arctic horror adventure (levels 1-12). Contains frost-themed magic items, chwinga charms, and the Codicil of White artifact.",
       "publisherLane": "wizards-first-party",
@@ -1013,8 +1009,7 @@
       "expectedCategories": [
         "magic-item",
         "fey-item",
-        "trinket",
-        "charm"
+        "trinket"
       ],
       "notes": "Feywild adventure (levels 1-8). Contains fey-themed magic items, trinkets, and charms. Unique in that it can be completed without combat.",
       "publisherLane": "wizards-first-party",
@@ -1209,8 +1204,8 @@
         "adventuring-gear",
         "weapon"
       ],
-      "notes": "Licensed Stranger Things tie-in starter set. Contains a basic adventure with some magic items. Items likely duplicates of standard SRD items with thematic flavor.",
-      "publisherLane": "wizards-first-party",
+      "notes": "Licensed Stranger Things tie-in starter set. Contains a basic adventure with some magic items. Items likely duplicates of standard SRD items with thematic flavor. Licensed product. Review for inclusion policy.",
+      "publisherLane": "official-licensed",
       "assignedAgent": null
     },
     {
@@ -1230,13 +1225,13 @@
         "adventuring-gear",
         "comedy-item"
       ],
-      "notes": "Licensed Rick and Morty tie-in starter set. Contains a comedy-themed adventure with magic items. Some items may be unique and official, but the comedic nature requires review for inclusion.",
-      "publisherLane": "wizards-first-party",
+      "notes": "Licensed Rick and Morty tie-in starter set. Contains a comedy-themed adventure with magic items. Some items may be unique and official, but the comedic nature requires review for inclusion. Licensed product. Review for inclusion policy.",
+      "publisherLane": "official-licensed",
       "assignedAgent": null
     },
     {
       "sourceCode": "hofb",
-      "title": "Heroes of the Borderland (Starter Set 2025)",
+      "title": "Heroes of the Borderlands",
       "abbreviation": "HotB",
       "publicationDate": "2025-09-16",
       "rulesFamily": "2024",
@@ -1516,6 +1511,89 @@
       "notes": "Combined re-release of HotDQ and RoT with integrated errata. Does not add new item content beyond the original two adventures. Use HotDQ and RoT as the canonical sources.",
       "publisherLane": "wizards-first-party",
       "assignedAgent": null
+    },
+    {
+      "sourceCode": "frhof",
+      "title": "Forgotten Realms: Heroes of Faerûn",
+      "abbreviation": "FRHoF",
+      "publicationDate": "2025-11-04",
+      "rulesFamily": "2024",
+      "sourceType": "setting",
+      "official": true,
+      "publisherLane": "wizards-first-party",
+      "potentiallyContainsItems": true,
+      "accessStatus": "accessible",
+      "inclusionStatus": "included",
+      "exclusionReason": null,
+      "assignedAgent": null,
+      "researchStatus": "not-started",
+      "expectedCategories": [
+        "weapon",
+        "armor",
+        "adventuring-gear",
+        "tool",
+        "mount",
+        "vehicle",
+        "mechanical-wonder"
+      ],
+      "notes": "Contains Aurora's Whole Realms Catalog: equipment, mechanical wonders, mounts, tools, travel gear, vehicles. Official D&D Beyond: https://www.dndbeyond.com/sources/dnd/frhof"
+    },
+    {
+      "sourceCode": "fraif",
+      "title": "Forgotten Realms: Adventures in Faerûn",
+      "abbreviation": "FRAiF",
+      "publicationDate": "2026-03-17",
+      "rulesFamily": "2024",
+      "sourceType": "setting",
+      "official": true,
+      "publisherLane": "wizards-first-party",
+      "potentiallyContainsItems": true,
+      "accessStatus": "accessible",
+      "inclusionStatus": "included",
+      "exclusionReason": null,
+      "assignedAgent": null,
+      "researchStatus": "not-started",
+      "expectedCategories": [
+        "magic-item",
+        "artifact",
+        "mechanical-wonder",
+        "vehicle"
+      ],
+      "notes": "Contains dedicated magic-item chapter with Calimemnon Crystal, Crown of Horns, Harper Pin, Mechanical Wonder, Orb of Damara, Tome of the Dragon, Windskiff. https://www.dndbeyond.com/sources/dnd/fraif"
+    },
+    {
+      "sourceCode": "wthc",
+      "title": "Stranger Things: Welcome to the Hellfire Club",
+      "abbreviation": "WTHC",
+      "publicationDate": "2025-04-15",
+      "rulesFamily": "2014",
+      "sourceType": "starter",
+      "official": true,
+      "publisherLane": "official-licensed",
+      "potentiallyContainsItems": true,
+      "accessStatus": "partially-accessible",
+      "inclusionStatus": "pending-review",
+      "exclusionReason": null,
+      "assignedAgent": null,
+      "researchStatus": "not-started",
+      "expectedCategories": [
+        "adventuring-gear",
+        "magic-item"
+      ],
+      "notes": "Official 2025 boxed release. Licensed product — review separately from first-party sources. https://www.dndbeyond.com/sources/dnd/wthc"
     }
-  ]
+  ],
+  "scopeRule": {
+    "description": "A feature, gift, charm, blessing, or boon is excluded unless the source explicitly defines it as a possessable inventory item.",
+    "excludedCategories": [
+      "supernatural-gift",
+      "blessing",
+      "charm",
+      "dark-gift",
+      "boon",
+      "piety-gift",
+      "character-feature"
+    ],
+    "included": "Named objects with explicit mechanics, equipment slots, inventory presence, charges, consumption rules, or defined rarity/category"
+  }
 }

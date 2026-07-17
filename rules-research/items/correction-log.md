@@ -117,9 +117,86 @@
 
 ## Phase B Authorization
 
-All four blockers are resolved. Phase B is authorized to proceed with:
-
+All four follow-up blockers are resolved. Phase B is authorized to proceed with:
 - **Schema**: v1.0.0 (frozen)
+- **Manifest**: v1.0.0 (frozen, 74 sources)
+- **Validator**: `scripts/validate-item-candidates.mjs` (hardened, 21 errors caught on invalid fixture)
+- **Tests**: `tests/item-candidate-validator.test.mjs` (9/9 pass)
+- **Assignments**: `rules-research/items/phase-b-assignments.json`
+- **Research cutoff**: 2026-07-16
+- **Checkpoint**: `1dd3a7a` on `main`
+
+---
+
+## Third Review — Final Gate (2026-07-17)
+
+**Review**: `deepseek-phase-a-final-gate-review.md`  
+**Result**: All issues addressed
+
+| # | Issue | Resolution |
+|---|---|---|
+| 1 | Missing FR: Heroes of Faerûn | Added `frhof` to manifest (included, 2024 setting) |
+| 2 | Missing FR: Adventures in Faerûn | Added `fraif` to manifest (included, 2024 setting) |
+| 3 | Missing Stranger Things: WTHC | Added `wthc` to manifest (pending-review, official-licensed) |
+| 4 | SRD 5.2.1 date wrong (2025-04-22) | Fixed to 2025-05-01 |
+| 5 | Heroes of the Borderlands title typo | Fixed to "Heroes of the Borderlands" |
+| 6 | Licensed tie-ins wrong publisher lane | Stranger Things, Rick & Morty → `official-licensed`; Acq Inc → `partnered` |
+| 7 | Scope leakage (gifts/charms/boons) | Removed non-item categories. Added `scopeRule` to manifest |
+| 8 | All assignedAgent null | Created `phase-b-assignments.json` with agent assignments |
+| 9 | Validator: manifestVersion not compared | Enforces exact match with frozen manifest |
+| 10 | Validator: manifest schemaVersion not validated | Checks `raw.schemaVersion === SCHEMA_VERSION` |
+| 11 | Validator: envelope sourceCode not validated | Checks against manifest source codes |
+| 12 | Validator: publisherLane optional | Now REQUIRED with manifest cross-check |
+| 13 | Validator: sourceEvidence optional | Now REQUIRED (primarySource + accessedAt + ISO check) |
+| 14 | Validator: provenance optional | Now REQUIRED (at least 1 entry) |
+| 15 | Validator: structuredData optional | Now REQUIRED |
+| 16 | Validator: unknown fields not rejected | Strict allowed-key sets for all object types |
+| 17 | Validator: rules-family consistency | Cross-checks candidate.rulesVersion against source.rulesFamily |
+| 18 | Validator: source title not cross-checked | Warns when candidate title doesn't match manifest |
+| 19 | Validator: ISO timestamps not validated | `isISO()` check on all date fields |
+| 20 | Validator: categories not validated | Category enum check (non-empty string required) |
+| 21 | Validator: cross-file duplicate IDs | Global `allCandidateIds` map across all files |
+| 22 | Validator: directory input broken | Recursive `*.json` scan with report file exclusion |
+| 23 | Validator: no JSON output | `--json` flag with machine-readable output |
+| 24 | Validator: no --warnings-as-errors | `--warnings-as-errors` flag |
+| 25 | Validator: no --quiet flag | `--quiet` flag for CI |
+| 26 | Fixture: Dagger should be 2014 not shared | Fixed to `rulesVersion: "2014"` |
+| 27 | Fixture: "+1 Dagger" alias wrong | Removed |
+| 28 | Fixture: open-license on PHB provenance | Added separate SRD 5.1 provenance entry |
+| 29 | Fixtures not split | Split into `candidates.valid.json` + `candidates.invalid.json` |
+| 30 | No automated tests | Created `tests/item-candidate-validator.test.mjs` (9/9 pass) |
+
+### Validator Hardening Results
+
+Before: 11 errors caught on invalid fixture  
+After: **21 errors caught** on the same fixture, including:
+- Wrong manifest version rejection
+- Envelope source code validation
+- Missing researcher agent
+- ISO timestamp validation
+- Unknown field rejection (candidate level)
+- Missing publisherLane (now required)
+- Missing sourceEvidence fields
+- sourceEvidence ISO timestamp check
+- Unknown field rejection (structuredData level)
+- Missing provenance (now required)
+- Plus all original checks retained
+
+### Test Suite Results
+
+```
+Validator Test Suite
+  PASS: valid fixture exits 0
+  PASS: invalid fixture exits 1
+  PASS: invalid fixture reports provenance error
+  PASS: invalid fixture reports unknown-field error
+  PASS: invalid fixture reports publisherLane error
+  PASS: invalid fixture reports manifest version error
+  PASS: directory mode validates recursively
+  PASS: --json flag produces valid JSON
+  PASS: cross-file duplicate IDs caught
+9 passed, 0 failed, 9 total
+```
 - **Manifest**: v1.0.0 (frozen, 71 sources)
 - **Validator**: `scripts/validate-item-candidates.mjs` (operational)
 - **Research cutoff**: 2026-07-16

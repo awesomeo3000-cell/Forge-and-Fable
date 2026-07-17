@@ -6,11 +6,11 @@
   "researchedAt": "2026-07-17T00:00:00Z",
   "candidates": [
     {
-      "candidateId": "test-dagger-001",
+      "candidateId": "test-dagger-2014",
       "name": "Dagger",
       "normalizedName": "dagger",
-      "aliases": ["Dagger, +1"],
-      "rulesVersion": "shared",
+      "aliases": [],
+      "rulesVersion": "2014",
       "sourceCode": "phb-2014",
       "sourceTitle": "Player's Handbook (2014)",
       "publisherLane": "wizards-first-party",
@@ -51,7 +51,18 @@
             "license": "srd-5.1",
             "researchedAt": "2026-07-17T00:00:00Z",
             "researcherAgent": "agent-5-mundane-2014",
-            "verificationStatus": "single-source"
+            "verificationStatus": "cross-checked"
+          },
+          {
+            "sourceCode": "srd-5.1",
+            "sourceTitle": "System Reference Document 5.1",
+            "rulesVersion": "2014",
+            "sourceType": "srd",
+            "publisherLane": "wizards-first-party",
+            "license": "srd-5.1",
+            "researchedAt": "2026-07-17T00:00:00Z",
+            "researcherAgent": "agent-5-mundane-2014",
+            "verificationStatus": "cross-checked"
           }
         ]
       },
@@ -65,25 +76,6 @@
       "confidence": 0.95,
       "issues": [],
       "spoiler": false
-    },
-    {
-      "candidateId": "test-bad-candidate",
-      "name": "",
-      "normalizedName": "",
-      "rulesVersion": "invalid",
-      "sourceCode": "nonexistent-source",
-      "category": "",
-      "confidence": 5,
-      "structuredData": {
-        "price": {
-          "costCp": -10,
-          "status": "impossible"
-        },
-        "weapon": {
-          "damageDice": "not-a-dice",
-          "damageType": "invalid-type"
-        }
-      }
     }
   ]
 }

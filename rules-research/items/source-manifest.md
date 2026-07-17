@@ -1,21 +1,31 @@
 # D&D 5e Source Manifest for Item Research
 
-**Generated:** 2026-07-16
-**Cutoff Date:** July 2026
-**Total Sources Cataloged:** 65
-**Sources Marked for Inclusion:** 48
-**Sources Excluded:** 14
-**Sources Pending Review:** 3
+**Manifest version:** 1.0.0  
+**Status:** Frozen  
+**Schema version:** 1.0.0  
+**Research cutoff:** 2026-07-16  
+**Last refreshed:** 2026-07-17  
+**Total sources cataloged:** 74  
+**Sources included:** 53  
+**Sources excluded:** 16  
+**Sources pending review:** 5  
 
 ---
 
 ## Purpose
 
-This manifest catalogs every official Dungeons & Dragons Fifth Edition product that could contain player-usable items (weapons, armor, adventuring gear, magic items, artifacts, etc.). It is the canonical reference for determining which sources need item-by-item research.
+This manifest catalogs every official Dungeons & Dragons Fifth Edition product that could contain player-usable items. It is the canonical reference for determining which sources need item-by-item research before the catalog can claim exhaustiveness.
 
 Each source is classified by:
-- **Rules Family:** 2014 or 2024 (or mixed/superseded)
+- **Publisher Lane:** wizards-first-party, official-licensed, partnered, charity, third-party
+- **Rules Family:** 2014 or 2024
 - **Source Type:** core-book, supplement, setting, adventure, anthology, starter, digital, promotional
+- **Inclusion Status:** included, excluded, or pending-review
+- **Research Status:** not-started, in-progress, complete, blocked
+
+### Scope Rule
+
+A feature, gift, charm, blessing, or boon is excluded from the item catalog unless the source explicitly defines it as a possessable inventory item. Non-item character options (supernatural gifts, dark gifts, piety gifts, charms, blessings) are out of scope.
 - **Inclusion Status:** included, excluded, or pending-review
 
 ---

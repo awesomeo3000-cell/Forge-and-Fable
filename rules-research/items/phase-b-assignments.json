@@ -1,0 +1,44 @@
+{
+  "assignmentVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "manifestVersion": "1.0.0",
+  "generatedAt": "2026-07-17",
+  "agents": {
+    "agent-5-mundane-2014": {
+      "label": "2014 Mundane Equipment Researcher",
+      "sources": ["phb-2014", "srd-5.1"]
+    },
+    "agent-6-mundane-2024": {
+      "label": "2024 Mundane Equipment Researcher",
+      "sources": ["phb-2024", "srd-5.2.1"]
+    },
+    "agent-7-core-magic": {
+      "label": "Core Magic Item Researcher",
+      "sources": ["dmg-2014", "dmg-2024", "srd-5.1", "srd-5.2.1"]
+    },
+    "agent-8-supplements": {
+      "label": "Rules Supplement Magic Item Researcher",
+      "sources": ["xgte", "tcoe", "ftod", "bgg", "bok", "scag"]
+    },
+    "agent-9-settings": {
+      "label": "Setting Item Researcher",
+      "sources": ["erlw", "egw", "mot", "vrgr", "ggr", "scc", "aag", "pas", "dsdq", "frhof", "fraif"]
+    },
+    "agent-10-adventures": {
+      "label": "Adventure Item Researcher",
+      "sources": ["cos", "toa", "skt", "oota", "potaa", "totd", "wdh", "wdmm", "bgdia", "idrotf", "twbtw", "jttrc", "kftgv", "pabtso", "veor", "qftis"]
+    },
+    "agent-11-edge": {
+      "label": "Edge Category Researcher",
+      "sources": ["phb-2014", "phb-2024", "dmg-2014", "dmg-2024", "xgte"]
+    }
+  },
+  "pendingAssignment": {
+    "label": "Pending review — not yet assigned",
+    "sources": ["dod", "mbjv", "llok", "imr", "wthc"]
+  },
+  "excludedFromResearch": {
+    "label": "Excluded — no item research needed",
+    "sources": ["mm-2014", "mm-2025", "mtf", "vgm", "mpmm"]
+  }
+}
