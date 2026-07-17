@@ -2353,7 +2353,7 @@ export default function ForgeAndFableApp() {
         />
       </section>
       ) : (
-      <section className="builder-layout">
+      <section className="builder-layout builder-layout-sheet-only">
         <aside className="vault-rail ledger-rail" style={vaultThemeVars}>
           <div className="rail-heading">
             <button type="button" className="rail-action" title="Import PDF" onClick={() => setImportOpen(true)}>Import</button>
