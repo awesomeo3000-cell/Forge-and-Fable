@@ -290,6 +290,7 @@ export default function ForgeAndFableApp() {
     total: number,
     adv?: RollHistoryEntry["adv"],
     nat?: RollHistoryEntry["nat"],
+    pool?: RollHistoryEntry["pool"],
   ) => {
     setRollHistory((prev) => [
       {
@@ -300,6 +301,7 @@ export default function ForgeAndFableApp() {
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         ...(adv ? { adv } : {}),
         ...(nat ? { nat } : {}),
+        ...(pool ? { pool } : {}),
       },
       ...prev,
     ].slice(0, 100));
@@ -1838,7 +1840,7 @@ export default function ForgeAndFableApp() {
         ? { mode, dice: d20Pairs[0].pair, keptIndex: d20Pairs[0].keptIndex }
         : undefined;
       setConsoleLog((prev) => [`${label} -> ${detail}`, ...prev].slice(0, 20));
-      recordHistory(label, detail, total, histModeData, nat);
+      recordHistory(label, detail, total, histModeData, nat, { groups: cleaned, modifier, mode });
       onResult?.({
         rolls: [
           ...d20Pairs.map((pair) => pair.keptValue),
@@ -1908,7 +1910,9 @@ export default function ForgeAndFableApp() {
       die.lingerMs = die.dropped ? DROPPED_D20_LINGER_MS : NORMAL_ROLL_LINGER_MS;
     });
     setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
-    recordHistory(label, detail, total);
+    // "normal" is recorded explicitly so a reroll can never inherit a mode
+    // armed after the fact.
+    recordHistory(label, detail, total, undefined, undefined, { groups: cleaned, modifier, mode: "normal" });
     onResult?.({
       rolls: rolledDice.map((die) => die.value),
       modifier,
@@ -2136,7 +2140,6 @@ export default function ForgeAndFableApp() {
       currentUserId={user.id}
       campaignInitiative={campaignSync?.initiative}
       campaignIsDm={campaignSync?.campaign.dmUserId === user.id}
-      onRollModeChange={setRollMode}
       onRollPool={pushPool}
       onCampaignInitiativeUpdate={updateCampaignInitiative}
       onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
@@ -2600,6 +2603,9 @@ export default function ForgeAndFableApp() {
               onRoll={pushRoll}
               onRollPool={pushPool}
               onRollD20={pushD20}
+              rollMode={rollMode}
+              rollModeIsFromEffect={rollModeIsFromEffect}
+              onRollModeChange={setRollMode}
               onUpdate={updateSelected}
               onDelete={deleteSelected}
               onNotify={setStatus}

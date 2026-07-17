@@ -327,10 +327,13 @@ export function parseDiceFormula(formula: string): ParsedFormula {
     return { groups: [], modifier: 0, error: "No dice found. Use format like 2d6+1d4+3 or 4d6kh3." };
   }
 
-  // Parse flat modifier from non-dice parts
+  // Parse flat modifier from non-dice parts. Dice terms must be removed
+  // first or the sign+count of a later group ("+1d20") reads as a "+1"
+  // modifier and silently inflates every mixed formula's total.
   let modifier = 0;
+  const withoutDice = cleaned.replace(DICE_RE, "");
   MOD_RE.lastIndex = 0;
-  while ((match = MOD_RE.exec(cleaned)) !== null) {
+  while ((match = MOD_RE.exec(withoutDice)) !== null) {
     modifier += parseInt(match[1].replace(/\s+/g, ""), 10);
   }
 

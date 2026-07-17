@@ -187,6 +187,11 @@ export default memo(function HeroSheet(props: {
   onConsoleInput: (value: string) => void;
   onConsoleSubmit: (event: FormEvent) => void;
   readOnly?: boolean;
+  /** Armed d20 mode for the next sheet roll (effects can drive it); the
+      toggle lives here, next to the roll targets it affects (proposal 35). */
+  rollMode?: RollMode;
+  rollModeIsFromEffect?: boolean;
+  onRollModeChange?: (mode: RollMode) => void;
 }) {
   const isReadOnly = props.readOnly === true;
 
@@ -1360,7 +1365,32 @@ export default memo(function HeroSheet(props: {
   const sectionContent = (id: SheetSectionId) => {
     switch (id) {
       case "abilities": return (
+        <>
+        {!isReadOnly && props.onRollModeChange ? (
+          <div className="ao-dice-arm cs-roll-arm" role="group" aria-label="Advantage for your next d20 roll">
+            <button
+              type="button"
+              className={props.rollMode === "advantage" ? "is-armed" : ""}
+              aria-pressed={props.rollMode === "advantage"}
+              title="Advantage — your next d20 rolls twice and keeps the higher"
+              onClick={() => props.onRollModeChange!(props.rollMode === "advantage" ? "normal" : "advantage")}
+            >
+              Advantage
+            </button>
+            <button
+              type="button"
+              className={props.rollMode === "disadvantage" ? "is-armed" : ""}
+              aria-pressed={props.rollMode === "disadvantage"}
+              title="Disadvantage — your next d20 rolls twice and keeps the lower"
+              onClick={() => props.onRollModeChange!(props.rollMode === "disadvantage" ? "normal" : "disadvantage")}
+            >
+              Disadvantage
+            </button>
+            {props.rollMode !== "normal" && props.rollModeIsFromEffect ? <span className="ao-dice-arm-hint">from effects</span> : null}
+          </div>
+        ) : null}
         <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); const joaTBonus = hasJackOfAllTrades ? halfPb : 0; const totalMod = mod + effChecks + joaTBonus; return (<button type="button" className="cs-ability-cell cs-roll-target" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, totalMod, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(totalMod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll"}><span className="cs-ability-mod cs-roll-chip"><D20Icon />{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
+        </>
       );
       case "saves": return (
         <section className="cs-block">
@@ -2157,7 +2187,7 @@ export default memo(function HeroSheet(props: {
           <div>
             <span className="cs-section-eyebrow">First look</span>
             <p>Click stats to roll.</p>
-            <p>Adv/Dis lives in the dice drawer.</p>
+            <p>Advantage and disadvantage arm next to your abilities.</p>
             <p>Effects handles Bless and +1 weapons.</p>
             <p>Skin themes the sheet; Layout rearranges sections.</p>
           </div>

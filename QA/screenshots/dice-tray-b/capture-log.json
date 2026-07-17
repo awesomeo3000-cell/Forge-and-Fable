@@ -1,0 +1,55 @@
+{
+  "log": [
+    {
+      "step": "register + login + import character",
+      "status": "ok",
+      "detail": "dice_b_1784321011262@forge.test"
+    },
+    {
+      "step": "sheet open with arm toggle",
+      "status": "ok",
+      "detail": ""
+    },
+    {
+      "step": "sheet arms advantage",
+      "status": "ok",
+      "detail": "class=\"is-armed\" tabDot=1"
+    },
+    {
+      "step": "ticket built, d20 inherits armed adv, no segmented control",
+      "status": "ok",
+      "detail": "segmented=0 chip=\"1d20 · adv\""
+    },
+    {
+      "step": "d20 chip cycles modes",
+      "status": "ok",
+      "detail": "dis=\"1d20 · dis\" normal=\"1d20\" adv=\"1d20 · adv\""
+    },
+    {
+      "step": "roll → result strip + auto-clear",
+      "status": "ok",
+      "detail": "label=\"Roll 2d6 + 1d20 (adv)\" total=25 advFaces=2 cleared=1"
+    },
+    {
+      "step": "history reroll",
+      "status": "ok",
+      "detail": "1 -> 2"
+    },
+    {
+      "step": "formula replaces ticket",
+      "status": "ok",
+      "detail": "khChip=1 mod=\"+2\""
+    },
+    {
+      "step": "mobile bottom sheet",
+      "status": "ok",
+      "detail": "visible=true overflow=false"
+    },
+    {
+      "step": "console errors",
+      "status": "ok",
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}

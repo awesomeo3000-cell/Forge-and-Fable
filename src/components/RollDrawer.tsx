@@ -1,10 +1,22 @@
 "use client";
 
-import { GripHorizontal, Trash2, X } from "lucide-react";
+import { GripHorizontal, RotateCcw, Trash2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { signed } from "@/lib/utils";
-import { parseDiceFormula } from "@/lib/utils";
+import {
+  EMPTY_TICKET,
+  addDie,
+  removeGroup,
+  setTicketModifier,
+  cycleD20Mode,
+  hasD20,
+  totalDice,
+  ticketLabel,
+  formulaToTicket,
+  type Ticket,
+  type TicketGroup,
+} from "@/lib/diceTicket";
 import { FONT_STACKS } from "@/lib/skins";
 import type { CharacterTheme, RollMode } from "@/types/game";
 import type { InitiativeCombatant, InitiativeState } from "@/types/campaign";
@@ -20,6 +32,8 @@ export type RollHistoryEntry = {
   adv?: { mode: "advantage" | "disadvantage"; dice: number[]; keptIndex: number };
   /** Present when the kept (or only) d20 was a natural 20 or natural 1. */
   nat?: "crit" | "fumble";
+  /** Present for pool-built rolls — enough to re-run the same roll. */
+  pool?: { groups: TicketGroup[]; modifier: number; mode?: RollMode };
 };
 
 type DrawerLayout = {
@@ -148,14 +162,12 @@ function saveInitiative(state: InitiativeState) {
 }
 
 /**
- * Right-edge drawer: an ad-hoc dice pool builder on top, a log of every roll
- * made this session (sheet clicks included) underneath.
+ * Right-edge drawer (AO-17 / proposal 35 Option B): a result strip, one roll
+ * ticket as the single source of truth, and a log of every roll made this
+ * session (sheet clicks included) underneath. Advantage lives on the ticket's
+ * d20 chip; sheet-triggered rolls keep their own armed mode (toggled from the
+ * sheet), which this drawer only displays via the tab dot.
  */
-const ROLL_MODES: { id: RollMode; label: string; title: string }[] = [
-  { id: "disadvantage", label: "Dis", title: "Disadvantage: next d20 rolls twice, keeps the lower" },
-  { id: "normal", label: "Normal", title: "Normal: next d20 rolls once" },
-  { id: "advantage", label: "Adv", title: "Advantage: next d20 rolls twice, keeps the higher" },
-];
 
 /* Categorise a roll from its label so the history can colour-code by type —
    saves, attacks, damage, skills, ability checks all read at a glance instead
@@ -184,12 +196,12 @@ export default memo(function RollDrawer(props: {
   currentUserId?: string;
   campaignInitiative?: { data: InitiativeState; version: number };
   campaignIsDm?: boolean;
-  onRollModeChange: (mode: RollMode) => void;
   onRollPool: (
     groups: { sides: number; count: number; keepHighest?: number }[],
     modifier: number,
     label: string,
     onResult?: (outcome: RollPoolOutcome) => void,
+    forcedMode?: RollMode,
   ) => void;
   onCampaignInitiativeUpdate?: (data: InitiativeState, version: number) => void;
   onCampaignInitiativeRoll?: (initiative: number) => void;
@@ -197,8 +209,7 @@ export default memo(function RollDrawer(props: {
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"dice" | "combat">("dice");
-  const [counts, setCounts] = useState<Record<number, number>>({});
-  const [modifier, setModifier] = useState(0);
+  const [ticket, setTicket] = useState<Ticket>(EMPTY_TICKET);
   const [formulaInput, setFormulaInput] = useState("");
   const [formulaError, setFormulaError] = useState("");
   const [layout, setLayout] = useState<DrawerLayout>(FALLBACK_LAYOUT);
@@ -244,16 +255,19 @@ export default memo(function RollDrawer(props: {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const bump = (sides: number, delta: number) =>
-    setCounts((prev) => {
-      const next = { ...prev, [sides]: Math.max(0, Math.min(20, (prev[sides] ?? 0) + delta)) };
-      if (next[sides] === 0) delete next[sides];
+  /** Add a die to the ticket. The first d20 inherits the sheet-armed mode so
+      the chip shows the truth of what would roll (the user can cycle it off). */
+  const addDieToTicket = (sides: number) =>
+    setTicket((current) => {
+      const next = addDie(current, sides);
+      if (sides === 20 && !hasD20(current) && props.rollMode !== "normal") {
+        return { ...next, d20Mode: props.rollMode };
+      }
       return next;
     });
 
-  const groups = DIE_SIZES.filter((s) => (counts[s] ?? 0) > 0).map((s) => ({ sides: s, count: counts[s] }));
-  const notation =
-    groups.map((g) => `${g.count}d${g.sides}`).join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
+  const ticketNotation = ticketLabel(ticket);
+  const ticketDiceCount = totalDice(ticket);
 
   const drawerVars = useMemo(() => {
     const theme = props.theme;
@@ -360,36 +374,50 @@ export default memo(function RollDrawer(props: {
     handle.addEventListener("pointercancel", onDone);
   }, []);
 
-  const rollPool = () => {
-    if (groups.length === 0) return;
-    props.onRollPool(groups, modifier, notation);
-  };
-
-  const rollCustomFormula = () => {
-    const parsed = parseDiceFormula(formulaInput.trim());
-    if (parsed.error) {
-      setFormulaError(parsed.error);
+  const rollTicket = () => {
+    if (ticketDiceCount === 0) return;
+    // Advantage doubles each d20; the app's roll executor caps at 40 dice.
+    const advExtra = ticket.d20Mode !== "normal" && hasD20(ticket)
+      ? ticket.groups.reduce((sum, group) => sum + (group.sides === 20 && !group.keepHighest ? group.count : 0), 0)
+      : 0;
+    if (ticketDiceCount + advExtra > 40) {
+      setFormulaError("Too many dice for one roll — 40 at most.");
       return;
     }
     setFormulaError("");
-    const poolGroups = parsed.groups.map((g) => ({ sides: g.sides, count: g.count, keepHighest: g.keepHighest }));
-    // For keep-highest, we roll the full count but note it in the label
-    const keepLabels = parsed.groups
-      .filter((g) => g.keepHighest)
-      .map((g) => `kh${g.keepHighest}`);
-    const label = keepLabels.length > 0
-      ? `${formulaInput.trim()} (${keepLabels.join(", ")})`
-      : formulaInput.trim();
-    props.onRollPool(poolGroups, parsed.modifier, label);
+    // The ticket is the whole truth: its mode is always passed explicitly so
+    // a sheet-armed advantage can never silently apply to a "normal" chip.
+    const mode = hasD20(ticket) ? ticket.d20Mode : undefined;
+    props.onRollPool(ticket.groups, ticket.modifier, ticketNotation, undefined, mode);
+    setTicket(EMPTY_TICKET);
+  };
+
+  /** A typed formula replaces the ticket; the Roll button then reads it back. */
+  const applyFormula = () => {
+    if (!formulaInput.trim()) return;
+    const result = formulaToTicket(formulaInput, ticket);
+    if ("error" in result) {
+      setFormulaError(result.error);
+      return;
+    }
+    setFormulaError("");
+    setTicket(result.ticket);
     setFormulaInput("");
   };
 
   const handleFormulaKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      rollCustomFormula();
+      applyFormula();
     }
   };
+
+  const rerollEntry = (entry: RollHistoryEntry) => {
+    if (!entry.pool) return;
+    props.onRollPool(entry.pool.groups, entry.pool.modifier, entry.label, undefined, entry.pool.mode);
+  };
+
+  const latest = props.history[0];
 
   const displayedInitiative = sharedInitiative?.data ?? initiativeState;
 
@@ -504,7 +532,7 @@ export default memo(function RollDrawer(props: {
       {open ? (
         <div className="roll-drawer-body" style={bodyStyle}>
           <div className="roll-drawer-titlebar" onPointerDown={startMove} title="Drag dice drawer">
-            <span className="roll-drawer-heading">Dice & Combat</span>
+            <span className="roll-drawer-heading">Dice Tray</span>
             <span className="roll-drawer-titlebar-tools">
               <GripHorizontal size={16} aria-hidden="true" />
               <button
@@ -531,89 +559,113 @@ export default memo(function RollDrawer(props: {
           {activeTab === "dice" ? (
             <>
               <div className="roll-pool">
-                <div className="roll-pool-grid">
-                  {DIE_SIZES.map((sides) => {
-                    const n = counts[sides] ?? 0;
-                    return (
-                      <div className={`roll-pool-die${n > 0 ? " has-dice" : ""}`} key={sides}>
-                        <button type="button" className="roll-pool-add" onClick={() => bump(sides, 1)} title={`Add a d${sides}`}>
-                          d{sides}
-                          {n > 0 ? <em>{n}</em> : null}
-                        </button>
-                        {n > 0 ? (
-                          <button type="button" className="roll-pool-minus" onClick={() => bump(sides, -1)} aria-label={`Remove a d${sides}`}>
-                            -
+                {/* Result strip: the latest roll from anywhere — tray or sheet. */}
+                <div className="ao-dice-result" aria-live="polite">
+                  {latest ? (
+                    <>
+                      <span className="ao-dice-result-total">{latest.total}</span>
+                      <div className="ao-dice-result-line">
+                        <span>{latest.label}</span>
+                        {latest.adv ? (
+                          <span aria-label={`d20 rolls ${latest.adv.dice.join(", ")}, kept ${latest.adv.dice[latest.adv.keptIndex]}`}>
+                            {latest.adv.dice.map((d, i) => (
+                              <span key={i} className={`roll-history-die${i === latest.adv!.keptIndex ? " kept" : " dropped"}`}>{d}</span>
+                            ))}
+                          </span>
+                        ) : null}
+                        {latest.pool ? (
+                          <button type="button" className="ao-dice-reroll" onClick={() => rerollEntry(latest)}>
+                            <RotateCcw size={11} aria-hidden="true" /> Reroll
                           </button>
                         ) : null}
                       </div>
-                    );
-                  })}
+                    </>
+                  ) : (
+                    <p className="ao-dice-result-empty">Ready — build a roll or tap a stat on your sheet.</p>
+                  )}
                 </div>
-                <div className="roll-mode" role="group" aria-label="d20 roll mode">
-                  {ROLL_MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className={`roll-mode-btn${props.rollMode === m.id ? " active" : ""}${m.id !== "normal" ? ` ${m.id}` : ""}`}
-                      aria-pressed={props.rollMode === m.id}
-                      title={m.title}
-                      onClick={() => props.onRollModeChange(m.id)}
-                    >
-                      {m.label}
+
+                <div className="ao-dice-dice" role="group" aria-label="Add dice">
+                  {DIE_SIZES.map((sides) => (
+                    <button type="button" className="ao-dice-die" key={sides} onClick={() => addDieToTicket(sides)} title={`Add a d${sides}`}>
+                      d{sides}
                     </button>
                   ))}
                 </div>
-                {props.rollMode !== "normal" ? (
-                  <p className="roll-mode-hint">
-                    Next d20 roll uses <strong>{props.rollMode}</strong>.
-                    {props.rollModeIsFromEffect ? " (from effects)" : ""}
-                  </p>
-                ) : null}
-                <div className="roll-pool-mod">
-                  <span>Modifier</span>
-                  <button type="button" onClick={() => setModifier((m) => Math.max(-20, m - 1))}>-</button>
-                  <strong>{signed(modifier)}</strong>
-                  <button type="button" onClick={() => setModifier((m) => Math.min(20, m + 1))}>+</button>
+
+                {/* The roll ticket: chips, the d20's advantage state, and the
+                    modifier — one visible source of truth for the next roll. */}
+                <div className="ao-dice-ticket" aria-label="Roll ticket">
+                  {ticket.groups.length === 0 ? (
+                    <p className="ao-dice-ticket-empty">Tap dice to build a roll…</p>
+                  ) : (
+                    ticket.groups.map((group, index) => {
+                      const isPlainD20 = group.sides === 20 && !group.keepHighest;
+                      const modeLabel = ticket.d20Mode === "advantage" ? "adv" : ticket.d20Mode === "disadvantage" ? "dis" : null;
+                      return (
+                        <span className={`ao-dice-chip${isPlainD20 ? "" : " is-static"}`} key={`${group.sides}-${index}`}>
+                          {isPlainD20 ? (
+                            <button
+                              type="button"
+                              onClick={() => setTicket(cycleD20Mode(ticket))}
+                              title="Advantage cycles: normal, advantage, disadvantage"
+                              aria-label={`${group.count}d20, ${ticket.d20Mode} — change advantage`}
+                            >
+                              {group.count}d20{modeLabel ? <> · <span className="ao-dice-chip-mode">{modeLabel}</span></> : null}
+                            </button>
+                          ) : (
+                            <button type="button" tabIndex={-1} aria-hidden="true" style={{ cursor: "default" }}>
+                              {group.count}d{group.sides}{group.keepHighest ? `kh${group.keepHighest}` : ""}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="ao-dice-chip-x"
+                            onClick={() => setTicket(removeGroup(ticket, index))}
+                            aria-label={`Remove ${group.count}d${group.sides} from the roll`}
+                          >
+                            <X size={12} aria-hidden="true" />
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
+                  <span className="ao-dice-mod">
+                    <button type="button" onClick={() => setTicket(setTicketModifier(ticket, ticket.modifier - 1))} aria-label="Decrease modifier">−</button>
+                    <strong aria-label={`Modifier ${signed(ticket.modifier)}`}>{signed(ticket.modifier)}</strong>
+                    <button type="button" onClick={() => setTicket(setTicketModifier(ticket, ticket.modifier + 1))} aria-label="Increase modifier">+</button>
+                  </span>
                 </div>
-                <div className="roll-formula-input">
+
+                <div className="ao-dice-formula">
                   <input
                     type="text"
-                    placeholder="Or type a formula: 2d6+3, 4d6kh3…"
+                    placeholder="Type a formula: 2d6+3, 4d6kh3…"
                     value={formulaInput}
                     onChange={(e) => { setFormulaInput(e.target.value); setFormulaError(""); }}
                     onKeyDown={handleFormulaKeyDown}
-                    aria-label="Custom dice formula"
+                    onBlur={() => { if (formulaInput.trim()) applyFormula(); }}
+                    aria-label="Dice formula — replaces the roll ticket"
                   />
-                  {formulaInput.trim() ? (
-                    <button type="button" className="glass-button" onClick={rollCustomFormula} title="Roll custom formula">
-                      Roll
-                    </button>
-                  ) : null}
                 </div>
-                {formulaError ? <p className="roll-formula-error">{formulaError}</p> : null}
-                <div className="roll-pool-actions">
-                  <button type="button" className="gold-button roll-pool-roll" disabled={groups.length === 0} onClick={rollPool}>
-                    Roll {groups.length > 0 ? notation : "dice"}
-                  </button>
-                  {groups.length > 0 || modifier !== 0 ? (
-                    <button type="button" className="glass-button" onClick={() => { setCounts({}); setModifier(0); }}>
-                      Clear
-                    </button>
-                  ) : null}
-                </div>
+                {formulaError ? <p className="ao-dice-error">{formulaError}</p> : null}
+
+                <button type="button" className="ao-dice-roll" disabled={ticketDiceCount === 0} onClick={rollTicket}>
+                  {ticketDiceCount > 0 ? `Roll ${ticketNotation}` : "Roll"}
+                </button>
               </div>
 
               <div className="roll-history">
                 <div className="roll-history-header">
                   <span className="roll-drawer-heading">History</span>
                   {props.history.length > 0 && props.onClearHistory ? (
-                    <button type="button" className="glass-button roll-clear-btn" onClick={props.onClearHistory} title="Clear all rolls">
+                    <button type="button" className="ao-dice-reroll roll-clear-btn" onClick={props.onClearHistory} title="Clear all rolls">
                       Clear
                     </button>
                   ) : null}
                 </div>
                 {props.history.length === 0 ? (
-                  <p className="roll-history-empty">No rolls yet - click a stat on the sheet or build a pool above.</p>
+                  <p className="roll-history-empty">No rolls yet — tap a stat on your sheet or build a roll above.</p>
                 ) : (
                   <ul className="roll-history-list">
                     {props.history.map((entry) => (
@@ -636,6 +688,11 @@ export default memo(function RollDrawer(props: {
                         ) : null}
                         <div className="roll-history-detail">
                           <span>{entry.detail}</span>
+                          {entry.pool ? (
+                            <button type="button" className="ao-dice-reroll" onClick={() => rerollEntry(entry)} aria-label={`Reroll ${entry.label}`}>
+                              <RotateCcw size={11} aria-hidden="true" />
+                            </button>
+                          ) : null}
                           <time>{entry.time}</time>
                         </div>
                       </li>
