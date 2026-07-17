@@ -8649,7 +8649,7 @@ button.dj-card {
 }
 
 .campaign-theme-picker legend {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: var(--muted);
   font-family: var(--font-label);
   font-size: 0.72rem;
@@ -8657,39 +8657,49 @@ button.dj-card {
   text-transform: uppercase;
 }
 
+.campaign-theme-helper {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--cp-text-3, var(--muted));
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .campaign-theme-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
 }
 
 .campaign-form .campaign-theme-option {
   position: relative;
   display: grid;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
-  padding: 8px;
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  background: var(--ground-2);
+  padding: 0 0 11px;
+  overflow: hidden;
+  border: 1px solid var(--cp-hair, var(--rule));
+  border-radius: 12px;
+  background: var(--cp-card, var(--ground-2));
   color: var(--parchment);
   cursor: pointer;
   font-family: var(--font-body);
   font-size: inherit;
   letter-spacing: normal;
   text-transform: none;
-  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
 .campaign-form .campaign-theme-option:hover {
-  border-color: var(--campaign-accent, var(--accent));
+  border-color: var(--cp-hair-strong, var(--campaign-accent, var(--accent)));
+  background: var(--cp-card-hi, var(--ground-2));
   transform: translateY(-1px);
 }
 
 .campaign-form .campaign-theme-option.is-selected {
-  border-color: var(--campaign-accent, var(--accent));
-  background: color-mix(in srgb, var(--campaign-accent, var(--accent)) 11%, var(--ground-2));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--campaign-accent, var(--accent)) 40%, transparent);
+  border-color: var(--doc-accent, var(--campaign-accent, var(--accent)));
+  background: color-mix(in srgb, var(--doc-accent, var(--campaign-accent, var(--accent))) 8%, var(--cp-card, var(--ground-2)));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--doc-accent, var(--campaign-accent, var(--accent))) 34%, transparent);
 }
 
 .campaign-theme-option input[type="radio"] {
@@ -8711,30 +8721,51 @@ button.dj-card {
 
 .campaign-theme-image {
   display: block;
-  aspect-ratio: 16 / 7;
-  border-radius: 6px;
+  aspect-ratio: 16 / 8;
+  border-bottom: 1px solid var(--cp-hair, var(--rule));
+  background-color: var(--ground-2);
   background-position: center;
   background-size: cover;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 -24px 24px -24px rgba(0, 0, 0, 0.75);
 }
 
 .campaign-theme-copy {
   display: grid;
-  gap: 3px;
+  gap: 4px;
+  padding: 0 11px;
 }
 
 .campaign-theme-copy strong {
   color: var(--parchment);
   font-family: var(--font-display);
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .campaign-theme-copy small {
   color: var(--muted);
   font-family: var(--font-body);
-  font-size: 0.76rem;
+  font-size: 0.73rem;
   line-height: 1.3;
+}
+
+.campaign-form .campaign-theme-option.is-selected::after {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--doc-accent, var(--accent)) 72%, white 12%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--doc-accent, var(--accent)) 86%, black 14%);
+  color: var(--paper, white);
+  content: "✓";
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .campaign-appearance {
@@ -8807,10 +8838,17 @@ button.dj-card {
   .campaign-form .campaign-theme-option {
     grid-template-columns: 96px minmax(0, 1fr);
     align-items: center;
+    padding: 8px;
   }
 
   .campaign-theme-image {
     aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: 7px;
+  }
+
+  .campaign-theme-copy {
+    padding: 0;
   }
 }
 

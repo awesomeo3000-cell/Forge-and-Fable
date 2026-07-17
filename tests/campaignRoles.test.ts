@@ -51,6 +51,13 @@ describe("campaign roles and character eligibility", () => {
     expect(syncCampaign(campaign.id, "dm").campaign.themeKey).toBe("forge");
   });
 
+  it("accepts the expanded campaign theme catalog", () => {
+    const campaign = createCampaign("dm", "The Wayhouse", "wayhouse");
+
+    expect(listCampaigns("dm")[0]).toMatchObject({ themeKey: "wayhouse" });
+    expect(syncCampaign(campaign.id, "dm").campaign.themeKey).toBe("wayhouse");
+  });
+
   it("rejects a character already enrolled in another campaign", async () => {
     const character = await createCharacter("player", characterInput("Rook"));
     const first = createCampaign("dm", "First Table");

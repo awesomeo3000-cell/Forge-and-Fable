@@ -297,6 +297,7 @@ export default memo(function CampaignPanel({
                 </label>
                 <fieldset className="campaign-theme-picker">
                   <legend>Select your campaign theme</legend>
+                  <p className="campaign-theme-helper">Choose the atmosphere for your table. You can change it later in campaign settings.</p>
                   <div className="campaign-theme-options">
                     {CAMPAIGN_THEMES.map((campaignTheme) => (
                       <label className={`campaign-theme-option${newThemeKey === campaignTheme.id ? " is-selected" : ""}`} key={campaignTheme.id}>

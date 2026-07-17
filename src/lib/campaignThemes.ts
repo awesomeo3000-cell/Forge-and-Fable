@@ -30,6 +30,18 @@ export const CAMPAIGN_THEMES: CampaignTheme[] = [
     description: "High passes, green valleys and a long road ahead.",
     imageUrl: "/heroes-backdrop.jpg",
   },
+  {
+    id: "wayhouse",
+    label: "The Moonlit Wayhouse",
+    description: "Warm windows, quiet roads and stories after dark.",
+    imageUrl: "/wayhouse-backdrop.png",
+  },
+  {
+    id: "hearth",
+    label: "The Hearth Market",
+    description: "A bustling crossroads beneath the old blue tree.",
+    imageUrl: "/backdrop.png",
+  },
 ];
 
 export function isCampaignThemeId(value: unknown): value is CampaignThemeId {
