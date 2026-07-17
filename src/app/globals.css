@@ -7626,35 +7626,40 @@ button.dj-card {
 .cs-item-result [data-rarity="Common" i],
 .cs-item-catalog-controls option[data-rarity="Common" i],
 .cs-inv-row [data-rarity="Common" i],
-.cs-inv-meta [data-rarity="Common" i] {
+.cs-inv-meta [data-rarity="Common" i],
+.cs-equipment-option [data-rarity="Common" i] {
   color: #cbd5e1;
 }
 
 .cs-item-result [data-rarity="Uncommon" i],
 .cs-item-catalog-controls option[data-rarity="Uncommon" i],
 .cs-inv-row [data-rarity="Uncommon" i],
-.cs-inv-meta [data-rarity="Uncommon" i] {
+.cs-inv-meta [data-rarity="Uncommon" i],
+.cs-equipment-option [data-rarity="Uncommon" i] {
   color: #2e9e5b;
 }
 
 .cs-item-result [data-rarity="Rare" i],
 .cs-item-catalog-controls option[data-rarity="Rare" i],
 .cs-inv-row [data-rarity="Rare" i],
-.cs-inv-meta [data-rarity="Rare" i] {
+.cs-inv-meta [data-rarity="Rare" i],
+.cs-equipment-option [data-rarity="Rare" i] {
   color: #3b82f6;
 }
 
 .cs-item-result [data-rarity="Very Rare" i],
 .cs-item-catalog-controls option[data-rarity="Very Rare" i],
 .cs-inv-row [data-rarity="Very Rare" i],
-.cs-inv-meta [data-rarity="Very Rare" i] {
+.cs-inv-meta [data-rarity="Very Rare" i],
+.cs-equipment-option [data-rarity="Very Rare" i] {
   color: #a855f7;
 }
 
 .cs-item-result [data-rarity="Legendary" i],
 .cs-item-catalog-controls option[data-rarity="Legendary" i],
 .cs-inv-row [data-rarity="Legendary" i],
-.cs-inv-meta [data-rarity="Legendary" i] {
+.cs-inv-meta [data-rarity="Legendary" i],
+.cs-equipment-option [data-rarity="Legendary" i] {
   color: #ff7a1a;
 }
 
@@ -12077,6 +12082,109 @@ button.dj-card {
   font-size: 11px;
   line-height: 1.4;
 }
+.dm-audio-form {
+  display: grid;
+  gap: 12px;
+  align-items: stretch;
+}
+.dm-audio-row {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+}
+.dm-audio-field,
+.dm-audio-source {
+  display: grid;
+  flex: 1 1 0;
+  gap: 5px;
+  min-width: 0;
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 72%, transparent);
+  font-family: var(--font-label);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.dm-audio-field input,
+.dm-audio-field select,
+.dm-audio-source input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.dm-audio-title { flex-basis: 42%; }
+.dm-audio-kind { flex: 0 1 130px; }
+.dm-audio-submit { flex: 0 0 auto; white-space: nowrap; }
+.dm-audio-source-row {
+  align-items: stretch;
+  padding-top: 2px;
+}
+.dm-audio-source {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 15%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--paper, #e9dfc8) 3%, transparent);
+}
+.dm-audio-source > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dm-audio-source > span small {
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 46%, transparent);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: none;
+}
+.dm-audio-source input[type="file"] {
+  min-height: 32px;
+  padding: 3px;
+  border: 1px dashed color-mix(in srgb, var(--paper, #e9dfc8) 28%, transparent);
+  border-radius: 3px;
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 66%, transparent);
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+.dm-audio-source input[type="file"]::file-selector-button {
+  margin-right: 8px;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--doc-accent, #c9a25a) 55%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--doc-accent, #c9a25a) 16%, transparent);
+  color: var(--paper, #e9dfc8);
+  cursor: pointer;
+  font-family: var(--font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dm-audio-source.is-selected {
+  border-color: color-mix(in srgb, var(--doc-accent, #c9a25a) 65%, transparent);
+  background: color-mix(in srgb, var(--doc-accent, #c9a25a) 8%, transparent);
+}
+.dm-audio-url-source input {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 22%, transparent);
+  border-radius: 3px;
+}
+.dm-audio-url-source input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dm-audio-or {
+  align-self: center;
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 45%, transparent);
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
 /* Custom condition sub-form (mirrors HeroSheet's cs-effect-form for the DM's desk). */
 .dm-custom-condition-form {
@@ -12272,6 +12380,16 @@ button.dj-card {
   text-transform: uppercase;
 }
 .dm-soundboard .dm-inline-form { border: 0; background: transparent; padding: 6px 0 0; }
+
+@media (max-width: 700px) {
+  .dm-audio-row { flex-wrap: wrap; }
+  .dm-audio-title,
+  .dm-audio-kind,
+  .dm-audio-submit { flex: 1 1 100%; }
+  .dm-audio-source-row { align-items: stretch; }
+  .dm-audio-source { flex-basis: 100%; }
+  .dm-audio-or { flex-basis: 100%; text-align: center; }
+}
 
 /* ── The player's table strip ── */
 .campaign-table-strip {
