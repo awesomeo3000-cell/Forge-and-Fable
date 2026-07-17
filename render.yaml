@@ -18,6 +18,8 @@ services:
         value: https://dreamwright.gg
       - key: FORGE_VAULT_DIR
         value: /var/data
+      - key: FORGE_BACKUP_DIR
+        sync: false
     disk:
       name: forge-vault
       mountPath: /var/data
