@@ -1473,7 +1473,7 @@ export default memo(function HeroSheet(props: {
                 return (
                   <label className={`cs-equipment-option${equipped ? " is-equipped" : ""}${proficiencyIssue ? " has-warning" : ""}`} key={item.id}>
                     <input type="checkbox" checked={equipped} disabled={!equippable} onChange={() => toggleInventoryEquipment(item)} />
-                    <span><strong>{item.name}</strong><small>{[item.category || "Other gear", item.rarity, proficiencyIssue ? "Not proficient" : equippable ? equipped ? "Equipped" : "Ready to equip" : "Carried only"].join(" · ")}</small></span>
+                    <span><strong>{item.name}</strong><small>{item.category || "Other gear"} <i aria-hidden="true">·</i> <em data-rarity={item.rarity}>{item.rarity}</em> <i aria-hidden="true">·</i> {proficiencyIssue ? "Not proficient" : equippable ? equipped ? "Equipped" : "Ready to equip" : "Carried only"}</small></span>
                   </label>
                 );
               })}
