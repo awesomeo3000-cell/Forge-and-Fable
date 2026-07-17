@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestVersion": "1.0.0",
+  "sourceCode": "phb-2014",
+  "researcherAgent": "agent-5-mundane-2014",
+  "researchedAt": "2026-07-17T00:00:00Z",
+  "candidates": [
+    {
+      "candidateId": "test-dagger-001",
+      "name": "Dagger",
+      "normalizedName": "dagger",
+      "aliases": ["Dagger, +1"],
+      "rulesVersion": "shared",
+      "sourceCode": "phb-2014",
+      "sourceTitle": "Player's Handbook (2014)",
+      "publisherLane": "wizards-first-party",
+      "page": 149,
+      "section": "Weapons",
+      "category": "Weapon",
+      "subcategory": "Simple Melee Weapons",
+      "classification": "Simple Melee Weapon",
+      "structuredData": {
+        "magical": false,
+        "rarity": null,
+        "price": {
+          "costCp": 200,
+          "status": "listed",
+          "sourceCode": "phb-2014"
+        },
+        "weightLb": 1,
+        "weapon": {
+          "category": "simple",
+          "rangeType": "melee",
+          "damageDice": "1d4",
+          "damageType": "piercing",
+          "properties": ["finesse", "light", "thrown (range 20/60)"],
+          "normalRangeFt": 20,
+          "longRangeFt": 60
+        },
+        "attunement": {
+          "required": false
+        },
+        "provenance": [
+          {
+            "sourceCode": "phb-2014",
+            "sourceTitle": "Player's Handbook (2014)",
+            "rulesVersion": "2014",
+            "sourceType": "core-book",
+            "publisherLane": "wizards-first-party",
+            "page": 149,
+            "license": "srd-5.1",
+            "researchedAt": "2026-07-17T00:00:00Z",
+            "researcherAgent": "agent-5-mundane-2014",
+            "verificationStatus": "single-source"
+          }
+        ]
+      },
+      "shortDescription": "A simple light melee weapon dealing 1d4 piercing damage with the finesse, light, and thrown properties.",
+      "descriptionStatus": "open-license",
+      "sourceEvidence": {
+        "primarySource": "Player's Handbook (2014) p.149",
+        "secondaryChecks": ["SRD 5.1"],
+        "accessedAt": "2026-07-17T00:00:00Z"
+      },
+      "confidence": 0.95,
+      "issues": [],
+      "spoiler": false
+    },
+    {
+      "candidateId": "test-bad-candidate",
+      "name": "",
+      "normalizedName": "",
+      "rulesVersion": "invalid",
+      "sourceCode": "nonexistent-source",
+      "category": "",
+      "confidence": 5,
+      "structuredData": {
+        "price": {
+          "costCp": -10,
+          "status": "impossible"
+        },
+        "weapon": {
+          "damageDice": "not-a-dice",
+          "damageType": "invalid-type"
+        }
+      }
+    }
+  ]
+}

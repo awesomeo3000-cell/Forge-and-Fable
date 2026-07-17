@@ -1,6 +1,9 @@
 {
+  "manifestVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "status": "frozen",
   "researchCutoff": "2026-07-16",
-  "generatedAt": "2026-07-17T12:39:56.086Z",
+  "lastRefreshedAt": "2026-07-17T13:22:57.798Z",
   "totalSources": 71,
   "includedCount": 51,
   "excludedCount": 16,
@@ -29,7 +32,9 @@
         "ammunition"
       ],
       "notes": "Core equipment chapter (Ch.5) defines all standard weapons, armor, and adventuring gear. No magic items (those are in the DMG). Some class-specific starting equipment choices.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "dmg-2014",
@@ -51,7 +56,9 @@
         "poison"
       ],
       "notes": "Primary magic item catalog for 2014 rules: ~300+ magic items in Chapter 7, including Magic Item Tables A-I, Treasure Hoard tables, artifacts, sentient items, and poisons.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "mm-2014",
@@ -67,7 +74,8 @@
       "exclusionReason": "Monster stat blocks only; no standalone player-usable item definitions. Monster equipment listed in stat blocks is not intended as player item catalog entries.",
       "expectedCategories": [],
       "notes": "Some NPC stat blocks reference equipment (e.g., Guard's chain mail, Mage's spellbook). These are not independently defined item records and rely on PHB equipment definitions.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "srd-5.1",
@@ -89,7 +97,9 @@
         "tools"
       ],
       "notes": "Free subset of PHB + DMG + MM content under OGL 1.0a. Contains a representative selection of equipment and magic items. The current production baseline for existing Forge & Fable item records.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "phb-2024",
@@ -113,7 +123,9 @@
         "firearm"
       ],
       "notes": "2024 revised core rulebook. Chapter on equipment includes weapon masteries, firearms (musket, pistol), and crafting rules for potions and scrolls. No magic items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "dmg-2024",
@@ -136,7 +148,9 @@
         "firearm"
       ],
       "notes": "2024 revised magic item catalog. Reorganized and updated magic item definitions. Referenced by the 2025 Monster Manual treasure tags system.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "mm-2025",
@@ -152,7 +166,8 @@
       "exclusionReason": "Monster stat blocks only; no standalone player-usable item definitions. The 'Gear' entry on stat blocks indicates what equipment is recoverable, but items themselves reference PHB/DMG definitions.",
       "expectedCategories": [],
       "notes": "Introduces Treasure Tags system (Any, Individual, Treasure Theme, None) and four treasure themes (Arcana, Armaments, Implements, Relics) keyed to DMG magic item tables. No new item definitions.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "srd-5.2.1",
@@ -174,8 +189,10 @@
         "tools",
         "firearm"
       ],
-      "notes": "Free subset of 2024 core rules under CC-BY-4.0. SRD 5.2.1 restores 15 magic items accidentally omitted from SRD 5.2: +1 Ammunition, +1 Armor, +1 Shield, +1 Weapon, +2 Ammunition, +2 Armor, +2 Shield, +2 Weapon, +3 Ammunition, +3 Armor, +3 Shield, +3 Weapon, Adamantine Armor, Ammunition +1/+2/+3, Dragon Scale Mail. Also includes firearms, weapon masteries, crafting rules. Supersedes SRD 5.2.",
-      "publisherLane": "wizards-first-party"
+      "notes": "Free subset of 2024 core rules under CC-BY-4.0. SRD 5.2.1 restores 15 magic items accidentally omitted from SRD 5.2: Bead of Nourishment, Cloak of Invisibility, Elixir of Health, Energy Bow, Gloves of Thievery, Hat of Many Spells, Potion of Invulnerability, Potion of Longevity, Potion of Vitality, Quarterstaff of the Acrobat, Rod of Resurrection, Sending Stones, Sentinel Shield, Shield of the Cavalier, Thunderous Greatclub. Also includes firearms, weapon masteries, crafting rules. Supersedes SRD 5.2.",
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "scag",
@@ -193,7 +210,9 @@
         "magic-item"
       ],
       "notes": "Primarily a Forgotten Realms setting/lore book. Contains a small number of setting-specific magic items. Most item content is lore-focused rather than mechanical.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "vgm",
@@ -209,7 +228,8 @@
       "exclusionReason": "Monster lore and playable races only; no new item definitions. Any items mentioned are descriptive, not mechanical catalog entries.",
       "expectedCategories": [],
       "notes": "Monster-focused supplement with some playable race options. Replaced/consolidated by Mordenkainen Presents: Monsters of the Multiverse (2022).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "xgte",
@@ -228,7 +248,9 @@
         "tool"
       ],
       "notes": "Chapter 2: Dungeon Master's Tools contains new common magic items and reorganized DMG + XGE items into minor/major tables by rarity. Also includes expanded tool rules.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "mtof",
@@ -244,7 +266,8 @@
       "exclusionReason": "Monster lore and playable subraces only; no new item definitions. Items mentioned in lore are not mechanically defined.",
       "expectedCategories": [],
       "notes": "High-level monster lore and elf/dwarf/gith/etc. racial options. Replaced/consolidated by Mordenkainen Presents: Monsters of the Multiverse (2022).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "tcoe",
@@ -265,7 +288,9 @@
         "artifact"
       ],
       "notes": "~36 magic items including the new magic tattoos category, class-specific spellcasting foci, and artifacts. Also contains the Artificer class (the sole 2014 Artificer source).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "ftod",
@@ -287,7 +312,9 @@
         "artifact"
       ],
       "notes": "Dragon-themed magic items including hoard items, dragon vessels, dragon-touched weapons, and artifacts. References DMG tables for hoard generation.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "mpmm",
@@ -303,7 +330,8 @@
       "exclusionReason": "Monster and race compilation only. Consolidates and updates content from VGM and MToF but adds no new item definitions.",
       "expectedCategories": [],
       "notes": "Compiles and updates monster and race content from Volo's Guide to Monsters and Mordenkainen's Tome of Foes. No new item content.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "bpgg",
@@ -323,7 +351,9 @@
         "artifact"
       ],
       "notes": "Giant-themed magic items, relics, and artifacts. New giant-related item categories.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "tbomt",
@@ -342,7 +372,9 @@
         "artifact"
       ],
       "notes": "22 magic items inspired by the Deck of Many Things plus new deck-related artifacts.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "ggr",
@@ -361,7 +393,9 @@
         "adventuring-gear"
       ],
       "notes": "Magic: The Gathering crossover setting. Contains Ravnica-specific magic items and guild equipment.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "ai",
@@ -381,7 +415,9 @@
         "vehicle"
       ],
       "notes": "Corporate-themed D&D sourcebook in partnership with Penny Arcade. Contains franchise-themed magic items, vehicles, and trinkets. Includes adventure The Orrery of the Wanderer (levels 1-6).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "erlw",
@@ -402,7 +438,9 @@
         "dragonmark-focus"
       ],
       "notes": "Eberron campaign setting. Contains many common-rarity magic items reflecting Eberron's wide magic, symbiotic items, dragonmark focus items, and setting-specific artifacts.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "egw",
@@ -422,7 +460,9 @@
         "artifact"
       ],
       "notes": "Critical Role / Exandria campaign setting. Contains Wildemount-specific magic items including Vestiges of Divergence (evolving artifacts).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "mot",
@@ -443,7 +483,9 @@
         "piety-gift"
       ],
       "notes": "Greek mythology-themed Magic: The Gathering setting. Contains god-weapons, artifacts, and supernatural gifts that function as items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "vrgr",
@@ -463,7 +505,9 @@
         "cursed-item"
       ],
       "notes": "Horror-themed campaign setting covering multiple Domains of Dread. Contains horror-themed magic items, dark gifts, and cursed items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "scc",
@@ -482,7 +526,9 @@
         "magic-item-for-sale"
       ],
       "notes": "Magic school setting (Magic: The Gathering crossover). Contains magic items including a unique 'Magic Items for Sale' price table.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "saag",
@@ -502,7 +548,9 @@
         "vehicle"
       ],
       "notes": "Part of the Spelljammer boxed set (3 books: Astral Adventurer's Guide, Boo's Astral Menagerie, Light of Xaryxis). AAG contains the player-facing content including magic items for Wildspace and Astral Plane travel. The spelljamming helm is a key item.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "dsotdq",
@@ -522,7 +570,9 @@
         "artifact"
       ],
       "notes": "Dragonlance campaign setting + adventure. Introduces the setting to 5e with Dragonlance-specific magic items including the iconic dragonlance weapon. Also contains adventure-specific items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "paatm",
@@ -542,7 +592,9 @@
         "portal-key"
       ],
       "notes": "Planescape campaign setting boxed set. Contains planar-themed magic items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "efota",
@@ -563,7 +615,9 @@
         "bastion"
       ],
       "notes": "2024-compatible Eberron expansion. Companion to ERLW (not replacement). Revised Artificer class with Replicate Magic Items feature. Includes new magic items, airship rules, and bastion options.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "rlthw",
@@ -584,7 +638,9 @@
         "artifact"
       ],
       "notes": "2024-compatible Ravenloft sourcebook. 16 Domains of Dread with individual mini-adventures. Contains new magic items and dark gift feats. Last pre-July-2026 release included in this manifest.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "lmop",
@@ -604,7 +660,9 @@
         "weapon"
       ],
       "notes": "Original 2014 Starter Set adventure (levels 1-5). Contains several magic items as treasure rewards. Expanded/remade in Phandelver and Below (2023).",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "hotdq",
@@ -623,7 +681,9 @@
         "treasure"
       ],
       "notes": "Part 1 of Tyranny of Dragons storyline (levels 1-8). Contains adventure-specific magic items and treasure. Re-released combined with Rise of Tiamat in 2023.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "rot",
@@ -643,7 +703,9 @@
         "dragon-mask"
       ],
       "notes": "Part 2 of Tyranny of Dragons storyline (levels 8-15). Contains adventure-specific magic items including the Dragon Masks (artifacts). Re-released combined with Hoard in 2023.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "potaa",
@@ -663,7 +725,9 @@
         "weapon"
       ],
       "notes": "Elemental Evil storyline (levels 1-15). Contains elemental-themed magic items and weapons.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "oota",
@@ -683,7 +747,9 @@
         "underdark-item"
       ],
       "notes": "Rage of Demons storyline (levels 1-15). Underdark adventure with demon-themed and Underdark-specific magic items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "cos",
@@ -704,7 +770,9 @@
         "cursed-item"
       ],
       "notes": "Gothic horror adventure in Barovia (levels 1-10). Contains iconic Ravenloft items including the Holy Symbol of Ravenkind, Sunsword, and Tome of Strahd.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "skt",
@@ -725,7 +793,9 @@
         "artifact"
       ],
       "notes": "Giant-themed adventure (levels 1-11). Contains giant rune items and giant-sized magic items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "tftyp",
@@ -745,7 +815,9 @@
         "artifact"
       ],
       "notes": "Anthology of 7 classic dungeons updated for 5e (levels 1-11+). Each adventure contains its own set of magic items from the original modules.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "toa",
@@ -766,7 +838,9 @@
         "trickster-god-item"
       ],
       "notes": "Jungle exploration adventure in Chult (levels 1-9+). Contains trickster god items, the Soulmonger, and Chult-specific treasures.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "wdh",
@@ -786,7 +860,9 @@
         "artifact"
       ],
       "notes": "Urban adventure in Waterdeep (levels 1-5). Contains the Vault of Dragons treasure and city-specific magic items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "wdmm",
@@ -807,7 +883,9 @@
         "wondrous-item"
       ],
       "notes": "Megadungeon sequel to Dragon Heist (levels 5-20). 23 floors of Undermountain with hundreds of magic items as treasure.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "gos",
@@ -828,7 +906,9 @@
         "weapon"
       ],
       "notes": "Anthology of 7 nautical adventures (levels 1-12). Contains ship upgrades, nautical magic items, and Appendix A: Of Ships and the Sea with ship stat blocks.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "doip",
@@ -848,7 +928,9 @@
         "adventuring-gear"
       ],
       "notes": "Essentials Kit adventure (levels 1-6). Contains magic items as quest rewards. Also includes sidekick rules and digital D&D Beyond content.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "bgdia",
@@ -869,7 +951,9 @@
         "hellfire-weapon"
       ],
       "notes": "Hell-themed adventure (levels 1-13). Contains infernal war machines (vehicles), hellfire weapons, soul coins, and the Sword of Zariel artifact.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "idrotf",
@@ -889,7 +973,9 @@
         "chwinga-charm"
       ],
       "notes": "Arctic horror adventure (levels 1-12). Contains frost-themed magic items, chwinga charms, and the Codicil of White artifact.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "cm",
@@ -909,7 +995,9 @@
         "scroll"
       ],
       "notes": "Anthology of 17 mystery adventures (levels 1-16). Contains book-themed magic items and adventure-specific treasure.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "twbtw",
@@ -929,7 +1017,9 @@
         "charm"
       ],
       "notes": "Feywild adventure (levels 1-8). Contains fey-themed magic items, trinkets, and charms. Unique in that it can be completed without combat.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "crcotn",
@@ -950,7 +1040,9 @@
         "underwater-item"
       ],
       "notes": "Critical Role / Exandria adventure (levels 3-12). Appendix B contains new magic items including ruidium-based corrupting items and the Jewel of Three Prayers artifact.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "jtrc",
@@ -969,7 +1061,9 @@
         "cultural-item"
       ],
       "notes": "Anthology of 13 adventures by diverse authors (levels 1-14). Contains culturally-inspired magic items unique to each adventure.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "dosi",
@@ -989,7 +1083,9 @@
         "adventuring-gear"
       ],
       "notes": "2022 Starter Set adventure (levels 1-3). Contains beginner-friendly magic items. Designed as an on-ramp to 5e.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "kftgv",
@@ -1009,7 +1105,9 @@
         "tool"
       ],
       "notes": "Anthology of 13 heist adventures (levels 1-11). Contains heist-themed magic items and specialized tools.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "patbso",
@@ -1029,7 +1127,9 @@
         "obelisk-fragment"
       ],
       "notes": "Expanded remake of Lost Mine of Phandelver (levels 1-12). Contains updated + new magic items including psionic-themed and obelisk fragment items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "veor",
@@ -1049,7 +1149,9 @@
         "Rod-of-Seven-Parts"
       ],
       "notes": "High-level multiverse adventure (levels 10-20). Contains the Rod of Seven Parts artifact and other high-level magic items. Culminates with confronting Vecna.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "qftis",
@@ -1069,7 +1171,9 @@
         "planar-item"
       ],
       "notes": "Anthology of 6 classic adventures updated for 5e (levels 1-13). Contains updated magic items from classic D&D adventures spanning multiple settings.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "dd",
@@ -1085,7 +1189,8 @@
       "exclusionReason": "No new item definitions. All treasures reference the 2024 DMG and Monster Manual. The book is designed to be played using only core rulebook items.",
       "expectedCategories": [],
       "notes": "Anthology of 10 dragon-themed adventures (levels 1-12). First non-core 2024-rules product. Explicitly contains no new magic items or monster stat blocks — relies entirely on 2024 core rulebooks.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "twbtw-starter",
@@ -1105,7 +1210,8 @@
         "weapon"
       ],
       "notes": "Licensed Stranger Things tie-in starter set. Contains a basic adventure with some magic items. Items likely duplicates of standard SRD items with thematic flavor.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "dndvsram-starter",
@@ -1125,7 +1231,8 @@
         "comedy-item"
       ],
       "notes": "Licensed Rick and Morty tie-in starter set. Contains a comedy-themed adventure with magic items. Some items may be unique and official, but the comedic nature requires review for inclusion.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "hofb",
@@ -1147,7 +1254,9 @@
         "spellcasting-focus"
       ],
       "notes": "Largest D&D starter set ever. 2024 rules. 210+ cards covering spells, equipment, and magic items. Spiritual successor to Keep on the Borderlands. Contains magic items on reference cards.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "ee-pc",
@@ -1163,7 +1272,8 @@
       "exclusionReason": "Free PDF supplement containing only spells and race options. No item definitions. All spells were later reprinted in Xanathar's Guide to Everything.",
       "expectedCategories": [],
       "notes": "Free official PDF released alongside Princes of the Apocalypse. Races (aarakocra, deep gnome, genasi, goliath) and 40+ spells only. No items.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "tortle-package",
@@ -1179,7 +1289,8 @@
       "exclusionReason": "Extra Life charity PDF. Primarily a race supplement (tortle) with an adventure location. No new magic item definitions.",
       "expectedCategories": [],
       "notes": "DMsGuild charity PDF. Introduces the tortle race and the Snout of Omgar island for Tomb of Annihilation. No new item content.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "one-grung-above",
@@ -1195,7 +1306,8 @@
       "exclusionReason": "Officially UNOFFICIAL product. Disclaimed as unofficial on DMsGuild. Grung race content only. Not Adventurers League legal.",
       "expectedCategories": [],
       "notes": "DMsGuild charity PDF described as 'officially unofficial.' Grung playable race only. Whistle-stick instrument is the only item, and it is not a standard magic item.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "llok",
@@ -1216,7 +1328,9 @@
         "powered-armor"
       ],
       "notes": "Extra Life charity adventure (levels 5-10). DMsGuild/D&D Beyond. Contains 14 magic items including powered armor variants, golem manuals, and techno-magic items. Greyhawk setting.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "imr",
@@ -1236,7 +1350,9 @@
         "techno-magic-item"
       ],
       "notes": "Extra Life charity adventure (levels 5-10). DMsGuild/D&D Beyond. Sequel to LLoK. Contains 8 magic items including the Infernal Machine of Lum the Mad artifact. Greyhawk setting.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null,
+      "researchStatus": "not-started"
     },
     {
       "sourceCode": "locathah-rising",
@@ -1252,7 +1368,8 @@
       "exclusionReason": "Extra Life charity PDF. Locathah race + adventure for locathah characters. No new magic item definitions beyond standard aquatic treasure.",
       "expectedCategories": [],
       "notes": "DMsGuild charity PDF. Contains locathah race rules and an adventure. No new item content.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "mffv1",
@@ -1268,7 +1385,8 @@
       "exclusionReason": "Extra Life charity supplement containing only monsters. No item definitions.",
       "expectedCategories": [],
       "notes": "DMsGuild/D&D Beyond charity PDF. 18 monsters updated from 1e Fiend Folio. No items.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "muk-adventure",
@@ -1284,7 +1402,8 @@
       "exclusionReason": "Children's activity book. No mechanically defined item content.",
       "expectedCategories": [],
       "notes": "Extra Life charity kids activity book. Fun activities, not a source of game-mechanical items.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "muks-guide",
@@ -1300,7 +1419,8 @@
       "exclusionReason": "Children's activity book. No mechanically defined item content.",
       "expectedCategories": [],
       "notes": "Extra Life charity kids activity book riffing on Tasha's Cauldron. Activities and puzzles only. No game-mechanical items.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "domains-of-delight",
@@ -1319,7 +1439,8 @@
         "fey-item"
       ],
       "notes": "Extra Life charity supplement on DMsGuild. Feywild sourcebook tied to The Wild Beyond the Witchlight. May contain Feywild-themed magic items. Requires further review.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "minsc-and-boo",
@@ -1339,7 +1460,8 @@
         "baldurs-gate-item"
       ],
       "notes": "Extra Life charity sourcebook (156 pages) on DMsGuild. Baldur's Gate-themed with group patrons, arch-villains, and likely magic items. Requires further review.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "misplaced-monsters",
@@ -1355,7 +1477,8 @@
       "exclusionReason": "Monster stat blocks only. Creatures designed by children for charity. No item definitions.",
       "expectedCategories": [],
       "notes": "Extra Life charity PDF. Monster stat blocks based on children's drawings. No item content.",
-      "publisherLane": "charity"
+      "publisherLane": "charity",
+      "assignedAgent": null
     },
     {
       "sourceCode": "wayfinders-eberron",
@@ -1374,7 +1497,8 @@
         "dragonmark-item"
       ],
       "notes": "Originally released as a PDF on DMsGuild as a playtest/preview. Content was iterated on and finalized in ERLW. Not a separate item source.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     },
     {
       "sourceCode": "tyranny-of-dragons-combined",
@@ -1390,7 +1514,8 @@
       "exclusionReason": "Reprint. Combines Hoard of the Dragon Queen and The Rise of Tiamat into one volume with errata. No new items beyond what exists in the original two books.",
       "expectedCategories": [],
       "notes": "Combined re-release of HotDQ and RoT with integrated errata. Does not add new item content beyond the original two adventures. Use HotDQ and RoT as the canonical sources.",
-      "publisherLane": "wizards-first-party"
+      "publisherLane": "wizards-first-party",
+      "assignedAgent": null
     }
   ]
 }
