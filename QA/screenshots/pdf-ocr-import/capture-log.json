@@ -1,0 +1,30 @@
+{
+  "log": [
+    {
+      "step": "register + verify + login",
+      "status": "ok",
+      "detail": "pdf_ocr_1784289172701@forge.test"
+    },
+    {
+      "step": "image-only OCR import",
+      "status": "ok",
+      "detail": "progressBar=true ocrCopy=true name=\"Rhea Voss\" summary=\"PDF sheet · 1 pagesWe found a Level 5 Wood Ranger named Rhea Voss.✓ 0 confirmed⚠\""
+    },
+    {
+      "step": "create character from OCR draft",
+      "status": "ok",
+      "detail": "enabled=true modalClosed=true"
+    },
+    {
+      "step": "searchable fast path",
+      "status": "ok",
+      "detail": "elapsedMs=1351 ocrCopyShown=0"
+    },
+    {
+      "step": "console errors",
+      "status": "ok",
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}
