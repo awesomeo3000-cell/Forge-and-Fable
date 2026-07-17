@@ -1,23 +1,22 @@
 # Item ID Compatibility Report
 
+**Updated**: 2026-07-17 (added rules-version–aware fallback)
+
 ## 1. Current ID Systems
 
 ### Catalog Item IDs (`CatalogItem.id`)
 
 Two patterns coexist in `items.json`:
-- **Sequential suffix**: `"{name}-{N}"` where N is a 1-based index (e.g., `"leather-1"`, `"dagger-15"`, `"rapier-39"`). Used for approximately the first 40 items (mundane armor/weapons).
-- **Semantic name-based**: `"{kebab-case-name}"` (e.g., `"sending-stones"`, `"robe-of-useful-items"`, `"well-of-many-worlds"`). Used for the majority of magic items.
+- **Sequential suffix**: `"{name}-{N}"` (e.g., `"leather-1"`, `"dagger-15"`). ~513 items.
+- **Semantic name-based**: `"{kebab-case-name}"` (e.g., `"sending-stones"`). ~542 items.
 
 ### Inventory Item IDs (`InventoryItem.id`)
 
 - **UUID-based**: `crypto.randomUUID()` for catalog-sourced and UI-created items
-- **Slug-based**: `"{slugified-name}-{index}"` for `utils.inventoryEntry()` (starter kit)
+- **Slug-based**: `"{slugified-name}-{index}"` for starter kit items
 - **Hardcoded**: `"item-healers-kit"`, `"item-moonsteel-token"`, `"item-ember-vial"` in `ruleset.ts`
 
-### Static Equipment IDs (`ArmorDef.id`, `WeaponDef.id`)
-
-- Simple semantic IDs: `"leather"`, `"plate"`, `"longsword"`, `"dagger"`, etc.
-- These are **NOT** the same as catalog IDs (catalog has `"leather-1"`, static has `"leather"`)
+---
 
 ## 2. What References Existing IDs
 
@@ -26,82 +25,81 @@ Two patterns coexist in `items.json`:
 1. **`InventoryItem.sourceItemId`** (persisted in `characters.data` JSON blob)
    - Set by `catalogItemToInventory()` in `src/lib/itemCatalog.ts:183`
    - Used by `catalogBackedInventoryItem()` in `HeroSheet.tsx:110` for catalog lookback
-   - Fallback: name-based matching if `sourceItemId` lookup fails (line 111)
+   - **Name-based fallback** on line 111 — matches by normalized name if `sourceItemId` fails
 
-2. **Runtime search/filter**:
-   - `ITEM_CATALOG.find()` by `id` (only in `catalogBackedInventoryItem`, line 110)
-   - `ITEM_CATALOG.map()` for `ITEM_CATEGORIES` derivation (line 60-62)
-   - `ITEM_CATALOG.map()` for `ITEM_RARITIES` derivation (line 64-69)
-   - `ITEM_CATALOG.filter()` for search results in `itemMatches` useMemo (line 671-692)
+2. **Runtime search/filter** in `HeroSheet.tsx:671-692`
 
-### Static Equipment IDs are referenced by:
+---
 
-1. **`Equipment.armorId`** (persisted in `characters.data` JSON blob)
-2. **`Equipment.weaponIds`** (persisted in `characters.data` JSON blob)
-3. **`ARMORS_BY_ID` / `WEAPONS_BY_ID`** Maps in equipment.ts (lines 70-71)
-4. **`ARMORS.find()` / `WEAPONS.find()`** for name matching (lines 77-98)
-5. **`getArmor()` / `getWeapon()`** lookup functions (lines 73-74)
+## 3. Risks When Adding 2014/2024 Records
 
-## 3. Can Catalog Item IDs Be Changed?
+### The Name-Based Fallback Is Not Sufficient for Dual-Version Catalogs
 
-### Renaming Existing IDs — Risk: MEDIUM
+Once the catalog contains both 2014 and 2024 versions of the same item name, the current fallback becomes dangerous:
 
-- **Impact on existing characters**: Characters that already added the item to their inventory will have the old ID in `sourceItemId`. The `catalogBackedInventoryItem()` function will **fail the `sourceItemId` lookup** but **succeed the name-based fallback** (line 111). This means:
-  - Item enrichment will still work via name matching
-  - The stale `sourceItemId` will remain in the persisted data but become inert
-  - No data loss or crash
+```
+InventoryItem { sourceItemId: "longsword-35", name: "Longsword" }
+```
 
-- **Impact on runtime**: None. IDs are not used as React keys in the catalog browser.
+If `longsword-35` is deprecated and there are now two "Longsword" records (one 2014, one 2024), the name-based fallback will match **arbitrarily** — whichever comes first in the array.
 
-- **Migration burden**: None required for a simple rename if the name stays the same. If both ID and name change, the fallback fails and items lose catalog enrichment.
+**Same-name records may differ across**: rules versions, sources, variant families, templates, adventure-specific objects, reprints, and revised mechanics.
 
-### Changing ID Format — Risk: LOW
+### Required Lookup Priority
 
-Changing from `"leather-1"` to a new format like `"armor-leather"` has the same fallback behavior as renaming. The `sourceItemId` becomes stale, name-based matching takes over.
+```
+1. Exact match on sourceItemId
+2. Match on legacyIds (if sourceItemId is a deprecated ID)
+3. Exact match on canonical item ID
+4. Normalized name + rulesVersion + sourceCode
+5. Verified alias + rulesVersion
+6. Manual reconciliation (flag for review, do not silently bind)
+```
 
-### Adding New Items — Risk: NONE
+### Required Rule
 
-New items with new unique IDs have no backward compatibility concerns.
+**Never allow a plain name match to silently bind a 2014 inventory record to a 2024 item.** The current `catalogBackedInventoryItem()` function must be updated before dual-version records are added to the catalog.
 
-### Deleting Items — Risk: LOW
+### Recommended Identity Fields for Canonical Schema
 
-Deleted items that were already added to character inventories will:
-- Lose catalog enrichment via `sourceItemId` (dead reference)
-- Lose catalog enrichment via name-based fallback (no match found)
-- But retain all data that was snapshotted at the time of adding
+```typescript
+type CanonicalItemIdentity = {
+  id: string;
+  legacyIds?: string[];
+  rulesVersion: "2014" | "2024" | "shared";
+  sourceCode: string;
+  normalizedName: string;
+  aliases?: string[];
+};
+```
 
-## 4. Can Inventory Item IDs Be Changed?
+The lookup function should use `CanonicalItemIdentity` for matching, not just a name string.
 
-**Inventory item IDs are generated at creation time and cannot be "changed" in bulk.** Each is a UUID or slug unique to a specific character. The `Equipment` object references these IDs.
+---
 
-- Changing the ID generation strategy would only affect new items.
-- Existing persisted UUIDs in `Equipment.armorItemId`, `Equipment.shieldItemId`, `Equipment.weaponItemIds`, `Equipment.bonusItemIds` are permanent references that would break if inventory item IDs were retroactively changed.
-
-## 5. Migration Risk Summary
+## 4. Migration Risk Summary
 
 | Operation | Risk | Mitigation |
 |---|---|---|
-| Rename catalog item ID | MEDIUM | Name-based fallback in `catalogBackedInventoryItem()` provides resilience |
-| Rename catalog item ID + name | HIGH | Would break enrichment for existing characters; consider migration script |
+| Rename catalog item ID | MEDIUM | Add old ID to `legacyIds`; update lookup to check `legacyIds` |
+| Rename catalog item ID + name | HIGH | Requires migration script or `legacyIds` + alias matching |
 | Add new catalog items | NONE | No backward references exist |
-| Delete catalog items | LOW | Snapshot data retained in inventory; only enrichment lost |
-| Change catalog ID format | LOW | Same as rename — fallback works |
-| Add required fields to CatalogItem | LOW | Old items in inventory just have `undefined` for new fields |
-| Remove fields from CatalogItem | MEDIUM | `catalogItemToInventory()` explicitly maps fields — must update |
-| Change inventory ID generation | LOW | Only affects new items |
-| Change Equipment reference semantics | HIGH | Would break all existing character equipment state |
+| Add 2014/2024 variant of existing item | **HIGH** | Name-based fallback becomes ambiguous; must implement rules-version–aware matching FIRST |
+| Delete catalog items | LOW | Snapshot data retained; use `deprecated` + `replacedBy` instead of deletion |
+| Change catalog ID format | LOW | Same as rename — use `legacyIds` |
+| Add required fields to CatalogItem | LOW | Old inventory items just have `undefined` |
+| Remove fields from CatalogItem | MEDIUM | `catalogItemToInitialize()` explicitly maps fields |
 
-## 6. Recommendations
+---
 
-1. **Do NOT rename catalog item IDs without also keeping the name stable.** The name-based fallback is the only safety net.
+## 5. Recommendations
 
-2. **If IDs must change**, consider a migration approach:
-   - Add a `legacyIds?: string[]` field to `CatalogItem`
-   - Update `catalogBackedInventoryItem()` to also check `legacyIds`
-   - This would allow old `sourceItemId` values to continue resolving
+1. **Before adding any 2014/2024 dual-version records**, update `catalogBackedInventoryItem()` to use the staged lookup priority above.
 
-3. **The `image` field is dead code** — present in both `CatalogItem` and `InventoryItem` types, copied by `catalogItemToInventory()`, but never rendered. It can be safely removed from both types and from `items.json`.
+2. **Add `legacyIds` to the canonical schema** and update the lookup to check it.
 
-4. **The `cost` field is always a string** in practice, but `formatItemCost()` handles non-numeric gracefully. Converting to a number would require updating `formatItemCost()` and `itemMetaParts()`.
+3. **Add a `rulesVersion` filter to the name-based fallback** — when resolving by name, prefer the same rules version as a `rulesVersion` field on the inventory item (if present), or require explicit disambiguation.
 
-5. **Test coverage for item ID reconciliation is zero.** Any ID migration work should include tests for `catalogBackedInventoryItem()` and fallback behavior.
+4. **Add `_legacyRarity` bridge field** to preserve the current flat rarity string for backward compatibility.
+
+5. **Test coverage for item ID reconciliation is zero.** Any ID migration work must include tests for the staged lookup, legacy ID resolution, and rules-version–aware matching.

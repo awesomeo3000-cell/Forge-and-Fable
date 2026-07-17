@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T03:04:55.498Z",
+  "generatedAt": "2026-07-17T12:40:47.634Z",
   "totalRecords": 1055,
   "byCategory": {
     "Armor": 42,
@@ -30,8 +30,9 @@
     "Artifact": 3
   },
   "byAttunement": {
-    "true": 202,
-    "false": 853
+    "required": 202,
+    "notRequired": 853,
+    "total": 1055
   },
   "byClassification": {
     "Light Armor": 5,
@@ -238,17 +239,43 @@
     "Warhammer": 1
   },
   "emptyFields": {
-    "image": 896,
-    "damageType": 1054,
-    "damage": 991,
-    "ac": 1029,
-    "properties": 864,
-    "classification": 74
+    "image": {
+      "count": 896,
+      "total": 1055,
+      "percent": 84.93
+    },
+    "damageType": {
+      "count": 1054,
+      "total": 1055,
+      "percent": 99.91
+    },
+    "damage": {
+      "count": 991,
+      "total": 1055,
+      "percent": 93.93
+    },
+    "ac": {
+      "count": 1029,
+      "total": 1055,
+      "percent": 97.54
+    },
+    "properties": {
+      "count": 864,
+      "total": 1055,
+      "percent": 81.9
+    },
+    "classification": {
+      "count": 74,
+      "total": 1055,
+      "percent": 7.01
+    }
   },
   "costStats": {
     "min": 0,
     "max": 16500000,
     "zeroCount": 147,
+    "nonNumericCount": 0,
+    "totalWithCost": 1055,
     "p10": 0,
     "p25": 100,
     "p50": 12000,
@@ -263,6 +290,33 @@
   },
   "idPatterns": {
     "withSuffix": 513,
-    "withoutSuffix": 542
+    "withoutSuffix": 542,
+    "total": 1055
+  },
+  "weaponStats": {
+    "total": 108,
+    "missingDamageType": {
+      "count": 107,
+      "total": 108,
+      "percent": 99.07
+    },
+    "missingDamage": {
+      "count": 44,
+      "total": 108,
+      "percent": 40.74
+    },
+    "missingProperties": {
+      "count": 43,
+      "total": 108,
+      "percent": 39.81
+    }
+  },
+  "armorStats": {
+    "total": 42,
+    "missingAC": {
+      "count": 16,
+      "total": 42,
+      "percent": 38.1
+    }
   }
 }

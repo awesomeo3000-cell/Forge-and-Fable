@@ -2,154 +2,227 @@
   {
     "itemId": "oil-of-taggit-192",
     "itemName": "Oil of Taggit",
+    "anomalyType": "duplicate-name",
     "anomaly": "Duplicate name (case-insensitive)",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Review both entries; likely one should be removed or differentiated"
   },
   {
     "itemId": "oil-of-taggit",
     "itemName": "Oil of Taggit",
+    "anomalyType": "duplicate-name",
     "anomaly": "Duplicate name (case-insensitive)",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Review both entries; likely one should be removed or differentiated"
   },
   {
     "itemId": "arcane-focus-crystal-59, arcane-focus-crystal",
     "itemName": "Arcane Focus, Crystal",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "arcane-focus-orb-60, arcane-focus-orb",
     "itemName": "Arcane Focus, Orb",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "arcane-focus-rod-61, arcane-focus-rod",
     "itemName": "Arcane Focus, Rod",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "arcane-focus-staff-62, arcane-focus-staff",
     "itemName": "Arcane Focus, Staff",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "arcane-focus-wand-63, arcane-focus-wand",
     "itemName": "Arcane Focus, Wand",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "druidic-focus-sprig-of-mistletoe-89, druidic-focus-sprig-of-mistletoe",
     "itemName": "Druidic Focus, Sprig of Mistletoe",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "druidic-focus-totem-90, druidic-focus-totem",
     "itemName": "Druidic Focus, Totem",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "druidic-focus-wooden-staff-91, druidic-focus-wooden-staff",
     "itemName": "Druidic Focus, Wooden Staff",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "druidic-focus-yew-wand-92, druidic-focus-yew-wand",
     "itemName": "Druidic Focus, Yew Wand",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "holy-symbol-amulet-100, holy-symbol-amulet",
     "itemName": "Holy Symbol, Amulet",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "holy-symbol-emblem-101, holy-symbol-emblem",
     "itemName": "Holy Symbol, Emblem",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "holy-symbol-reliquary-102, holy-symbol-reliquary",
     "itemName": "Holy Symbol, Reliquary",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "oil-of-taggit-192, oil-of-taggit",
     "itemName": "Oil of Taggit",
+    "anomalyType": "structural-duplicate",
     "anomaly": "Structural duplicate: exists with both numeric-suffix ID and base-name ID",
+    "rawCount": 2,
+    "totalEligible": 1055,
     "severity": "high",
     "recommendation": "Deduplicate — keep one record, mark the other as deprecated"
   },
   {
     "itemId": "plate-10",
     "itemName": "Plate",
-    "anomaly": "Mundane plate armor marked as \"Rare\" — inconsistent with all other mundane armor marked \"Common\"",
+    "anomalyType": "suspected-rarity-error",
+    "anomaly": "Mundane plate armor marked as \"Rare\" while all other mundane armor (leather through half-plate) is \"Common\"",
+    "recordDetails": {
+      "id": "plate-10",
+      "name": "Plate",
+      "category": "Armor",
+      "classification": "Heavy Armor",
+      "rarity": "Rare",
+      "ac": "18",
+      "cost": "150000"
+    },
     "severity": "high",
-    "recommendation": "Change rarity to \"Common\" or \"Mundane\""
+    "recommendation": "Inspect the exact record. Determine if it is: (a) ordinary plate armor with wrong rarity, (b) a magic plate variant, (c) a merged record, or (d) a category-mapping error. Do not patch from summary alone."
   },
   {
-    "itemId": "185 items",
+    "itemId": "185 items use Common, 78 items use Mundane",
     "itemName": "Various mundane equipment",
-    "anomaly": "185 mundane equipment items marked \"Common\" instead of \"Mundane\"",
+    "anomalyType": "taxonomy-conflict",
+    "anomaly": "Taxonomy conflict: 185 non-magical equipment items use rarity \"Common\" while 78 use \"Mundane\". The current field likely serves multiple incompatible purposes (magic-item rarity vs. general availability vs. UI grouping).",
+    "rawCount": 263,
+    "totalEligible": 1055,
     "severity": "medium",
-    "recommendation": "Standardize: non-magical gear should use \"Mundane\" rarity consistently"
+    "recommendation": "Resolve as a schema policy decision, not a data error. The canonical schema should separate magical rarity from mundane availability using distinct fields. Until the schema policy is approved, these are taxonomy conflicts, not confirmed source-rule errors."
   },
   {
     "itemId": "133 items",
     "itemName": "Various magic items",
-    "anomaly": "133 magic items have zero cost (likely templates)",
+    "anomalyType": "zero-cost",
+    "anomaly": "133 magic items have zero cost. A zero may mean: no official price listed, not applicable, variable, template item, unknown, missing, or legacy placeholder. These meanings must not be collapsed into one numeric value.",
+    "rawCount": 133,
+    "totalEligible": 1055,
     "severity": "medium",
-    "recommendation": "Assign costs to specific instantiations or add a template flag"
+    "recommendation": "Add a price status field (listed | not-listed | varies | not-applicable | unknown). Assign costs to specific instantiations where available. Mark template items explicitly."
   },
   {
-    "itemId": "1054 items",
+    "itemId": "107 of 108 weapons",
     "itemName": "Various weapons",
-    "anomaly": "Only 1 item has damageType populated; 1054 weapons missing it",
+    "anomalyType": "missing-mechanics",
+    "anomaly": "107 of 108 weapons (99.07%) have empty damageType. Only Scimitar of Speed (scimitar-of-speed-342) has it populated.",
+    "rawCount": 107,
+    "totalEligible": 108,
     "severity": "medium",
-    "recommendation": "Populate damageType for all weapons"
+    "recommendation": "Populate damageType for all weapons (Bludgeoning, Piercing, Slashing, etc.)"
   },
   {
     "itemId": "21 items",
     "itemName": "Simple melee weapons",
-    "anomaly": "21 items use singular \"Simple Melee Weapon\" instead of plural",
+    "anomalyType": "naming-inconsistency",
+    "anomaly": "21 items use singular \"Simple Melee Weapon\" while \"Martial Melee Weapons\" uses plural",
+    "rawCount": 21,
+    "totalEligible": 108,
     "severity": "low",
     "recommendation": "Standardize to plural \"Simple Melee Weapons\""
   },
   {
     "itemId": "295 items",
     "itemName": "Spell Scrolls",
-    "anomaly": "Scrolls use classification for spell school/level metadata instead of \"Spell Scroll\"",
+    "anomalyType": "classification-misuse",
+    "anomaly": "295 scrolls use classification field for spell school/level metadata instead of item type",
+    "rawCount": 295,
+    "totalEligible": 320,
     "severity": "medium",
-    "recommendation": "Add subcategory field for spell metadata; use classification for item type"
+    "recommendation": "Add subcategory field for spell metadata; use classification for item type (\"Spell Scroll\")"
   },
   {
     "itemId": "16 items",
     "itemName": "Various items",
-    "anomaly": "16 items use curly apostrophes; others use straight",
+    "anomalyType": "formatting-inconsistency",
+    "anomaly": "16 items use curly apostrophes; 432 use straight apostrophes",
+    "rawCount": 16,
+    "totalEligible": 1055,
     "severity": "low",
     "recommendation": "Standardize to straight apostrophes"
   }
