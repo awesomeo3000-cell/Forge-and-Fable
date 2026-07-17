@@ -1,21 +1,23 @@
 # Phase A Findings: Repository Audit, Catalog Profile, Source Manifest & Schema Design
 
-**Date**: 2026-07-16
-**Branch**: `research/exhaustive-item-catalog`
-**Status**: COMPLETE — ready for Phase B
+**Date**: 2026-07-16 (corrected 2026-07-17)  
+**Schema version**: 1.0.0  
+**Research cutoff**: 2026-07-16  
+**Branch**: `research/exhaustive-item-catalog`  
+**Status**: COMPLETE — corrections applied, ready for Phase B
 
 ---
 
 ## Executive Summary
 
-Phase A completed four parallel investigations without modifying any production data. Here are the consolidated findings:
+Phase A completed four parallel investigations without modifying any production data. All corrections from the 2026-07-17 verification review have been applied.
 
 | Investigation | Key Finding |
 |---|---|
 | **Repo Audit** | `src/data/items.json` is the sole canonical store. 1,055 items. IDs are persisted via `sourceItemId` in character JSON blobs. No dedicated items table in SQLite. `image` field is dead code. Zero test coverage for item logic. |
-| **Catalog Profile** | 1,055 items across 17 categories. 16 high-severity anomalies (13 structural duplicates, Plate wrong rarity, Oil of Taggit cross-category duplicate). 185 mundane items misclassified as "Common" instead of "Mundane". 99.9% of weapons lack damageType. |
-| **Source Manifest** | 71 total sources identified: 51 included, 16 excluded, 4 pending review. Covers 2014 core (4), 2024 core (4), supplements (9), settings (13), adventures (16), anthologies (7), starters (6), digital (12). All accessible. |
-| **Schema Design** | Recommended: **Option B** — canonical `items.canonical.json` + build-generated `items.json` for backward compatibility. Schema adds ~40 fields with structured weapon/armor/tool data, rules versioning, provenance tracking, and `_legacy*` bridge fields. |
+| **Catalog Profile** | 1,055 items across 17 categories. 16 high-severity anomalies. 107 of 108 weapons (99.07%) lack damageType. Common vs Mundane is a **taxonomy conflict** — the current field conflates magic rarity with mundane availability. |
+| **Source Manifest** | 71 total sources: 51 included, 16 excluded, 4 pending review. SRD 5.2.1 (not the superseded 5.2) with 15 restored magic items. Publisher lanes added. Research cutoff 2026-07-16. |
+| **Schema Design** | **Option B** conditionally approved: canonical `items.canonical.json` + deterministic generated `items.json`. Schema v1.0.0 with price status model (listed/not-listed/varies/not-applicable/unknown), separated magical/r rarity, publisher lanes, and 10 required generator gates. |
 
 ---
 
@@ -25,23 +27,21 @@ Phase A completed four parallel investigations without modifying any production 
 - `src/data/items.json` is the **only** canonical item catalog
 - 1,055 items, 874 KB, statically imported by `src/lib/itemCatalog.ts:1`
 - No secondary catalogs, no DLC packs, no API-served items
-- Secondary item sources exist but are not catalog items:
-  - `src/lib/ruleset.ts`: 3 hardcoded `starterItems` (not catalog-backed)
-  - `src/lib/equipment.ts`: 12 `ARMORS` + 17 `WEAPONS` static definitions (legacy system)
+- Secondary sources: `ruleset.ts` (3 starter items), `equipment.ts` (12 armors + 17 weapons — legacy, not catalog-backed)
 
 ### Item ID Flow
-- Catalog IDs (e.g., `"leather-1"`, `"sending-stones"`) → converted to UUID-based inventory IDs via `catalogItemToInventory()` → `sourceItemId` stores the original catalog ID
-- Character inventory is a JSON blob in `characters.data TEXT` column
-- Equipment references (`Equipment.armorItemId`, `shieldItemId`, `weaponItemIds`, `bonusItemIds`) point to UUID inventory IDs, NOT catalog IDs
-- **Critical safety net**: `catalogBackedInventoryItem()` has a name-based fallback — if `sourceItemId` lookup fails, it matches by normalized name. This means catalog ID changes are survivable.
+- Catalog IDs → `catalogItemToInventory()` → UUID inventory IDs → `sourceItemId` persistence
+- Character inventory: JSON blob in `characters.data TEXT` column (SQLite)
+- Equipment references point to UUID inventory IDs, NOT catalog IDs
+- **Name-based fallback exists** in `catalogBackedInventoryItem()` — but it is NOT rules-version aware. Before dual-version records are added, the fallback must be updated to a staged priority lookup that considers `rulesVersion`.
 
 ### Database
 - SQLite via `node:sqlite`, schema revision 18
-- **No dedicated items/equipment/inventory tables**
+- No dedicated items/equipment/inventory tables
 - Items exist only as JSON within character blobs
-- Schema migrations are column-oriented and never touch item data
+- Schema migrations are column-oriented; never touch item data
 
-### Consumer Map
+### Consumer Map (14 files)
 | File | Role |
 |---|---|
 | `src/lib/itemCatalog.ts` | Core module — imports items.json, exports ITEM_CATALOG and 12 utility functions |
@@ -51,22 +51,24 @@ Phase A completed four parallel investigations without modifying any production 
 | `src/lib/ruleset.ts` | Starter item definitions |
 | `src/app/api/import/pdf/create/route.ts` | PDF character import |
 | `src/components/ForgeAndFableApp.tsx` | Console commands |
+| +7 more (types, tests, persistence) |
 
 ### Test Coverage
 - **Zero** test coverage for: `catalogItemToInventory()`, `catalogBackedInventoryItem()`, `getEquippedItemBonuses()`, `itemPassiveBonuses()`, `isWeaponItem()`, `isArmorItem()`, `isShieldItem()`, `sourceItemId` reconciliation
-- Only `tests/equipment.test.ts` touches items, and only tests legacy static armor AC (not inventory-backed)
+- Only `tests/equipment.test.ts` touches items — legacy static armor AC only
 
-### Key Risks
-- `catalogItemToInventory()` uses explicit field mapping — new fields added to `CatalogItem` MUST be added to this function or they're lost during conversion
-- `properties` is parsed as text in 5+ locations via `.includes()` and regex — changing it to an array is a BREAKING change
-- `attunement` is checked as boolean in HeroSheet — changing to object is a BREAKING change
-- `image` field is present in types and JSON but NEVER rendered — dead code
+### Key Risks Documented
+- `catalogItemToInitialize()` explicit field mapping — new fields MUST be added or lost
+- `properties` parsed as text in 5+ locations — type change is BREAKING
+- `attunement` checked as boolean — type change is BREAKING
+- Name-based fallback becomes ambiguous with dual-version records
+- `image` field is dead code (typed but never rendered)
 
 ### Deliverables
 - ✅ `rules-research/items/agents/repo-audit/repo-audit.md`
 - ✅ `rules-research/items/current-schema.json`
 - ✅ `rules-research/items/item-consumers.json`
-- ✅ `rules-research/items/id-compatibility-report.md`
+- ✅ `rules-research/items/id-compatibility-report.md` (updated with rules-version–aware fallback)
 
 ---
 
@@ -77,168 +79,153 @@ Phase A completed four parallel investigations without modifying any production 
 - Top categories: Scroll (320), Wondrous Items (199), Adventuring Gear (192)
 - Rarity distribution: Common (314), Rare (214), Uncommon (208), Very Rare (155), Legendary (83), Mundane (78), Artifact (3)
 - 202 items require attunement (19.1%)
-- 896 items have no image (84.9%)
 
-### High-Severity Anomalies (16 identified)
-1. **13 structural duplicates**: Arcane Focus (5 variants), Druidic Focus (4 variants), Holy Symbol (3 variants) exist twice — once with numeric ID suffix, once without
-2. **Oil of Taggit cross-category duplicate**: `oil-of-taggit-192` (Poisons) and `oil-of-taggit` (Potions & Oils) — same item
-3. **Plate armor at "Rare"**: `plate-10` is standard 1,500 gp mundane plate but marked "Rare" while all other mundane armor is "Common"
-4. **99.9% of weapons lack damageType**: Only Scimitar of Speed has it populated
+### Weapon Stats (with raw counts)
+| Metric | Missing | Total | % |
+|---|---|---|---|
+| damageType | 107 | 108 | 99.07% |
+| damage | 44 | 108 | 40.74% |
+| properties | 43 | 108 | 39.81% |
 
-### Medium-Severity Anomalies (4 identified)
-1. **185 mundane items marked "Common"**: Adventuring Gear, Tools, Food, Mounts, Tack, Instruments should be "Mundane"
-2. **147 zero-cost magic item templates**: Missing costs for generic templates (Flametongue, +1 Weapon, etc.)
-3. **Scroll classification misuse**: 320 scrolls use classification for spell metadata, not item type
-4. **Weapon damage missing**: 44 weapons (templates + ammunition + net) have no damage value
+Only Scimitar of Speed (`scimitar-of-speed-342`) has damageType populated ("Slashing").
 
-### Cost Analysis
-- All costs verified correct in copper pieces against SRD
-- 147 items have zero cost (magic item templates)
-- Median cost: 12,000 cp (120 gp)
-- Max: 16,500,000 cp (Holy Avenger Greatsword)
+### High-Severity Anomalies (16)
+1. **13 structural duplicates**: Arcane Focus (5), Druidic Focus (4), Holy Symbol (3) variants exist twice
+2. **Oil of Taggit cross-category duplicate**: Poisons vs Potions & Oils
+3. **Plate armor at "Rare"** — requires inspection of the exact record before correction. Must determine whether it is: ordinary plate with wrong rarity, a magic variant, a merged record, or a category-mapping error.
 
-### ID Patterns
-- 513 IDs with numeric suffix (48.6%), 542 without (51.4%)
-- Early equipment: `leather-1` through `spikes-iron-10-142`
-- Magic items: descriptive kebab-case (`sending-stones`, `robe-of-useful-items`)
+### Taxonomy Conflict (not confirmed error)
+**Common vs Mundane**: 185 non-magical items use "Common" while 78 use "Mundane". The current `rarity` field conflates multiple purposes (magic-item rarity, general availability, UI grouping). This is a **taxonomy conflict** to be resolved by schema policy, not a confirmed source-rule error. The canonical schema separates `magical: boolean` from `rarity: CanonicalRarity | null`.
+
+### Price Analysis
+- 147 items have zero cost. A zero may mean: no official price listed, not applicable, variable, template, unknown, or missing. **These meanings must not be collapsed into one numeric value.**
+- **Cost verification scope**: All mundane equipment records with an official listed SRD price were compared against that source. Magic items and items without official listed prices are not included in that comparison.
+- The canonical schema uses `ItemPrice { costCp, status, sourceCode }` with a `PriceStatus` enum.
 
 ### Deliverables
-- ✅ `rules-research/items/current-catalog-profile.json`
-- ✅ `rules-research/items/current-catalog-profile.md`
-- ✅ `rules-research/items/current-catalog-normalized.json` (1,055 items with `normalizedName` added)
-- ✅ `rules-research/items/current-data-anomalies.json` (22 anomalies)
+- ✅ `rules-research/items/current-catalog-profile.json` (raw counts + percentages)
+- ✅ `rules-research/items/current-catalog-profile.md` (corrected)
+- ✅ `rules-research/items/current-catalog-normalized.json` (1,055 items with normalizedName)
+- ✅ `rules-research/items/current-data-anomalies.json` (22 anomalies with raw counts and anomaly types)
 
 ---
 
 ## 3. Source Manifest (Agent 3)
 
 ### Scope Summary
-**71 sources identified**: 51 included, 16 excluded, 4 pending review
+**71 sources** (in a structured manifest with metadata):
+- 51 included, 16 excluded, 4 pending review
+- Research cutoff: **2026-07-16**
+- Publisher lanes: wizards-first-party (default), official-licensed, partnered, charity, third-party
 
 ### Included Sources by Type
 | Type | Count | Details |
 |---|---|---|
-| Core Books | 6 | PHB 2014, DMG 2014, PHB 2024, DMG 2024, SRD 5.1, SRD 5.2 |
-| Supplements | 6 | Xanathar's, Tasha's, Fizban's, Bigby's, Book of Many Things, Sword Coast Adventurer's Guide |
-| Settings | 11 | Eberron, Wildemount, Theros, Ravenloft, Ravnica, Strixhaven, Spelljammer, Planescape, Dragonlance, plus 2024 settings |
-| Adventures | 16 | Curse of Strahd, Tomb of Annihilation, Storm King's Thunder, Out of the Abyss, Princes of the Apocalypse, Tyranny of Dragons, Dragon Heist, Dungeon of the Mad Mage, Descent into Avernus, Rime of the Frostmaiden, Wild Beyond the Witchlight, Radiant Citadel, Keys from the Golden Vault, Phandelver and Below, Vecna: Eve of Ruin, Infinite Staircase |
-| Anthologies | 7 | Candlekeep Mysteries, Tales from the Yawning Portal, Ghosts of Saltmarsh, Quests from the Infinite Staircase, etc. |
-| Starters | 5 | Lost Mine of Phandelver, Dragon of Icespire Peak, Dragons of Stormwreck Isle, etc. |
+| Core Books | 6 | PHB 2014, DMG 2014, PHB 2024, DMG 2024, SRD 5.1, **SRD 5.2.1** |
+| Supplements | 6 | Xanathar's, Tasha's, Fizban's, Bigby's, Book of Many Things, SCAG |
+| Settings | 11 | Eberron, Wildemount, Theros, Ravenloft, Ravnica, Strixhaven, Spelljammer, Planescape, Dragonlance, +2 more |
+| Adventures | 16 | Curse of Strahd through Vecna: Eve of Ruin |
+| Anthologies | 7 | Candlekeep, Yawning Portal, Saltmarsh, etc. |
+| Starters | 5 | LMoP, Icespire Peak, Stormwreck Isle, etc. |
 
-### Excluded Sources (16)
-- Monster Manuals (2014, 2025) — no standalone player-usable items
+### SRD 5.2.1 (not the superseded 5.2)
+SRD 5.2.1 restores **15 magic items** accidentally omitted from SRD 5.2:
++1 Ammunition, +1 Armor, +1 Shield, +1 Weapon, +2 Ammunition, +2 Armor, +2 Shield, +2 Weapon, +3 Ammunition, +3 Armor, +3 Shield, +3 Weapon, Adamantine Armor, Ammunition +1/+2/+3, Dragon Scale Mail.
+
+These items are now explicitly in the research scope.
+
+### Excluded (16)
+- Monster Manuals (2014, 2025) — excluded after confirming no standalone player-usable item definitions. Policy is source-specific, not a blanket "bestiaries never contain items" rule.
 - Children's books, comics, cookbooks
-- Superseded reprints (Tyranny of Dragons 2023, Wayfinder's Guide to Eberron)
-- Unofficial/third-party products
+- Superseded reprints
+- Third-party products
 
-### Pending Review (4)
-- Extra Life charity products (DMsGuild, content verification needed)
-- Domains of Delight, Minsc and Boo's Journal of Villainy
+### Publisher Lane Policy
+| Lane | Inclusion Rule |
+|---|---|
+| wizards-first-party | Include by default |
+| official-licensed | Review separately |
+| partnered | Review separately |
+| charity | Review separately |
+| third-party | Exclude by default |
 
-### Access Status
-- All 51 included sources are fully accessible (web research)
-- No blocked sources among the included set
-- Research cutoff: July 2026
+### Required Refresh Before Phase B
+The manifest should refresh coverage for later first-party releases including: Dragon Delves, Heroes of the Borderlands, Forgotten Realms: Heroes of Faerûn, Forgotten Realms: Adventures in Faerûn, Eberron: Forge of the Artificer, and any other releases through the cutoff date.
 
 ### Deliverables
-- ✅ `rules-research/items/source-manifest.json` (44 KB, 71 entries)
-- ✅ `rules-research/items/source-manifest.md` (14 KB)
-- ✅ `rules-research/items/source-access-blockers.md` (8 KB)
+- ✅ `rules-research/items/source-manifest.json` (updated: SRD 5.2.1, publisher lanes, cutoff)
+- ✅ `rules-research/items/source-manifest.md`
+- ✅ `rules-research/items/source-access-blockers.md`
 
 ---
 
 ## 4. Schema Architecture (Agent 4)
 
-### Recommendation: Option B — Canonical + Generated Legacy
+### Recommendation: Option B (conditionally approved)
 
 **File architecture:**
 ```
-src/data/items.canonical.json   ← Hand-edited, full schema, source of truth
-scripts/build-items-legacy.mjs   ← Auto-generates flat format
-src/data/items.json              ← Build artifact (generated, not hand-edited)
+src/data/items.canonical.json   ← Hand-edited, full schema v1.0.0, source of truth
+scripts/build-items-legacy.mjs   ← Deterministic generator
+src/data/items.json              ← Build artifact (GENERATED — do not edit)
 ```
 
-### Canonical Schema Highlights
-- **~40 new fields** organized into structured sub-types:
-  - `weapon`: damage dice, damage type, range, properties (array), mastery, magic bonus, base item
-  - `armor`: base AC, dex bonus, max dex, STR requirement, stealth, magic bonus, base item
-  - `tool`, `container`, `consumableRules`, `charges`, `vehicle`
-  - `attunement`: structured object with requirement text, class/species/alignment restrictions
-  - `provenance[]`: multi-source verification trail
-- **`_legacy*` bridge fields**: `_legacyProperties`, `_legacyAc`, `_legacyDamage`, `_legacyDamageType`, `_legacyAttunement`, `_legacyCost` — preserve original string formats for current consumers
-- **New top-level fields**: `rulesVersion`, `sourceCode`, `sourceTitle`, `page`, `license`, `normalizedName`, `aliases`, `mundane`/`magical`/`consumable`/`stackable` flags, `weightLb`, `costCp`, `tags`, `spoiler`, `deprecated`, `replacedBy`
+### Canonical Schema v1.0.0 — Key Features
+- **Price status model**: `ItemPrice { costCp, status: PriceStatus, sourceCode }` disambiguates listed/not-listed/varies/not-applicable/unknown prices
+- **Separated magic classification**: `magical: boolean` + `rarity: CanonicalRarity | null` — mundane items use `{ magical: false, rarity: null }`. No synthetic "mundane" rarity tier.
+- **Publisher lanes**: Every provenance entry includes `publisherLane: PublisherLane`
+- **Structured weapon/armor/tool data** with `_legacy*` bridge fields
+- **Rules-version–aware identity**: `CanonicalItemIdentity` with `id`, `legacyIds`, `rulesVersion`, `sourceCode`, `normalizedName`, `aliases`
+- **SRD 5.2.1** tracked in license field (not the superseded 5.2)
 
-### Compatibility Analysis
-| Change | Risk | Mitigation |
-|---|---|---|
-| Add new optional fields | NONE | TypeScript structural typing ignores unknown fields |
-| Add `_legacy*` fields | NONE | Extra fields; current code ignores them |
-| Change `properties` string→array | BREAKING | Keep `_legacyProperties` string; add `weapon.properties[]` array |
-| Change `attunement` boolean→object | BREAKING | Keep `_legacyAttunement` boolean; add `attunement` object |
-| Change `cost` string→number | BREAKING | Keep `_legacyCost` string; add `costCp` number |
-
-### Key Design Decisions (10 logged)
-1. **Cost**: number (cp) with legacy string bridge
-2. **Attunement**: structured object with legacy boolean bridge
-3. **Properties**: array in canonical, string in legacy
-4. **AC**: parsed into structured armor data, original string preserved
-5. **Weight**: `number | null` (null = weightless)
-6. **Rarity**: lowercase normalized, plus `mundane`/`magical` boolean flags
-7. **Rules version**: `"2014" | "2024" | "shared"` — "shared" avoids duplicating unchanged items
-8. **Provenance**: array for multi-source items
-9. **Deprecation**: `deprecated` + `replacedBy` instead of deletion
-10. **File naming**: `items.canonical.json` signals authoritative role
+### Required Generator Gates (10)
+1. Preserve existing IDs byte-for-byte unchanged
+2. Preserve existing names during initial migration (use aliases)
+3. Deterministic generation (same input → same output, no diff)
+4. Legacy snapshot test in CI
+5. Saved-character compatibility test
+6. Separate same-name rules versions (distinct IDs)
+7. Mark generated file with header comment
+8. CI stale-file check
+9. Research isolation (agents write only to `rules-research/items/agents/`)
+10. Reconciliation before merge (provenance, schema, match, conflict, duplicate, rules-version review)
 
 ### Deliverables
-- ✅ `rules-research/items/proposed-item-schema.ts`
+- ✅ `rules-research/items/proposed-item-schema.ts` (v1.0.0, updated)
 - ✅ `rules-research/items/schema-mapping.md`
-- ✅ `rules-research/items/schema-migration-options.md`
-- ✅ `rules-research/items/schema-decision-log.md`
+- ✅ `rules-research/items/schema-migration-options.md` (risk assessment, not "zero risk")
+- ✅ `rules-research/items/schema-decision-log.md` (14 decisions, updated)
 
 ---
 
-## 5. Interdependencies & Conflicts
-
-### Issues Requiring Resolution Before Phase B
-1. **Schema strategy must be locked** — Option B is recommended but needs owner approval
-2. **2014 vs 2024 rules family**: Source manifest has 0 "mixed" entries; all sources are either 2014 or 2024. Items shared between editions (most mundane equipment) will need `rulesVersion: "shared"` records.
-3. **Deprecation policy**: 13 structural duplicates need to be resolved — which record is canonical?
-4. **Rarity standardization**: "Common" vs "Mundane" for non-magical gear must be decided
-
-### Risks to Monitor
-- **Test gap**: Zero tests for item logic means any change is risky. Tests MUST be added during Phase D integration.
-- **Name-based fallback fragility**: If we change item names AND IDs simultaneously, saved characters lose enrichment.
-- **`catalogItemToInventory()`**: Must be updated to map new fields to `InventoryItem` when adding items from the canonical catalog.
-
----
-
-## 6. Phase B Readiness Assessment
+## 5. Phase B Readiness Assessment
 
 | Gate | Status | Notes |
 |---|---|---|
 | Repository audit complete | ✅ | All consumers identified, ID flow traced, risks documented |
-| Catalog profiled | ✅ | All 1,055 items analyzed, anomalies documented |
-| Source manifest complete | ✅ | 71 sources, 51 included, all accessible |
-| Schema designed | ✅ | Option B recommended with full type definitions |
-| Schema strategy approved | ⚠️ PENDING | Needs owner sign-off on Option B |
+| Catalog profiled | ✅ | 1,055 items analyzed, raw counts on all metrics |
+| Source manifest complete | ✅ | 71 sources, SRD 5.2.1, publisher lanes, cutoff recorded |
+| Schema designed | ✅ | v1.0.0 with price status, separated rarity, publisher lanes |
+| Schema strategy approved | ✅ | Option B conditionally approved |
+| SRD 5.2 → 5.2.1 | ✅ | Updated with 15 restored magic items in scope |
+| Weapon percentage corrected | ✅ | 107/108 = 99.07%, raw counts on all anomalies |
+| Common/Mundane reclassified | ✅ | Taxonomy conflict, not confirmed source error |
+| ID fallback rules-version aware | ✅ | Staged lookup priority documented |
+| Price status model added | ✅ | listed/not-listed/varies/not-applicable/unknown |
+| Publisher lanes added | ✅ | First-party, licensed, partnered, charity, third-party |
+| Zero-risk language removed | ✅ | Replaced with documented risk assessment and 10 gates |
+| Generator gates defined | ✅ | 10 required gates before production use |
 | Baseline backup created | ✅ | `rules-research/items/baseline-items.json` |
 
-**Phase B is ready to proceed** once the schema strategy is confirmed. The research agents can begin populating the canonical catalog with researched items.
+**Phase B is ready to proceed** once the Phase A checkpoint is committed and the schema v1.0.0 contract is distributed to all research agents.
 
 ---
 
-## 7. Next Steps (Phase B)
+## 6. Next Steps (Phase B)
 
-1. **Lock schema** — Confirm Option B or select alternative
-2. **Create `items.canonical.json`** — Seed with current items in canonical format
-3. **Create `scripts/build-items-legacy.mjs`** — Build script for legacy format
-4. **Spawn research agents** (Agents 5-11):
-   - 2014 mundane equipment (Agent 5)
-   - 2024 mundane equipment (Agent 6)
-   - Core magic items (Agent 7)
-   - Supplement magic items (Agent 8)
-   - Setting items (Agent 9)
-   - Adventure items (Agent 10)
-   - Edge categories (Agent 11)
-5. **Validate all candidate files** against canonical schema
+1. **Commit Phase A checkpoint** — `research(items): complete phase A audit and schema findings`
+2. **Freeze schema v1.0.0** — distribute to all Phase B agents
+3. **Refresh source manifest** — confirm later first-party releases are covered
+4. **Spawn research agents** (Agents 5-11) — all writing to `rules-research/items/agents/`
+5. **Validate all candidate files** against canonical schema v1.0.0
 6. **Proceed to Phase C (comparison)**
