@@ -3,7 +3,7 @@
  * Run: node tests/item-candidate-validator.test.mjs
  */
 import { execSync } from 'node:child_process';
-import { existsSync, writeFileSync, unlinkSync } from 'node:fs';
+import { writeFileSync, unlinkSync } from 'node:fs';
 
 const VALIDATOR = 'node scripts/validate-item-candidates.mjs';
 const VALID_FIXTURE = 'rules-research/items/agents/mundane-2014/candidates.valid.json';
@@ -114,4 +114,15 @@ test('cross-file duplicate IDs caught', () => {
 });
 
 console.log(`\n${passed} passed, ${failed} failed, ${passed + failed} total`);
-process.exit(failed > 0 ? 1 : 0);
+// This file is a self-running script (node tests/item-candidate-validator.test.mjs)
+// whose checks have already executed by this point. Under vitest, register the
+// summary as a real test so the suite reports pass/fail instead of erroring on
+// process.exit / "no test suite found".
+if (process.env.VITEST) {
+  const { test: vitestTest, expect } = await import('vitest');
+  vitestTest('item candidate validator script checks', () => {
+    expect(failed, `${failed} validator check(s) failed — see stdout`).toBe(0);
+  });
+} else {
+  process.exit(failed > 0 ? 1 : 0);
+}

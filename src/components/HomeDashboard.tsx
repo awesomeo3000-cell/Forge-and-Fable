@@ -49,6 +49,7 @@ type Props = {
   onOpenCharacter: (characterId: string) => void;
   onCreateCharacter: () => void;
   onImportCharacter: () => void;
+  onNameChange: (name: string) => Promise<boolean>;
 };
 
 function eventHeadline(event: CampaignEvent): string {
@@ -67,6 +68,9 @@ function eventHeadline(event: CampaignEvent): string {
 export default memo(function HomeDashboard(props: Props) {
   const [campaigns, setCampaigns] = useState<CampaignSummary[] | null>(null);
   const [nextSession, setNextSession] = useState<CampaignSession | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(props.userName);
+  const [nameBusy, setNameBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +107,14 @@ export default memo(function HomeDashboard(props: Props) {
       .catch(() => { if (!cancelled) setNextSession(null); });
     return () => { cancelled = true; };
   }, [featured?.id, props.refreshKey]);
+
+  useEffect(() => setNameDraft(props.userName), [props.userName]);
+
+  const saveName = async () => {
+    setNameBusy(true);
+    if (await props.onNameChange(nameDraft)) setEditingName(false);
+    setNameBusy(false);
+  };
 
   const context = useMemo(
     () => resolveDashboardContext({ characters: props.characters, campaigns: campaignsReady }),
@@ -160,8 +172,15 @@ export default memo(function HomeDashboard(props: Props) {
   };
 
   const sessionDate = nextSession ? new Date(nextSession.scheduledAt ?? nextSession.startedAt) : null;
+  // Exact date, not just the weekday — "Friday" alone is ambiguous the moment
+  // the week rolls over. Year appears only when it differs from the current one.
   const sessionTimeLabel = sessionDate
-    ? `${sessionDate.toLocaleDateString([], { weekday: "long" })} at ${sessionDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    ? `${sessionDate.toLocaleDateString([], {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        ...(sessionDate.getFullYear() !== new Date().getFullYear() ? { year: "numeric" as const } : {}),
+      })} at ${sessionDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
     : null;
 
   const partyMembers = (props.campaignSync?.members ?? []).filter((member) => !member.isGhost);
@@ -234,7 +253,24 @@ export default memo(function HomeDashboard(props: Props) {
       <section className="ao-hd-welcome" aria-labelledby="ao-hd-welcome-title">
         <div className="ao-hd-welcome-copy">
           <span className="ao-dash-eyebrow">{greeting.kicker}</span>
-          <h1 id="ao-hd-welcome-title">{greeting.title}</h1>
+          <div className="ao-hd-name-row">
+            <h1 id="ao-hd-welcome-title">{greeting.title}</h1>
+            {!editingName ? (
+              <button type="button" className="ao-hd-name-edit" onClick={() => setEditingName(true)}>Edit name</button>
+            ) : (
+              <form className="ao-hd-name-form" onSubmit={(event) => { event.preventDefault(); void saveName(); }}>
+                <input
+                  value={nameDraft}
+                  maxLength={80}
+                  aria-label="Display name"
+                  onChange={(event) => setNameDraft(event.target.value)}
+                  autoFocus
+                />
+                <button type="submit" disabled={nameBusy || !nameDraft.trim()}>{nameBusy ? "Saving" : "Save"}</button>
+                <button type="button" onClick={() => { setNameDraft(props.userName); setEditingName(false); }}>Cancel</button>
+              </form>
+            )}
+          </div>
           <p>{greeting.text}</p>
           <div className="ao-hd-feature-actions">
             <button className="ao-hd-btn ao-hd-btn-primary" type="button" aria-label={welcome.primaryAria} onClick={welcome.onPrimary}>

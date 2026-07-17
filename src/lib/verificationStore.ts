@@ -3,6 +3,13 @@ import { getDb } from "@/lib/db";
 
 const VERIFICATION_EXPIRY_HOURS = 24;
 
+/** Explicit off-switch for email verification (local/self-hosted servers).
+ *  NODE_ENV can't be the only gate: the local server runs a production build
+ *  via `next start`, which would otherwise demand real verification emails. */
+export function emailVerificationDisabled(): boolean {
+  return process.env.DISABLE_EMAIL_VERIFICATION === "true";
+}
+
 type VerificationTokenRow = {
   id: string;
   user_id: string;

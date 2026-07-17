@@ -228,6 +228,35 @@
   white-space: nowrap;
 }
 
+/* Observatory treatment: the entry keeps its paper/document role, but its
+   frame, active rail, and controls use the same shell tokens as the rest of
+   the refreshed application. */
+[data-theme="arcane-observatory"] .level-rite-backdrop {
+  background: rgba(3, 7, 13, 0.76);
+}
+[data-theme="arcane-observatory"] .level-rite-modal {
+  max-width: 780px;
+  border-color: var(--border-strong, #38506a);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-document, #172638);
+  box-shadow: var(--shadow-overlay, 0 24px 64px rgba(0, 0, 0, 0.45));
+}
+[data-theme="arcane-observatory"] .level-rite-header {
+  border-bottom-color: var(--border-brass, #b3924a);
+}
+[data-theme="arcane-observatory"] .level-rite-rail {
+  border-right-color: var(--border-subtle, #253b52);
+  background: var(--surface-panel-recessed, #0f1b2a);
+}
+[data-theme="arcane-observatory"] .level-rite-step.is-current {
+  border-left-color: var(--border-brass-bright, #d9b967);
+  background: color-mix(in srgb, var(--border-brass, #b3924a) 14%, transparent);
+}
+[data-theme="arcane-observatory"] .level-rite-main,
+[data-theme="arcane-observatory"] .level-rite-summary {
+  color: var(--text-primary, #edf1f4);
+}
+
 /* ── Main column ── */
 .level-rite-main {
   display: flex;

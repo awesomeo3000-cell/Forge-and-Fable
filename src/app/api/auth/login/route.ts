@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { loginUser } from "@/lib/vaultStore";
 import { SESSION_COOKIE_NAME, sessionCookieOptions, signToken } from "@/lib/auth";
 import { authRateLimitKeys, clearAuthFailures, isAuthRateLimited, recordAuthFailure } from "@/lib/authRateLimit";
-import { isEmailVerified } from "@/lib/verificationStore";
+import { emailVerificationDisabled, isEmailVerified } from "@/lib/verificationStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,8 +27,10 @@ export async function POST(request: Request) {
       password: String(body.password ?? ""),
     });
 
-    // Block login until the email is verified.
-    if (!isEmailVerified(user.id)) {
+    // Block login until the email is verified — unless verification is
+    // switched off (local server), which also unblocks accounts that were
+    // registered before the switch and never verified.
+    if (!emailVerificationDisabled() && !isEmailVerified(user.id)) {
       recordAuthFailure(rateLimitKeys);
       return NextResponse.json(
         { error: "Please verify your email before logging in. Check your inbox for a verification link." },

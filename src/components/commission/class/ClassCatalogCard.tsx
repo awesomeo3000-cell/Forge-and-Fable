@@ -33,7 +33,10 @@ export default function ClassCatalogCard(props: {
     >
       {CLASS_ART_IDS.has(heroClass.id) ? (
         <span className="ao-class-card-art" aria-hidden="true">
-          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 760px) 90vw, 300px" quality={88} />
+          {/* The banner art is height-driven under object-fit: cover (4:1 art
+              in a ~2:1 box), so its effective rendered width is ~4× the card
+              height — request derivatives sized for that, not the container. */}
+          <Image src={classArtSrc(heroClass.id)} alt="" fill sizes="(max-width: 760px) 160vw, 520px" quality={90} />
         </span>
       ) : (
         <span className="ao-class-card-fallback" aria-hidden="true">

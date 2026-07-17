@@ -8,6 +8,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Swords,
+  Upload,
   User as UserIcon,
   X,
 } from "lucide-react";
@@ -47,7 +48,6 @@ import {
   emptyAbilities,
   pointCosts,
   rollDie,
-  scoreFrom4d6,
   signed,
   standardArray,
 } from "@/lib/utils";
@@ -172,19 +172,37 @@ export default function ForgeAndFableApp() {
   });
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authDisplayName, setAuthDisplayName] = useState("");
   const [authInviteCode, setAuthInviteCode] = useState("");
   const [authResetToken, setAuthResetToken] = useState(() =>
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("resetToken") ?? "" : "",
   );
   const [status, setStatus] = useState("");
-  const [toasts, setToasts] = useState<{ id: string; kind: "announce" | "condition" | "turn"; title: string; body?: string }[]>([]);
+  const [toasts, setToasts] = useState<{ id: string; kind: "announce" | "condition" | "turn"; title: string; body?: string; sourceId?: string }[]>([]);
+  const [dismissedAnnouncementIds, setDismissedAnnouncementIds] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const value = JSON.parse(window.localStorage.getItem("forge-and-fable-dismissed-announcements") ?? "[]");
+      return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(-100) : [];
+    } catch { return []; }
+  });
 
-  function pushToast(kind: "announce" | "condition" | "turn", title: string, body?: string) {
+  function pushToast(kind: "announce" | "condition" | "turn", title: string, body?: string, sourceId?: string) {
+    if (kind === "announce" && sourceId && dismissedAnnouncementIds.includes(sourceId)) return;
     const id = crypto.randomUUID();
-    setToasts((current) => [...current.slice(-3), { id, kind, title, body }]);
+    setToasts((current) => [...current.slice(-3), { id, kind, title, body, sourceId }]);
     window.setTimeout(() => {
       setToasts((current) => current.filter((toast) => toast.id !== id));
     }, kind === "announce" ? 9000 : 6000);
+  }
+  function dismissToast(toast: { id: string; kind: "announce" | "condition" | "turn"; sourceId?: string }) {
+    setToasts((current) => current.filter((item) => item.id !== toast.id));
+    if (toast.kind !== "announce" || !toast.sourceId) return;
+    setDismissedAnnouncementIds((current) => {
+      const next = [...new Set([...current, toast.sourceId!])].slice(-100);
+      window.localStorage.setItem("forge-and-fable-dismissed-announcements", JSON.stringify(next));
+      return next;
+    });
   }
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // A #/campaigns/<id>[/<section>] deep link (handoff §1, §20) opens the
@@ -492,7 +510,7 @@ export default function ForgeAndFableApp() {
       } else if (event.type === "announce") {
         const message = typeof payload.message === "string" ? payload.message.trim() : "";
         if (message && !processedCampaignEventsRef.current.has(event.id)) {
-          pushToast("announce", message);
+          pushToast("announce", message, undefined, event.id);
         }
       } else if (event.type === "roll-request") {
         // The Roll button lives in the campaign panel; surface the ask so a
@@ -516,7 +534,7 @@ export default function ForgeAndFableApp() {
         const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
         const url = typeof payload.url === "string" ? payload.url.trim() : "";
         if (!processedCampaignEventsRef.current.has(event.id)) {
-          pushToast("announce", `The DM shared a handout: ‹${title}›.`);
+          pushToast("announce", `The DM shared a handout: ‹${title}›.`, undefined, event.id);
           if (url) setCampaignHandout({ title, url });
         }
       }
@@ -742,6 +760,10 @@ export default function ForgeAndFableApp() {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
     };
+  // pushToast is intentionally scoped to this component; the sync loop only
+  // needs the current campaign/user inputs and should not restart on each
+  // announcement-state update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCampaignId, user, campaignOpen]);
 
   // Auto-snapshot on session load (once per session)
@@ -808,7 +830,7 @@ export default function ForgeAndFableApp() {
           ...(authMode === "reset"
             ? { token: authResetToken, password: authPassword }
             : { email: authEmail, ...(authMode === "login" || authMode === "register" ? { password: authPassword } : {}) }),
-          ...(authMode === "register" ? { inviteCode: authInviteCode } : {}),
+          ...(authMode === "register" ? { inviteCode: authInviteCode, name: authDisplayName } : {}),
         }),
       });
 
@@ -827,6 +849,7 @@ export default function ForgeAndFableApp() {
       // The user must verify their email before logging in.
       if (data.message && !data.user) {
         setStatus(data.message);
+        if (authMode === "register") setAuthDisplayName("");
         if (authMode === "register" || authMode === "reset") setAuthMode("login");
         if (authMode === "reset") {
           setAuthResetToken("");
@@ -902,25 +925,23 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    const nextAssignments = defaultAssignments();
-    const values =
-      method === "standard-array"
-        ? standardArray
-        : Array.from({ length: 6 }, () => scoreFrom4d6()).sort((a, b) => b - a);
-
-    if (method === "standard-array") {
-      setStandardAssignments(nextAssignments);
-    } else {
-      setRolledScores(values);
-      setRolledAssignments(nextAssignments);
+    if (method === "roll") {
+      // No silent pre-roll: the chapter's Roll action casts real dice
+      // (rollStatBlock) and the step stays incomplete until they land.
+      setRolledScores([]);
+      setRolledAssignments(defaultAssignments());
+      setDraft((current) => (current ? { ...current, abilities: { ...emptyAbilities } } : current));
+      return;
     }
 
+    const nextAssignments = defaultAssignments();
+    setStandardAssignments(nextAssignments);
     setDraft((current) =>
       current
         ? {
             ...current,
             abilities: abilityKeys.reduce((scores, key) => {
-              scores[key] = values[nextAssignments[key]];
+              scores[key] = standardArray[nextAssignments[key]];
               return scores;
             }, {} as AbilityScores),
           }
@@ -998,22 +1019,81 @@ export default function ForgeAndFableApp() {
   }
 
   function rollStatBlock() {
-    const nextRolls = Array.from({ length: 6 }, () => scoreFrom4d6()).sort((a, b) => b - a);
-    const nextAssignments = defaultAssignments();
+    // Six ability scores as one physical flight of 4d6-drop-lowest groups —
+    // the same 3D dice the sheet rolls, with each group's lowest die dimmed
+    // like an adv/dis discard. Scores apply once every die has settled (or
+    // the flight is click-dismissed, which flushes every onFinish).
+    const groups = Array.from({ length: 6 }, () => Array.from({ length: 4 }, () => rollDie(6)));
+    const scoreOf = (dice: number[]) => dice.reduce((sum, value) => sum + value, 0) - Math.min(...dice);
+    const scores = groups.map(scoreOf).sort((a, b) => b - a);
 
-    setRolledScores(nextRolls);
-    setRolledAssignments(nextAssignments);
-    setDraft((current) =>
-      current
-        ? {
-            ...current,
-            abilities: abilityKeys.reduce((scores, key) => {
-              scores[key] = nextRolls[nextAssignments[key]];
-              return scores;
-            }, {} as AbilityScores),
-          }
-        : current,
-    );
+    const summary = scores.join(" · ");
+    const detail = groups
+      .map((dice) => {
+        const dropIndex = dice.indexOf(Math.min(...dice));
+        const parts = dice.map((value, i) => (i === dropIndex ? `~~${value}~~` : String(value)));
+        return `[${parts.join(", ")}] = ${scoreOf(dice)}`;
+      })
+      .join("  ");
+
+    const applyScores = () => {
+      const nextAssignments = defaultAssignments();
+      setRolledScores(scores);
+      setRolledAssignments(nextAssignments);
+      setDraft((current) =>
+        current
+          ? {
+              ...current,
+              abilities: abilityKeys.reduce((abilities, key) => {
+                abilities[key] = scores[nextAssignments[key]];
+                return abilities;
+              }, {} as AbilityScores),
+            }
+          : current,
+      );
+    };
+
+    const totalDice = groups.length * 4;
+    let settled = 0;
+    const newDice: RollingDie[] = [];
+    groups.forEach((dice, groupIndex) => {
+      const dropIndex = dice.indexOf(Math.min(...dice));
+      dice.forEach((value, dieIndex) => {
+        const flightIndex = groupIndex * 4 + dieIndex;
+        const fromLeft = Math.random() > 0.5;
+        const dropped = dieIndex === dropIndex;
+        newDice.push({
+          id: `${crypto.randomUUID()}-${flightIndex}`,
+          sides: 6,
+          result: value,
+          label: "Ability Scores",
+          lingerMs: NORMAL_ROLL_LINGER_MS,
+          fromLeft,
+          startYPct: 0.15 + Math.random() * 0.35,
+          landXPct: 0.22 + Math.random() * 0.56,
+          landYPct: 0.25 + Math.random() * 0.38,
+          rotations: (fromLeft ? 1 : -1) * (2 + Math.floor(Math.random() * 3)) * 360,
+          delayMs: flightIndex * 90,
+          dropped,
+          onFinish: () => {
+            settled += 1;
+            if (settled === totalDice) {
+              applyScores();
+            }
+          },
+        });
+      });
+    });
+    // The score readout rides the last kept die so it appears as the flight ends.
+    const lastKeptIndex = newDice.reduce((last, die, i) => (die.dropped ? last : i), -1);
+    newDice.forEach((die, i) => {
+      die.resultSummary = die.dropped ? "Dropped" : i === lastKeptIndex ? summary : undefined;
+      die.resultDetail = die.dropped ? String(die.result) : i === lastKeptIndex ? detail : undefined;
+    });
+
+    setConsoleLog((prev) => [`Ability Scores -> ${detail}`, ...prev].slice(0, 20));
+    recordHistory("Ability Scores", detail, scores.reduce((sum, value) => sum + value, 0));
+    setFlyingDice((prev) => [...prev, ...newDice]);
   }
 
   function rollStartingHp(request: {
@@ -1627,8 +1707,10 @@ export default function ForgeAndFableApp() {
         sides,
         result,
         label: fullLabel,
-        resultSummary,
-        resultDetail,
+        // The total rides only the last die of the flight — earlier dice
+        // landing must not spoil the sum before the roll finishes.
+        resultSummary: i === count - 1 ? resultSummary : undefined,
+        resultDetail: i === count - 1 ? resultDetail : undefined,
         lingerMs: NORMAL_ROLL_LINGER_MS,
         fromLeft,
         startYPct: 0.15 + Math.random() * 0.35,
@@ -1744,9 +1826,11 @@ export default function ForgeAndFableApp() {
         : (d20Pairs.length === 1 && d20Pairs[0].keptValue === 1) || anyOne ? "fumble"
         : undefined;
       const resultSummary = rollResultSummary(total);
-      newDice.forEach((die) => {
-        die.resultSummary = die.dropped ? "Dropped" : resultSummary;
-        die.resultDetail = die.dropped ? `${die.result}` : detail;
+      // Total on the last kept die only — earlier landings must not spoil it.
+      const lastKeptIndex = newDice.reduce((last, die, i) => (die.dropped ? last : i), -1);
+      newDice.forEach((die, i) => {
+        die.resultSummary = die.dropped ? "Dropped" : i === lastKeptIndex ? resultSummary : undefined;
+        die.resultDetail = die.dropped ? `${die.result}` : i === lastKeptIndex ? detail : undefined;
         die.lingerMs = die.dropped ? DROPPED_D20_LINGER_MS : d20Pairs.length > 0 ? KEPT_D20_LINGER_MS : NORMAL_ROLL_LINGER_MS;
       });
 
@@ -1816,9 +1900,11 @@ export default function ForgeAndFableApp() {
       })
       .join(" + ") + (modifier !== 0 ? ` ${signed(modifier)}` : "");
     const detailWithTotal = rollDetailWithTotal(detail, total);
-    newDice.forEach((die) => {
-      die.resultSummary = die.dropped ? "Dropped" : rollResultSummary(total);
-      die.resultDetail = die.dropped ? String(die.result) : detailWithTotal;
+    // Total on the last kept die only — earlier landings must not spoil it.
+    const lastKeptIndex = newDice.reduce((last, die, i) => (die.dropped ? last : i), -1);
+    newDice.forEach((die, i) => {
+      die.resultSummary = die.dropped ? "Dropped" : i === lastKeptIndex ? rollResultSummary(total) : undefined;
+      die.resultDetail = die.dropped ? String(die.result) : i === lastKeptIndex ? detailWithTotal : undefined;
       die.lingerMs = die.dropped ? DROPPED_D20_LINGER_MS : NORMAL_ROLL_LINGER_MS;
     });
     setConsoleLog((prev) => [`${label} -> ${total}`, ...prev].slice(0, 20));
@@ -1893,12 +1979,15 @@ export default function ForgeAndFableApp() {
       .join("");
     const detail = `${d20Part}${riderPart}${modifier !== 0 ? ` ${signed(modifier)}` : ""} = ${total}`;
     const resultSummary = rollResultSummary(total);
+    // Total on the last kept die only — with riders in flight, the kept d20
+    // landing first must not spoil the sum.
+    const lastKeptIndex = newDice.reduce((last, die, i) => (die.dropped ? last : i), -1);
     newDice.forEach((die, dieIndex) => {
       const isD20ChoiceDie = dieIndex < d20s.length && die.sides === 20;
       const isKeptD20 = isD20ChoiceDie && dieIndex === keptIndex;
 
-      die.resultSummary = isD20ChoiceDie && die.dropped ? "Dropped" : resultSummary;
-      die.resultDetail = isD20ChoiceDie && die.dropped ? `${die.result}` : detail;
+      die.resultSummary = die.dropped ? "Dropped" : dieIndex === lastKeptIndex ? resultSummary : undefined;
+      die.resultDetail = die.dropped ? `${die.result}` : dieIndex === lastKeptIndex ? detail : undefined;
       die.lingerMs = isKeptD20 && mode !== "normal"
         ? KEPT_D20_LINGER_MS
         : die.dropped
@@ -2017,11 +2106,13 @@ export default function ForgeAndFableApp() {
         mode={authMode}
         email={authEmail}
         password={authPassword}
+        displayName={authDisplayName}
         inviteCode={authInviteCode}
         status={status}
         onModeChange={setAuthMode}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onDisplayNameChange={setAuthDisplayName}
         onInviteCodeChange={setAuthInviteCode}
         resetToken={authResetToken}
         onResetTokenChange={setAuthResetToken}
@@ -2032,7 +2123,10 @@ export default function ForgeAndFableApp() {
 
   return (
     <>
-    {diceTrayVisible ? <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} /> : null}
+    {/* The overlay must mount wherever dice are in flight, not just where the
+        tray lives — creator rolls (starting HP, ability scores) otherwise queue
+        in flyingDice unseen and their onFinish callbacks never fire. */}
+    {diceTrayVisible || flyingDice.length > 0 ? <DiceRollOverlay dice={flyingDice} onExpire={expireDie} onDismissAll={clearFlyingDice} accentHex={diceAccent} fontStack={diceFont} /> : null}
     {diceTrayVisible ? <RollDrawer
       history={rollHistory}
       rollMode={rollMode}
@@ -2050,7 +2144,7 @@ export default function ForgeAndFableApp() {
     /> : null}
     {toasts.length > 0 ? (
       <div
-        className="ff-toast-stack"
+        className={`ff-toast-stack${toasts.some((toast) => toast.kind === "announce") ? " has-announcement" : ""}`}
         aria-live="polite"
         style={selected?.theme ? ({
           "--toast-paper": selected.theme.paper,
@@ -2060,7 +2154,7 @@ export default function ForgeAndFableApp() {
         } as CSSProperties) : undefined}
       >
         {toasts.map((toast) => (
-          <button key={toast.id} type="button" className={`ff-toast ff-toast-${toast.kind}`} onClick={() => setToasts((current) => current.filter((t) => t.id !== toast.id))}>
+          <button key={toast.id} type="button" className={`ff-toast ff-toast-${toast.kind}`} onClick={() => dismissToast(toast)}>
             <strong>{toast.title}</strong>
             {toast.body ? <span>{toast.body}</span> : null}
           </button>
@@ -2267,17 +2361,22 @@ export default function ForgeAndFableApp() {
           {status ? <span className="system-status">{status}</span> : null}
           <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
-          <button className="glass-icon ink-action" type="button" onClick={() => setCampaignListOpen(true)} title="Campaigns">
-            <Swords size={18} />
-          </button>
-          {selected ? (
-            <button className="glass-icon ink-action" type="button" onClick={() => setSnapshotsOpen(true)} title="Snapshots">
-              <RotateCcw size={18} />
+          <div className="ao-header-action-cluster" aria-label="Workspace actions">
+            <button className="glass-icon ink-action ao-header-action ao-header-action-primary" type="button" onClick={() => setCampaignListOpen(true)} title="Campaigns">
+              <Swords size={17} /><span>Campaigns</span>
             </button>
-          ) : null}
-          <button className="glass-icon ink-action" type="button" onClick={openFeedback} title="Submit feedback">
-            <MessageSquare size={18} />
-          </button>
+            {selected ? (
+              <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setSnapshotsOpen(true)} title="Snapshots">
+                <RotateCcw size={16} /><span>Snapshots</span>
+              </button>
+            ) : null}
+            <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setImportOpen(true)} title="Import character">
+              <Upload size={16} /><span>Import</span>
+            </button>
+            <button className="glass-icon ink-action ao-header-action" type="button" onClick={openFeedback} title="Submit feedback">
+              <MessageSquare size={16} /><span>Feedback</span>
+            </button>
+          </div>
           {user.isAdmin ? (
             <button className="glass-icon ink-action" type="button" onClick={() => setAdminOpen(true)} title="Admin console">
               <ShieldCheck size={18} />
@@ -2370,6 +2469,17 @@ export default function ForgeAndFableApp() {
             setCreatorOpen(false);
           }}
           onImportCharacter={() => { setHomeOpen(false); setImportOpen(true); }}
+          onNameChange={async (name) => {
+            try {
+              const response = await fetch("/api/auth/profile", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ name }) });
+              const data = await response.json() as { user?: PublicUser; error?: string };
+              if (!response.ok || !data.user) { setStatus(data.error ?? "Name could not be updated."); return false; }
+              setUser(data.user);
+              window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
+              setStatus("Name updated");
+              return true;
+            } catch { setStatus("Name could not be updated."); return false; }
+          }}
         />
       </section>
       ) : (

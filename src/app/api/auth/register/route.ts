@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { registerUser, deleteUserById } from "@/lib/vaultStore";
 import { authRateLimitKeys, clearAuthFailures, isAuthRateLimited, recordAuthFailure } from "@/lib/authRateLimit";
 import { consumeRegistrationCode, registrationRequiresCode } from "@/lib/adminStore";
-import { createVerificationToken } from "@/lib/verificationStore";
+import { createVerificationToken, emailVerificationDisabled } from "@/lib/verificationStore";
 import { sendVerificationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -39,6 +39,9 @@ export async function POST(request: Request) {
     const user = await registerUser({
       email,
       password: String(body.password ?? ""),
+      // Chosen display name; registerUser falls back to an email-derived
+      // name when blank, so existing clients keep working.
+      name: String(body.name ?? "").trim().slice(0, 80),
     });
 
     // Generate a token for production email verification. Local development
@@ -51,13 +54,15 @@ export async function POST(request: Request) {
       throw new Error("Could not create verification token. Please try again.");
     }
 
-    // Never require external email verification during non-production local testing.
-    if (process.env.NODE_ENV !== "production") {
-      // Auto-verify in dev — import dynamically to avoid bundling into every route.
+    // Never require external email verification during non-production local
+    // testing, or anywhere DISABLE_EMAIL_VERIFICATION=true (the local server
+    // runs a production build, so NODE_ENV alone can't identify it).
+    if (process.env.NODE_ENV !== "production" || emailVerificationDisabled()) {
+      // Auto-verify — import dynamically to avoid bundling into every route.
       const { consumeVerificationToken } = await import("@/lib/verificationStore");
       consumeVerificationToken(verificationToken);
       clearAuthFailures(rateLimitKeys);
-      return NextResponse.json({ message: "Account created (dev — auto-verified). You may now log in." });
+      return NextResponse.json({ message: "Account created (auto-verified). You may now log in." });
     }
 
     let emailSent = false;

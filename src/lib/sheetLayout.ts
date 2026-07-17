@@ -4,7 +4,7 @@ export const SECTION_TITLES: Record<SheetSectionId, string> = {
   identity: "Character", vitals: "Vitals", abilities: "Abilities", saves: "Saves", skills: "Skills",
   senses: "Senses", profs: "Proficiencies & Training", equipment: "Equipment", effects: "Effects & Conditions",
   attacks: "Attacks", actions: "Actions", "bonus-actions": "Bonus Actions", reactions: "Reactions", passives: "Passive & Triggered",
-  features: "Features & Traits", traits: "Traits", spells: "Spells", spellbook: "Spellbook",
+  features: "Features & Gear", traits: "Traits", spells: "Spells", spellbook: "Spellbook",
   inventory: "Inventory", notes: "Notes", background: "Background", pages: "Pages", console: "Console",
 };
 
@@ -15,13 +15,13 @@ export const PINNED_BOTTOM: SheetSectionId[] = [];
 const PINNED = new Set<SheetSectionId>([...PINNED_TOP, ...PINNED_BOTTOM]);
 const PREFERRED_TABS: Partial<Record<SheetSectionId, SheetSectionId[]>> = {
   attacks: ["attacks", "actions", "bonus-actions", "reactions"],
-  features: ["features", "passives", "traits", "spells", "spellbook", "inventory"],
+  features: ["features", "equipment", "passives", "traits", "spells", "spellbook", "inventory"],
 };
-const OPTIONAL_TABS: SheetSectionId[] = ["actions", "bonus-actions", "reactions", "passives", "traits", "spells", "spellbook", "inventory"];
+const OPTIONAL_TABS: SheetSectionId[] = ["equipment", "actions", "bonus-actions", "reactions", "passives", "traits", "spells", "spellbook", "inventory"];
 const DEFAULT_COLUMNS: SheetSectionId[][] = [
   ["abilities", "saves", "senses"],
   ["skills", "background", "notes"],
-  ["equipment", "effects", "attacks", "features", "profs", "pages"],
+  ["effects", "attacks", "features", "profs", "pages"],
 ];
 const DEFAULT_SECTIONS = DEFAULT_COLUMNS.flat();
 const KNOWN_SECTIONS = new Set<SheetSectionId>([...DEFAULT_SECTIONS, ...OPTIONAL_TABS]);
@@ -38,7 +38,7 @@ export const DEFAULT_LAYOUT: SheetLayout = {
   columns: DEFAULT_COLUMNS.map((column) => [...column]),
   modules: defaultModules(),
   collapsed: [],
-  version: 4,
+  version: 5,
 };
 
 function cleanWidths(widths: number[] | undefined) {
@@ -46,6 +46,39 @@ function cleanWidths(widths: number[] | undefined) {
   return Array.isArray(widths) && widths.length === DEFAULT_COLUMNS.length
     && widths.every((width) => Number.isFinite(width) && width >= 5) && sum >= 90 && sum <= 110
     ? widths : undefined;
+}
+
+/** Equipment is a peer tab of the Features module, even when an older saved
+ * layout stored it as its own module or in another merged module. */
+function mergeEquipmentIntoFeatures(columns: string[][], modules: SheetModule[]) {
+  const featureModule = modules.find((module) => module.tabs.includes("features"));
+  if (!featureModule) return { columns, modules };
+
+  const equipmentTitleSource = modules.find((module) => module.id !== featureModule.id && module.tabs.includes("equipment"));
+  const equipmentTitle = equipmentTitleSource?.tabTitles?.equipment
+    ?? (equipmentTitleSource?.tabs.length === 1 ? equipmentTitleSource.title : undefined);
+  const nextModules = modules
+    .map((module) => {
+      if (module.id === featureModule.id) {
+        const tabs: SheetSectionId[] = module.tabs.filter((id) => id !== "equipment");
+        const featuresIndex = tabs.indexOf("features");
+        tabs.splice(featuresIndex < 0 ? 0 : featuresIndex + 1, 0, "equipment");
+        return {
+          ...module,
+          tabs,
+          ...(equipmentTitle && !module.tabTitles?.equipment
+            ? { tabTitles: { ...(module.tabTitles ?? {}), equipment: equipmentTitle } }
+            : {}),
+        };
+      }
+      return { ...module, tabs: module.tabs.filter((id) => id !== "equipment") };
+    })
+    .filter((module) => module.tabs.length > 0);
+  const removedModuleIds = new Set(modules.filter((module) => !nextModules.some((next) => next.id === module.id)).map((module) => module.id));
+  return {
+    columns: columns.map((column) => column.filter((id) => !removedModuleIds.has(id))),
+    modules: nextModules,
+  };
 }
 
 function migrateLegacy(saved: SheetLayout): SheetLayout {
@@ -61,13 +94,15 @@ function migrateLegacy(saved: SheetLayout): SheetLayout {
       .filter((id): id is SheetSectionId => KNOWN_SECTIONS.has(id) && !PINNED.has(id));
     return { id: moduleId, tabs, title: saved.customTitles?.[moduleId] };
   });
+  const normalized = mergeEquipmentIntoFeatures(columns, modules);
+  const finalModuleIds = new Set(normalized.modules.map((module) => module.id));
   return {
-    columns,
-    modules,
-    collapsed: saved.collapsed.filter((id) => present.has(id)),
-    hidden: (saved.hidden ?? []).filter((id) => present.has(id)),
+    columns: normalized.columns,
+    modules: normalized.modules,
+    collapsed: saved.collapsed.filter((id) => finalModuleIds.has(id)),
+    hidden: (saved.hidden ?? []).filter((id) => finalModuleIds.has(id)),
     columnWidths: cleanWidths(saved.columnWidths),
-    version: 4,
+    version: 5,
   };
 }
 
@@ -103,7 +138,7 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
     }
   }
 
-  const columns = saved.columns.map((column) => column.filter((id) => seenModules.has(id)));
+  const columns: string[][] = saved.columns.map((column) => column.filter((id) => seenModules.has(id)));
   while (columns.length < DEFAULT_COLUMNS.length) columns.push([]);
   const placedModules = new Set(columns.flat());
   for (const sheetModule of modules) if (!placedModules.has(sheetModule.id)) columns[columns.length - 1].push(sheetModule.id);
@@ -116,14 +151,15 @@ export function mergeWithDefaults(saved: SheetLayout | undefined): SheetLayout {
     sheetModule.tabs.forEach((id) => seenTabs.add(id));
   }
 
-  const moduleIds = new Set(modules.map((module) => module.id));
+  const normalized = mergeEquipmentIntoFeatures(columns, modules);
+  const normalizedModuleIds = new Set(normalized.modules.map((module) => module.id));
   return {
-    columns,
-    modules,
-    collapsed: saved.collapsed.filter((id) => moduleIds.has(id)),
-    hidden: (saved.hidden ?? []).filter((id) => moduleIds.has(id)),
+    columns: normalized.columns,
+    modules: normalized.modules,
+    collapsed: saved.collapsed.filter((id) => normalizedModuleIds.has(id)),
+    hidden: (saved.hidden ?? []).filter((id) => normalizedModuleIds.has(id)),
     columnWidths: cleanWidths(saved.columnWidths),
-    version: 4,
+    version: 5,
   };
 }
 

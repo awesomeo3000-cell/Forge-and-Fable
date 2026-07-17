@@ -342,6 +342,7 @@ export default memo(function HeroSheet(props: {
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
   const [tourDismissed, setTourDismissed] = useState(true);
+  const [prepareHintDismissed, setPrepareHintDismissed] = useState(true);
 
   const toggleSkillProficiency = (skillId: string) => {
     if (isBackgroundSkill(skillId)) return; // background-granted — cannot toggle
@@ -377,9 +378,18 @@ export default memo(function HeroSheet(props: {
     setTourDismissed(window.localStorage.getItem(TOUR_STORAGE_KEY) === "true");
   }, []);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is intentionally read after hydration.
+    setPrepareHintDismissed(window.localStorage.getItem(`forge-and-fable-prepare-hint-${props.character.id}`) === "true");
+  }, [props.character.id]);
+
   const dismissTour = () => {
     window.localStorage.setItem(TOUR_STORAGE_KEY, "true");
     setTourDismissed(true);
+  };
+  const dismissPrepareHint = () => {
+    window.localStorage.setItem(`forge-and-fable-prepare-hint-${props.character.id}`, "true");
+    setPrepareHintDismissed(true);
   };
   const toggleSaveProficiency = (key: AbilityKey) => {
     const cur = props.character.savingThrowProficiencies ?? proficientSaves;
@@ -1585,11 +1595,25 @@ export default memo(function HeroSheet(props: {
               const hasDice = dice.length > 0;
               return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
-        const rows = baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined }));
+        // Castable spells that require an attack roll (Fire Bolt, Guiding
+        // Bolt, …) join the table with the character's spell attack bonus.
+        // Save/utility spells stay in their Actions / Bonus Actions lanes.
+        const attackSpellRows = Array.from(capabilitySpellIds)
+          .map((id) => getSpell(id))
+          .filter((spell): spell is SpellData => Boolean(spell?.attack))
+          .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
+          .map((spell) => {
+            const firstEffect = resolveSpellEffects(spell, spell.level)[0];
+            const damageLabel = firstEffect
+              ? `${firstEffect.dice}${firstEffect.type === "damage" && firstEffect.damageType ? ` ${firstEffect.damageType}` : ""}`
+              : "—";
+            return { id: `spell-${spell.id}`, name: spell.name, ability: spellAbility ?? ("intelligence" as const), toHit: spellAttack, mod: 0, dice: [] as ReturnType<typeof parseDamageDice>, hasDice: false, versatileDice: null, damageLabel, spell: spell as SpellData | undefined };
+          });
+        const rows = [...baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined })), ...attackSpellRows];
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id}><td>{row.name}{row.spell ? <small> · spell</small> : null}</td><td>{row.spell ? signed(row.toHit) : (<SheetRollButton compact label={`Roll ${row.name} attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20ForAbility(row.name, row.toHit, row.ability)} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : `Roll ${row.name} to hit`} />)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.spell ? (<button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, Math.max(1, row.spell!.level))}>Cast</button>) : row.hasDice ? row.dice.map((d, di) => (<SheetRollButton key={di} compact icon="die" label={`Roll ${row.name} damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} />)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{!row.spell && row.versatileDice ? row.versatileDice.map((d, di) => (<SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
+            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id}><td>{row.name}{row.spell ? <small> · spell</small> : null}</td><td>{row.spell ? (<SheetRollButton compact label={`Roll ${row.name} spell attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20(`${row.name} attack`, row.toHit)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle ?? `Roll ${row.name} spell attack`} />) : (<SheetRollButton compact label={`Roll ${row.name} attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20ForAbility(row.name, row.toHit, row.ability)} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : `Roll ${row.name} to hit`} />)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.spell ? (<button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, row.spell!.level)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle}>Cast</button>) : row.hasDice ? row.dice.map((d, di) => (<SheetRollButton key={di} compact icon="die" label={`Roll ${row.name} damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} />)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{!row.spell && row.versatileDice ? row.versatileDice.map((d, di) => (<SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
@@ -1708,6 +1732,12 @@ export default memo(function HeroSheet(props: {
                   aria-label="Search spells"
                 />
               ) : null}
+              {_isPrepared && !canManageSpellbook && refTab === "spells" && !prepareHintDismissed && knownSpells.some((spell) => spell.level > 0) ? (
+                <div className="cs-context-hint" role="note">
+                  <span><strong>First spell prep</strong> Use Prepare on the spells you want ready today. Your limit is shown above.</span>
+                  <button type="button" onClick={dismissPrepareHint} aria-label="Dismiss spell preparation hint">Got it</button>
+                </div>
+              ) : null}
               <div className="cs-spell-list">{Object.entries(filteredSpellsByLevel).sort(([a],[b]) => Number(a)-Number(b)).map(([level, spells]) => {
                 const lvlNum = Number(level);
                 const max = slotMax[lvlNum - 1] ?? 0;
@@ -1725,9 +1755,11 @@ export default memo(function HeroSheet(props: {
                   {shown.map((spell) => {
                     const status = spellStatuses[spell.id];
                     const source = status?.source?.trim();
+                    const showPrepare = !canManageSpellbook && _isPrepared && spell.level > 0;
+                    const isPreparedSpell = preparedIds.includes(spell.id);
                     return (
-                      <div className="cs-spell-card" key={spell.id} onClick={() => setSpellDetail(spell)}>
-                        {!canManageSpellbook && _isPrepared && spell.level > 0 ? (<button type="button" className={`cs-glass-btn cs-spellbook-prepare${preparedIds.includes(spell.id) ? " is-prepared" : ""}`} disabled={!preparedIds.includes(spell.id) && preparedIds.length >= prepLimit} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-pressed={preparedIds.includes(spell.id)} aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`}>{preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"}</button>) : null}
+                      <div className={`cs-spell-card${showPrepare ? " cs-spell-card-preparable" : ""}`} key={spell.id} onClick={() => setSpellDetail(spell)}>
+                        <div className="cs-spell-card-body">
                         <strong>{spell.name}</strong>
                         <span>{spell.school}{spell.ritual ? " (ritual)" : ""}{spell.concentration ? " \u2022 concentration" : ""} &middot; {spell.castingTime}</span>
                         {source || status?.freeUse ? (
@@ -1737,6 +1769,8 @@ export default memo(function HeroSheet(props: {
                           </div>
                         ) : null}
                         <p>{spell.description.slice(0, 120)}{spell.description.length > 120 ? "…" : ""}</p>
+                        </div>
+                        {showPrepare ? (<button type="button" className={`cs-glass-btn cs-spellbook-prepare${isPreparedSpell ? " is-prepared" : ""}`} disabled={!isPreparedSpell && preparedIds.length >= prepLimit} onClick={(e) => { e.stopPropagation(); togglePrepared(spell.id); }} aria-pressed={isPreparedSpell} aria-label={`${isPreparedSpell ? "Unprepare" : "Prepare"} ${spell.name}`}>{isPreparedSpell ? "Prepared ✓" : "Prepare"}</button>) : null}
                       </div>
                     );
                   })}
@@ -1802,7 +1836,7 @@ export default memo(function HeroSheet(props: {
                                   aria-pressed={preparedIds.includes(spell.id)}
                                   aria-label={`${preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"} ${spell.name}`}
                                 >
-                                  {preparedIds.includes(spell.id) ? "Unprepare" : "Prepare"}
+                                  {preparedIds.includes(spell.id) ? "Prepared ✓" : "Prepare"}
                                 </button>
                               ) : <span className="cs-spellbook-cantrip">Cantrip</span>}
                             </div>

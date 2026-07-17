@@ -18,6 +18,10 @@ services:
         value: https://dreamwright.gg
       - key: FORGE_VAULT_DIR
         value: /var/data
+      # Async PDF-import jobs with OCR — the synchronous analyze fallback
+      # times out on scanned sheets behind the platform's request timeout.
+      - key: PDF_IMPORT_OCR_ENABLED
+        value: "true"
       - key: FORGE_BACKUP_DIR
         sync: false
     disk:

@@ -19,7 +19,7 @@ describe("stable modular sheet layouts", () => {
     const layout = mergeWithDefaults(legacy);
     const features = layout.modules?.find((module) => module.id === "features");
 
-    expect(layout.version).toBe(4);
+    expect(layout.version).toBe(5);
     expect(layout.columns.flat()).not.toContain("attacks");
     expect(features?.tabs).toContain("attacks");
     expect(features?.title).toBe("Adventuring");
@@ -29,9 +29,31 @@ describe("stable modular sheet layouts", () => {
   it("keeps default reference tabs inside the Features module", () => {
     const layout = mergeWithDefaults(undefined);
     expect(layout.columns).toEqual(DEFAULT_LAYOUT.columns);
-    expect(layout.modules?.find((module) => module.id === "features")?.tabs).toEqual(["features", "passives", "traits", "spells", "spellbook", "inventory"]);
+    expect(layout.modules?.find((module) => module.id === "features")?.tabs).toEqual(["features", "equipment", "passives", "traits", "spells", "spellbook", "inventory"]);
     expect(layout.modules?.find((module) => module.id === "attacks")?.tabs).toEqual(["attacks", "actions", "bonus-actions", "reactions"]);
     expect(layout.columns.flat()).not.toContain("inventory");
+    expect(layout.columns.flat()).not.toContain("equipment");
+  });
+
+  it("moves legacy equipment modules into the Features & Gear tabs", () => {
+    const saved: SheetLayout = {
+      columns: [["features", "equipment"], [], []],
+      modules: [
+        { id: "features", tabs: ["features", "passives"] },
+        { id: "equipment", title: "Pack", tabs: ["equipment"] },
+      ],
+      collapsed: ["equipment"],
+      version: 4,
+    };
+
+    const layout = mergeWithDefaults(saved);
+    expect(layout.modules?.find((module) => module.id === "features")).toMatchObject({
+      tabs: ["features", "equipment", "passives", "traits", "spells", "spellbook", "inventory"],
+      tabTitles: { equipment: "Pack" },
+    });
+    expect(layout.modules?.some((module) => module.id === "equipment")).toBe(false);
+    expect(layout.columns.flat()).not.toContain("equipment");
+    expect(layout.collapsed).not.toContain("equipment");
   });
 
   it("preserves arbitrary tab order while dropping invalid and duplicate tabs", () => {
@@ -49,7 +71,7 @@ describe("stable modular sheet layouts", () => {
     const layout = mergeWithDefaults(saved);
     expect(layout.modules?.find((module) => module.id === "combat")).toMatchObject({
       title: "Battle Station",
-      tabs: ["effects", "attacks", "equipment", "actions", "bonus-actions", "reactions"],
+      tabs: ["effects", "attacks", "actions", "bonus-actions", "reactions"],
     });
     expect(layout.hidden).toEqual(["combat"]);
   });

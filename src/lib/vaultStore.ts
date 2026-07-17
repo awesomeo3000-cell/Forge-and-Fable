@@ -69,7 +69,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function displayNameFromEmail(email: string) {
+export function displayNameFromEmail(email: string) {
   const localPart = email.split("@")[0] ?? "";
   const readableName = localPart.replace(/[._-]+/g, " ").trim();
 
@@ -80,6 +80,17 @@ function displayNameFromEmail(email: string) {
   return readableName
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
     .slice(0, 80);
+}
+
+export async function updateUserName(userId: string, input: { name?: string }): Promise<PublicUser> {
+  const db = getDb();
+  const row = db.prepare("SELECT id, name, email, password_hash, created_at FROM users WHERE id = ?")
+    .get(userId) as UserRow | undefined;
+  if (!row) throw new Error("Vault session not found.");
+
+  const name = input.name?.trim().slice(0, 80) || displayNameFromEmail(row.email);
+  db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, userId);
+  return publicUser(storedUserFromRow({ ...row, name }));
 }
 
 function isUniqueConstraintError(error: unknown) {

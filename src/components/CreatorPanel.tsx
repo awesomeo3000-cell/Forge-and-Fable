@@ -88,8 +88,8 @@ export default memo(function CreatorPanel(props: {
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
   const [inspectedSpeciesId, setInspectedSpeciesId] = useState<string | null>(null);
-  // "Use an image link" fallback on the Likeness step (AO-7b) — reuses the
-  // selector modal, which owns link validation.
+  // "Upload or link your own image" on the Likeness step (AO-7b) — opens the
+  // selector modal, which owns upload, crop, and link validation.
   const [portraitLinkOpen, setPortraitLinkOpen] = useState(false);
   const [portraitStyleTab, setPortraitStyleTab] = useState<PortraitStyle | "all">("dreamwright");
 
@@ -219,18 +219,23 @@ export default memo(function CreatorPanel(props: {
     }
   };
 
+  // The rolled method only completes once the dice have actually landed —
+  // choosing "Rolled" no longer pre-fills scores silently.
+  const rolledScoresComplete = props.statMethod !== "roll" || props.rolledScores.length === 6;
+
   const stepComplete = [
     Boolean(props.draft.name.trim()) && props.draft.sourceIds.length > 0,
     Boolean(props.draft.portraitUrl),
     classStepComplete,
     Boolean(props.draft.background),
     Boolean(props.draft.raceId),
-    Boolean(props.statMethod),
+    Boolean(props.statMethod) && rolledScoresComplete,
     Boolean(props.draft.name.trim()) &&
       props.draft.sourceIds.length > 0 &&
       classStepComplete &&
       Boolean(props.draft.background) &&
-      Boolean(props.draft.raceId),
+      Boolean(props.draft.raceId) &&
+      rolledScoresComplete,
   ];
 
   // Live prerequisite check for the Finalize seal. Because it is derived from
@@ -243,6 +248,7 @@ export default memo(function CreatorPanel(props: {
     ...(props.draft.classId ? [] : [{ label: "A class", step: 2 }]),
     ...(props.draft.background ? [] : [{ label: "A background", step: 3 }]),
     ...(props.draft.raceId ? [] : [{ label: "A species", step: 4 }]),
+    ...(rolledScoresComplete ? [] : [{ label: "Rolled ability scores", step: 5 }]),
   ];
 
   // TOC marginalia: the decided value each completed chapter shows (18c pass 1).
@@ -311,7 +317,9 @@ export default memo(function CreatorPanel(props: {
             ? stepComplete[3]
             : props.step === 4
               ? stepComplete[4]
-              : true;
+              : props.step === 5
+                ? rolledScoresComplete
+                : true;
 
   const toggleSource = (sourceId: string) => {
     const exists = props.draft.sourceIds.includes(sourceId);
@@ -525,7 +533,7 @@ export default memo(function CreatorPanel(props: {
                       className="ledger-button small"
                       onClick={() => setPortraitLinkOpen(true)}
                     >
-                      Use an image link
+                      Upload or link your own image
                     </button>
                   </aside>
                 </div>
@@ -727,6 +735,11 @@ export default memo(function CreatorPanel(props: {
                 {props.step === 2 && !canContinue && classContinueHint ? (
                   <p className="ao-continue-hint" aria-live="polite">
                     {classContinueHint}
+                  </p>
+                ) : null}
+                {props.step === 5 && !canContinue ? (
+                  <p className="ao-continue-hint" aria-live="polite">
+                    Roll your ability scores to continue.
                   </p>
                 ) : null}
                 <button

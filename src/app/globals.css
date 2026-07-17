@@ -4780,8 +4780,46 @@ button.cs-skill-bonus {
 .cs-spellbook-entry strong { grid-area: name; }
 .cs-spellbook-entry span { grid-area: meta; }
 .cs-spellbook-prepare { grid-area: prepare; align-self: center; }
-.cs-spellbook-prepare.is-prepared { border-color: var(--doc-accent); color: var(--doc-accent); }
 .cs-spellbook-entry .cs-spellbook-cantrip { grid-area: prepare; align-self: center; }
+
+/* Preparable spell rows: body text and prepare toggle live in fixed grid
+   columns, so the toggle's position never depends on how long the spell's
+   name or description happens to be. */
+.cs-spell-card-preparable {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "body prepare";
+  align-items: center;
+  column-gap: 10px;
+}
+.cs-spell-card-preparable .cs-spell-card-body { grid-area: body; }
+.cs-spell-card-preparable .cs-spellbook-prepare { grid-area: prepare; }
+.cs-spell-card-body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* The toggle itself: quiet until noticed, but unmistakably a control. */
+.cs-spellbook-prepare {
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--doc-accent, var(--accent)) 55%, transparent);
+  border-radius: 999px;
+  font-family: var(--font-label);
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cs-spellbook-prepare:not(:disabled):hover {
+  border-color: var(--doc-accent, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--doc-accent, var(--accent)) 18%, transparent);
+}
+.cs-spellbook-prepare.is-prepared {
+  border-color: var(--doc-accent, var(--accent));
+  background: color-mix(in srgb, var(--doc-accent, var(--accent)) 16%, transparent);
+  color: var(--doc-accent, var(--accent));
+}
 
 .cs-spell-level-head { font-family: var(--font-label); font-size: 0.78em; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); margin-bottom: 2px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
@@ -8128,19 +8166,32 @@ button.dj-card {
   color: var(--roll-ink, #e8dcc2);
 }
 
+/* First-look card: has to catch the eye of a brand-new user — accent spine,
+   raised shadow, and a gentle entrance so it reads as "start here", not as
+   another row of chrome. */
 .cs-tour-card {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   margin: 0 16px 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--rule);
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--rule));
+  border-left: 4px solid var(--accent);
   border-radius: var(--r-sm);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 66%),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 66%),
     var(--paper-raised);
   color: var(--ink);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+  animation: cs-tour-enter 0.5s ease-out both;
+}
+@keyframes cs-tour-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-tour-card { animation: none; }
 }
 
 .cs-tour-card p {
@@ -12709,6 +12760,22 @@ button.dj-card {
 .cs-weapon-chip:hover {
   background: var(--ui-control-bg-hover);
   color: var(--ui-text-primary);
+}
+
+/* Spell detail overlay: descriptions, attack/save lines, and higher-level
+   scaling notes are combat-critical reading — body scale, never fine print. */
+.cs-spell-detail-desc,
+.cs-spell-detail-roll,
+.cs-spell-reference-dice,
+.cs-spell-damage-dice {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* First look card: an introduction, not a footnote. */
+.cs-tour-card p {
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 /* The ledger's printed headings can stay compact, but no live label or

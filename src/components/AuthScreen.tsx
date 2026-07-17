@@ -9,12 +9,14 @@ export default memo(function AuthScreen(props: {
   mode: AuthMode;
   email: string;
   password: string;
+  displayName: string;
   inviteCode: string;
   resetToken: string;
   status: string;
   onModeChange: (mode: AuthMode) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onDisplayNameChange: (value: string) => void;
   onInviteCodeChange: (value: string) => void;
   onResetTokenChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
@@ -62,14 +64,26 @@ export default memo(function AuthScreen(props: {
             />
           ) : null}
           {registering ? (
-            <input
-              className="ao-input"
-              type="text"
-              placeholder="Invite code (optional)"
-              aria-label="Invite code (optional)"
-              value={props.inviteCode}
-              onChange={(event) => props.onInviteCodeChange(event.target.value)}
-            />
+            <>
+              <input
+                className="ao-input"
+                type="text"
+                placeholder="Display name"
+                aria-label="Display name"
+                autoComplete="nickname"
+                maxLength={80}
+                value={props.displayName}
+                onChange={(event) => props.onDisplayNameChange(event.target.value)}
+              />
+              <input
+                className="ao-input"
+                type="text"
+                placeholder="Invite code (optional)"
+                aria-label="Invite code (optional)"
+                value={props.inviteCode}
+                onChange={(event) => props.onInviteCodeChange(event.target.value)}
+              />
+            </>
           ) : null}
           {props.status ? (
             <span className="ao-title-status" role="status">

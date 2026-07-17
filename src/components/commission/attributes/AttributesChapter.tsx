@@ -85,6 +85,10 @@ export default function AttributesChapter(props: {
     }
     const assignments = method === "standard-array" ? props.standardAssignments : props.rolledAssignments;
     const values = method === "standard-array" ? standardArray : props.rolledScores;
+    if (values.length === 0) {
+      // Rolled method before the dice have been cast — nothing to assign yet.
+      return <span className="ao-ability-unrolled" aria-label={`${abilityNames[key]} not yet rolled`}>—</span>;
+    }
     return (
       <select
         value={assignments[key]}
@@ -147,7 +151,9 @@ export default function AttributesChapter(props: {
             </div>
             {method === "roll" ? (
               <p className="ao-ability-roll-note" aria-live="polite">
-                {`Current results: ${props.rolledScores.join(", ")} — assign each value below.`}
+                {props.rolledScores.length > 0
+                  ? `Current results: ${props.rolledScores.join(", ")} — assign each value below.`
+                  : "No results yet — cast the dice to determine your six scores."}
               </p>
             ) : null}
             <div className="ao-ability-grid">
