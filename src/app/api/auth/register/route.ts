@@ -72,24 +72,19 @@ export async function POST(request: Request) {
         email: user.email,
         name: user.name,
         token: verificationToken,
-        requestOrigin: (() => {
-          const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-          const forwardedProto = request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "");
-          return forwardedHost ? `${forwardedProto}://${forwardedHost.split(",")[0].trim()}` : new URL(request.url).origin;
-        })(),
       });
       emailSent = true;
     } catch (emailError) {
       // User was created and token stored — they can request a resend later.
       console.error("Failed to send verification email:", emailError);
-      emailErrorMessage = emailError instanceof Error ? emailError.message : "Unknown error";
+      emailErrorMessage = "Use Resend verification from the login screen.";
     }
 
     clearAuthFailures(rateLimitKeys);
 
     const message = emailSent
       ? "Account created! Check your email to verify your address."
-      : `Account created, but we couldn't send the verification email: ${emailErrorMessage}`;
+      : `Account created, but the verification email was delayed. ${emailErrorMessage}`;
 
     return NextResponse.json({ message });
   } catch (error) {

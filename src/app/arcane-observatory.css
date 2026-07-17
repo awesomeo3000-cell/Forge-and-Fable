@@ -1187,7 +1187,7 @@
 [data-theme="arcane-observatory"] .builder-shell::before {
   background-image:
     linear-gradient(90deg, rgba(7, 13, 22, 0.88) 0%, rgba(7, 13, 22, 0.68) 42%, rgba(7, 13, 22, 0.78) 100%),
-    url("/backdrop.png"),
+    url("/backdrop.webp"),
     radial-gradient(circle at calc(100% - 40px) calc(100% + 80px),
       transparent 258px,
       rgba(179, 146, 74, 0.15) 259px 260px,

@@ -27,7 +27,7 @@ describe("resolveDashboardCampaignArtwork", () => {
 
   it("uses the campaign theme art when no banner is set", () => {
     const art = resolveDashboardCampaignArtwork({ bannerImageUrl: null, themeKey: "forge" });
-    expect(art).toBe("/forge-backdrop.png");
+    expect(art).toBe("/forge-backdrop.webp");
   });
 
   it("resolves an unknown theme key to the default theme, not a broken path", () => {

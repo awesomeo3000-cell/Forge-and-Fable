@@ -21,7 +21,8 @@ Registration asks for email and password, with an optional invite code if you se
 | `JWT_SECRET` | Required in production. Use a long random value. |
 | `REGISTRATION_CODE` | Optional. If set, new accounts must enter this exact code. |
 | `FORGE_VAULT_DIR` | Optional. Directory that stores `forge.db` plus SQLite `-wal` and `-shm` sidecar files. Use a persistent disk path online. |
-| `FORGE_BACKUP_DIR` | Recommended. Different persistent volume or mounted destination for SQLite backups. |
+| `FORGE_BACKUP_DIR` | Required for production backup jobs. Must be outside `FORGE_VAULT_DIR` on separate durable storage. |
+| `FORGE_BACKUP_KEEP` | Number of timestamped backups to retain; defaults to 7. |
 
 Generate a strong `JWT_SECRET`:
 
@@ -103,7 +104,11 @@ Verify a backup before relying on it:
 npm run db:verify-backup -- /path/to/forge-2026-07-17T12-00-00-000Z.db
 ```
 
-The verification checks SQLite integrity, foreign-key consistency, and that the backup can be opened read-only.
+Every backup is now verified automatically before it is retained. The separate verification command checks SQLite integrity, foreign-key consistency, and that an older backup can still be opened read-only.
+
+Schedule the backup job on the hosting platform and alert on non-zero exits. A same-volume copy is useful for operator mistakes but is not disaster recovery; production backup commands fail when the destination is missing or nested under the vault directory. `FORGE_ALLOW_SAME_VOLUME_BACKUP=true` is an explicit emergency override, not a recommended deployment setting.
+
+For Railway, enable scheduled volume backups in addition to the application-level export. For Render or another single-disk host, copy verified backups to an external durable destination. Record a restore drill before release and repeat it after schema migrations.
 
 To restore, stop the app, preserve the current `forge.db` and its `-wal`/`-shm` sidecars, copy the chosen backup to `forge.db`, remove stale sidecars, and restart. Confirm `/api/health` returns `ok: true` before allowing edits.
 

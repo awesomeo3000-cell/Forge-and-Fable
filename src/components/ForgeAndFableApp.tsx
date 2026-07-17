@@ -94,6 +94,7 @@ const HeroSheet = dynamic(() => import("@/components/HeroSheet"), { ssr: false }
 const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 const DiceRollOverlay = dynamic(() => import("@/components/DiceRollOverlay"), { ssr: false });
 const RollDrawer = dynamic(() => import("@/components/RollDrawer"), { ssr: false });
+const AccountDataModal = dynamic(() => import("@/components/AccountDataModal"), { ssr: false });
 
 function authHeaders(): Record<string, string> {
   return {
@@ -218,6 +219,7 @@ export default function ForgeAndFableApp() {
     () => (typeof window !== "undefined" ? parseCampaignHash(window.location.hash)?.section : undefined) ?? "overview",
   );
   const [adminOpen, setAdminOpen] = useState(false);
+  const [accountDataOpen, setAccountDataOpen] = useState(false);
   const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
     () => typeof window !== "undefined"
@@ -873,6 +875,27 @@ export default function ForgeAndFableApp() {
       setStatus("Unexpected response from server.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Network error — please try again.");
+    }
+  }
+
+  async function resendVerification() {
+    const email = authEmail.trim();
+    if (!email) {
+      setStatus("Enter your email address first.");
+      return;
+    }
+
+    setStatus("");
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json() as { message?: string };
+      setStatus(data.message ?? "If the account is unverified, a new link has been sent.");
+    } catch {
+      setStatus("Network error — please try again.");
     }
   }
 
@@ -2120,6 +2143,7 @@ export default function ForgeAndFableApp() {
         onInviteCodeChange={setAuthInviteCode}
         resetToken={authResetToken}
         onResetTokenChange={setAuthResetToken}
+        onResendVerification={() => void resendVerification()}
         onSubmit={authRequest}
       />
     );
@@ -2267,6 +2291,15 @@ export default function ForgeAndFableApp() {
       onToast={(title, body) => pushToast("announce", title, body)}
     /> : null}
     {adminOpen && user.isAdmin ? <AdminPanel onClose={() => setAdminOpen(false)} /> : null}
+    {accountDataOpen ? (
+      <AccountDataModal
+        onClose={() => setAccountDataOpen(false)}
+        onDeleted={() => {
+          setAccountDataOpen(false);
+          logOut();
+        }}
+      />
+    ) : null}
     {campaignHandout ? (
       <div className="modal-scrim" role="presentation" onMouseDown={() => setCampaignHandout(null)}>
         <figure className="campaign-handout" onMouseDown={(event) => event.stopPropagation()}>
@@ -2365,6 +2398,9 @@ export default function ForgeAndFableApp() {
           <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
           <div className="ao-header-action-cluster" aria-label="Workspace actions">
+            <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setAccountDataOpen(true)} title="Account data">
+              <UserIcon size={16} /><span>My data</span>
+            </button>
             <button className="glass-icon ink-action ao-header-action ao-header-action-primary" type="button" onClick={() => setCampaignListOpen(true)} title="Campaigns">
               <Swords size={17} /><span>Campaigns</span>
             </button>

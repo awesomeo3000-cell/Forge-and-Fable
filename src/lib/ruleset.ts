@@ -104,7 +104,7 @@ const featureDescriptions: Record<string, string> = {
   "Indomitable improvement": "Use Indomitable more often before resting.",
   "Indomitable Might": "Treat low Strength checks as stronger results while raging.",
   "Jack of All Trades": "Add part of your proficiency bonus to many checks you are not trained in.",
-  Ki: "Gain a pool of focus points used for special monk techniques.",
+  Ki: "Gain a pool of ki points used for special monk techniques.",
   "Ki-Empowered Strikes": "Your unarmed strikes count as magical for overcoming resistance.",
   "Land's Stride": "Move more easily through natural terrain and resist some plant-based hindrances.",
   "Lay on Hands": "Heal wounds or cure certain conditions with a pool of divine healing.",
@@ -1431,7 +1431,7 @@ export const ruleset: Ruleset = {
         {
           name: "Sneak strike",
           ability: "dexterity",
-          formula: "1d8 + DEX + 1d6",
+          formula: "1d8 + DEX + Sneak Attack",
           damageType: "Precision",
         },
       ],

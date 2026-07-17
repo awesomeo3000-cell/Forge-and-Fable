@@ -1,8 +1,10 @@
 # Forge & Fable — Road to 1.0
 
-**Status date:** 2026-07-11. Foundation hardening through R21 and the CHANGES-27 pre-session DM tools MVP are implemented locally; see `CHANGES-20.md`, `CHANGES-21.md`, and `CHANGES-27-pre-session-dm-tools.md`.
+> Historical planning document. Current release status and acceptance gates live in [`RELEASE-1.0-CHECKLIST.md`](./RELEASE-1.0-CHECKLIST.md). Items below are retained for decision history and must not be treated as current without re-verification.
 
-**Pre-session tools note:** Creature and encounter libraries, seeded encounter generation and warnings, reusable handouts, campaign journal/player memory, sessions and reviewed summaries, encounter snapshots, context-matched reminders, waves, and Table integration are present. Automated gates are 129 tests and clean lint/typecheck/build. Advanced creature editing, visual wave authoring, reminder push/history refinements, generator locking/partial regeneration, and the policy-blocked two-profile browser pass remain explicitly deferred.
+**Status date:** 2026-07-17. Foundation hardening through R21 and the CHANGES-27 pre-session DM tools MVP are implemented locally; see `CHANGES-20.md`, `CHANGES-21.md`, and `CHANGES-27-pre-session-dm-tools.md`.
+
+**Pre-session tools note:** Creature and encounter libraries, seeded encounter generation and warnings, reusable handouts, campaign journal/player memory, sessions and reviewed summaries, encounter snapshots, context-matched reminders, waves, and Table integration are present. Current automated counts and gates are recorded in `RELEASE-1.0-CHECKLIST.md`. Advanced creature editing, visual wave authoring, reminder push/history refinements, and generator locking/partial regeneration remain explicitly deferred.
 **Progress:** HP correctness, revisioned/serialized character writes, shared derived HP/passive rules, ordered SQLite migrations, health checks, and rotating backups are implemented. The next safe work is UX polish or a separately reviewed rules batch.
 **Audience:** whichever AI (or human) picks up a round. Assume no memory of prior sessions — this document plus the repo IS the memory.
 **Companion documents:** `docs/QA-REPORT-2026-07-04.md` (the 43-issue audit; P0s fixed, P1–P3 open), `docs/CHANGES-*.md` (what every prior round did and how it was verified), `docs/ai-project-proposal-*.md` (the proposal format that works).

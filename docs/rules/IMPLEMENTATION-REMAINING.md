@@ -1,6 +1,8 @@
 # Forge & Fable Level-Up Implementation Remaining Work
 
-Updated: 2026-07-13
+> Historical handoff captured before the progression engine landed. The typed packet loader, deterministic engine, persistence state, and production integration now exist under `src/lib/progression/`. Use `../RELEASE-1.0-CHECKLIST.md` for current gates; the sections below remain useful only as regression criteria.
+
+Updated: 2026-07-17
 
 ## Current state
 
@@ -14,7 +16,7 @@ The research layer is complete for the current scope:
 - Structural research validation, typecheck, lint, and the full test suite are passing.
 - Production currently remains strict 2014. The research packets are not yet the production level-up source of truth.
 
-The remaining work is implementation, integration, and end-to-end verification.
+The remaining release work is exhaustive end-to-end verification across every supported 2014 class/subclass path, not construction of the engine described below.
 
 ## 1. Make the research packets consumable by production code
 

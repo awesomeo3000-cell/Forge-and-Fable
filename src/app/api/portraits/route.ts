@@ -11,14 +11,32 @@ import { authenticateRequest, AuthError } from "@/lib/auth";
 import {
   MAX_PORTRAIT_SIZE,
   MAX_PORTRAITS_PER_USER,
+  MAX_PORTRAIT_STORAGE_PER_USER,
   PORTRAIT_MIME_TYPES,
-  countUserPortraits,
+  listUserPortraits,
   savePortrait,
   sniffImageMime,
+  userPortraitStorage,
 } from "@/lib/portraitStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  try {
+    const userId = await authenticateRequest(request);
+    const storage = userPortraitStorage(userId);
+    return NextResponse.json({
+      portraits: listUserPortraits(userId),
+      storage: { ...storage, limitBytes: MAX_PORTRAIT_STORAGE_PER_USER },
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: "Could not list portraits." }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -73,10 +91,17 @@ export async function POST(request: Request) {
       );
     }
 
-    if (countUserPortraits(userId) >= MAX_PORTRAITS_PER_USER) {
+    const storage = userPortraitStorage(userId);
+    if (storage.count >= MAX_PORTRAITS_PER_USER) {
       return NextResponse.json(
         { error: `Upload limit reached (${MAX_PORTRAITS_PER_USER} images per account).` },
         { status: 403 },
+      );
+    }
+    if (storage.bytes + bytes.length > MAX_PORTRAIT_STORAGE_PER_USER) {
+      return NextResponse.json(
+        { error: `Portrait storage limit reached (${MAX_PORTRAIT_STORAGE_PER_USER / 1024 / 1024} MB per account).` },
+        { status: 413 },
       );
     }
 

@@ -623,8 +623,8 @@ export function checkDatabaseHealth() {
   const databaseBytes = existsSync(getDbFile()) ? statSync(getDbFile()).size : 0;
   const walFile = `${getDbFile()}-wal`;
   const walBytes = existsSync(walFile) ? statSync(walFile).size : 0;
-  if (freeBytes < 64 * 1024 * 1024) {
-    throw new Error("Database volume has less than 64 MB free.");
+  if (freeBytes < 256 * 1024 * 1024) {
+    throw new Error("Database volume has less than 256 MB free.");
   }
   const now = Date.now();
   if (globalThis.__forgeDbLastWriteHealthAt && now - globalThis.__forgeDbLastWriteHealthAt < 60_000) {

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     if (user) {
       const token = createPasswordResetToken(user.id);
       try {
-        await sendPasswordResetEmail({ email: user.email, name: user.name, token, requestOrigin: new URL(request.url).origin });
+        await sendPasswordResetEmail({ email: user.email, name: user.name, token });
       } catch (error) {
         console.error("Failed to send password reset email:", error);
       }

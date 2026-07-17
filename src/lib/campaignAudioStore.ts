@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
+import { MAX_TOTAL_MEDIA_STORAGE, totalMediaStorageBytes } from "@/lib/mediaStorage";
 
 export const MAX_CAMPAIGN_AUDIO_SIZE = 25 * 1024 * 1024;
 export const MAX_CAMPAIGN_AUDIO_STORAGE = 100 * 1024 * 1024;
@@ -45,6 +46,9 @@ export function saveCampaignAudioAsset(campaignId: string, userId: string, mime:
       .get(campaignId) as { total: number };
     if (current.total + bytes.length > MAX_CAMPAIGN_AUDIO_STORAGE) {
       throw new Error(`This campaign has reached its ${MAX_CAMPAIGN_AUDIO_STORAGE / 1024 / 1024} MB audio storage limit.`);
+    }
+    if (totalMediaStorageBytes() + bytes.length > MAX_TOTAL_MEDIA_STORAGE) {
+      throw new Error("The server media storage limit has been reached.");
     }
 
     const id = randomUUID();

@@ -9,22 +9,40 @@ function getResend(): Resend {
   return new Resend(apiKey);
 }
 
-export function appUrl(requestOrigin?: string): string {
-  const forwarded = requestOrigin?.trim();
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
-    || process.env.APP_URL?.trim()
+export function appUrl(): string {
+  const configured = process.env.APP_URL?.trim()
+    || process.env.NEXT_PUBLIC_APP_URL?.trim()
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")
-    || "http://localhost:3000";
-  return (forwarded || configured).replace(/\/+$/, "");
+    || (process.env.NODE_ENV !== "production" ? "http://localhost:3000" : "");
+
+  if (!configured) {
+    throw new Error("APP_URL is required in production.");
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(configured);
+  } catch {
+    throw new Error("APP_URL must be an absolute http(s) URL.");
+  }
+
+  if (!new Set(["http:", "https:"]).has(parsed.protocol)) {
+    throw new Error("APP_URL must use http or https.");
+  }
+  if (parsed.search || parsed.hash) {
+    throw new Error("APP_URL cannot include a query string or fragment.");
+  }
+  if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
+    throw new Error("APP_URL must use https in production.");
+  }
+
+  return parsed.toString().replace(/\/+$/, "");
 }
 
 export interface VerificationEmailParams {
   email: string;
   name: string;
   token: string;
-  /** Origin of the registration request, used to prevent links pointing at a
-      stale localhost/preview hostname when the app is deployed. */
-  requestOrigin?: string;
 }
 
 /** Send a verification email via Resend. Returns the Resend API response id on
@@ -33,7 +51,7 @@ export async function sendVerificationEmail(
   params: VerificationEmailParams,
 ): Promise<string> {
   const resend = getResend();
-  const verifyUrl = `${appUrl(params.requestOrigin)}/api/auth/verify?token=${encodeURIComponent(params.token)}`;
+  const verifyUrl = `${appUrl()}/api/auth/verify?token=${encodeURIComponent(params.token)}`;
 
   const { data, error } = await resend.emails.send({
     from: `${BRAND_NAME} <noreply@dreamwright.gg>`,
@@ -61,7 +79,7 @@ export async function sendPasswordResetEmail(
   params: VerificationEmailParams,
 ): Promise<string> {
   const resend = getResend();
-  const resetUrl = `${appUrl(params.requestOrigin)}/?resetToken=${encodeURIComponent(params.token)}`;
+  const resetUrl = `${appUrl()}/?resetToken=${encodeURIComponent(params.token)}`;
   const { data, error } = await resend.emails.send({
     from: `${BRAND_NAME} <noreply@dreamwright.gg>`,
     to: [params.email],

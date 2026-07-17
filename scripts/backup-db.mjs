@@ -14,14 +14,25 @@ const backupDir = configuredBackupDir
     : path.join(process.cwd(), configuredBackupDir)
   : path.join(dataDir, "backups");
 const keepCount = Math.max(1, Number.parseInt(process.env.FORGE_BACKUP_KEEP ?? "7", 10) || 7);
+const allowSameVolume = process.env.FORGE_ALLOW_SAME_VOLUME_BACKUP === "true";
+const backupRelativeToData = path.relative(dataDir, backupDir);
+const backupInsideDataDir = backupRelativeToData === "" || (!backupRelativeToData.startsWith("..") && !path.isAbsolute(backupRelativeToData));
 
 if (!existsSync(source)) {
   throw new Error(`No Forge & Fable database found at ${source}`);
 }
 
 mkdirSync(backupDir, { recursive: true });
-if (!configuredBackupDir) {
-  console.warn("FORGE_BACKUP_DIR is not set; this backup is on the database volume and is not disaster protection.");
+if (process.env.NODE_ENV === "production" && (!configuredBackupDir || backupInsideDataDir) && !allowSameVolume) {
+  throw new Error(
+    "Production backups require FORGE_BACKUP_DIR outside FORGE_VAULT_DIR. " +
+    "Set FORGE_ALLOW_SAME_VOLUME_BACKUP=true only when you deliberately accept that this is not disaster protection.",
+  );
+}
+if (!configuredBackupDir || backupInsideDataDir) {
+    console.warn(
+      "The backup destination is on or inside the database volume; this is not disaster protection.",
+    );
 }
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const destination = path.join(backupDir, `forge-${stamp}.db`);
@@ -35,6 +46,19 @@ try {
   db.close();
 }
 
+const backup = new DatabaseSync(destination, { readOnly: true });
+try {
+  const integrity = String(backup.prepare("PRAGMA integrity_check").get()?.integrity_check ?? "");
+  if (integrity !== "ok") throw new Error(`Backup integrity check failed: ${integrity}`);
+  const foreignKeys = backup.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeys.length > 0) throw new Error(`Backup foreign-key check failed with ${foreignKeys.length} issue(s)`);
+} catch (error) {
+  rmSync(destination, { force: true });
+  throw error;
+} finally {
+  backup.close();
+}
+
 const backups = readdirSync(backupDir)
   .filter((name) => /^forge-.*\.db$/.test(name))
   .sort()
@@ -44,4 +68,5 @@ for (const old of backups.slice(keepCount)) {
 }
 
 console.log(`Backup created: ${destination}`);
+console.log("Verification: integrity and foreign-key checks passed");
 console.log(`Retention: newest ${keepCount} backup${keepCount === 1 ? "" : "s"}`);

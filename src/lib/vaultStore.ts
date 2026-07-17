@@ -178,7 +178,7 @@ export async function registerUser(input: {
   return publicUser(user);
 }
 
-/** Best-effort rollback for a registration whose post-write step (token signing) failed. */
+/** Delete an account and its foreign-key-cascaded data in one transaction. */
 export async function deleteUserById(userId: string): Promise<void> {
   const db = getDb();
   db.exec("BEGIN IMMEDIATE");

@@ -28,9 +28,9 @@
 | Warlock | 2024 | second-review | Pilot packet includes prepared Pact Magic, level-1 Eldritch Invocations, Contact Patron, Mystic Arcanum, and Epic Boon. |
 | Wizard | 2024 | second-review | Pilot packet includes Ritual Adept, Scholar, Memorize Spell, Wizard Subclass timing, revised preparation, and Epic Boon. |
 | Artificer | 2024 | policy-blocked | Not part of the twelve-class 2024 Basic Rules core inventory; later and Unearthed Arcana sources are deferred. |
-| Remaining base classes | 2014 | inventory-complete | Existing production catalog exists; structured extraction remains. |
-| Remaining base classes | 2024 | inventory-complete | Core class names identified; structured extraction remains. |
-| Subclasses | 2014 | first-extraction-complete | All 32 source-backed records have edition-specific IDs; detailed packets now cover all 28 SRD records and four licensed Tasha Artificer specialists. Independent second review remains pending. |
-| Subclasses | 2024 | first-extraction-basic-rules | 12 Basic Rules records have edition-specific IDs and detailed structured feature packets; independent second review and additional licensed coverage remain pending. |
+| Base classes | 2014 | packet-complete | All 13 production class packets are structurally validated and represented in progression tests. |
+| Base classes | 2024 | packet-complete-research | All 12 Basic Rules class packets are structurally validated; production remains gated to 2014. |
+| Subclasses | 2014 | packet-complete | All 32 source-backed records have edition-specific IDs and detailed packets: 28 SRD records and four licensed Tasha Artificer specialists. |
+| Subclasses | 2024 | packet-complete-basic-rules | All 12 Basic Rules records have edition-specific IDs and detailed structured feature packets; additional licensed coverage remains outside the current scope. |
 
 No 2024 record is production-approved by this status file.

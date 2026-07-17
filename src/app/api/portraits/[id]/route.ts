@@ -7,7 +7,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { getPortrait } from "@/lib/portraitStore";
+import { authenticateRequest, AuthError } from "@/lib/auth";
+import { deleteUserPortrait, getPortrait } from "@/lib/portraitStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +32,27 @@ export async function GET(
     headers: {
       "Content-Type": portrait.mime,
       "Content-Length": String(portrait.bytes.length),
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const userId = await authenticateRequest(request);
+    const { id } = await context.params;
+    if (!UUID_PATTERN.test(id) || !deleteUserPortrait(userId, id)) {
+      return NextResponse.json({ error: "Portrait not found." }, { status: 404 });
+    }
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: "Could not delete portrait." }, { status: 500 });
+  }
 }

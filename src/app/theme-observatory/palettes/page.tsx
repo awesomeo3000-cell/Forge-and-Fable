@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { BRAND_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -155,6 +156,9 @@ function Sample({ opt }: { opt: PaletteOption }) {
 }
 
 export default function PaletteOptionsPage(): ReactNode {
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_INTERNAL_REVIEW_ROUTES !== "true") {
+    notFound();
+  }
   return (
     <div data-theme="arcane-observatory" className="ao-sc-root">
       <header className="ao-sc-masthead">

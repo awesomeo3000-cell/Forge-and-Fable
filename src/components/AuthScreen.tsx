@@ -19,6 +19,7 @@ export default memo(function AuthScreen(props: {
   onDisplayNameChange: (value: string) => void;
   onInviteCodeChange: (value: string) => void;
   onResetTokenChange: (value: string) => void;
+  onResendVerification: () => void;
   onSubmit: (event: FormEvent) => void;
 }) {
   const registering = props.mode === "register";
@@ -109,9 +110,14 @@ export default memo(function AuthScreen(props: {
             </button>
           )}
           {!registering && !requestingReset && !resetting ? (
-            <button type="button" onClick={() => props.onModeChange("forgot")}>
-              Forgot password?
-            </button>
+            <>
+              <button type="button" onClick={props.onResendVerification}>
+                Resend verification
+              </button>
+              <button type="button" onClick={() => props.onModeChange("forgot")}>
+                Forgot password?
+              </button>
+            </>
           ) : null}
         </nav>
       </div>

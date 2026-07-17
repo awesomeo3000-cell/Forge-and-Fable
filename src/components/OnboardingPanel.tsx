@@ -16,7 +16,7 @@ type Props = {
 const CHOICES = [
   {
     key: "character" as const,
-    art: "/Start/onboard-character.jpg",
+    art: "/Start/onboard-character.webp",
     Icon: UserPlus,
     name: "Create a character",
     desc: "Build a hero now — join a campaign whenever one calls.",
@@ -24,7 +24,7 @@ const CHOICES = [
   },
   {
     key: "campaign" as const,
-    art: "/Start/onboard-campaign.jpg",
+    art: "/Start/onboard-campaign.webp",
     Icon: Swords,
     name: "Run a campaign",
     desc: "Open a table and prepare as DM. No character required.",

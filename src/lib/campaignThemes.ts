@@ -16,7 +16,7 @@ export const CAMPAIGN_THEMES: CampaignTheme[] = [
     id: "forge",
     label: "The Arcane Forge",
     description: "Bronze, fire and dangerous old magic.",
-    imageUrl: "/forge-backdrop.png",
+    imageUrl: "/forge-backdrop.webp",
   },
   {
     id: "observatory",
@@ -34,13 +34,13 @@ export const CAMPAIGN_THEMES: CampaignTheme[] = [
     id: "wayhouse",
     label: "The Moonlit Wayhouse",
     description: "Warm windows, quiet roads and stories after dark.",
-    imageUrl: "/wayhouse-backdrop.png",
+    imageUrl: "/wayhouse-backdrop.webp",
   },
   {
     id: "hearth",
     label: "The Hearth Market",
     description: "A bustling crossroads beneath the old blue tree.",
-    imageUrl: "/backdrop.png",
+    imageUrl: "/backdrop.webp",
   },
 ];
 

@@ -26,6 +26,12 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Validate rules research
+        run: npm run rules:validate-research
+
+      - name: Validate release assets
+        run: npm run assets:check
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -34,3 +40,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Audit all dependencies
+        run: npm audit
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Hosted browser smoke tests
+        run: npm run test:e2e

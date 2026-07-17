@@ -21,7 +21,8 @@ export function createPasswordResetToken(userId: string): string {
   const expiresAt = new Date(now.getTime() + RESET_EXPIRY_HOURS * 60 * 60 * 1000);
   db.exec("BEGIN IMMEDIATE");
   try {
-    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(userId);
+    db.prepare("DELETE FROM password_reset_tokens WHERE expires_at <= ? OR user_id = ?")
+      .run(now.toISOString(), userId);
     db.prepare("INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)")
       .run(randomUUID(), userId, hashToken(rawToken), expiresAt.toISOString(), now.toISOString());
     db.exec("COMMIT");

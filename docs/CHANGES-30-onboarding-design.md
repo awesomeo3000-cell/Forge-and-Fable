@@ -37,8 +37,8 @@ Fixed:
 The two choices now use the builder's threshold-card treatment — full-bleed
 ink-washed art + bottom scrim + caption. Two named files drop into
 `public/Start/`:
-- `onboard-character.jpg` — an outline/silhouette of a hero.
-- `onboard-campaign.jpg` — two hands working puppeteer control bars (the DM).
+- `onboard-character.webp` — an outline/silhouette of a hero.
+- `onboard-campaign.webp` — two hands working puppeteer control bars (the DM).
 Graceful two-state design (`OnboardingPanel`): each card starts in a
 seal-icon fallback (centered dark-ink caption on parchment) and flips to
 art-mode on image load (seal hidden, art+scrim at full opacity, caption

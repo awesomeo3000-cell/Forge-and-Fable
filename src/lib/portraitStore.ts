@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
+import { MAX_TOTAL_MEDIA_STORAGE, totalMediaStorageBytes } from "@/lib/mediaStorage";
 
 /**
  * User-uploaded portrait images, stored as BLOBs in SQLite so they live in
@@ -12,6 +13,7 @@ import { getDb } from "@/lib/db";
 export const MAX_PORTRAIT_SIZE = 4 * 1024 * 1024; // 4 MB
 /** Uploads per user — a safety valve against unbounded BLOB growth. */
 export const MAX_PORTRAITS_PER_USER = 50;
+export const MAX_PORTRAIT_STORAGE_PER_USER = 64 * 1024 * 1024;
 
 export const PORTRAIT_MIME_TYPES = new Set([
   "image/png",
@@ -38,12 +40,53 @@ export function countUserPortraits(userId: string): number {
   return row.count;
 }
 
+export function userPortraitStorage(userId: string): { count: number; bytes: number } {
+  const row = getDb().prepare(`
+    SELECT COUNT(*) AS count, COALESCE(SUM(size), 0) AS bytes
+    FROM user_portraits WHERE user_id = ?
+  `).get(userId) as { count: number; bytes: number };
+  return { count: Number(row.count), bytes: Number(row.bytes) };
+}
+
+export function listUserPortraits(userId: string) {
+  return getDb().prepare(`
+    SELECT id, mime, size, created_at
+    FROM user_portraits WHERE user_id = ? ORDER BY created_at DESC
+  `).all(userId).map((row) => {
+    const portrait = row as { id: string; mime: string; size: number; created_at: string };
+    return {
+      id: portrait.id,
+      mime: portrait.mime,
+      size: portrait.size,
+      createdAt: portrait.created_at,
+      portraitUrl: `/api/portraits/${portrait.id}`,
+    };
+  });
+}
+
 export function savePortrait(userId: string, mime: string, bytes: Buffer): string {
   const id = randomUUID();
-  getDb()
-    .prepare("INSERT INTO user_portraits (id, user_id, mime, bytes, size, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-    .run(id, userId, mime, bytes, bytes.length, new Date().toISOString());
-  return id;
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const userStorage = userPortraitStorage(userId);
+    if (userStorage.count >= MAX_PORTRAITS_PER_USER) {
+      throw new Error(`Upload limit reached (${MAX_PORTRAITS_PER_USER} images per account).`);
+    }
+    if (userStorage.bytes + bytes.length > MAX_PORTRAIT_STORAGE_PER_USER) {
+      throw new Error(`Portrait storage limit reached (${MAX_PORTRAIT_STORAGE_PER_USER / 1024 / 1024} MB per account).`);
+    }
+    if (totalMediaStorageBytes() + bytes.length > MAX_TOTAL_MEDIA_STORAGE) {
+      throw new Error("The server media storage limit has been reached.");
+    }
+    db.prepare("INSERT INTO user_portraits (id, user_id, mime, bytes, size, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(id, userId, mime, bytes, bytes.length, new Date().toISOString());
+    db.exec("COMMIT");
+    return id;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function getPortrait(id: string): { mime: string; bytes: Buffer } | null {
@@ -51,4 +94,8 @@ export function getPortrait(id: string): { mime: string; bytes: Buffer } | null 
     .prepare("SELECT mime, bytes FROM user_portraits WHERE id = ?")
     .get(id) as { mime: string; bytes: Uint8Array } | undefined;
   return row ? { mime: row.mime, bytes: Buffer.from(row.bytes) } : null;
+}
+
+export function deleteUserPortrait(userId: string, id: string): boolean {
+  return getDb().prepare("DELETE FROM user_portraits WHERE id = ? AND user_id = ?").run(id, userId).changes > 0;
 }

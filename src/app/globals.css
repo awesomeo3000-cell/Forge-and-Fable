@@ -76,7 +76,7 @@
      crossroads). The AO app shell overrides its ::before with the engraved
      field, so this stays a title-screen/auth asset rather than a campaign
      setting baked into the logged-in workspace. */
-  --world-backdrop: url("/wayhouse-backdrop.png");
+  --world-backdrop: url("/wayhouse-backdrop.webp");
   --world-backdrop-position: center center;
   --world-backdrop-wash:
     linear-gradient(180deg, rgba(7, 13, 22, 0.12) 0%, transparent 30%, rgba(7, 13, 22, 0.5) 100%),

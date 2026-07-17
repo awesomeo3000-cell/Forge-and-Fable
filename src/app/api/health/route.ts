@@ -6,11 +6,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const database = checkDatabaseHealth();
-    return NextResponse.json({ ok: true, database });
-  } catch (error) {
+    checkDatabaseHealth();
+    return NextResponse.json({ ok: true });
+  } catch {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Database health check failed." },
+      { ok: false, error: "Service unavailable." },
       { status: 503 },
     );
   }

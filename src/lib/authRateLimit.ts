@@ -8,7 +8,11 @@ function hashKey(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-export function authRateLimitKeys(request: Request, scope: "login" | "register" | "password-reset", email: string) {
+export function authRateLimitKeys(
+  request: Request,
+  scope: "login" | "register" | "password-reset" | "verification-resend",
+  email: string,
+) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const ip = (forwarded || request.headers.get("x-real-ip") || "").slice(0, 128);
   return [hashKey(`${scope}:email:${email}`), ...(ip ? [hashKey(`${scope}:ip:${ip}`)] : [])];

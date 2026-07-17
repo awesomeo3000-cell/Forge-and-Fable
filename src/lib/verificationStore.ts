@@ -35,9 +35,18 @@ export function createVerificationToken(userId: string): string {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000);
 
-  db.prepare(
-    "INSERT INTO verification_tokens (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
-  ).run(crypto.randomUUID(), userId, tokenHash, expiresAt.toISOString(), now.toISOString());
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("DELETE FROM verification_tokens WHERE expires_at < ? OR user_id = ?")
+      .run(now.toISOString(), userId);
+    db.prepare(
+      "INSERT INTO verification_tokens (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
+    ).run(crypto.randomUUID(), userId, tokenHash, expiresAt.toISOString(), now.toISOString());
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 
   return rawToken;
 }
