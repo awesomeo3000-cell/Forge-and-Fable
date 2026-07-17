@@ -1,5 +1,5 @@
 {
-  "name": "forge-and-fable",
+  "name": "dreamwright",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -15,14 +15,16 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "assets:check": "node scripts/check-release-assets.mjs",
+    "bundle:check": "node scripts/check-bundle-budget.mjs",
     "rules:validate-research": "node scripts/rules/validate-research.mjs",
     "rules:build-actions": "node scripts/build-action-capability-data.mjs",
     "portraits:sync": "python scripts/sync-portraits.py",
     "db:backup": "node scripts/backup-db.mjs",
     "db:verify-backup": "node scripts/verify-db-backup.mjs",
+    "db:restore-drill": "node scripts/drill-db-restore.mjs",
     "cleanup:pdf-imports": "node scripts/clean-pdf-imports.mjs",
     "fixtures:pdf-import": "node scripts/generate-pdf-fixtures.mjs",
-    "release:check": "npm run rules:validate-research && npm run assets:check && npm test && npm run lint:ci && npm run typecheck && npm run build && npm audit"
+    "release:check": "npm run rules:validate-research && npm run assets:check && npm test && npm run lint:ci && npm run typecheck && npm run build && npm run bundle:check && npm audit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -40,8 +42,9 @@
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.61.1",
+    "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

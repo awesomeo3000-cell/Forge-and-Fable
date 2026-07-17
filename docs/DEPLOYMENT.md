@@ -1,6 +1,6 @@
-# Deploying Forge & Fable Privately
+# Deploying Dreamwright.gg
 
-Forge & Fable is a Next.js server app. It needs a Node 22.5+ web service, environment variables, and persistent storage for the SQLite vault database.
+Dreamwright is a Next.js server app. It needs a Node 22.5+ web service, environment variables, and persistent storage for the SQLite database.
 
 Do not deploy this to GitHub Pages or a static-only host.
 
@@ -20,9 +20,12 @@ Registration asks for email and password, with an optional invite code if you se
 | --- | --- |
 | `JWT_SECRET` | Required in production. Use a long random value. |
 | `REGISTRATION_CODE` | Optional. If set, new accounts must enter this exact code. |
-| `FORGE_VAULT_DIR` | Optional. Directory that stores `forge.db` plus SQLite `-wal` and `-shm` sidecar files. Use a persistent disk path online. |
+| `APP_URL` | Required canonical public URL. Production uses `https://www.dreamwright.gg`. |
+| `RESEND_API_KEY` | Required send-enabled Resend API key for verification and password-reset email. |
+| `FORGE_VAULT_DIR` | Optional legacy-compatible directory variable that stores `forge.db` plus SQLite sidecars. Use a persistent disk path online. |
 | `FORGE_BACKUP_DIR` | Required for production backup jobs. Must be outside `FORGE_VAULT_DIR` on separate durable storage. |
 | `FORGE_BACKUP_KEEP` | Number of timestamped backups to retain; defaults to 7. |
+| `BACKUP_EXPORT_TOKEN` | At least 32 random characters. Authorizes only the scheduled encrypted-transport backup download endpoint. |
 
 Generate a strong `JWT_SECRET`:
 
@@ -47,6 +50,7 @@ The blueprint creates:
 - a Node web service
 - a generated `JWT_SECRET`
 - a persistent disk mounted at `/var/data`
+- `APP_URL=https://www.dreamwright.gg`
 - `FORGE_VAULT_DIR=/var/data`
 
 The app writes the vault database to:
@@ -76,7 +80,7 @@ This repo includes `railway.json`.
 JWT_SECRET=<long random secret>
 ```
 
-Railway automatically exposes the volume path as `RAILWAY_VOLUME_MOUNT_PATH`, and Forge & Fable will use it for the vault. You can also explicitly set:
+Railway automatically exposes the volume path as `RAILWAY_VOLUME_MOUNT_PATH`, and Dreamwright will use it for the vault. You can also explicitly set:
 
 ```text
 FORGE_VAULT_DIR=/data
@@ -88,7 +92,7 @@ The database will live at `/data/forge.db` with possible `-wal` and `-shm` sidec
 
 ## Vault Migration and Backups
 
-On first boot after this update, Forge & Fable migrates `forge-vault.json` into SQLite if the database has no users yet. After a successful migration, the old JSON file is renamed to `forge-vault.migrated-<timestamp>.json`.
+On first boot after this update, Dreamwright migrates the legacy `forge-vault.json` into SQLite if the database has no users yet. After a successful migration, the old JSON file is renamed to `forge-vault.migrated-<timestamp>.json`.
 
 Create a consistent SQLite backup with:
 
@@ -108,9 +112,24 @@ Every backup is now verified automatically before it is retained. The separate v
 
 Schedule the backup job on the hosting platform and alert on non-zero exits. A same-volume copy is useful for operator mistakes but is not disaster recovery; production backup commands fail when the destination is missing or nested under the vault directory. `FORGE_ALLOW_SAME_VOLUME_BACKUP=true` is an explicit emergency override, not a recommended deployment setting.
 
-For Railway, enable scheduled volume backups in addition to the application-level export. For Render or another single-disk host, copy verified backups to an external durable destination. Record a restore drill before release and repeat it after schema migrations.
+For Railway, enable scheduled volume backups in addition to the application-level export. Render automatically snapshots persistent disks daily, but its cron services cannot mount a web service's disk, so the checked-in `.github/workflows/backup.yml` performs the application-level off-volume copy instead.
+
+Configure these repository secrets before enabling the workflow:
+
+```text
+DREAMWRIGHT_BACKUP_URL=https://www.dreamwright.gg
+DREAMWRIGHT_BACKUP_TOKEN=<same value as the host's BACKUP_EXPORT_TOKEN>
+```
+
+The workflow runs daily, downloads a transactionally consistent SQLite copy over HTTPS, verifies integrity and foreign keys, exercises a writable restore copy, stores the verified database as a 30-day GitHub Actions artifact, and opens or updates a repository issue if any step fails. Manually run **Off-volume database backup** once after configuring the secrets and after every schema migration.
 
 To restore, stop the app, preserve the current `forge.db` and its `-wal`/`-shm` sidecars, copy the chosen backup to `forge.db`, remove stale sidecars, and restart. Confirm `/api/health` returns `ok: true` before allowing edits.
+
+Before touching production, exercise the backup in an isolated temporary directory:
+
+```bash
+npm run db:restore-drill -- /path/to/dreamwright-backup.db
+```
 
 Existing browser sessions may need to log in again after this deployment because authentication now uses an httpOnly `ff_session` cookie instead of a JWT stored in localStorage.
 

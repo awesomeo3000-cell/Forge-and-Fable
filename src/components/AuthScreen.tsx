@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import type { FormEvent } from "react";
+import Link from "next/link";
 import type { AuthMode } from "@/types/game";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -119,6 +120,12 @@ export default memo(function AuthScreen(props: {
               </button>
             </>
           ) : null}
+        </nav>
+        <nav className="ao-title-legal" aria-label="Legal and support">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/legal">Licensing</Link>
+          <Link href="/support">Support</Link>
         </nav>
       </div>
     </main>

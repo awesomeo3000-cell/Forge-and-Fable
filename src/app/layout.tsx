@@ -20,7 +20,7 @@ import "./character-sheet-carded-observatory.css";
 // After arcane-observatory.css so its .ao-campaign-main / .ao-cw styles win
 // ties by cascade order.
 import "./ao17-campaign.css";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_DESCRIPTION, BRAND_NAME, BRAND_URL } from "@/lib/brand";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -64,8 +64,26 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: BRAND_NAME,
-  description: "A D&D 5e character builder and DM toolkit.",
+  metadataBase: new URL(BRAND_URL),
+  title: {
+    default: `${BRAND_NAME} | 5E Character Builder & DM Toolkit`,
+    template: `%s | ${BRAND_NAME}`,
+  },
+  description: BRAND_DESCRIPTION,
+  applicationName: BRAND_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: BRAND_URL,
+    siteName: BRAND_NAME,
+    title: `${BRAND_NAME} | 5E Character Builder & DM Toolkit`,
+    description: BRAND_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: `${BRAND_NAME} | 5E Character Builder & DM Toolkit`,
+    description: BRAND_DESCRIPTION,
+  },
 };
 
 // viewport-fit=cover lets the mobile shell pad into the safe areas

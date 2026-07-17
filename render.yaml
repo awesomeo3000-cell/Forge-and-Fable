@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: forge-and-fable
+    name: dreamwright
     runtime: node
     plan: starter
     buildCommand: npm ci && npm run build
@@ -16,7 +16,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: APP_URL
-        value: https://dreamwright.gg
+        value: https://www.dreamwright.gg
       - key: FORGE_VAULT_DIR
         value: /var/data
       # Async PDF-import jobs with OCR — the synchronous analyze fallback
@@ -28,6 +28,8 @@ services:
       - key: ENABLE_INTERNAL_REVIEW_ROUTES
         value: "false"
       - key: FORGE_BACKUP_DIR
+        sync: false
+      - key: BACKUP_EXPORT_TOKEN
         sync: false
     disk:
       name: forge-vault

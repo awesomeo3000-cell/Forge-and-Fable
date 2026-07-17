@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME, TRANSACTIONAL_EMAIL } from "@/lib/brand";
 
 function getResend(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -54,7 +54,7 @@ export async function sendVerificationEmail(
   const verifyUrl = `${appUrl()}/api/auth/verify?token=${encodeURIComponent(params.token)}`;
 
   const { data, error } = await resend.emails.send({
-    from: `${BRAND_NAME} <noreply@dreamwright.gg>`,
+    from: `${BRAND_NAME} <${TRANSACTIONAL_EMAIL}>`,
     to: [params.email],
     subject: `Verify your email for ${BRAND_NAME}`,
     html: `
@@ -81,7 +81,7 @@ export async function sendPasswordResetEmail(
   const resend = getResend();
   const resetUrl = `${appUrl()}/?resetToken=${encodeURIComponent(params.token)}`;
   const { data, error } = await resend.emails.send({
-    from: `${BRAND_NAME} <noreply@dreamwright.gg>`,
+    from: `${BRAND_NAME} <${TRANSACTIONAL_EMAIL}>`,
     to: [params.email],
     subject: `Reset your ${BRAND_NAME} password`,
     html: `

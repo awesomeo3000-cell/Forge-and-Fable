@@ -19,7 +19,7 @@ const backupRelativeToData = path.relative(dataDir, backupDir);
 const backupInsideDataDir = backupRelativeToData === "" || (!backupRelativeToData.startsWith("..") && !path.isAbsolute(backupRelativeToData));
 
 if (!existsSync(source)) {
-  throw new Error(`No Forge & Fable database found at ${source}`);
+  throw new Error(`No Dreamwright database found at ${source}`);
 }
 
 mkdirSync(backupDir, { recursive: true });
@@ -35,7 +35,7 @@ if (!configuredBackupDir || backupInsideDataDir) {
     );
 }
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const destination = path.join(backupDir, `forge-${stamp}.db`);
+const destination = path.join(backupDir, `dreamwright-${stamp}.db`);
 const escapedDestination = destination.replace(/'/g, "''");
 const db = new DatabaseSync(source);
 
@@ -60,7 +60,7 @@ try {
 }
 
 const backups = readdirSync(backupDir)
-  .filter((name) => /^forge-.*\.db$/.test(name))
+  .filter((name) => /^(?:dreamwright|forge)-.*\.db$/.test(name))
   .sort()
   .reverse();
 for (const old of backups.slice(keepCount)) {
