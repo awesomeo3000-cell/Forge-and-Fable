@@ -12,7 +12,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve } from 'node:path';
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
@@ -58,10 +58,6 @@ function check(condition, path, id, message) {
 
 function isNonEmptyString(v) {
   return typeof v === 'string' && v.trim().length > 0;
-}
-
-function isPositiveNumberOrNull(v) {
-  return v === null || v === undefined || (typeof v === 'number' && v >= 0 && Number.isFinite(v));
 }
 
 // ── Load Manifest ──────────────────────────────────────────────────────────
@@ -170,7 +166,7 @@ function validateCandidate(candidate, filePath, index, manifest) {
   // ── Structured data validation ──
   const sd = candidate.structuredData;
   if (sd) {
-    validateStructuredData(sd, path, id, manifest);
+    validateStructuredData(sd, path, id);
   }
   
   // ── Issues ──
@@ -182,7 +178,7 @@ function validateCandidate(candidate, filePath, index, manifest) {
   return true;
 }
 
-function validateStructuredData(sd, path, id, manifest) {
+function validateStructuredData(sd, path, id) {
   // Price
   if (sd.price) {
     if (sd.price.costCp !== undefined && sd.price.costCp !== null) {
@@ -216,7 +212,7 @@ function validateStructuredData(sd, path, id, manifest) {
     if (w.damageDice) check(/^\d+d\d+$/.test(w.damageDice) || /^\d+$/.test(w.damageDice), path, id, `Invalid damageDice: "${w.damageDice}"`);
     if (w.versatileDamageDice) check(/^\d+d\d+$/.test(w.versatileDamageDice), path, id, `Invalid versatileDamageDice: "${w.versatileDamageDice}"`);
     if (w.properties && Array.isArray(w.properties)) {
-      w.properties.forEach((prop, pi) => {
+      w.properties.forEach((prop) => {
         const clean = prop.replace(/\s*\(.*\)\s*/, '').toLowerCase().trim();
         if (!VALID_WEAPON_PROPERTIES.has(clean) && clean !== 'monk') {
           warn(path, id, `Unknown weapon property: "${prop}"`);

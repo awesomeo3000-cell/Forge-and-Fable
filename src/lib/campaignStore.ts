@@ -733,11 +733,15 @@ export function deleteCampaignTrack(campaignId: string, userId: string, trackId:
   const db = getDb();
   db.exec("BEGIN IMMEDIATE");
   try {
+    const track = db.prepare("SELECT url FROM campaign_tracks WHERE campaign_id = ? AND id = ?")
+      .get(campaignId, trackId) as { url: string } | undefined;
     const audio = getCampaignAudio(campaignId);
     if (audio.trackId === trackId) {
       db.prepare("UPDATE campaign_audio SET track_id = NULL, url = NULL, title = NULL, started_at = NULL, version = version + 1 WHERE campaign_id = ?").run(campaignId);
     }
     db.prepare("DELETE FROM campaign_tracks WHERE campaign_id = ? AND id = ?").run(campaignId, trackId);
+    const assetId = track?.url.match(/\/audio-assets\/([0-9a-f-]{36})(?:$|[/?])/i)?.[1];
+    if (assetId) db.prepare("DELETE FROM campaign_audio_assets WHERE id = ? AND campaign_id = ?").run(assetId, campaignId);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

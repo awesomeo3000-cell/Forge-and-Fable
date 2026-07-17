@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, statfsSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 19;
+const SCHEMA_REVISION = 21;
 
 export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -62,7 +62,8 @@ function createSchema(db: DatabaseSync) {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       created_at TEXT NOT NULL,
-      email_verified INTEGER NOT NULL DEFAULT 0
+      email_verified INTEGER NOT NULL DEFAULT 0,
+      session_version INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS characters (
@@ -354,6 +355,15 @@ function createSchema(db: DatabaseSync) {
     );
     CREATE INDEX IF NOT EXISTS idx_verification_tokens_hash ON verification_tokens(token_hash);
 
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
+
     CREATE TABLE IF NOT EXISTS user_portraits (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -494,6 +504,25 @@ function migrateSchema(db: DatabaseSync) {
       CREATE INDEX IF NOT EXISTS idx_pdf_import_jobs_expires ON pdf_import_jobs(expires_at);
     `);
     recordMigration(db, 19, "PDF import OCR jobs");
+    if (!tableHasColumn(db, "users", "session_version")) {
+      db.exec("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0");
+    }
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
+    `);
+    recordMigration(db, 20, "password recovery and session invalidation");
+    // Revision 21 is intentionally a no-op schema reconciliation. A local
+    // development branch previously used migration number 20 for campaign
+    // banner assets, so a fresh revision avoids treating that history as the
+    // password-recovery migration on existing installations.
+    recordMigration(db, 21, "schema history reconciliation after development-branch drift");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {
@@ -586,9 +615,20 @@ export function checkDatabaseHealth() {
   const db = getDb();
   db.prepare("SELECT 1 AS ok").get();
   const migration = db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get() as { version: number | null };
+  if (migration.version !== SCHEMA_REVISION) {
+    throw new Error(`Database schema revision ${migration.version ?? 0} does not match application revision ${SCHEMA_REVISION}.`);
+  }
+  const fileStats = statfsSync(getDataDir());
+  const freeBytes = Number(fileStats.bavail) * Number(fileStats.bsize);
+  const databaseBytes = existsSync(getDbFile()) ? statSync(getDbFile()).size : 0;
+  const walFile = `${getDbFile()}-wal`;
+  const walBytes = existsSync(walFile) ? statSync(walFile).size : 0;
+  if (freeBytes < 64 * 1024 * 1024) {
+    throw new Error("Database volume has less than 64 MB free.");
+  }
   const now = Date.now();
   if (globalThis.__forgeDbLastWriteHealthAt && now - globalThis.__forgeDbLastWriteHealthAt < 60_000) {
-    return { writable: true, schemaVersion: migration.version ?? 0 };
+    return { writable: true, schemaVersion: migration.version ?? 0, freeBytes, databaseBytes, walBytes };
   }
   let transactionStarted = false;
   try {
@@ -603,5 +643,5 @@ export function checkDatabaseHealth() {
     }
     throw error;
   }
-  return { writable: true, schemaVersion: migration.version ?? 0 };
+  return { writable: true, schemaVersion: migration.version ?? 0, freeBytes, databaseBytes, walBytes };
 }

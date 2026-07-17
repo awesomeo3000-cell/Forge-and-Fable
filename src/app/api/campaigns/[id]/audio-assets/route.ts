@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const bytes = Buffer.from(await file.arrayBuffer());
     const mime = sniffAudioMime(bytes, file.type);
     if (!mime) return NextResponse.json({ error: "The selected file does not look like a supported audio file." }, { status: 400 });
-    const assetId = saveCampaignAudioAsset(campaignId, mime, bytes);
+    const assetId = saveCampaignAudioAsset(campaignId, userId, mime, bytes);
     try {
       const track = addCampaignTrack(campaignId, userId, { title, url: `/api/campaigns/${encodeURIComponent(campaignId)}/audio-assets/${assetId}`, kind });
       return NextResponse.json({ track }, { status: 201 });
@@ -39,6 +39,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.status });
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not upload audio." }, { status: error instanceof Error && error.message.includes("DM") ? 403 : 400 });
+    const message = error instanceof Error ? error.message : "Could not upload audio.";
+    const status = message.includes("DM") ? 403 : message.includes("storage limit") ? 413 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

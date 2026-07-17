@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { getDb } from "@/lib/db";
 
 export const SESSION_COOKIE_NAME = "ff_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -18,10 +19,13 @@ const TOKEN_EXPIRY = "30d";
 
 export interface TokenPayload {
   userId: string;
+  sessionVersion?: number;
 }
 
 export async function signToken(payload: TokenPayload): Promise<string> {
-  return new SignJWT({ ...payload })
+  const row = getDb().prepare("SELECT session_version FROM users WHERE id = ?").get(payload.userId) as { session_version: number } | undefined;
+  const sessionVersion = row?.session_version ?? payload.sessionVersion ?? 0;
+  return new SignJWT({ ...payload, sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime(TOKEN_EXPIRY)
     .setIssuedAt()
@@ -66,10 +70,19 @@ export async function authenticateRequest(request: Request): Promise<string> {
 
   try {
     const payload = await verifyToken(token);
+    const row = getDb().prepare("SELECT session_version FROM users WHERE id = ?").get(payload.userId) as { session_version: number } | undefined;
+    if (!row || typeof payload.sessionVersion !== "number" || payload.sessionVersion !== row.session_version) {
+      throw new Error("Session has been revoked.");
+    }
     return payload.userId;
   } catch {
     throw new AuthError("Invalid or expired token.", 401);
   }
+}
+
+export function revokeAllSessions(userId: string): void {
+  const result = getDb().prepare("UPDATE users SET session_version = session_version + 1 WHERE id = ?").run(userId);
+  if (result.changes === 0) throw new AuthError("Vault session not found.", 401);
 }
 
 export class AuthError extends Error {

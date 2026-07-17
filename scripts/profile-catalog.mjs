@@ -67,7 +67,7 @@ items.forEach(item => {
 });
 
 // Compute percentages for empty fields
-for (const [key, val] of Object.entries(profile.emptyFields)) {
+for (const val of Object.values(profile.emptyFields)) {
   val.percent = val.total > 0 ? parseFloat(((val.count / val.total) * 100).toFixed(2)) : 0;
 }
 
@@ -147,13 +147,11 @@ items.forEach(item => {
   if (!baseIds.has(base)) baseIds.set(base, []);
   baseIds.get(base).push(item.id);
 });
-let structuralDupCount = 0;
 for (const [base, ids] of baseIds) {
   if (ids.length > 1) {
     const hasSuffix = ids.some(id => /-\d+$/.test(id));
     const hasNoSuffix = ids.some(id => !/-\d+$/.test(id));
     if (hasSuffix && hasNoSuffix) {
-      structuralDupCount++;
       const sampleName = items.find(i => ids.includes(i.id))?.name || base;
       anomalies.push({
         itemId: ids.join(', '),

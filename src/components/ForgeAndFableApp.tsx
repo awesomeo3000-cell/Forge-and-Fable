@@ -166,10 +166,16 @@ export default function ForgeAndFableApp() {
   const [rolledAssignments, setRolledAssignments] = useState(defaultAssignments);
   const [consoleInput, setConsoleInput] = useState("");
   const [consoleLog, setConsoleLog] = useState<string[]>(["Console online"]);
-  const [authMode, setAuthMode] = useState<AuthMode>("register");
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    if (typeof window === "undefined") return "register";
+    return new URLSearchParams(window.location.search).has("resetToken") ? "reset" : "register";
+  });
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authInviteCode, setAuthInviteCode] = useState("");
+  const [authResetToken, setAuthResetToken] = useState(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("resetToken") ?? "" : "",
+  );
   const [status, setStatus] = useState("");
   const [toasts, setToasts] = useState<{ id: string; kind: "announce" | "condition" | "turn"; title: string; body?: string }[]>([]);
 
@@ -786,14 +792,22 @@ export default function ForgeAndFableApp() {
     setStatus("");
 
     try {
-      const response = await fetch(authMode === "login" ? "/api/auth/login" : "/api/auth/register", {
+      const endpoint = authMode === "login"
+        ? "/api/auth/login"
+        : authMode === "register"
+          ? "/api/auth/register"
+          : authMode === "forgot"
+            ? "/api/auth/forgot-password"
+            : "/api/auth/reset-password";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: authEmail,
-          password: authPassword,
+          ...(authMode === "reset"
+            ? { token: authResetToken, password: authPassword }
+            : { email: authEmail, ...(authMode === "login" || authMode === "register" ? { password: authPassword } : {}) }),
           ...(authMode === "register" ? { inviteCode: authInviteCode } : {}),
         }),
       });
@@ -813,7 +827,11 @@ export default function ForgeAndFableApp() {
       // The user must verify their email before logging in.
       if (data.message && !data.user) {
         setStatus(data.message);
-        setAuthMode("login"); // switch to login so they can come back after verifying
+        if (authMode === "register" || authMode === "reset") setAuthMode("login");
+        if (authMode === "reset") {
+          setAuthResetToken("");
+          window.history.replaceState({}, "", window.location.pathname);
+        }
         return;
       }
 
@@ -2005,6 +2023,8 @@ export default function ForgeAndFableApp() {
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
         onInviteCodeChange={setAuthInviteCode}
+        resetToken={authResetToken}
+        onResetTokenChange={setAuthResetToken}
         onSubmit={authRequest}
       />
     );

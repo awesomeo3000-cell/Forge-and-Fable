@@ -41,6 +41,8 @@ The `data/` folder is intentionally ignored by Git so local users, characters, a
 
 Set `FORGE_VAULT_DIR` to change this location, for example `/var/data` on Render or `/data` on Railway.
 
+For disaster recovery, set `FORGE_BACKUP_DIR` to a different persistent volume or a mounted backup destination. Keeping backups under the vault directory is useful for quick rollback, but does not protect against loss of that volume.
+
 ## Deployment
 
 See `docs/DEPLOYMENT.md` for Render and Railway setup. The repo includes `render.yaml` and `railway.json`.
@@ -49,5 +51,7 @@ See `docs/DEPLOYMENT.md` for Render and Railway setup. The repo includes `render
 
 ```bash
 npm run lint
+npm test
+npm run typecheck
 npm run build
 ```

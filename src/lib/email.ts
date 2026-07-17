@@ -57,6 +57,29 @@ export async function sendVerificationEmail(
   return data?.id ?? "";
 }
 
+export async function sendPasswordResetEmail(
+  params: VerificationEmailParams,
+): Promise<string> {
+  const resend = getResend();
+  const resetUrl = `${appUrl(params.requestOrigin)}/?resetToken=${encodeURIComponent(params.token)}`;
+  const { data, error } = await resend.emails.send({
+    from: `${BRAND_NAME} <noreply@dreamwright.gg>`,
+    to: [params.email],
+    subject: `Reset your ${BRAND_NAME} password`,
+    html: `
+      <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:32px 16px;color:#2c1810;background:#faf7f2;border:1px solid #d4b896;border-radius:8px">
+        <h1 style="font-size:24px;margin:0 0 8px;color:#8b3a2a">${BRAND_NAME}</h1>
+        <p style="font-size:16px;margin:0 0 16px">Hello, ${escapeHtml(params.name)}.</p>
+        <p style="font-size:16px;margin:0 0 24px">Use the button below to choose a new password. This link expires in one hour.</p>
+        <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:#8b3a2a;color:#fff;text-decoration:none;border-radius:4px;font-size:16px;font-weight:bold">Reset password</a>
+        <p style="font-size:13px;color:#6b5e4f;margin:24px 0 0">If you did not request this, you can ignore this email.</p>
+      </div>`,
+    text: `Reset your ${BRAND_NAME} password by visiting: ${resetUrl}\n\nThis link expires in one hour. If you did not request this, you can ignore this email.`,
+  });
+  if (error) throw new Error(error.message);
+  return data?.id ?? "";
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

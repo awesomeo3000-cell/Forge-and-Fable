@@ -10,14 +10,18 @@ export default memo(function AuthScreen(props: {
   email: string;
   password: string;
   inviteCode: string;
+  resetToken: string;
   status: string;
   onModeChange: (mode: AuthMode) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onInviteCodeChange: (value: string) => void;
+  onResetTokenChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) {
   const registering = props.mode === "register";
+  const requestingReset = props.mode === "forgot";
+  const resetting = props.mode === "reset";
   return (
     <main className="entry-screen ao-title-entry">
       <div className="ao-title-stack">
@@ -36,15 +40,27 @@ export default memo(function AuthScreen(props: {
             value={props.email}
             onChange={(event) => props.onEmailChange(event.target.value)}
           />
-          <input
-            className="ao-input"
-            type="password"
-            placeholder="Password"
-            aria-label="Password"
-            autoComplete={registering ? "new-password" : "current-password"}
-            value={props.password}
-            onChange={(event) => props.onPasswordChange(event.target.value)}
-          />
+          {!requestingReset ? (
+            <input
+              className="ao-input"
+              type="password"
+              placeholder={resetting ? "New password" : "Password"}
+              aria-label={resetting ? "New password" : "Password"}
+              autoComplete={registering || resetting ? "new-password" : "current-password"}
+              value={props.password}
+              onChange={(event) => props.onPasswordChange(event.target.value)}
+            />
+          ) : null}
+          {resetting ? (
+            <input
+              className="ao-input"
+              type="text"
+              placeholder="Reset token"
+              aria-label="Reset token"
+              value={props.resetToken}
+              onChange={(event) => props.onResetTokenChange(event.target.value)}
+            />
+          ) : null}
           {registering ? (
             <input
               className="ao-input"
@@ -61,11 +77,15 @@ export default memo(function AuthScreen(props: {
             </span>
           ) : null}
           <button className="ao-btn ao-btn-brass ao-title-submit" type="submit">
-            {registering ? "Create account" : "Enter"}
+            {registering ? "Create account" : requestingReset ? "Send reset link" : resetting ? "Set new password" : "Enter"}
           </button>
         </form>
         <nav className="ao-title-links">
           {registering ? (
+            <button type="button" onClick={() => props.onModeChange("login")}>
+              Back to login
+            </button>
+          ) : requestingReset || resetting ? (
             <button type="button" onClick={() => props.onModeChange("login")}>
               Back to login
             </button>
@@ -74,6 +94,11 @@ export default memo(function AuthScreen(props: {
               Register
             </button>
           )}
+          {!registering && !requestingReset && !resetting ? (
+            <button type="button" onClick={() => props.onModeChange("forgot")}>
+              Forgot password?
+            </button>
+          ) : null}
         </nav>
       </div>
     </main>

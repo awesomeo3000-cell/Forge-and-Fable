@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
-import { addCampaignTrack, CampaignConflictError, createCampaign, joinCampaign, postCampaignEvent, postRoll, syncCampaign, updateCampaignAudio, updateCampaignInitiative } from "@/lib/campaignStore";
+import { addCampaignTrack, CampaignConflictError, createCampaign, deleteCampaignTrack, joinCampaign, postCampaignEvent, postRoll, syncCampaign, updateCampaignAudio, updateCampaignInitiative } from "@/lib/campaignStore";
+import { saveCampaignAudioAsset, sniffAudioMime } from "@/lib/campaignAudioStore";
 import { encodeCampaignCursor } from "@/lib/campaignCursor";
 import { createCharacter } from "@/lib/vaultStore";
 import { characterInput } from "./fixtures/character";
@@ -22,6 +23,22 @@ beforeEach(() => {
 afterEach(() => { closeDb(); rmSync(dataDir, { recursive: true, force: true }); delete process.env.FORGE_VAULT_DIR; });
 
 describe("campaign v2 store", () => {
+  it("requires real audio signatures and removes uploaded bytes with their track", () => {
+    expect(sniffAudioMime(Buffer.from("not audio"), "audio/mpeg")).toBeNull();
+    expect(sniffAudioMime(Buffer.from("ID3 metadata"), "audio/mpeg")).toBe("audio/mpeg");
+
+    const campaign = createCampaign("dm", "Audio Cleanup Table");
+    const assetId = saveCampaignAudioAsset(campaign.id, "dm", "audio/mpeg", Buffer.from("ID3 metadata"));
+    const track = addCampaignTrack(campaign.id, "dm", {
+      title: "Uploaded cue",
+      url: `/api/campaigns/${campaign.id}/audio-assets/${assetId}`,
+      kind: "music",
+    });
+
+    deleteCampaignTrack(campaign.id, "dm", track.id);
+    expect(getDb().prepare("SELECT id FROM campaign_audio_assets WHERE id = ?").get(assetId)).toBeUndefined();
+  });
+
   it("keeps hidden combatants out of player syncs and versions audio state", async () => {
     const player = await createCharacter("player", characterInput("Pip"));
     const campaign = createCampaign("dm", "Review Table");

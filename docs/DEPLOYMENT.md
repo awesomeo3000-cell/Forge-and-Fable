@@ -21,6 +21,7 @@ Registration asks for email and password, with an optional invite code if you se
 | `JWT_SECRET` | Required in production. Use a long random value. |
 | `REGISTRATION_CODE` | Optional. If set, new accounts must enter this exact code. |
 | `FORGE_VAULT_DIR` | Optional. Directory that stores `forge.db` plus SQLite `-wal` and `-shm` sidecar files. Use a persistent disk path online. |
+| `FORGE_BACKUP_DIR` | Recommended. Different persistent volume or mounted destination for SQLite backups. |
 
 Generate a strong `JWT_SECRET`:
 
@@ -94,7 +95,15 @@ Create a consistent SQLite backup with:
 npm run db:backup
 ```
 
-The command writes timestamped databases under `<vault-dir>/backups/` and retains the newest seven. It uses SQLite `VACUUM INTO`, so the resulting file is self-contained even when WAL mode is active.
+Set `FORGE_BACKUP_DIR` before running it in production. The command writes timestamped databases there and retains the newest seven by default. If it is unset, backups are written under `<vault-dir>/backups/` and the command prints a warning because that location is on the same volume as the live database. It uses SQLite `VACUUM INTO`, so the resulting file is self-contained even when WAL mode is active.
+
+Verify a backup before relying on it:
+
+```bash
+npm run db:verify-backup -- /path/to/forge-2026-07-17T12-00-00-000Z.db
+```
+
+The verification checks SQLite integrity, foreign-key consistency, and that the backup can be opened read-only.
 
 To restore, stop the app, preserve the current `forge.db` and its `-wal`/`-shm` sidecars, copy the chosen backup to `forge.db`, remove stale sidecars, and restart. Confirm `/api/health` returns `ok: true` before allowing edits.
 

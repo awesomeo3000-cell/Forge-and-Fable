@@ -509,7 +509,7 @@ export type DraftCharacter = {
 };
 
 export type StatMethod = "point-buy" | "standard-array" | "roll" | "manual";
-export type AuthMode = "login" | "register";
+export type AuthMode = "login" | "register" | "forgot" | "reset";
 export type BuildMode = "standard" | "quickbuilder" | "premade";
 
 export type RollOutcome = {

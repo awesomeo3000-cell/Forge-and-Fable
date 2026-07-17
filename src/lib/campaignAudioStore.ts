@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 
 export const MAX_CAMPAIGN_AUDIO_SIZE = 25 * 1024 * 1024;
+export const MAX_CAMPAIGN_AUDIO_STORAGE = 100 * 1024 * 1024;
 
 export const CAMPAIGN_AUDIO_MIME_TYPES = new Set([
   "audio/aac",
@@ -21,18 +22,40 @@ export function sniffAudioMime(bytes: Buffer, declaredMime: string): string | nu
   if (bytes.length >= 12 && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WAVE") return "audio/wav";
   if (bytes.length >= 4 && bytes.subarray(0, 4).toString("ascii") === "OggS") return "audio/ogg";
   if (bytes.length >= 4 && bytes.subarray(0, 4).toString("ascii") === "fLaC") return "audio/flac";
-  if (bytes.length >= 4 && bytes.subarray(0, 4).toString("ascii") === "ID3") return "audio/mpeg";
+  if (bytes.length >= 3 && bytes.subarray(0, 3).toString("ascii") === "ID3") return "audio/mpeg";
   if (bytes.length >= 8 && bytes.subarray(4, 8).toString("ascii") === "ftyp") return "audio/mp4";
   if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "audio/webm";
   if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) return "audio/mpeg";
-  return CAMPAIGN_AUDIO_MIME_TYPES.has(declaredMime) ? declaredMime : null;
+  // Do not trust a client-declared MIME type when the bytes have no known
+  // audio signature. Otherwise arbitrary data can be persisted as an audio
+  // BLOB simply by sending an allowed Content-Type.
+  void declaredMime;
+  return null;
 }
 
-export function saveCampaignAudioAsset(campaignId: string, mime: string, bytes: Buffer): string {
-  const id = randomUUID();
-  getDb().prepare("INSERT INTO campaign_audio_assets (id, campaign_id, mime, bytes, size, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-    .run(id, campaignId, mime, bytes, bytes.length, new Date().toISOString());
-  return id;
+export function saveCampaignAudioAsset(campaignId: string, userId: string, mime: string, bytes: Buffer): string {
+  const db = getDb();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const campaign = db.prepare("SELECT dm_user_id FROM campaigns WHERE id = ?").get(campaignId) as { dm_user_id: string } | undefined;
+    if (!campaign) throw new Error("Campaign not found.");
+    if (campaign.dm_user_id !== userId) throw new Error("Only the DM can add audio.");
+
+    const current = db.prepare("SELECT COALESCE(SUM(size), 0) AS total FROM campaign_audio_assets WHERE campaign_id = ?")
+      .get(campaignId) as { total: number };
+    if (current.total + bytes.length > MAX_CAMPAIGN_AUDIO_STORAGE) {
+      throw new Error(`This campaign has reached its ${MAX_CAMPAIGN_AUDIO_STORAGE / 1024 / 1024} MB audio storage limit.`);
+    }
+
+    const id = randomUUID();
+    db.prepare("INSERT INTO campaign_audio_assets (id, campaign_id, mime, bytes, size, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(id, campaignId, mime, bytes, bytes.length, new Date().toISOString());
+    db.exec("COMMIT");
+    return id;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function getCampaignAudioAsset(id: string, campaignId: string, userId: string): { mime: string; bytes: Buffer } | null {
