@@ -3,7 +3,7 @@
     {
       "step": "register + verify + login",
       "status": "ok",
-      "detail": "ao_dash_1784227700300@forge.test"
+      "detail": "ao_dash_1784251237403@forge.test"
     },
     {
       "step": "new-user dashboard",
@@ -18,7 +18,7 @@
     {
       "step": "dm dashboard",
       "status": "ok",
-      "detail": "created=true feature=\"The Shattered Vale\" primary=\"Open Active Campaign\" role=\"Dungeon Master\" welcome=\"Good afternoon, Ao Dash 1784227700300.\""
+      "detail": "created=true feature=\"The Shattered Vale\" primary=\"Open Active Campaign\" role=\"Dungeon Master\" welcome=\"Good evening, Ao Dash 1784251237403.\""
     },
     {
       "step": "responsive @ 768x1024",

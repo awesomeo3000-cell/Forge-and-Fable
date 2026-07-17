@@ -7623,33 +7623,42 @@ button.dj-card {
 }
 
 /* Item rarity color-coding: catalog search + rarity filter options + equipped inventory list. */
-.cs-item-result strong[data-rarity="Uncommon"],
-.cs-item-catalog-controls option[data-rarity="Uncommon"],
-.cs-inv-row strong[data-rarity="Uncommon"],
-.cs-inv-meta span[data-rarity="Uncommon"] {
+.cs-item-result [data-rarity="Common" i],
+.cs-item-catalog-controls option[data-rarity="Common" i],
+.cs-inv-row [data-rarity="Common" i],
+.cs-inv-meta [data-rarity="Common" i] {
+  color: #cbd5e1;
+}
+
+.cs-item-result [data-rarity="Uncommon" i],
+.cs-item-catalog-controls option[data-rarity="Uncommon" i],
+.cs-inv-row [data-rarity="Uncommon" i],
+.cs-inv-meta [data-rarity="Uncommon" i] {
   color: #2e9e5b;
 }
 
-.cs-item-result strong[data-rarity="Rare"],
-.cs-item-catalog-controls option[data-rarity="Rare"],
-.cs-inv-row strong[data-rarity="Rare"],
-.cs-inv-meta span[data-rarity="Rare"] {
+.cs-item-result [data-rarity="Rare" i],
+.cs-item-catalog-controls option[data-rarity="Rare" i],
+.cs-inv-row [data-rarity="Rare" i],
+.cs-inv-meta [data-rarity="Rare" i] {
   color: #3b82f6;
 }
 
-.cs-item-result strong[data-rarity="Very Rare"],
-.cs-item-catalog-controls option[data-rarity="Very Rare"],
-.cs-inv-row strong[data-rarity="Very Rare"],
-.cs-inv-meta span[data-rarity="Very Rare"] {
+.cs-item-result [data-rarity="Very Rare" i],
+.cs-item-catalog-controls option[data-rarity="Very Rare" i],
+.cs-inv-row [data-rarity="Very Rare" i],
+.cs-inv-meta [data-rarity="Very Rare" i] {
   color: #a855f7;
 }
 
-.cs-item-result strong[data-rarity="Legendary"],
-.cs-item-catalog-controls option[data-rarity="Legendary"],
-.cs-inv-row strong[data-rarity="Legendary"],
-.cs-inv-meta span[data-rarity="Legendary"] {
+.cs-item-result [data-rarity="Legendary" i],
+.cs-item-catalog-controls option[data-rarity="Legendary" i],
+.cs-inv-row [data-rarity="Legendary" i],
+.cs-inv-meta [data-rarity="Legendary" i] {
   color: #ff7a1a;
 }
+
+.cs-item-result [data-rarity] { font-style: normal; }
 
 /* Species family grouping: one card per subspecies family in the grid;
    clicking it opens SpeciesFamilyModal, a popup with an accordion list of
@@ -12062,6 +12071,12 @@ button.dj-card {
   text-transform: uppercase;
 }
 .dm-inline-form input[type="checkbox"] { flex: 0; min-height: 0; accent-color: var(--doc-accent, #c9a25a); }
+.dm-audio-help {
+  flex-basis: 100%;
+  color: color-mix(in srgb, var(--paper, #e9dfc8) 62%, transparent);
+  font-size: 11px;
+  line-height: 1.4;
+}
 
 /* Custom condition sub-form (mirrors HeroSheet's cs-effect-form for the DM's desk). */
 .dm-custom-condition-form {

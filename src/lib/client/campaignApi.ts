@@ -134,6 +134,17 @@ export async function addCampaignTrack(campaignId: string, track: Pick<CampaignT
   return payload.track;
 }
 
+export async function uploadCampaignTrack(campaignId: string, file: File, title: string, kind: CampaignTrack["kind"]) {
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("title", title);
+  formData.set("kind", kind);
+  const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/audio-assets`, { method: "POST", credentials: "include", body: formData });
+  const payload = await response.json().catch(() => ({})) as { track?: CampaignTrack; error?: string };
+  if (!response.ok || !payload.track) throw new Error(payload.error ?? "Could not upload audio.");
+  return payload.track;
+}
+
 export async function removeCampaignMember(campaignId: string, userId: string) {
   const response = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/members/${encodeURIComponent(userId)}`, {
     method: "DELETE", headers: jsonHeaders, credentials: "include",

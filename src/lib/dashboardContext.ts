@@ -24,7 +24,21 @@ export type DashboardActionId =
   | "import-character"
   | "manage-campaigns";
 
-export type DashboardActionArt = "character" | "campaign" | "join" | "import";
+/**
+ * Which artwork family an action card draws from (final-polish handoff §4).
+ * "campaign" and "character" are dynamic — the grid receives the resolved
+ * campaign appearance art / selected portrait; the rest map to fixed files in
+ * the dashboard artwork registry. Distinct families per view keep any one
+ * image from repeating across the row.
+ */
+export type DashboardActionArt =
+  | "character"
+  | "campaign"
+  | "prepare"
+  | "create"
+  | "table"
+  | "join"
+  | "import";
 
 export type DashboardAction = {
   id: DashboardActionId;
@@ -129,31 +143,31 @@ export function dashboardGreeting(context: DashboardContext, signals: DashboardS
     return {
       kicker: "Your table",
       title: `${timeGreeting(hour)}, ${name}.`,
-      text: "Your heroes, your campaigns and what needs your attention, gathered in one place.",
+      text: "Pick up where you left off or begin something new.",
       heading: "Your next move",
-      subhead: "Player and Dungeon Master work, ranked by what is happening now.",
+      subhead: "Your table and your heroes, side by side.",
     };
   }
   return {
     kicker: "Your table",
     title: `${timeGreeting(hour)}, ${name}.`,
-    text: "Your heroes, your campaigns and what needs your attention, gathered in one place.",
+    text: "Pick up where you left off or begin something new.",
     heading: "Your next move",
-    subhead: "Resume what matters instead of choosing a role again.",
+    subhead: "Return to your hero or find your next table.",
   };
 }
 
 const ACTION_COPY: Record<DashboardActionId, Omit<DashboardAction, "primary">> = {
-  "create-character": { id: "create-character", title: "Create a Character", description: "Build a hero from the ground up and choose how detailed the commission should be.", cta: "Begin the commission", art: "character" },
+  "create-character": { id: "create-character", title: "Create a Character", description: "Build a hero from the ground up and choose how detailed the commission should be.", cta: "Begin the commission", art: "create" },
   "continue-character": { id: "continue-character", title: "Continue Last Character", description: "Reopen your most recent hero and return to the character sheet.", cta: "Continue", art: "character" },
-  "start-campaign": { id: "start-campaign", title: "Start a Campaign", description: "Open a table, invite players and prepare the world as Dungeon Master.", cta: "Open the table", art: "campaign" },
+  "start-campaign": { id: "start-campaign", title: "Start a Campaign", description: "Open a table, invite players and prepare the world as Dungeon Master.", cta: "Open the table", art: "table" },
   "open-campaign": { id: "open-campaign", title: "Open Active Campaign", description: "Return to your table and pick up where the party left off.", cta: "Open campaign", art: "campaign" },
   "join-campaign": { id: "join-campaign", title: "Join a Campaign", description: "Enter a code from your Dungeon Master and connect to the party.", cta: "Join with a code", art: "join" },
-  "next-session": { id: "next-session", title: "Next Session", description: "Review the upcoming session and party readiness.", cta: "View session", art: "campaign" },
-  "prepare-session": { id: "prepare-session", title: "Prepare Next Session", description: "Review notes, encounters and unresolved session work.", cta: "Prepare", art: "campaign" },
-  "review-party": { id: "review-party", title: "Review Party", description: "Check character readiness, assignments and player status.", cta: "View party", art: "campaign" },
+  "next-session": { id: "next-session", title: "Next Session", description: "Review the upcoming session and party readiness.", cta: "View session", art: "prepare" },
+  "prepare-session": { id: "prepare-session", title: "Prepare Next Session", description: "Review notes, encounters and unresolved session work.", cta: "Prepare", art: "prepare" },
+  "review-party": { id: "review-party", title: "Review Party", description: "Check character readiness, assignments and player status.", cta: "View party", art: "table" },
   "import-character": { id: "import-character", title: "Import a Character", description: "Bring an existing character into Dreamwright.", cta: "Import now", art: "import" },
-  "manage-campaigns": { id: "manage-campaigns", title: "Create or Join Another", description: "Start another campaign or connect to a table as a player.", cta: "Manage campaigns", art: "campaign" },
+  "manage-campaigns": { id: "manage-campaigns", title: "Create or Join Another", description: "Start another campaign or connect to a table as a player.", cta: "Manage campaigns", art: "join" },
 };
 
 /** Rank the four action cards for the resolved context. The first entry is

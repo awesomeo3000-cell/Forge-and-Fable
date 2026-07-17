@@ -4,14 +4,36 @@ import { useState } from "react";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import type { DashboardAction, DashboardActionArt, DashboardActionId } from "@/lib/dashboardContext";
+import { DASHBOARD_ARTWORK } from "@/data/dashboardArtwork";
 import { ACTION_ICON } from "./dashboardIcons";
 
-const ART_SRC: Record<DashboardActionArt, string> = {
-  character: "/dashboard/card-character.webp",
-  campaign: "/dashboard/card-campaign.webp",
-  join: "/dashboard/card-join.webp",
-  import: "/dashboard/card-import.webp",
+/** Fixed registry art for the non-dynamic families (final-polish handoff §4). */
+const STATIC_ART: Record<Exclude<DashboardActionArt, "campaign" | "character">, string> = {
+  prepare: DASHBOARD_ARTWORK.prepareSession,
+  create: DASHBOARD_ARTWORK.createCharacter,
+  table: DASHBOARD_ARTWORK.campaignFallback,
+  join: DASHBOARD_ARTWORK.joinCard,
+  import: DASHBOARD_ARTWORK.importCard,
 };
+
+/**
+ * Dynamic card art (campaign appearance / character portrait): a plain <img>
+ * so an arbitrary stored URL that fails to load swaps to the registry
+ * fallback instead of a broken-image icon (handoff §17). Keyed by src by the
+ * caller so the failed state resets when the source changes.
+ */
+function DynamicCardArt({ src, fallback, eager }: { src: string; fallback: string; eager: boolean }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <img
+      src={failed ? fallback : src}
+      alt=""
+      loading={eager ? "eager" : "lazy"}
+      draggable={false}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 /**
  * Context-aware action grid (dashboard handoff §6): four cards, exactly one
@@ -25,6 +47,10 @@ export default function DashboardActionGrid(props: {
   heading: string;
   subhead: string;
   actions: DashboardAction[];
+  /** Resolved dynamic sources for the campaign/character art families. */
+  dynamicArt?: { campaign?: string; character?: string };
+  /** Subject names for accessible CTA labels, e.g. "Open Active Campaign: The Shattered Vale". */
+  subjectNames?: Partial<Record<DashboardActionId, string>>;
   onAction: (id: DashboardActionId) => void;
 }) {
   const [selectedId, setSelectedId] = useState<DashboardActionId | null>(null);
@@ -33,6 +59,12 @@ export default function DashboardActionGrid(props: {
   const effectiveSelected = props.actions.some((action) => action.id === selectedId)
     ? selectedId
     : props.actions[0]?.id ?? null;
+
+  const artSrc = (art: DashboardActionArt): string => {
+    if (art === "campaign") return props.dynamicArt?.campaign ?? DASHBOARD_ARTWORK.campaignFallback;
+    if (art === "character") return props.dynamicArt?.character ?? DASHBOARD_ARTWORK.characterFallback;
+    return STATIC_ART[art];
+  };
 
   return (
     <section aria-labelledby="ao-hd-action-heading">
@@ -46,20 +78,33 @@ export default function DashboardActionGrid(props: {
         {props.actions.map((action, index) => {
           const Icon = ACTION_ICON[action.id];
           const selected = action.id === effectiveSelected;
+          const dynamic = action.art === "campaign" || action.art === "character";
+          const src = artSrc(action.art);
+          const subject = props.subjectNames?.[action.id];
           return (
             <div
               key={action.id}
+              data-art={action.art}
               className={`ao-hd-action-card${action.primary ? " primary" : ""}${selected ? " selected" : ""}`}
             >
               <span className="ao-hd-action-art" aria-hidden="true">
-                <Image
-                  src={ART_SRC[action.art]}
-                  alt=""
-                  fill
-                  sizes="(max-width: 760px) 100vw, 25vw"
-                  loading={index === 0 ? "eager" : "lazy"}
-                  draggable={false}
-                />
+                {dynamic ? (
+                  <DynamicCardArt
+                    key={src}
+                    src={src}
+                    fallback={action.art === "campaign" ? DASHBOARD_ARTWORK.campaignFallback : DASHBOARD_ARTWORK.characterFallback}
+                    eager={index === 0}
+                  />
+                ) : (
+                  <Image
+                    src={src}
+                    alt=""
+                    fill
+                    sizes="(max-width: 760px) 100vw, 25vw"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    draggable={false}
+                  />
+                )}
               </span>
               {/* Selection layer: covers the card, highlights it, does not act. */}
               <button
@@ -79,6 +124,7 @@ export default function DashboardActionGrid(props: {
                 <button
                   type="button"
                   className="ao-hd-action-cta"
+                  aria-label={subject ? `${action.title}: ${subject}` : undefined}
                   onClick={() => props.onAction(action.id)}
                 >
                   {action.cta} <ArrowRight size={13} aria-hidden="true" />

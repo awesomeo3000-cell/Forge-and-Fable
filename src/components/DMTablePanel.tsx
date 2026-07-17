@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Command, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
-import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, removeCampaignMember, updateCampaignAudio } from "@/lib/client/campaignApi";
+import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, removeCampaignMember, updateCampaignAudio, uploadCampaignTrack } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
 import DMPrepPanel from "@/components/DMPrepPanel";
 import { D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
@@ -85,6 +85,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [tracks, setTracks] = useState<CampaignTrack[]>([]);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackUrl, setTrackUrl] = useState("");
+  const [trackFile, setTrackFile] = useState<File | null>(null);
   const [trackKind, setTrackKind] = useState<"music" | "cue">("music");
   const [announcement, setAnnouncement] = useState("");
   const [rollRequest, setRollRequest] = useState("");
@@ -116,6 +117,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   // stacked forms (proposal 24c).
   const [activeCommand, setActiveCommand] = useState<null | "announce" | "roll" | "condition" | "handout" | "loot" | "combatant">(null);
   const [error, setError] = useState("");
+  const [trackUploading, setTrackUploading] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
   const [prepInitialTab, setPrepInitialTab] = useState<"encounters" | "sessions">("encounters");
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
@@ -408,6 +410,17 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   };
 
   const addTrack = async () => {
+    if (trackFile) {
+      setTrackUploading(true);
+      try {
+        const track = await uploadCampaignTrack(campaign.campaign.id, trackFile, trackTitle.trim(), trackKind);
+        setTracks((current) => [...current, track]); setTrackTitle(""); setTrackUrl(""); setTrackFile(null); setError("");
+        const input = document.getElementById("dm-track-file") as HTMLInputElement | null;
+        if (input) input.value = "";
+      } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not upload audio."); }
+      finally { setTrackUploading(false); }
+      return;
+    }
     try {
       const track = await addCampaignTrack(campaign.campaign.id, { title: trackTitle.trim(), url: trackUrl.trim(), kind: trackKind });
       setTracks((current) => [...current, track]); setTrackTitle(""); setTrackUrl(""); setError("");
@@ -1167,7 +1180,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         />
         )}
       </div>
-      <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input placeholder="Direct audio URL" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || !trackUrl.trim()}><Plus size={14}/> Add track</button></div></section>
+      <section className="dm-table-region dm-soundboard"><div><h3>The Soundboard</h3><small>{isPlaying ? `Now playing: ${campaign.audio.title}` : "The table is quiet. Add a track…"}</small></div><div className="dm-track-list">{tracks.map((track) => <div key={track.id} className={isPlaying === track.id ? "is-playing" : ""}><span>{track.kind === "music" ? <Music2 size={15}/> : <Volume2 size={15}/>}<strong>{track.title}</strong>{isPlaying === track.id ? <em className="dm-nowplaying">Now playing</em> : <small>{track.kind}</small>}</span>{track.kind === "music" ? <button type="button" className={`dm-btn${isPlaying === track.id ? " is-active" : ""}`} onClick={() => void toggleMusic(isPlaying === track.id ? null : track.id)}>{isPlaying === track.id ? <><Pause size={14}/> Stop</> : <><Play size={14}/> Play</>}</button> : <button type="button" className="dm-btn" onClick={() => void onPostEvent("audio-cue", { url: track.url, title: track.title })}><Play size={14}/> Cue</button>}<button type="button" className="dm-icon-btn" aria-label={`Delete ${track.title}`} onClick={() => void deleteCampaignTrack(campaign.campaign.id, track.id).then(() => setTracks((current) => current.filter((item) => item.id !== track.id)))}><Trash2 size={13}/></button></div>)}</div><div className="dm-inline-form"><input placeholder="Track title" value={trackTitle} onChange={(event) => setTrackTitle(event.target.value)}/><input id="dm-track-file" type="file" accept="audio/*" onChange={(event) => setTrackFile(event.target.files?.[0] ?? null)}/><input placeholder="Direct audio URL (MP3/OGG/WAV link)" value={trackUrl} onChange={(event) => setTrackUrl(event.target.value)} disabled={Boolean(trackFile)}/><select value={trackKind} onChange={(event) => setTrackKind(event.target.value as "music" | "cue")}><option value="music">Music</option><option value="cue">Cue</option></select><button type="button" className="dm-btn dm-btn-primary" onClick={addTrack} disabled={!trackTitle.trim() || (!trackUrl.trim() && !trackFile) || trackUploading}><Plus size={14}/> {trackUploading ? "Uploading…" : "Add track"}</button><small className="dm-audio-help">Upload an audio file, or use a URL that points directly to an MP3, OGG, WAV, M4A, or WebM file. YouTube links are webpage links, so they won’t play here.</small></div></section>
       {prepOpen ? <DMPrepPanel campaignId={campaign.campaign.id} initialTab={prepInitialTab} onClose={() => { setPrepOpen(false); void refreshWorkspace(); }} onEncounterStarted={() => void refreshWorkspace()}/> : null}
     </section>
   );

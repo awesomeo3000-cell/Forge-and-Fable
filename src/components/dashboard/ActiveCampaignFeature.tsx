@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { KeyRound, Plus } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import { getCampaignTheme } from "@/lib/campaignThemes";
+import { resolveDashboardCampaignArtwork } from "@/data/dashboardArtwork";
 
 export type CampaignFeatureMeta = { label: string; value: string };
 
@@ -55,7 +56,7 @@ export default function ActiveCampaignFeature(props: {
   }
 
   const theme = getCampaignTheme(props.campaign.themeKey);
-  const art = (props.campaign.bannerImageUrl || theme.imageUrl).replace(/["\\)]/g, "");
+  const art = resolveDashboardCampaignArtwork(props.campaign).replace(/["\\)]/g, "");
 
   return (
     <article

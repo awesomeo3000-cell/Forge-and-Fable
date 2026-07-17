@@ -49,7 +49,7 @@ export default function DashboardCharacters(props: {
               <CharacterPortrait
                 portraitId={character.portraitUrl || null}
                 characterName={character.name}
-                size={64}
+                size={88}
                 shape="rounded"
                 className="ao-hd-hero-portrait"
               />

@@ -153,6 +153,17 @@ function createSchema(db: DatabaseSync) {
 
     CREATE INDEX IF NOT EXISTS idx_campaign_tracks_sort ON campaign_tracks(campaign_id, sort, created_at);
 
+    CREATE TABLE IF NOT EXISTS campaign_audio_assets (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      mime TEXT NOT NULL,
+      bytes BLOB NOT NULL,
+      size INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_campaign_audio_assets_campaign ON campaign_audio_assets(campaign_id, created_at);
+
     CREATE TABLE IF NOT EXISTS campaign_audio (
       campaign_id TEXT PRIMARY KEY REFERENCES campaigns(id) ON DELETE CASCADE,
       track_id TEXT REFERENCES campaign_tracks(id) ON DELETE SET NULL,

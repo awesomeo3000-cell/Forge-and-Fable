@@ -1,7 +1,8 @@
 "use client";
 
 import { memo, useEffect, useMemo, useState } from "react";
-import { BookOpen, CalendarDays, ChevronRight, Clock3, Download, KeyRound, MapPin, Swords } from "lucide-react";
+import { preload } from "react-dom";
+import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Clock3, Download, KeyRound, MapPin, Swords } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import type { Character, Ruleset } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
@@ -15,6 +16,11 @@ import {
   resolveDashboardContext,
   type DashboardActionId,
 } from "@/lib/dashboardContext";
+import {
+  DASHBOARD_ARTWORK,
+  resolveDashboardCampaignArtwork,
+  resolveDashboardCharacterArtwork,
+} from "@/data/dashboardArtwork";
 import DashboardActionGrid from "@/components/dashboard/DashboardActionGrid";
 import ActiveCampaignFeature, { type CampaignFeatureMeta } from "@/components/dashboard/ActiveCampaignFeature";
 import DashboardCharacters from "@/components/dashboard/DashboardCharacters";
@@ -118,6 +124,21 @@ export default memo(function HomeDashboard(props: Props) {
 
   const lastCharacter = props.characters[0] ?? null;
 
+  // Both banner images are CSS backgrounds; preload so the hearth and backdrop
+  // don't pop in after the panels render (handoff §17: load welcome eagerly).
+  preload(DASHBOARD_ARTWORK.backdrop, { as: "image" });
+  preload(DASHBOARD_ARTWORK.welcome, { as: "image" });
+
+  // One assembled artwork model (handoff §6): the grid and feature consume
+  // these resolved sources instead of re-deriving art in JSX.
+  const dashboardArt = useMemo(
+    () => ({
+      activeCampaign: resolveDashboardCampaignArtwork(featured),
+      continueCharacter: resolveDashboardCharacterArtwork(lastCharacter),
+    }),
+    [featured, lastCharacter],
+  );
+
   // Every action id resolves to an existing app handler. Campaign-hub actions
   // (start/join/manage) route to the campaign panel, which owns those flows.
   const runAction = (id: DashboardActionId) => {
@@ -148,13 +169,20 @@ export default memo(function HomeDashboard(props: Props) {
   const readinessValue = partyMembers.length > 0 ? `${readyMembers} of ${partyMembers.length} ready` : "Awaiting party";
 
   // Welcome banner actions vary by context; all reuse the same handlers.
-  const welcome = ((): { primaryLabel: string; onPrimary: () => void; secondaryLabel: string; onSecondary: () => void } => {
+  // Labels stay action-first (handoff §8.5) — the campaign or character name
+  // moves into the accessible label instead of the button text, so a campaign
+  // named "test" never yields an "Open test" button.
+  const welcome = ((): {
+    primaryLabel: string; primaryAria?: string; onPrimary: () => void;
+    secondaryLabel: string; secondaryAria?: string; onSecondary: () => void;
+  } => {
     if (context === "new") {
       return { primaryLabel: "Create a Character", onPrimary: props.onCreateCharacter, secondaryLabel: "Join a Campaign", onSecondary: props.onOpenCampaigns };
     }
     if (context === "dm") {
       return {
-        primaryLabel: featured ? `Open ${featured.name}` : "Open a Campaign",
+        primaryLabel: "Open Campaign",
+        primaryAria: featured ? `Open campaign: ${featured.name}` : undefined,
         onPrimary: () => (featured ? props.onResumeCampaign(featured.id) : props.onOpenCampaigns()),
         secondaryLabel: "Prepare Next Session",
         onSecondary: () => (featured ? (featured.myRole === "dm" && !nextSession ? props.onScheduleSession(featured.id) : props.onResumeCampaign(featured.id)) : props.onOpenCampaigns()),
@@ -162,14 +190,17 @@ export default memo(function HomeDashboard(props: Props) {
     }
     if (context === "mixed") {
       return {
-        primaryLabel: featured ? `Open ${featured.name}` : "Open a Campaign",
+        primaryLabel: "Open Campaign",
+        primaryAria: featured ? `Open campaign: ${featured.name}` : undefined,
         onPrimary: () => (featured ? props.onResumeCampaign(featured.id) : props.onOpenCampaigns()),
-        secondaryLabel: lastCharacter ? `Continue ${lastCharacter.name}` : "Create a Character",
+        secondaryLabel: lastCharacter ? "Continue Character" : "Create a Character",
+        secondaryAria: lastCharacter ? `Continue character: ${lastCharacter.name}` : undefined,
         onSecondary: () => (lastCharacter ? props.onOpenCharacter(lastCharacter.id) : props.onCreateCharacter()),
       };
     }
     return {
-      primaryLabel: lastCharacter ? `Continue ${lastCharacter.name}` : "Create a Character",
+      primaryLabel: lastCharacter ? "Continue Character" : "Create a Character",
+      primaryAria: lastCharacter ? `Continue character: ${lastCharacter.name}` : undefined,
       onPrimary: () => (lastCharacter ? props.onOpenCharacter(lastCharacter.id) : props.onCreateCharacter()),
       secondaryLabel: "Create Another Character",
       onSecondary: props.onCreateCharacter,
@@ -206,10 +237,10 @@ export default memo(function HomeDashboard(props: Props) {
           <h1 id="ao-hd-welcome-title">{greeting.title}</h1>
           <p>{greeting.text}</p>
           <div className="ao-hd-feature-actions">
-            <button className="ao-hd-btn ao-hd-btn-primary" type="button" onClick={welcome.onPrimary}>
+            <button className="ao-hd-btn ao-hd-btn-primary" type="button" aria-label={welcome.primaryAria} onClick={welcome.onPrimary}>
               {welcome.primaryLabel}
             </button>
-            <button className="ao-hd-btn" type="button" onClick={welcome.onSecondary}>
+            <button className="ao-hd-btn" type="button" aria-label={welcome.secondaryAria} onClick={welcome.onSecondary}>
               {welcome.secondaryLabel}
             </button>
           </div>
@@ -218,7 +249,17 @@ export default memo(function HomeDashboard(props: Props) {
       </section>
 
       {/* 2. Context-aware action cards */}
-      <DashboardActionGrid heading={greeting.heading} subhead={greeting.subhead} actions={actions} onAction={runAction} />
+      <DashboardActionGrid
+        heading={greeting.heading}
+        subhead={greeting.subhead}
+        actions={actions}
+        dynamicArt={{ campaign: dashboardArt.activeCampaign, character: dashboardArt.continueCharacter }}
+        subjectNames={{
+          ...(featured ? { "open-campaign": featured.name, "prepare-session": featured.name, "next-session": featured.name, "review-party": featured.name } : {}),
+          ...(lastCharacter ? { "continue-character": lastCharacter.name } : {}),
+        }}
+        onAction={runAction}
+      />
 
       {/* 3. Active campaign feature + supporting session/attention panels */}
       <div className="ao-hd-grid">
@@ -258,10 +299,13 @@ export default memo(function HomeDashboard(props: Props) {
                 </button>
               </div>
             ) : (
-              <p className="ao-hd-panel-empty">
-                <Clock3 size={14} aria-hidden="true" /> No session is scheduled yet.
-                {featured?.myRole === "dm" ? " Set a date from the campaign workshop." : " Your DM will schedule the next one."}
-              </p>
+              <div className="ao-hd-empty">
+                <span className="ao-hd-empty-icon" aria-hidden="true"><Clock3 size={16} /></span>
+                <span className="ao-hd-row-main">
+                  <strong>No session scheduled</strong>
+                  <span>{featured?.myRole === "dm" ? "Set a date from the campaign workshop." : "Your Dungeon Master will set the next date."}</span>
+                </span>
+              </div>
             )}
           </section>
 
@@ -287,37 +331,51 @@ export default memo(function HomeDashboard(props: Props) {
                 ))}
               </ul>
             ) : (
-              <p className="ao-hd-panel-empty">Nothing needs attention. Active commissions and campaigns will surface here.</p>
+              <div className="ao-hd-empty is-success">
+                <span className="ao-hd-empty-icon" aria-hidden="true"><CheckCircle2 size={16} /></span>
+                <span className="ao-hd-row-main">
+                  <strong>All clear</strong>
+                  <span>Nothing needs your attention right now.</span>
+                </span>
+              </div>
             )}
           </section>
         </div>
       </div>
 
-      {/* 4. Supporting: heroes, activity, quick links */}
+      {/* 4. Supporting: heroes, activity, around the hearth. Headings live
+          inside the panels (final-polish handoff §11) so they never sit
+          directly over the illustrated page backdrop. */}
       <div className="ao-hd-lower">
-        <section aria-labelledby="ao-hd-heroes-title">
-          <div className="ao-hd-section-head">
+        <section className="ao-hd-panel ao-hd-module" aria-labelledby="ao-hd-heroes-title">
+          <header className="ao-hd-module-head">
             <div><h2 id="ao-hd-heroes-title">Your Heroes</h2><p>Characters you can open or continue.</p></div>
+          </header>
+          <div className="ao-hd-module-body">
+            <DashboardCharacters
+              characters={props.characters}
+              ruleset={props.ruleset}
+              campaignByCharacter={campaignByCharacter}
+              onOpenCharacter={props.onOpenCharacter}
+              onCreateCharacter={props.onCreateCharacter}
+              onImportCharacter={props.onImportCharacter}
+            />
           </div>
-          <DashboardCharacters
-            characters={props.characters}
-            ruleset={props.ruleset}
-            campaignByCharacter={campaignByCharacter}
-            onOpenCharacter={props.onOpenCharacter}
-            onCreateCharacter={props.onCreateCharacter}
-            onImportCharacter={props.onImportCharacter}
-          />
         </section>
 
-        <section aria-labelledby="ao-hd-activity-title">
-          <div className="ao-hd-section-head">
+        <section className="ao-hd-panel ao-hd-module" aria-labelledby="ao-hd-activity-title">
+          <header className="ao-hd-module-head">
             <div><h2 id="ao-hd-activity-title">Recent Activity</h2><p>What changed across your stories.</p></div>
-          </div>
-          <div className="ao-hd-panel">
+          </header>
+          <div className="ao-hd-module-body">
             {recentEvents.length === 0 ? (
-              <p className="ao-hd-panel-empty">
-                <BookOpen size={14} aria-hidden="true" /> The table is quiet. Activity from your active campaign appears here.
-              </p>
+              <div className="ao-hd-empty">
+                <span className="ao-hd-empty-icon" aria-hidden="true"><BookOpen size={16} /></span>
+                <span className="ao-hd-row-main">
+                  <strong>The table is quiet</strong>
+                  <span>Campaign activity will appear here as the story develops.</span>
+                </span>
+              </div>
             ) : (
               <ul className="ao-hd-activity-list">
                 {recentEvents.map((event) => (
@@ -331,11 +389,11 @@ export default memo(function HomeDashboard(props: Props) {
           </div>
         </section>
 
-        <section aria-labelledby="ao-hd-links-title">
-          <div className="ao-hd-section-head">
-            <div><h2 id="ao-hd-links-title">Quick Links</h2><p>Secondary tools and destinations.</p></div>
-          </div>
-          <nav className="ao-hd-panel ao-hd-links">
+        <section className="ao-hd-panel ao-hd-module" aria-labelledby="ao-hd-links-title">
+          <header className="ao-hd-module-head">
+            <div><h2 id="ao-hd-links-title">Around the Hearth</h2><p>Secondary tools and destinations.</p></div>
+          </header>
+          <nav className="ao-hd-module-body ao-hd-links" aria-label="Around the Hearth">
             <button type="button" className="ao-hd-link-row" onClick={props.onOpenCampaigns}>
               <span className="ao-hd-row-icon" aria-hidden="true"><Swords size={15} /></span>
               <span className="ao-hd-row-main"><strong>Browse Campaigns</strong><span>Open, create or join a table</span></span>
