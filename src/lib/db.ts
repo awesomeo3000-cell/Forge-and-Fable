@@ -22,9 +22,9 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 18;
+const SCHEMA_REVISION = 19;
 
-function getDataDir() {
+export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
   if (!configuredDir) return path.join(process.cwd(), "data");
   return path.isAbsolute(configuredDir)
@@ -470,6 +470,30 @@ function migrateSchema(db: DatabaseSync) {
       CREATE INDEX IF NOT EXISTS idx_verification_tokens_hash ON verification_tokens(token_hash);
     `);
     recordMigration(db, 18, "email verification");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS pdf_import_jobs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status TEXT NOT NULL,
+        original_filename TEXT NOT NULL,
+        size_bytes INTEGER NOT NULL,
+        page_count INTEGER,
+        requires_ocr INTEGER,
+        ocr_reason TEXT,
+        ocr_duration_ms INTEGER,
+        text_quality_score REAL,
+        progress_percent INTEGER NOT NULL DEFAULT 0,
+        progress_message TEXT,
+        error_code TEXT,
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_pdf_import_jobs_user ON pdf_import_jobs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_pdf_import_jobs_expires ON pdf_import_jobs(expires_at);
+    `);
+    recordMigration(db, 19, "PDF import OCR jobs");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

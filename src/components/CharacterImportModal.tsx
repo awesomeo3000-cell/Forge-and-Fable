@@ -6,7 +6,13 @@ import { createPortal } from "react-dom";
 import type { ImportDraft, ImportField, ImportConfidence } from "@/lib/import/pdfTypes";
 import type { AbilityKey } from "@/types/game";
 import { abilityLabels } from "@/lib/utils";
-import { analyzePdf, createCharacterFromPdfDraft } from "@/lib/client/importApi";
+import {
+  analyzePdf,
+  createCharacterFromPdfDraft,
+  runImportJob,
+  completeImportJob,
+  ImportJobsUnavailableError,
+} from "@/lib/client/importApi";
 
 // ── Types ──
 
@@ -120,6 +126,11 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  // Job-workflow progress (OCR plan §13/§14). Null while the legacy
+  // synchronous analyze path is in use.
+  const [progress, setProgress] = useState<{ percent: number; message: string; requiresOcr: boolean } | null>(null);
+  const jobIdRef = useRef<string | null>(null);
+  const cancelJobRef = useRef<(() => void) | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
@@ -127,6 +138,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
     triggerRef.current = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        cancelJobRef.current?.();
         onClose();
         queueMicrotask(() => triggerRef.current?.focus());
       }
@@ -234,14 +246,32 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
     setFile(selectedFile);
     setError("");
     setBusy(true);
+    setProgress(null);
 
     try {
-      const draft = await analyzePdf(selectedFile);
-      setDraft(draft);
-      setStep("review");
+      // Job workflow first: staged progress, automatic OCR for scanned
+      // sheets, survives the wait. Falls back to the legacy synchronous
+      // analyzer while the server flag is off.
+      try {
+        const { jobId, draft } = await runImportJob(
+          selectedFile,
+          (update) => setProgress(update),
+          (cancel) => { cancelJobRef.current = cancel; },
+        );
+        jobIdRef.current = jobId;
+        setDraft(draft);
+        setStep("review");
+      } catch (jobError) {
+        if (!(jobError instanceof ImportJobsUnavailableError)) throw jobError;
+        const draft = await analyzePdf(selectedFile);
+        setDraft(draft);
+        setStep("review");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error — please try again.");
     }
+    cancelJobRef.current = null;
+    setProgress(null);
     setBusy(false);
   };
 
@@ -254,12 +284,20 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
 
     try {
       await createCharacterFromPdfDraft(draft);
+      // Fire-and-forget: lets the server drop the job's temp files early.
+      if (jobIdRef.current) void completeImportJob(jobIdRef.current);
       setStep("creating");
       onCreated();
     } catch {
       setError("Network error — please try again.");
     }
     setBusy(false);
+  };
+
+  // Closing mid-processing cancels the server-side job (§6).
+  const handleClose = () => {
+    cancelJobRef.current?.();
+    onClose();
   };
 
   // ── Drag & drop handlers ──
@@ -288,7 +326,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
   );
 
   return createPortal(
-    <div className="modal-scrim" role="presentation" onMouseDown={step === "creating" ? undefined : onClose}>
+    <div className="modal-scrim" role="presentation" onMouseDown={step === "creating" ? undefined : handleClose}>
       <section
         className="import-modal paper-surface"
         role="dialog"
@@ -303,7 +341,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
             <FileText size={20} style={{ marginRight: 8 }} />
             Import Character from PDF
           </h2>
-          <button className="glass-icon modal-close" type="button" onClick={onClose} aria-label="Close">
+          <button className="glass-icon modal-close" type="button" onClick={handleClose} aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -343,9 +381,39 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
             </div>
 
             {busy && (
-              <div className="import-busy">
+              <div className="import-busy" aria-live="polite">
                 <Loader2 size={20} className="spin" />
-                <span>Analyzing PDF…</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span>{progress?.message ?? "Reading your character sheet…"}</span>
+                  {/* OCR is a compatibility step, not an error (§14). */}
+                  {progress?.requiresOcr && (
+                    <p className="cs-muted" style={{ margin: "4px 0 0", fontSize: "0.8rem" }}>
+                      This PDF does not contain enough readable text, so we are
+                      recognizing it automatically. This can take a minute.
+                    </p>
+                  )}
+                  {progress && (
+                    <div
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={progress.percent}
+                      style={{ marginTop: 8, height: 6, borderRadius: 3, background: "rgba(127,127,127,0.25)", overflow: "hidden" }}
+                    >
+                      <div style={{ width: `${progress.percent}%`, height: "100%", background: "var(--ok, #7ab286)", transition: "width 0.6s ease" }} />
+                    </div>
+                  )}
+                </div>
+                {progress && (
+                  <button
+                    type="button"
+                    className="glass-icon"
+                    aria-label="Cancel import"
+                    onClick={() => { cancelJobRef.current?.(); }}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
             )}
 
