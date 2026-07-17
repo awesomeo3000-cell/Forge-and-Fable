@@ -442,7 +442,9 @@ export function analyzeGenericPdf(
   // Very basic label:value extraction
   const labelPatterns: Array<{ regex: RegExp; setter: (match: RegExpMatchArray) => void }> = [
     {
-      regex: /(?:character\s*name|name)[:\s]*([\w\s'-]+?)(?:\s{2,}|$)/im,
+      // Up to four name words, stopping at the next sheet label — extracted
+      // and OCR text is single-spaced, so "two spaces" never terminates it.
+      regex: /character\s*name[:\s]+((?:(?!\b(?:class|level|background|race|species|player|alignment|xp)\b)[A-Za-z'-]+)(?:\s+(?!\b(?:class|level|background|race|species|player|alignment|xp)\b)[A-Za-z'-]+){0,3})/i,
       setter: (m) => { draft.identity.name = reviewField(m[1].trim(), "Generic label match"); },
     },
     {
@@ -491,7 +493,9 @@ export function analyzeGenericPdf(
   ];
 
   for (const { label, key } of abilityLabels) {
-    const regex = new RegExp(`${label}\\s*[:\\s]\\s*(\\d{1,2})`, "i");
+    // Sheets print either the abbreviation ("STR 12") or the full ability
+    // name ("STRENGTH 12") — accept both, preferring the full word.
+    const regex = new RegExp(`\\b(?:${key}|${label})\\.?\\s*[:\\s]\\s*(\\d{1,2})\\b`, "i");
     const match = allText.match(regex);
     if (match) {
       const score = parseInt(match[1], 10);

@@ -1,0 +1,57 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 7 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 339 >>
+stream
+BT /F1 14 Tf 40 740 Td 20 TL
+(CHARACTER NAME Rhea Voss) Tj T*
+(CLASS Ranger LEVEL 5 BACKGROUND Outlander) Tj T*
+(SPECIES Wood Elf RACE Wood Elf) Tj T*
+(ARMOR CLASS 16 INITIATIVE +3 SPEED 35 ft) Tj T*
+(HIT POINTS 44 PROFICIENCY BONUS +3) Tj T*
+(STRENGTH 12 DEXTERITY 17 CONSTITUTION 14) Tj T*
+(INTELLIGENCE 10 WISDOM 15 CHARISMA 8) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 7 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 293 >>
+stream
+BT /F1 14 Tf 40 740 Td 20 TL
+(SAVING THROWS Strength +4 Dexterity +6) Tj T*
+(SKILLS Perception +6 Stealth +6 Survival +5) Tj T*
+(EQUIPMENT Longbow, Shortsword, Explorer's Pack) Tj T*
+(FEATURES AND TRAITS Favored Enemy, Natural Explorer) Tj T*
+(SPELLCASTING Hunter's Mark, Cure Wounds) Tj T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000247 00000 n 
+0000000637 00000 n 
+0000000763 00000 n 
+0000001107 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1177
+%%EOF

@@ -1,0 +1,72 @@
+[
+  {
+    "file": "src/data/items.json",
+    "role": "Canonical item catalog data",
+    "consumption": "Source of truth. 1055 items. Statically imported by itemCatalog.ts."
+  },
+  {
+    "file": "src/lib/itemCatalog.ts",
+    "role": "Core catalog module",
+    "consumption": "Imports items.json. Exports ITEM_CATALOG, ITEM_CATEGORIES, ITEM_RARITIES, catalogItemToInventory(), getEquippedItemBonuses(), itemPassiveBonuses(), isArmorItem(), isShieldItem(), isWeaponItem(), itemWeaponBonus(), itemArmorAcBonus(), itemMetaParts(), formatItemCost(), itemHasPassiveBonus()."
+  },
+  {
+    "file": "src/types/game.ts",
+    "role": "Type definitions",
+    "consumption": "Defines CatalogItem (lines 179-193), InventoryItem (lines 150-169), Equipment (lines 195-203). CatalogItem has 13 fields; InventoryItem has 17 fields."
+  },
+  {
+    "file": "src/components/HeroSheet.tsx",
+    "role": "Primary UI consumer of items",
+    "consumption": "Equipment catalog browser (search, filter, add items to inventory). Inventory display (list items, remove items). Equipment management (equip armor/shield/weapons/bonus items from inventory). Passive bonus integration (AC, saves, spell attack, spell DC). Manual item creation. All item display logic."
+  },
+  {
+    "file": "src/lib/equipment.ts",
+    "role": "Equipment computation engine",
+    "consumption": "Uses inventory items for: computeArmorClass(), inventoryArmorBreakdown(), inventoryWeaponToDef(), getArmorProficiencyIssue(), totalCarriedWeight(). Parses item.properties for finesse, versatile, two-handed, ammunition. Uses getEquippedItemBonuses from itemCatalog."
+  },
+  {
+    "file": "src/components/ForgeAndFableApp.tsx",
+    "role": "App shell with console commands",
+    "consumption": "Console command 'add-item' creates InventoryItem with randomUUID. No catalog backing. Loot response handling (separate item system)."
+  },
+  {
+    "file": "src/lib/utils.ts",
+    "role": "Utility functions",
+    "consumption": "inventoryEntry() creates InventoryItem with slugified ID. createInitialDraft() initializes empty inventory array. characterPayload() handles inventory in character creation."
+  },
+  {
+    "file": "src/lib/ruleset.ts",
+    "role": "Ruleset definition with starter items",
+    "consumption": "starterItems array (3 hardcoded InventoryItem objects). Exposed as ruleset.items."
+  },
+  {
+    "file": "src/app/api/import/pdf/create/route.ts",
+    "role": "PDF character import",
+    "consumption": "Creates InventoryItem for imported inventory and weapon items. Uses node:crypto randomUUID() for IDs. Creates Equipment object for imported weapons."
+  },
+  {
+    "file": "src/lib/import/pdfTypes.ts",
+    "role": "PDF import type definitions",
+    "consumption": "Defines ImportInventoryItem (name, quantity?, weight?, notes?). Quantity is typed but never mapped to InventoryItem."
+  },
+  {
+    "file": "src/lib/import/importMapper.ts",
+    "role": "PDF import field mapper",
+    "consumption": "Maps import fields to ImportInventoryItem structure. Creates equipmentRows Map for equipment weight mapping."
+  },
+  {
+    "file": "src/lib/vaultStore.ts",
+    "role": "Character persistence",
+    "consumption": "Serializes/deserializes entire Character objects (including inventory and equipment) as JSON blobs. No item-specific logic."
+  },
+  {
+    "file": "src/lib/db.ts",
+    "role": "Database schema and migrations",
+    "consumption": "characters table stores inventory and equipment as JSON in data TEXT column. No item-specific columns or tables."
+  },
+  {
+    "file": "tests/equipment.test.ts",
+    "role": "Equipment unit tests",
+    "consumption": "Tests computeArmorClass() with legacy Equipment (armorId, shield). Does NOT test inventory-backed items or catalog items."
+  }
+]

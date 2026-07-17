@@ -1,0 +1,80 @@
+{
+  "CatalogItem": {
+    "description": "A catalog entry from items.json. The source of truth for all item data.",
+    "fields": {
+      "id": { "type": "string", "required": true, "description": "Unique catalog identifier. Pattern: name-based (\"sending-stones\") or name-number (\"leather-1\")" },
+      "name": { "type": "string", "required": true, "description": "Display name of the item" },
+      "image": { "type": "string", "required": false, "description": "Image key. Never rendered in current UI." },
+      "description": { "type": "string", "required": true, "description": "Full item description. Used for display AND bonus regex parsing." },
+      "category": { "type": "string", "required": true, "description": "Category for filtering and equipment classification. Values: Armor, Weapon, Adventuring Gear, Tools, Poisons, Wondrous Items, Ring, Wand, Staff, Rod, Potions & Oils, Elixir, Scroll, Food & Drink, Mount, Musical Instrument, Tack" },
+      "rarity": { "type": "string", "required": true, "description": "Rarity tier. Values: Mundane, Common, Uncommon, Rare, Very Rare, Legendary, Artifact" },
+      "classification": { "type": "string", "required": false, "description": "Sub-category. E.g., Light Armor, Medium Armor, Heavy Armor, Simple Melee Weapon, Martial Melee Weapons, etc." },
+      "ac": { "type": "string", "required": false, "description": "Armor class string. E.g., \"11 + Dex\", \"12 + Dex\"" },
+      "damage": { "type": "string", "required": false, "description": "Damage dice. E.g., \"1d8\", \"2d6\"" },
+      "damageType": { "type": "string", "required": false, "description": "Damage type. E.g., \"slashing\", \"piercing\"" },
+      "properties": { "type": "string", "required": false, "description": "Pipe-separated weapon properties. E.g., \"finesse | light | thrown (range 20/60)\". Parsed by regex at runtime." },
+      "cost": { "type": "string", "required": false, "description": "Cost in copper pieces as a string. E.g., \"1000\" = 10 gp. Non-numeric strings displayed as-is." },
+      "attunement": { "type": "boolean", "required": true, "description": "Whether the item requires attunement" }
+    }
+  },
+  "InventoryItem": {
+    "description": "An item in a character's inventory. May be catalog-backed or manually created.",
+    "fields": {
+      "id": { "type": "string", "required": true, "description": "UUID (from crypto.randomUUID()). The primary key for inventory references." },
+      "name": { "type": "string", "required": true, "description": "Display name" },
+      "rarity": { "type": "string", "required": true, "description": "Rarity tier" },
+      "attunement": { "type": "boolean", "required": true, "description": "Attunement required" },
+      "notes": { "type": "string", "required": true, "description": "Display notes. For catalog items, generated from meta parts." },
+      "sourceItemId": { "type": "string", "required": false, "description": "Reference to CatalogItem.id for enrichment." },
+      "category": { "type": "string", "required": false },
+      "classification": { "type": "string", "required": false },
+      "description": { "type": "string", "required": false },
+      "ac": { "type": "string", "required": false },
+      "damage": { "type": "string", "required": false },
+      "damageType": { "type": "string", "required": false },
+      "properties": { "type": "string", "required": false },
+      "cost": { "type": "string", "required": false },
+      "image": { "type": "string", "required": false },
+      "weight": { "type": "number", "required": false, "description": "Weight in pounds. Only populated for manually-added items and static armor/weapons." }
+    }
+  },
+  "Equipment": {
+    "description": "A character's equipped items. References either legacy static IDs or inventory UUIDs.",
+    "fields": {
+      "armorId": { "type": "string", "required": false, "description": "Legacy: Static ARMORS id. Deprecated." },
+      "shield": { "type": "boolean", "required": false, "description": "Legacy: Shield flag. Deprecated." },
+      "weaponIds": { "type": "string[]", "required": false, "description": "Legacy: Static WEAPONS ids. Deprecated." },
+      "armorItemId": { "type": "string", "required": false, "description": "UUID of inventory item serving as equipped armor" },
+      "shieldItemId": { "type": "string", "required": false, "description": "UUID of inventory item serving as equipped shield" },
+      "weaponItemIds": { "type": "string[]", "required": false, "description": "UUIDs of inventory items serving as equipped weapons" },
+      "bonusItemIds": { "type": "string[]", "required": false, "description": "UUIDs of inventory items providing passive bonuses" }
+    }
+  },
+  "ArmorDef": {
+    "description": "Static armor definition in equipment.ts. NOT a catalog item.",
+    "fields": {
+      "id": { "type": "string", "required": true },
+      "name": { "type": "string", "required": true },
+      "category": { "type": "\"light\"|\"medium\"|\"heavy\"", "required": true },
+      "baseAc": { "type": "number", "required": true },
+      "dexBonus": { "type": "\"full\"|\"max2\"|\"none\"", "required": true },
+      "stealthDisadvantage": { "type": "boolean", "required": true },
+      "strengthReq": { "type": "number", "required": true },
+      "weight": { "type": "number", "required": true }
+    }
+  },
+  "WeaponDef": {
+    "description": "Static weapon definition in equipment.ts. NOT a catalog item.",
+    "fields": {
+      "id": { "type": "string", "required": true },
+      "name": { "type": "string", "required": true },
+      "damage": { "type": "string", "required": true },
+      "damageType": { "type": "string", "required": true },
+      "kind": { "type": "\"melee\"|\"finesse\"|\"ranged\"", "required": true },
+      "versatile": { "type": "string", "required": false },
+      "twoHanded": { "type": "boolean", "required": false },
+      "bonus": { "type": "number", "required": false },
+      "weight": { "type": "number", "required": true }
+    }
+  }
+}

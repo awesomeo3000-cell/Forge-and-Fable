@@ -21,6 +21,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "QA/**",
+    // Research staging, not app code — crews drop mixed-format artifacts
+    // here (e.g. markdown in .ts files) and must not gate the app build.
+    "rules-research/**",
     "next-env.d.ts",
   ]),
 ]);
