@@ -14585,3 +14585,24 @@ button.dj-card {
 .cs-skill-bonus.cs-roll-target-value:hover {
   color: var(--select, #c9a25a);
 }
+
+/* A read-only character sheet can be opened from the fixed DM table without
+   dismissing the table underneath it. */
+.dm-sheet-overlay { z-index: 800; }
+
+/* Text-size control contract: the Observatory readability pass establishes
+   pixel baselines for the sheet, but those baselines still need to follow the
+   per-character scale. Keep the compact labels and body/table values on the
+   same multiplier so increasing text size never leaves a tab behind. */
+.cs-sheet :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  font-size: calc(15px * var(--sheet-scale, 1));
+}
+.cs-sheet :is(.cs-section-title, .cs-section-eyebrow) { font-size: calc(11px * var(--sheet-scale, 1)); }
+.cs-sheet :is(.cs-spell-level-head, .cs-skill-ability-tag, .cs-item-catalog-head, .cs-bg-label, .cs-console-label, .cs-equip-field, .cs-vital-label, .cs-prof-cat, .cs-reftab, .cs-action-table th, .cs-inv-meta, .cs-item-result span, .cs-spell-status-badges span, .cs-equipped-chip, .cs-ac-src) { font-size: calc(12px * var(--sheet-scale, 1)); }
+.cs-sheet :is(.cs-save-name, .cs-skill-btn, .cs-sense-row, .cs-action-table, .cs-spell-card span, .cs-spell-card p, .cs-item-result p, .cs-inv-row span, .cs-inv-details, .cs-bg-field p, .cs-feature-card p, .cs-rule-note, .cs-hd-rest-info, .cs-conc-banner, .cs-spellbook-head small, .cs-known-spell-chip, .cs-spell-detail-meta, .cs-spell-detail-grid, .cs-spell-status-panel label) { font-size: calc(14px * var(--sheet-scale, 1)); }
+.cs-sheet :is(.cs-action-table td, .cs-inv-row strong, .cs-item-result strong, .cs-feature-card strong, .cs-spell-card strong) { font-size: calc(15px * var(--sheet-scale, 1)); }
+.cs-sheet :is(.cs-save-bonus, .cs-skill-bonus, .cs-action-table td:nth-child(2)) { font-size: calc(16px * var(--sheet-scale, 1)); }
+.cs-sheet :is(.cs-vital-cell strong, .cs-vital-rollable strong, .cs-vital-hp-row strong) { font-size: calc(24px * var(--sheet-scale, 1)); }
+.cs-sheet .cs-ability-mod { font-size: calc(28px * var(--sheet-scale, 1)); }
+.cs-sheet .cs-ability-label { font-size: calc(12px * var(--sheet-scale, 1)); }
+.cs-sheet .cs-ability-score, .cs-sheet .cs-vital-hp-max { font-size: calc(14px * var(--sheet-scale, 1)); }

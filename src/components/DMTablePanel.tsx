@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Command, Copy, Music2, Pause, Play, Plus, Send, Trash2, Volume2, X } from "lucide-react";
 import { addCampaignTrack, deleteCampaignTrack, listCampaignTracks, removeCampaignMember, updateCampaignAudio, uploadCampaignTrack } from "@/lib/client/campaignApi";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
@@ -130,6 +130,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [chroniclePins, setChroniclePins] = useState<SessionPin[]>([]);
   const [chronicleHandoutId, setChronicleHandoutId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const selectionManuallySet = useRef(false);
   // Round Two: the view-preset axis is gone. The only layout switch is the
   // Compact toggle — global compact presentation since Round Four A1 (rail
   // cards AND initiative rows); a legacy "compact" preset migrates on first read.
@@ -185,6 +186,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     try {
       await dmToolsApi.clearRehearsalParty(campaign.campaign.id);
       setRehearsalActive(false);
+      selectionManuallySet.current = false;
       setSelectedUserId(null);
       setError("");
     } catch (reason) {
@@ -300,11 +302,12 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
     return () => { active = false; };
   }, [workspaceMode, chronicleSessionId, campaign.campaign.id]);
   useEffect(() => {
-    if (!selectedUserId) {
-      const first = players.find((member) => member.characterId);
-      if (first) queueMicrotask(() => setSelectedUserId(first.userId));
-    }
-  }, [players, selectedUserId]);
+    if (selectionManuallySet.current) return;
+    const current = sortedCombatants[campaign.initiative.data.turnIndex];
+    const currentTurnPlayer = current?.memberUserId ? players.find((member) => member.userId === current.memberUserId && member.characterId) : undefined;
+    const preferred = currentTurnPlayer ?? players.find((member) => member.characterId);
+    if (preferred && preferred.userId !== selectedUserId) queueMicrotask(() => setSelectedUserId(preferred.userId));
+  }, [campaign.campaign.id, campaign.initiative.data.turnIndex, players, selectedUserId, sortedCombatants]);
   useEffect(() => {
     if (!selectedMember?.characterId) { queueMicrotask(() => setCharacterNotes([])); return; }
     let active = true;
@@ -450,11 +453,16 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
       : rollTarget === "except" ? players.filter((member) => !rollSelectedTargets.includes(member.userId)).map((member) => member.userId)
       : [rollTarget];
     try {
+      if (targetUserIds.length === 0) {
+        setError("Choose at least one player for this roll request.");
+        return false;
+      }
       await dmToolsApi.createRequest(campaign.campaign.id, { kind: "roll", resolution: rollResolution, targetUserIds, payload });
       setRollRequest("");
       setRollAdvantage("normal");
       setError("");
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create roll request."); }
+      return true;
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create roll request."); return false; }
   };
 
   const createQuickScene = async () => {
@@ -741,7 +749,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           rehearsalBusy={rehearsalBusy}
           onSeatRehearsal={rehearsalActive ? undefined : () => void seatRehearsal()}
           onClearRehearsal={rehearsalActive ? () => void clearRehearsal() : undefined}
-          onSelect={(member) => setSelectedUserId(member.userId)}
+          onSelect={(member) => { selectionManuallySet.current = true; setSelectedUserId(member.userId); }}
           onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
         />
         )}
@@ -1003,7 +1011,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
               {rollKind !== "initiative" && rollDc.trim() ? (
                 <label className="dm-inline-check"><input type="checkbox" checked={rollRevealDc} onChange={(event) => setRollRevealDc(event.target.checked)} /> Show DC to players</label>
               ) : null}
-              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void requestRoll().then(() => setActiveCommand(null))}>Request roll</button>
+              <button type="button" className="dm-btn dm-btn-primary" onClick={() => void requestRoll().then((created) => { if (created) setActiveCommand(null); })}>Request roll</button>
             </div>
           ) : null}
           {activeCommand === "condition" ? (
@@ -1150,7 +1158,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
           notes={characterNotes}
           history={records.filter((record) => !selectedMember?.characterName || record.text.toLowerCase().includes(selectedMember.characterName.toLowerCase())).slice(0, 12).map((record) => ({ id: record.id, summary: record.text, createdAt: record.at }))}
           onOpenSheet={(member) => { if (member.characterJson) onOpenSheet(member.characterJson); }}
-          onRequestRoll={(member) => { setRollTarget(member.userId); setWorkspaceMode("encounter"); setActiveCommand("roll"); }}
+          onRequestRoll={(member) => { setRollTarget(member.userId); setRollSelectedTargets([]); setError(""); setWorkspaceMode("encounter"); setActiveCommand("roll"); }}
           onCreateNote={async (member, input) => {
             if (!member.characterId) return false;
             try {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { capabilitiesForCharacter, spellActivation } from "@/lib/capabilities";
+import { isAttackRollSpell } from "@/lib/spells";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { Character } from "@/types/game";
 
@@ -43,6 +44,12 @@ describe("character capabilities", () => {
     expect(spellActivation({ castingTime: "1 Bonus Action" })).toBe("bonus-action");
     expect(spellActivation({ castingTime: "1 Reaction *" })).toBe("reaction");
     expect(spellActivation({ castingTime: "10 Minutes" })).toBe("long-activation");
+  });
+
+  it("recognizes attack-roll spells when catalog metadata is incomplete", () => {
+    expect(isAttackRollSpell({ attack: "", description: "Make a ranged spell attack against the target." })).toBe(true);
+    expect(isAttackRollSpell({ attack: "", description: "The target must make a Dexterity saving throw." })).toBe(false);
+    expect(isAttackRollSpell({ attack: "Melee", description: "Make an attack." })).toBe(true);
   });
 
   it("resolves spendable class resource formulas", () => {

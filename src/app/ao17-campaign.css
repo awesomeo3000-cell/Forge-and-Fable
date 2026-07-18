@@ -588,6 +588,35 @@
   margin: 0 auto var(--space-7);
 }
 
+/* Journal uses the same instrument-panel language as the campaign workspace;
+   the old parchment treatment made this one tab feel like a different app. */
+[data-theme="arcane-observatory"] .campaign-memory {
+  margin: 0 0 var(--space-7);
+  padding: var(--space-5);
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--border-brass);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-recessed);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .campaign-memory > header {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+[data-theme="arcane-observatory"] .campaign-memory > header h3,
+[data-theme="arcane-observatory"] .campaign-memory h4 {
+  color: var(--text-primary);
+  font-family: var(--font-role-label);
+}
+[data-theme="arcane-observatory"] .campaign-memory > header span,
+[data-theme="arcane-observatory"] .campaign-memory article span,
+[data-theme="arcane-observatory"] .campaign-memory article a { color: var(--state-selected); }
+[data-theme="arcane-observatory"] .campaign-memory article { border-bottom-color: var(--border-subtle); }
+[data-theme="arcane-observatory"] .campaign-memory article p,
+[data-theme="arcane-observatory"] .campaign-memory-empty,
+[data-theme="arcane-observatory"] .campaign-memory-error { color: var(--text-secondary); }
+
 /* ── Party grid ── */
 [data-theme="arcane-observatory"] .ao-cw-party-grid {
   list-style: none;

@@ -2311,7 +2311,7 @@ export default function ForgeAndFableApp() {
       </div>
     ) : null}
     {readOnlyViewChar ? (
-      <div className="modal-scrim" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>
+      <div className="modal-scrim dm-sheet-overlay" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>
         <div onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(1100px, 100%)", maxHeight: "90vh", overflow: "auto", position: "relative" }}>
           <button className="glass-icon modal-close" type="button" onClick={() => setReadOnlyViewChar(null)} aria-label="Close" style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
             <X size={18} />

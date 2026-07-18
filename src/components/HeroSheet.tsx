@@ -31,7 +31,7 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, SECTION_TITLES } from "@/lib/sheetLayout";
-import { getSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
+import { getSpell, isAttackRollSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
@@ -1295,7 +1295,7 @@ export default memo(function HeroSheet(props: {
   }
 
   const renderCapabilityLane = (lane: CapabilityLane) => {
-    const entries = characterCapabilities.filter((capability) => capability.lane === lane);
+    const entries = characterCapabilities.filter((capability) => capability.lane === lane && !(capability.spell && isAttackRollSpell(capability.spell)));
     const groups = [
       { label: "Character", entries: entries.filter((capability) => capability.sourceKind !== "universal" && !capability.spell) },
       { label: "Spells", entries: entries.filter((capability) => Boolean(capability.spell)) },
@@ -1616,34 +1616,66 @@ export default memo(function HeroSheet(props: {
               const hasDice = dice.length > 0;
               const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
               const damageType = w.damageType ? ` ${w.damageType}` : "";
-              return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
+              return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, spellDamageDice: undefined, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
             })
           : classActionsAtLevel(heroClass, props.character.level).map((action) => {
               const mod = abilityModifier(props.finalAbilities[action.ability]);
               const damageMod = mod + effDamage;
               const dice = parseDamageDice(action.formula);
               const hasDice = dice.length > 0;
-              return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
+              return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, spellDamageDice: undefined, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
             });
         // Castable spells that require an attack roll (Fire Bolt, Guiding
         // Bolt, …) join the table with the character's spell attack bonus.
         // Save/utility spells stay in their Actions / Bonus Actions lanes.
         const attackSpellRows = Array.from(capabilitySpellIds)
           .map((id) => getSpell(id))
-          .filter((spell): spell is SpellData => Boolean(spell?.attack))
+          .filter((spell): spell is SpellData => Boolean(spell && isAttackRollSpell(spell)))
           .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
           .map((spell) => {
             const firstEffect = resolveSpellEffects(spell, spell.level)[0];
             const damageLabel = firstEffect
               ? `${firstEffect.dice}${firstEffect.type === "damage" && firstEffect.damageType ? ` ${firstEffect.damageType}` : ""}`
               : "—";
-            return { id: `spell-${spell.id}`, name: spell.name, ability: spellAbility ?? ("intelligence" as const), toHit: spellAttack, mod: 0, dice: [] as ReturnType<typeof parseDamageDice>, hasDice: false, versatileDice: null, damageLabel, spell: spell as SpellData | undefined };
+            const damageEffects = resolveSpellEffects(spell, spell.level).filter((effect) => effect.type === "damage");
+            const spellDamageDice = damageEffects.flatMap((effect) => {
+              const parsed = parseSimpleDice(effect.dice);
+              return parsed ? [{ ...parsed, damageType: effect.damageType }] : [];
+            });
+            const damageDisplay = damageEffects.length > 0
+              ? damageEffects.map((effect) => `${effect.dice}${effect.damageType ? ` ${effect.damageType}` : ""}`).join(" · ")
+              : damageLabel;
+            return { id: `spell-${spell.id}`, name: spell.name, ability: spellAbility ?? ("intelligence" as const), toHit: spellAttack, mod: 0, dice: [] as ReturnType<typeof parseDamageDice>, hasDice: false, versatileDice: null, spellDamageDice, damageLabel: damageDisplay, spell: spell as SpellData | undefined };
           });
         const rows = [...baseRows.map((row) => ({ ...row, spell: undefined as SpellData | undefined })), ...attackSpellRows];
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow"><Swords size={12} />Attacks</h3>
-            {rows.length > 0 ? (<table className="cs-action-table"><thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead><tbody>{rows.map((row) => (<tr key={row.id}><td>{row.name}{row.spell ? <small> · spell</small> : null}</td><td>{row.spell ? (<SheetRollButton compact label={`Roll ${row.name} spell attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20(`${row.name} attack`, row.toHit)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle ?? `Roll ${row.name} spell attack`} />) : (<SheetRollButton compact label={`Roll ${row.name} attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20ForAbility(row.name, row.toHit, row.ability)} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : `Roll ${row.name} to hit`} />)}</td><td>{row.damageLabel}</td><td className="cs-dmg-btns">{row.spell ? (<button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, row.spell!.level)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle}>Cast</button>) : row.hasDice ? row.dice.map((d, di) => (<SheetRollButton key={di} compact icon="die" label={`Roll ${row.name} damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} />)) : (<span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>)}{!row.spell && row.versatileDice ? row.versatileDice.map((d, di) => (<SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />)) : null}</td></tr>))}</tbody></table>) : <p className="cs-muted">No attacks configured</p>}
+            {rows.length > 0 ? (
+              <table className="cs-action-table">
+                <thead><tr><th>Name</th><th>To-Hit</th><th>Damage</th><th></th></tr></thead>
+                <tbody>{rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}{row.spell ? <small> · spell</small> : null}</td>
+                    <td>{row.spell ? (
+                      <SheetRollButton compact label={`Roll ${row.name} spell attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20(`${row.name} attack`, row.toHit)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle ?? `Roll ${row.name} spell attack`} />
+                    ) : (
+                      <SheetRollButton compact label={`Roll ${row.name} attack, ${signed(row.toHit)} to hit`} display={signed(row.toHit)} onRoll={() => rollD20ForAbility(row.name, row.toHit, row.ability)} title={d20OptionsForAbility(row.ability) ? "Armor proficiency penalty: rolls with disadvantage" : `Roll ${row.name} to hit`} />
+                    )}</td>
+                    <td>{row.spell ? row.spellDamageDice?.length ? row.spellDamageDice.map((damage, index) => (
+                      <SheetRollButton key={index} compact icon="die" label={`Roll ${row.name} damage, ${damage.count}d${damage.sides}${damage.modifier ? signed(damage.modifier) : ""}`} display={`${damage.count}d${damage.sides}${damage.modifier ? signed(damage.modifier) : ""}`} onRoll={() => props.onRoll(`${row.name} damage${damage.damageType ? ` (${damage.damageType})` : ""}`, damage.sides, damage.count, damage.modifier)} title={`Roll ${damage.count}d${damage.sides}${damage.modifier ? ` ${signed(damage.modifier)}` : ""} damage`} />
+                    )) : <span className="cs-muted">{row.damageLabel}</span> : row.hasDice ? row.dice.map((d, di) => (
+                      <SheetRollButton key={di} compact icon="die" label={`Roll ${row.name} damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} />
+                    )) : <span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>}</td>
+                    <td className="cs-dmg-btns">
+                      {row.spell ? <button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, row.spell!.level)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle}>Cast</button> : row.versatileDice ? row.versatileDice.map((d, di) => (
+                        <SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />
+                      )) : null}
+                    </td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            ) : <p className="cs-muted">No attacks configured</p>}
             {weaponDefs.length === 0 && rows.length > 0 ? <p className="cs-rule-note">Class defaults — equip weapons in the Equipment section to customize.</p> : null}
           </section>
         );
