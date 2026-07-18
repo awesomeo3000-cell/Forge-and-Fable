@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import LevelUpModal from "@/components/LevelUpModal";
 import { defaultCharacterSettings } from "@/lib/utils";
-import { hydrateSpells } from "@/lib/spells";
+import { hydrateSpells, spellsForClassAndSources } from "@/lib/spells";
 import rawSpells from "@/data/spells.json";
 import { buildCantripSelectionGroups } from "@/lib/cantripProgression";
 
@@ -74,6 +74,15 @@ describe("engine-driven level-up modal", () => {
     expect(html).toContain("Druid cantrips");
     expect(html).toContain("0/2");
     expect(html).toContain("Frostbite");
+    expect(html).not.toContain("New Cantrips");
+  });
+
+  it("keeps supplementary cantrips out of a 5e Core Rules Druid pool", () => {
+    const html = render("druid", 0, 1, { sourceIds: ["5e-core"] });
+    expect(html).toContain("Druid cantrips");
+    expect(html).toContain("0/2");
+    expect(html).not.toContain("Frostbite");
+    expect(spellsForClassAndSources("druid", ["5e-core"]).filter((spell) => spell.level === 0)).toHaveLength(8);
   });
 
   it("keeps subclass bonus cantrips separate from the class pool", () => {

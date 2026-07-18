@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { AbilityKey, AbilityScores, ASIChoice, CasterType, Character, CharacterSettings, FeatureChoiceValue, RulesetId, SpellStatus } from "@/types/game";
 import { abilityLabels, abilityModifier, proficiencyBonus, rollDie, signed } from "@/lib/utils";
 import { subclassesForClass } from "@/lib/subclasses";
-import { ALL_SPELLS, cantripsKnownAt, getSpell, learnsIndividualSpells, spellsForClass, spellsLearnedReachingLevel } from "@/lib/spells";
+import { ALL_SPELLS, cantripsKnownAt, filterSpellsBySources, getSpell, learnsIndividualSpells, spellsForClassAndSources, spellsLearnedReachingLevel } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
 import { maxSlots } from "@/lib/spellSlots";
 import { useFocusTrap } from "@/lib/useFocusTrap";
@@ -66,7 +66,7 @@ export default memo(function LevelUpModal({
   characterName,
   gainedFeatures = [],
 }: {
-  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; abilities?: AbilityScores; subclassId?: string; spellsKnown?: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
+  character: { ruleset: RulesetId; level: number; maxHp: number; currentHp: number; abilities?: AbilityScores; subclassId?: string; spellsKnown?: string[]; asiChoices?: ASIChoice[]; hpRolls?: number[]; raceId?: string; sourceIds?: string[]; spellStatuses?: Record<string, SpellStatus>; skillProficiencies?: string[]; skillExpertise?: string[]; background?: string; featureChoices?: Record<string, FeatureChoiceValue>; featureResources?: Character["featureResources"]; alwaysPreparedSpells?: string[]; progressionState?: Character["progressionState"]; spellbookSpells?: string[] };
   newLevel: number;
   finalAbilities: AbilityScores;
   classId: string;
@@ -174,7 +174,7 @@ export default memo(function LevelUpModal({
     || progressionPlan.choices.some((choice) => choice.spellLimit?.includes("any-class"));
   const restrictedSchools = progressionPlan.choices.flatMap((choice) => choice.restrictedSchools ?? []);
   const spellSourceClass = restrictedSchools.length > 0 && classId === "fighter" ? "wizard" : classId;
-  const availableSpells = (anyClassSpellChoice ? ALL_SPELLS : spellsForClass(spellSourceClass))
+  const availableSpells = (anyClassSpellChoice ? filterSpellsBySources(ALL_SPELLS, character.sourceIds) : spellsForClassAndSources(spellSourceClass, character.sourceIds))
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
     .filter((s) => restrictedSchools.length === 0 || restrictedSchools.includes(s.school.toLowerCase()))
     .filter((s) => !knownSpells.includes(s.id))
@@ -203,7 +203,7 @@ export default memo(function LevelUpModal({
   const cantripOptions = (group: CantripSelectionGroup): typeof ALL_SPELLS => {
     const groupPicked = new Set(pickedCantripsByGroup[group.id] ?? []);
     const reservedIds = new Set(cantripGroups.flatMap((candidate) => candidate.allowedSpellIds ?? []));
-    return spellsForClass(group.sourceClass)
+    return spellsForClassAndSources(group.sourceClass, character.sourceIds)
       .filter((s) => s.level === 0)
       .filter((s) => !group.allowedSpellIds || group.allowedSpellIds.includes(s.id))
       .filter((s) => group.allowedSpellIds || !reservedIds.has(s.id))
@@ -895,7 +895,9 @@ export default memo(function LevelUpModal({
 
                   {hasCantrips ? (
                     <>
-                      <span className="level-rite-eyebrow">New Cantrips · {pickedCantrips.length}/{cantripTarget}</span>
+                      {cantripGroups.length > 1 ? (
+                        <span className="level-rite-eyebrow">New Cantrips · {pickedCantrips.length}/{cantripTarget}</span>
+                      ) : null}
                       {cantripGroups.map((group) => {
                         const selected = pickedCantripsByGroup[group.id] ?? [];
                         return (

@@ -2204,6 +2204,7 @@ export default function ForgeAndFableApp() {
           character={{
             ...creationSeq.soFar,
             ruleset: draft.ruleset,
+            sourceIds: draft.sourceIds,
             raceId: draft.raceId,
             // The modal derives expertise eligibility from proficiencies and
             // background; soFar doesn't carry them — the draft does.

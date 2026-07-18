@@ -31,6 +31,36 @@ export function spellsForClass(classId: string): SpellData[] {
   return ALL_SPELLS.filter((s) => s.classes?.includes(classId));
 }
 
+const CORE_SOURCE_IDS = new Set(["5e-core", "5-5e-core", "2014-srd-5.1", "2024-basic-rules"]);
+const EXPANDED_SOURCE_IDS = new Set(["5e-expanded", "5-5e-expanded", "2014-tce-artificer"]);
+
+/**
+ * The imported spell catalog contains core and supplementary material in one
+ * list. Keep source gating here so character creation, level-up, and the sheet
+ * all resolve the same eligible spells.
+ *
+ * Empty/unknown source sets intentionally preserve the legacy behavior for
+ * imported characters and older fixtures that predate source-aware spell
+ * filtering. New characters must select a source before they can be created.
+ */
+export function filterSpellsBySources(spells: SpellData[], sourceIds: string[] = []): SpellData[] {
+  if (sourceIds.length === 0) return spells;
+  const hasCore = sourceIds.some((id) => CORE_SOURCE_IDS.has(id));
+  const hasExpanded = sourceIds.some((id) => EXPANDED_SOURCE_IDS.has(id));
+  if (!hasCore && !hasExpanded) return spells;
+
+  return spells.filter((spell) => {
+    const source = spell.source.trim().toLowerCase();
+    const isCore = source === "players handbook" || source === "basic rules";
+    const isExpanded = !isCore;
+    return (hasCore && isCore) || (hasExpanded && isExpanded);
+  });
+}
+
+export function spellsForClassAndSources(classId: string, sourceIds: string[] = []): SpellData[] {
+  return filterSpellsBySources(spellsForClass(classId), sourceIds);
+}
+
 /* Prepared casters (Cleric, Druid, Paladin, Artificer) don't LEARN a fixed
    list — they always have their whole class list available and prepare from
    it. So they never get a "choose spells to learn" step, and their sheet

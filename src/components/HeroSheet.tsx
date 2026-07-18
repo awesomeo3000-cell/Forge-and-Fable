@@ -31,7 +31,7 @@ import {
 import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/lib/srd";
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, SECTION_TITLES } from "@/lib/sheetLayout";
-import { getSpell, isAttackRollSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClass } from "@/lib/spells";
+import { getSpell, isAttackRollSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClassAndSources } from "@/lib/spells";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
@@ -310,7 +310,7 @@ export default memo(function HeroSheet(props: {
   const spellcastingBlockedByArmor = casterType !== "none" && armorProficiencyIssue.spellcastingBlocked;
   const spellBlockTitle = spellcastingBlockedByArmor ? `${armorPenaltyReason}: cannot cast spells.` : undefined;
   const spellAbility = heroClass.spellcastingAbility;
-  const classSpellList = spellsForClass(heroClass.id);
+  const classSpellList = spellsForClassAndSources(heroClass.id, props.character.sourceIds);
   const canManageSpellbook = isWizardSpellbook(heroClass.id) && classSpellList.length > 0;
   // Prepared casters (cleric/druid/paladin/artificer) have their WHOLE class
   // list available up to their accessible spell level — not a learned subset.
