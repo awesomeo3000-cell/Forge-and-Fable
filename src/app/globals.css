@@ -4400,8 +4400,8 @@ select option {
 }
 
 .cs-skin-btn {
-  border-color: var(--accent-deep) !important;
-  color: var(--accent) !important;
+  border-color: var(--border-brass, #b3924a) !important;
+  color: var(--border-brass-bright, #d9b967) !important;
 }
 
 .cs-identity   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 2; }

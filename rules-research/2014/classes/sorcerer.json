@@ -20,7 +20,7 @@
     }
   },
   "levels": {
-    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["spellcasting", "sorcerous-origin"], "choices": ["choose-2-cantrips", "choose-2-spells", "choose-subclass"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
+    "1": { "level": 1, "proficiencyBonus": 2, "automaticFeatures": ["spellcasting", "sorcerous-origin"], "choices": ["choose-4-cantrips", "choose-2-spells", "choose-subclass"], "resourceChanges": [], "sourceReferences": ["2014-srd-5.1"] },
     "2": { "level": 2, "proficiencyBonus": 2, "automaticFeatures": ["font-of-magic"], "choices": [], "resourceChanges": [{ "resourceId": "sorcery-points", "maximum": 2 }], "sourceReferences": ["2014-srd-5.1"] },
     "3": { "level": 3, "proficiencyBonus": 2, "automaticFeatures": ["metamagic"], "choices": ["choose-2-metamagic-options"], "resourceChanges": [{ "resourceId": "sorcery-points", "maximum": 3 }], "sourceReferences": ["2014-srd-5.1"] },
     "4": { "level": 4, "proficiencyBonus": 2, "automaticFeatures": ["ability-score-improvement"], "choices": ["choose-asi-or-feat", "choose-1-cantrip"], "resourceChanges": [{ "resourceId": "sorcery-points", "maximum": 4 }], "sourceReferences": ["2014-srd-5.1"] },

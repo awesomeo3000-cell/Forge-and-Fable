@@ -1146,6 +1146,24 @@ export default function ForgeAndFableApp() {
     );
   }
 
+  /** Chapter changes reopen the commission scrolled to the top — the wizard's
+      scroll container is an ancestor of the panel (.builder-layout on desktop),
+      not the window, so without this the next chapter lands mid-grid where the
+      previous chapter's footer sat. */
+  function changeCreatorStep(step: number) {
+    setCreatorStep(step);
+    requestAnimationFrame(() => {
+      let el: Element | null = document.querySelector(".creator-panel");
+      while (el) {
+        if (el.scrollHeight > el.clientHeight + 4) {
+          el.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+        }
+        el = el.parentElement;
+      }
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    });
+  }
+
   async function createHero() {
     if (!user || !ruleset || !draft) {
       return;
@@ -2622,7 +2640,7 @@ export default function ForgeAndFableApp() {
               rolledScores={rolledScores}
               rolledAssignments={rolledAssignments}
               onDraftChange={setDraft}
-              onStepChange={setCreatorStep}
+              onStepChange={changeCreatorStep}
               onMethodChange={changeStatMethod}
               onPointBuyChange={changePointBuy}
               onManualAbilityChange={changeManualAbility}

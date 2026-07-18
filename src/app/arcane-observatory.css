@@ -209,14 +209,14 @@
   transform: none;
 }
 [data-theme="arcane-observatory"] .ao-btn-primary {
-  background: var(--state-selected);
-  border-color: #7fb0da;
-  color: var(--text-on-accent);
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
   box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
 }
 [data-theme="arcane-observatory"] .ao-btn-primary:hover {
-  background: #6ba3d4;
-  border-color: #93bee2;
+  background: #ad9159;
+  border-color: var(--border-brass-bright);
 }
 [data-theme="arcane-observatory"] .ao-btn-brass {
   background: var(--border-brass);
@@ -836,14 +836,14 @@
 }
 [data-theme="arcane-observatory"] .dj-btn-primary,
 [data-theme="arcane-observatory"] .dj-btn.dj-btn-primary {
-  background: var(--state-selected);
-  border-color: #7fb0da;
-  color: var(--text-on-accent);
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
   box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
 }
 [data-theme="arcane-observatory"] .dj-btn.dj-btn-primary:hover:not(:disabled) {
-  background: #6ba3d4;
-  border-color: #93bee2;
+  background: #ad9159;
+  border-color: var(--border-brass-bright);
   color: var(--text-on-accent);
 }
 
@@ -2321,14 +2321,14 @@
   outline-offset: 2px;
 }
 [data-theme="arcane-observatory"] .ledger-button.ledger-button-primary {
-  background: var(--state-selected);
-  border-color: #7fb0da;
-  color: var(--text-on-accent);
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
   box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
 }
 [data-theme="arcane-observatory"] .ledger-button.ledger-button-primary:hover:not(:disabled) {
-  background: #6ba3d4;
-  border-color: #93bee2;
+  background: #ad9159;
+  border-color: var(--border-brass-bright);
   color: var(--text-on-accent);
 }
 
@@ -3087,14 +3087,14 @@
   color: var(--border-brass-bright);
 }
 [data-theme="arcane-observatory"] .dm-btn-primary {
-  background: var(--state-selected);
-  border-color: #7fb0da;
-  color: var(--text-on-accent);
+  background: var(--border-brass);
+  border-color: var(--border-brass-bright);
+  color: #14110a;
   box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
 }
 [data-theme="arcane-observatory"] .dm-btn-primary:hover:not(:disabled) {
-  background: #6ba3d4;
-  border-color: #93bee2;
+  background: #ad9159;
+  border-color: var(--border-brass-bright);
   color: var(--text-on-accent);
 }
 [data-theme="arcane-observatory"] .dm-btn:focus-visible,

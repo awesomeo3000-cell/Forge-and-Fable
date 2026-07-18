@@ -657,12 +657,14 @@
   color: var(--ground);
 }
 .level-rite-button-primary {
-  background: var(--parchment);
-  color: var(--ground);
+  background: var(--border-brass, #b3924a);
+  border-color: var(--border-brass-bright, #d9b967);
+  color: #14110a;
 }
 .level-rite-button-primary:hover:not(:disabled) {
-  background: transparent;
-  color: var(--parchment);
+  background: #ad9159;
+  border-color: var(--border-brass-bright, #d9b967);
+  color: #14110a;
 }
 .level-rite-button:disabled,
 .level-rite-button-primary:disabled {
