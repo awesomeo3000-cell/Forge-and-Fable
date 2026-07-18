@@ -1667,10 +1667,12 @@ export default memo(function HeroSheet(props: {
                     )) : <span className="cs-muted">{row.damageLabel}</span> : row.hasDice ? row.dice.map((d, di) => (
                       <SheetRollButton key={di} compact icon="die" label={`Roll ${row.name} damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} damage`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} damage`} />
                     )) : <span className="cs-muted">{row.mod !== 0 ? signed(row.mod) : "—"}</span>}</td>
-                    <td className="cs-dmg-btns">
-                      {row.spell ? <button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, row.spell!.level)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle}>Cast</button> : row.versatileDice ? row.versatileDice.map((d, di) => (
-                        <SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />
-                      )) : null}
+                    <td>
+                      <span className="cs-dmg-btns">
+                        {row.spell ? <button type="button" className="cs-glass-btn cs-dmg-roll" onClick={() => castSpell(row.spell!, row.spell!.level)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle}>Cast</button> : row.versatileDice ? row.versatileDice.map((d, di) => (
+                          <SheetRollButton key={`v-${di}`} compact icon="die" label={`Roll ${row.name} two-handed damage, ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""}`} display={`${d.count}d${d.sides}${row.mod !== 0 ? signed(row.mod) : ""}`} onRoll={() => props.onRoll(`${row.name} two-handed`, d.sides, d.count, row.mod)} title={`Roll ${d.count}d${d.sides}${row.mod !== 0 ? ` ${signed(row.mod)}` : ""} two-handed`} />
+                        )) : null}
+                      </span>
                     </td>
                   </tr>
                 ))}</tbody>
