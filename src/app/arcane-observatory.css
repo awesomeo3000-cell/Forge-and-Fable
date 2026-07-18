@@ -7342,3 +7342,26 @@
 @media (prefers-reduced-motion: no-preference) {
   [data-theme="arcane-observatory"] .ao-dice-result-total { transition: opacity 0.18s ease; }
 }
+
+/* ═══ Design-review refinements (2026-07) ═══ */
+
+/* Mobile dice trigger: the sheet/dice chrome block earlier in this file
+   re-declares min-height:124px on .roll-drawer-tab AFTER the 760px pill rule
+   and, at equal specificity, clobbers it — yielding a tall edge tab that
+   covers the HP stepper on phones. Re-assert the compact pill metrics here so
+   they win the cascade at this breakpoint. */
+@media (max-width: 760px) {
+  [data-theme="arcane-observatory"] .roll-drawer-tab {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+/* Narrow phones: retire the wordmark eyebrow so the character/page name keeps
+   a usable truncation budget beside the topbar action icons (the seal in the
+   navigation rail still carries the brand). */
+@media (max-width: 520px) {
+  [data-theme="arcane-observatory"] .builder-topbar .ledger-masthead span {
+    display: none;
+  }
+}
