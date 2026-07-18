@@ -247,6 +247,86 @@ export default memo(function HomeDashboard(props: Props) {
     [props.campaignSync, props.campaignEvents],
   );
 
+  // Context-aware action cards (mockup ② after-state: 2×2 grid).
+  const actionGrid = (
+    <DashboardActionGrid
+      heading={greeting.heading}
+      subhead={greeting.subhead}
+      actions={actions}
+      dynamicArt={{ campaign: dashboardArt.activeCampaign, character: dashboardArt.continueCharacter }}
+      subjectNames={{
+        ...(featured ? { "open-campaign": featured.name, "prepare-session": featured.name, "next-session": featured.name, "review-party": featured.name } : {}),
+        ...(lastCharacter ? { "continue-character": lastCharacter.name } : {}),
+      }}
+      onAction={runAction}
+    />
+  );
+
+  // Next Session + Needs Attention — the right rail beside the actions (empty
+  // roster) or beside the campaign feature (populated).
+  const sessionRail = (
+    <div className="ao-hd-stack">
+      <section className="ao-hd-panel" aria-labelledby="ao-hd-session-title">
+        <div className="ao-hd-panel-head">
+          <h2 id="ao-hd-session-title">Next Session</h2>
+        </div>
+        {nextSession && sessionDate ? (
+          <div className="ao-hd-session-row">
+            <span className="ao-hd-row-icon" aria-hidden="true"><CalendarDays size={16} /></span>
+            <span className="ao-hd-row-main">
+              <strong>{sessionTimeLabel}</strong>
+              <span>{nextSession.title ?? featured?.name ?? "Your next adventure"}</span>
+              {nextSession.location ? <span><MapPin size={12} aria-hidden="true" /> {nextSession.location}</span> : null}
+            </span>
+            <button className="ao-hd-row-action" type="button" onClick={() => featured && props.onResumeCampaign(featured.id)}>
+              {featured?.myRole === "dm" ? "Prepare" : "View"}
+            </button>
+          </div>
+        ) : (
+          <div className="ao-hd-empty">
+            <span className="ao-hd-empty-icon" aria-hidden="true"><Clock3 size={16} /></span>
+            <span className="ao-hd-row-main">
+              <strong>No session scheduled</strong>
+              <span>{featured?.myRole === "dm" ? "Set a date from the campaign workshop." : "Your Dungeon Master will set the next date."}</span>
+            </span>
+          </div>
+        )}
+      </section>
+
+      <section className="ao-hd-panel" aria-labelledby="ao-hd-attention-title">
+        <div className="ao-hd-panel-head">
+          <h2 id="ao-hd-attention-title">Needs Attention</h2>
+        </div>
+        {attention.length > 0 ? (
+          <ul className="ao-hd-attention-list">
+            {attention.map((item) => (
+              <li key={item.id}>
+                <span className={`ao-hd-attention-dot${item.severity === "warning" ? " is-warning" : ""}`} aria-hidden="true" />
+                <span className="ao-hd-row-main">
+                  <strong>{item.label}</strong>
+                  <span>{item.detail}</span>
+                </span>
+                {item.characterId ? (
+                  <button className="ao-hd-row-action" type="button" onClick={() => props.onOpenCharacter(item.characterId!)}>
+                    Resolve
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="ao-hd-empty is-success">
+            <span className="ao-hd-empty-icon" aria-hidden="true"><CheckCircle2 size={16} /></span>
+            <span className="ao-hd-row-main">
+              <strong>All clear</strong>
+              <span>Nothing needs your attention right now.</span>
+            </span>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+
   return (
     <div className="ao-hd" aria-label="Home">
       {/* 1. Welcome banner */}
@@ -286,100 +366,40 @@ export default memo(function HomeDashboard(props: Props) {
         <div className="ao-hd-welcome-art" aria-hidden="true" />
       </section>
 
-      {/* 2. Context-aware action cards */}
-      <DashboardActionGrid
-        heading={greeting.heading}
-        subhead={greeting.subhead}
-        actions={actions}
-        dynamicArt={{ campaign: dashboardArt.activeCampaign, character: dashboardArt.continueCharacter }}
-        subjectNames={{
-          ...(featured ? { "open-campaign": featured.name, "prepare-session": featured.name, "next-session": featured.name, "review-party": featured.name } : {}),
-          ...(lastCharacter ? { "continue-character": lastCharacter.name } : {}),
-        }}
-        onAction={runAction}
-      />
-
-      {/* 3. Active campaign feature + supporting session/attention panels */}
-      <div className="ao-hd-grid">
-        <ActiveCampaignFeature
-          campaign={featured}
-          loading={campaigns === null}
-          isActive={Boolean(featured && featured.id === props.activeCampaignId)}
-          meta={featureMeta}
-          primaryLabel={featured?.myRole === "dm" ? "Prepare Session" : "Open Campaign"}
-          secondaryLabel={featured?.myCharacterName ? `Open ${featured.myCharacterName}` : "Open Campaign"}
-          onPrimary={() => featured && (featured.myRole === "dm" && !nextSession ? props.onScheduleSession(featured.id) : props.onResumeCampaign(featured.id))}
-          onSecondary={() => {
-            if (!featured) return;
-            const linked = featured.myCharacterId;
-            if (linked && props.characters.some((c) => c.id === linked)) props.onOpenCharacter(linked);
-            else props.onResumeCampaign(featured.id);
-          }}
-          onStartCampaign={props.onOpenCampaigns}
-          onJoinCampaign={props.onOpenCampaigns}
-        />
-
-        <div className="ao-hd-stack">
-          <section className="ao-hd-panel" aria-labelledby="ao-hd-session-title">
-            <div className="ao-hd-panel-head">
-              <h2 id="ao-hd-session-title">Next Session</h2>
-            </div>
-            {nextSession && sessionDate ? (
-              <div className="ao-hd-session-row">
-                <span className="ao-hd-row-icon" aria-hidden="true"><CalendarDays size={16} /></span>
-                <span className="ao-hd-row-main">
-                  <strong>{sessionTimeLabel}</strong>
-                  <span>{nextSession.title ?? featured?.name ?? "Your next adventure"}</span>
-                  {nextSession.location ? <span><MapPin size={12} aria-hidden="true" /> {nextSession.location}</span> : null}
-                </span>
-                <button className="ao-hd-row-action" type="button" onClick={() => featured && props.onResumeCampaign(featured.id)}>
-                  {featured?.myRole === "dm" ? "Prepare" : "View"}
-                </button>
-              </div>
-            ) : (
-              <div className="ao-hd-empty">
-                <span className="ao-hd-empty-icon" aria-hidden="true"><Clock3 size={16} /></span>
-                <span className="ao-hd-row-main">
-                  <strong>No session scheduled</strong>
-                  <span>{featured?.myRole === "dm" ? "Set a date from the campaign workshop." : "Your Dungeon Master will set the next date."}</span>
-                </span>
-              </div>
-            )}
-          </section>
-
-          <section className="ao-hd-panel" aria-labelledby="ao-hd-attention-title">
-            <div className="ao-hd-panel-head">
-              <h2 id="ao-hd-attention-title">Needs Attention</h2>
-            </div>
-            {attention.length > 0 ? (
-              <ul className="ao-hd-attention-list">
-                {attention.map((item) => (
-                  <li key={item.id}>
-                    <span className={`ao-hd-attention-dot${item.severity === "warning" ? " is-warning" : ""}`} aria-hidden="true" />
-                    <span className="ao-hd-row-main">
-                      <strong>{item.label}</strong>
-                      <span>{item.detail}</span>
-                    </span>
-                    {item.characterId ? (
-                      <button className="ao-hd-row-action" type="button" onClick={() => props.onOpenCharacter(item.characterId!)}>
-                        Resolve
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="ao-hd-empty is-success">
-                <span className="ao-hd-empty-icon" aria-hidden="true"><CheckCircle2 size={16} /></span>
-                <span className="ao-hd-row-main">
-                  <strong>All clear</strong>
-                  <span>Nothing needs your attention right now.</span>
-                </span>
-              </div>
-            )}
-          </section>
+      {/* 2–3. Actions + session/attention rail. Empty/new roster (mockup ②
+          after-state): 2×2 action cards left, Next Session / Needs Attention
+          as a right rail. With a featured campaign, the campaign feature stays
+          prominent and the action cards sit above it. */}
+      {featured ? (
+        <>
+          {actionGrid}
+          <div className="ao-hd-grid">
+            <ActiveCampaignFeature
+              campaign={featured}
+              loading={campaigns === null}
+              isActive={Boolean(featured && featured.id === props.activeCampaignId)}
+              meta={featureMeta}
+              primaryLabel={featured?.myRole === "dm" ? "Prepare Session" : "Open Campaign"}
+              secondaryLabel={featured?.myCharacterName ? `Open ${featured.myCharacterName}` : "Open Campaign"}
+              onPrimary={() => featured && (featured.myRole === "dm" && !nextSession ? props.onScheduleSession(featured.id) : props.onResumeCampaign(featured.id))}
+              onSecondary={() => {
+                if (!featured) return;
+                const linked = featured.myCharacterId;
+                if (linked && props.characters.some((c) => c.id === linked)) props.onOpenCharacter(linked);
+                else props.onResumeCampaign(featured.id);
+              }}
+              onStartCampaign={props.onOpenCampaigns}
+              onJoinCampaign={props.onOpenCampaigns}
+            />
+            {sessionRail}
+          </div>
+        </>
+      ) : (
+        <div className="ao-hd-grid ao-hd-grid--actions">
+          {actionGrid}
+          {sessionRail}
         </div>
-      </div>
+      )}
 
       {/* 4. Supporting: heroes, activity, around the hearth. Headings live
           inside the panels (final-polish handoff §11) so they never sit

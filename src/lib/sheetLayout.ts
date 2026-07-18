@@ -21,7 +21,10 @@ const OPTIONAL_TABS: SheetSectionId[] = ["equipment", "actions", "bonus-actions"
 const DEFAULT_COLUMNS: SheetSectionId[][] = [
   ["abilities", "saves", "senses"],
   ["skills", "background", "notes"],
-  ["effects", "attacks", "features", "profs", "pages"],
+  // Mockup ① after-state: the third column leads with the tabbed Attacks panel
+  // (Attacks / Actions / Bonus / Reactions) so the top row reads
+  // Abilities | Skills | Attacks; Effects & Conditions moves down, not sideways.
+  ["attacks", "effects", "features", "profs", "pages"],
 ];
 const DEFAULT_SECTIONS = DEFAULT_COLUMNS.flat();
 const KNOWN_SECTIONS = new Set<SheetSectionId>([...DEFAULT_SECTIONS, ...OPTIONAL_TABS]);

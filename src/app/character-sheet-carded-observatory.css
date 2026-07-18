@@ -23,36 +23,54 @@
   border-radius: var(--radius-md);
 }
 
-/* The toolbar floats on the canvas instead of reading as a paper strip. */
+/* The toolbar floats on the canvas instead of reading as a paper strip.
+   Mockup ① change 4: a quiet "Sheet ▾" menu on the left, the single brass
+   primary (Long Rest) on the right — brass is the only action accent here. */
 [data-theme="arcane-observatory"] .cs-sheet-tools {
   background: transparent;
   border-bottom: 0;
   min-height: 0;
   padding: 8px 12px 0;
+  justify-content: space-between;
 }
 
-/* Skin & Layout controls: raised brass chips with a hover glow instead of the
-   flat hairline default. */
+/* Base chip sizing for both toolbar controls. */
 [data-theme="arcane-observatory"] .cs-sheet-tools .cs-glass-btn {
   padding: 6px 12px;
-  border: 1px solid var(--border-brass, rgba(158, 132, 82, 0.5));
   border-radius: var(--radius-sm, 6px);
-  background: var(--surface-panel-raised, rgba(255, 255, 255, 0.03));
-  color: var(--border-brass-bright, #d8b878);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: border-color 140ms, color 140ms, box-shadow 140ms, background 140ms;
 }
-[data-theme="arcane-observatory"] .cs-sheet-tools .cs-glass-btn:hover {
-  border-color: var(--border-brass-bright, #d8b878);
-  color: var(--text-primary, #f0e6d2);
-  background: rgba(158, 132, 82, 0.16);
-  box-shadow: 0 0 0 1px rgba(158, 132, 82, 0.35), 0 3px 14px rgba(158, 132, 82, 0.22);
+
+/* "Sheet ▾" trigger: neutral ghost so it does not compete with the brass CTA. */
+[data-theme="arcane-observatory"] .cs-sheet-tools .cs-sheet-menu-btn {
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.1));
+  background: var(--surface-panel-raised, rgba(255, 255, 255, 0.03));
+  color: var(--text-secondary, #b6c2d2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-[data-theme="arcane-observatory"] .cs-sheet-tools .cs-glass-btn.cs-edit-active {
+[data-theme="arcane-observatory"] .cs-sheet-tools .cs-sheet-menu-btn:hover {
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.22));
+  color: var(--text-primary, #f0e6d2);
+  background: #21334a;
+}
+[data-theme="arcane-observatory"] .cs-sheet-tools .cs-sheet-menu-btn.cs-edit-active {
   border-color: var(--state-selected, #5c94c8);
   color: var(--state-selected, #5c94c8);
   background: rgba(92, 148, 200, 0.14);
   box-shadow: 0 0 0 1px rgba(92, 148, 200, 0.3), 0 3px 14px rgba(92, 148, 200, 0.2);
+}
+
+/* Long Rest: the one brass primary on the sheet surface. */
+[data-theme="arcane-observatory"] .cs-sheet-tools .cs-sheet-longrest {
+  border: 1px solid var(--border-brass-bright, #d8b878);
+  background: var(--border-brass, #b3924a);
+  color: #14110a;
+  font-weight: 700;
+  box-shadow: inset 0 -2px rgba(0, 0, 0, 0.22);
+}
+[data-theme="arcane-observatory"] .cs-sheet-tools .cs-sheet-longrest:hover {
+  background: #ad9159;
+  border-color: var(--border-brass-bright, #d8b878);
 }
 
 /* Header banner and column stage get inset gutters from the canvas edge. */

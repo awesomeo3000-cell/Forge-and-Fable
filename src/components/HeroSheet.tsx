@@ -3,7 +3,6 @@
 import {
   BookOpen,
   ChevronDown,
-  GripHorizontal,
   Minus,
   Paintbrush,
   PenLine,
@@ -2186,6 +2185,10 @@ export default memo(function HeroSheet(props: {
           Reset to default
         </button>
       ) : null}
+      <div className="cs-skin-dropdown-divider" />
+      <button key="layout" type="button" className="cs-skin-option" role="menuitem" onClick={() => { const next = !editMode; setEditMode(next); setShowLayoutMenu(next); setShowPresets(false); }}>
+        {editMode ? "Done customizing layout" : "Customize layout…"}
+      </button>
     </div>,
     document.body,
   ) : null;
@@ -2199,8 +2202,11 @@ export default memo(function HeroSheet(props: {
       ) : null}
       <div className="cs-sheet-tools" role="toolbar" aria-label="Sheet tools">
         {!isReadOnly && editMode ? <span className="cs-layout-drag-hint">Drop a module onto another to make a tab · drag a tab into a column to pull it out</span> : null}
-        {!isReadOnly && <button ref={skinButtonRef} className="cs-glass-btn cs-skin-btn" type="button" onClick={toggleSkinMenu} title="Appearance" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Skin<ChevronDown size={10} /></button>}
-        {!isReadOnly && <button className={`cs-glass-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={() => { const next = !editMode; setEditMode(next); setShowLayoutMenu(next); }} title="Customize layout" aria-pressed={editMode} aria-expanded={showLayoutMenu}><GripHorizontal size={13} />Layout</button>}
+        {/* Mockup ① change 4: seven controls → one "Sheet ▾" menu (skin + layout)
+            plus a single brass primary. The dropdown that opens is the skin
+            preset menu, which now also carries the layout-edit toggle. */}
+        {!isReadOnly && <button ref={skinButtonRef} className={`cs-glass-btn cs-sheet-menu-btn${editMode ? " cs-edit-active" : ""}`} type="button" onClick={toggleSkinMenu} title="Sheet appearance & layout" aria-haspopup="menu" aria-expanded={showPresets}><Paintbrush size={13} /> Sheet<ChevronDown size={10} /></button>}
+        {!isReadOnly && <button className="cs-glass-btn cs-sheet-longrest" type="button" onClick={doLongRest} title="Take a long rest">Long Rest</button>}
       </div>
       {!isReadOnly && editMode && showLayoutMenu ? (
         <div className="cs-layout-menu">
@@ -2275,7 +2281,6 @@ export default memo(function HeroSheet(props: {
             <div className="character-header__side">
               <div className="character-header__actions">
                 <button className="character-header__action" type="button" onClick={doShortRest}>Short Rest</button>
-                <button className="character-header__action" type="button" onClick={doLongRest}>Long Rest</button>
                 <button
                   className={`character-header__action character-header__inspire${props.character.heroicInspiration ? " is-on" : ""}`}
                   type="button"

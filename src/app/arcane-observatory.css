@@ -6445,7 +6445,8 @@
 /* ── 2. Action grid (one primary card) ── */
 [data-theme="arcane-observatory"] .ao-hd-action-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Mockup ② after-state: 2×2 action cards (was a single 4-across row). */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 [data-theme="arcane-observatory"] .ao-hd-action-card {
@@ -6594,6 +6595,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
   gap: 14px;
+}
+/* Empty/new roster (mockup ②): the 2×2 action cards fill the left column and
+   Next Session / Needs Attention become a ~300px right rail. */
+[data-theme="arcane-observatory"] .ao-hd-grid--actions {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 320px);
+  align-items: start;
 }
 [data-theme="arcane-observatory"] .ao-hd-feature {
   position: relative;
