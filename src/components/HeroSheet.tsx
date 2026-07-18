@@ -2228,8 +2228,10 @@ export default memo(function HeroSheet(props: {
           <button type="button" className="cs-glass-btn" onClick={dismissTour}>Got it</button>
         </div>
       ) : null}
-      {/* Full-width banner: split-panel character record (pinned, not
-          draggable). Guide: docs mirror of split-panel-character-header. */}
+            {/* Hero: compact card per the approved design-review mockup —
+          seal | identity (level chip, name, line, tags) | side column
+          (rest actions + death-save panel). Vitals live in their own row
+          below. Pinned, not draggable. */}
       <div className="cs-sheet-top">
         <section className="character-header" aria-labelledby="cs-char-name">
           <button
@@ -2255,18 +2257,22 @@ export default memo(function HeroSheet(props: {
           </button>
 
           <div className="character-header__content">
-            <div className="character-header__top">
-              <header className="character-header__identity">
-                <div className="character-header__eyebrow">
-                  <button className="character-header__lvl" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={11} /></button>
-                  <span>Level {props.character.level} {heroClass.name}</span>
-                  <button className="character-header__lvl" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={11} /></button>
-                </div>
-                <h1 className="character-header__name" id="cs-char-name">{props.character.name}</h1>
-                <p className="character-header__summary">
-                  {[race.name, props.character.background, props.character.alignment].filter(Boolean).join(" · ")}
-                </p>
-              </header>
+            <header className="character-header__identity">
+              <div className="character-header__eyebrow">
+                <button className="character-header__lvl" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={11} /></button>
+                <span>Level {props.character.level} · {heroClass.name}</span>
+                <button className="character-header__lvl" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={11} /></button>
+              </div>
+              <h1 className="character-header__name" id="cs-char-name">{props.character.name}</h1>
+              <p className="character-header__summary">
+                {[race.name, props.character.background, props.character.alignment].filter(Boolean).join(" · ")}
+              </p>
+              <div className="character-header__tags">
+                {props.character.background ? <span className="character-header__tag">{props.character.background}</span> : null}
+                <span className="character-header__tag">{props.character.ruleset === "2024" ? "5e 2024 Rules" : "5e Core Rules"}</span>
+              </div>
+            </header>
+            <div className="character-header__side">
               <div className="character-header__actions">
                 <button className="character-header__action" type="button" onClick={doShortRest}>Short Rest</button>
                 <button className="character-header__action" type="button" onClick={doLongRest}>Long Rest</button>
@@ -2280,41 +2286,6 @@ export default memo(function HeroSheet(props: {
                   {props.character.heroicInspiration ? "✦ Inspired" : "◇ Inspiration"}
                 </button>
                 <button className="character-header__retire" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={13} /></button>
-              </div>
-            </div>
-
-            {showHitDiceRest ? (
-              <div className="cs-hd-rest-panel character-header__hd-rest">
-                <span className="cs-hd-rest-info">
-                  Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
-                </span>
-                <div className="cs-hd-rest-actions">
-                  <button className="cs-roll-btn cs-roll-btn--compact" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
-                    <DieIcon />Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
-                  </button>
-                  <button className="character-header__action" type="button" onClick={finishShortRest}>Done</button>
-                </div>
-              </div>
-            ) : null}
-
-            <section className="character-header__resources" aria-label="Hit points and resources">
-              <div className="character-header__hp">
-                <span className="character-header__label">Hit Points</span>
-                <div className="character-header__hp-row">
-                  <strong>{props.character.currentHp}</strong>
-                  <em>/ {props.character.maxHp}</em>
-                  {props.character.tempHp > 0 ? <span className="character-header__hp-temp">+{props.character.tempHp} temporary</span> : null}
-                  <span className="character-header__hp-steppers">
-                    <button type="button" aria-label="Decrease hit points" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
-                    <button type="button" aria-label="Increase hit points" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
-                  </span>
-                </div>
-                <span className="sr-only" aria-live="polite">{props.character.currentHp} of {props.character.maxHp} hit points{props.character.tempHp > 0 ? ` plus ${props.character.tempHp} temporary` : ""}</span>
-                <div className="character-header__hp-bar"><span style={{ width: `${hpPercent}%` }} /></div>
-                <p className="character-header__hp-meta">
-                  Hit Dice {props.character.level - (props.character.hitDiceSpent ?? 0)} / {props.character.level} d{heroClass.hitDie}
-                  <button type="button" className="cs-roll-btn cs-roll-btn--compact character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}><DieIcon />Roll</button>
-                </p>
               </div>
               <div className="character-header__saves" data-dying={props.character.currentHp <= 0 ? "true" : undefined}>
                 <span className="character-header__label"><Skull size={13} aria-hidden="true" /> Death Saves</span>
@@ -2332,30 +2303,68 @@ export default memo(function HeroSheet(props: {
                 </div>
                 <button className="character-header__saves-reset" type="button" onClick={resetDeathSaves}>Reset</button>
               </div>
-            </section>
+            </div>
+          </div>
+        </section>
 
-            <section className="character-header__stats" aria-label="Primary statistics">
-              <button type="button" className="character-stat character-stat--action" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}>
-                <strong>{armorClass}</strong>
-                <span>Armor Class</span>
-                <small>{acInfo.label}</small>
+        {showHitDiceRest ? (
+          <div className="cs-hd-rest-panel character-header__hd-rest">
+            <span className="cs-hd-rest-info">
+              Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
+            </span>
+            <div className="cs-hd-rest-actions">
+              <button className="cs-roll-btn cs-roll-btn--compact" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
+                <DieIcon />Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
               </button>
-              <button type="button" className="character-stat character-stat--action character-stat--roll" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}>
-                <strong><span className="cs-roll-chip"><D20Icon />{signed(initiative)}</span></strong>
-                <span>Initiative</span>
-              </button>
-              <div className="character-stat">
-                <strong style={acInfo.strengthWarning ? { color: "var(--accent, var(--gold))" } : undefined}>{(() => { const base = parseInt(race.speed, 10) || 30; return acInfo.strengthWarning ? `${Math.max(0, base - 10)} ft.` : race.speed; })()}</strong>
-                <span>Speed</span>
-              </div>
-              <div className="character-stat">
-                <strong>{signed(pb)}</strong>
-                <span>Proficiency</span>
-              </div>
-            </section>
+              <button className="character-header__action" type="button" onClick={finishShortRest}>Done</button>
+            </div>
+          </div>
+        ) : null}
+
+        <section className="sheet-vitals" aria-label="Vitals">
+          <div className="sheet-vital sheet-vital--hp">
+            <span className="sheet-vital__label">Hit Points</span>
+            <div className="character-header__hp-row">
+              <strong>{props.character.currentHp}</strong>
+              <em>/ {props.character.maxHp}</em>
+              {props.character.tempHp > 0 ? <span className="character-header__hp-temp">+{props.character.tempHp} temporary</span> : null}
+            </div>
+            <span className="sr-only" aria-live="polite">{props.character.currentHp} of {props.character.maxHp} hit points{props.character.tempHp > 0 ? ` plus ${props.character.tempHp} temporary` : ""}</span>
+            <div className="character-header__hp-bar"><span style={{ width: `${hpPercent}%` }} /></div>
+            <div className="sheet-vital__hpfoot">
+              <p className="character-header__hp-meta">
+                Hit Dice {props.character.level - (props.character.hitDiceSpent ?? 0)} / {props.character.level} d{heroClass.hitDie}
+                <button type="button" className="cs-roll-btn cs-roll-btn--compact character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}><DieIcon />Roll</button>
+              </p>
+              <span className="character-header__hp-steppers">
+                <button type="button" aria-label="Decrease hit points" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
+                <button type="button" aria-label="Increase hit points" onClick={() => props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + 1) })}><Plus size={10} /></button>
+              </span>
+            </div>
+          </div>
+          <button type="button" className="sheet-vital sheet-vital--action" onClick={() => setShowAcBreakdown(true)} title="See what makes up this AC" aria-label={`Armor class ${armorClass}, view breakdown`}>
+            <span className="sheet-vital__label">Armor Class</span>
+            <strong className="sheet-vital__num">{armorClass}</strong>
+            <span className="sheet-vital__sub">{acInfo.label}</span>
+          </button>
+          <button type="button" className="sheet-vital sheet-vital--action sheet-vital--roll" onClick={() => rollD20ForAbility("Initiative", initiative, "dexterity")} aria-label={`Roll initiative, ${signed(initiative)}`} title={d20OptionsForAbility("dexterity") ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll initiative"}>
+            <span className="sheet-vital__label">Initiative</span>
+            <strong className="sheet-vital__num"><span className="cs-roll-chip"><D20Icon />{signed(initiative)}</span></strong>
+            <span className="sheet-vital__sub">Dexterity</span>
+          </button>
+          <div className="sheet-vital">
+            <span className="sheet-vital__label">Speed</span>
+            <strong className="sheet-vital__num" style={acInfo.strengthWarning ? { color: "var(--accent, var(--gold))" } : undefined}>{(() => { const base = parseInt(race.speed, 10) || 30; return acInfo.strengthWarning ? `${Math.max(0, base - 10)} ft.` : race.speed; })()}</strong>
+            <span className="sheet-vital__sub">Walking</span>
+          </div>
+          <div className="sheet-vital">
+            <span className="sheet-vital__label">Proficiency</span>
+            <strong className="sheet-vital__num">{signed(pb)}</strong>
+            <span className="sheet-vital__sub">Level {props.character.level}</span>
           </div>
         </section>
       </div>
+
       {portraitPickerOpen && !isReadOnly ? (
         <PortraitSelectorModal
           open={portraitPickerOpen}

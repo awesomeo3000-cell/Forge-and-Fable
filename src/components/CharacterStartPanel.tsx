@@ -30,21 +30,6 @@ export default memo(function CharacterStartPanel(props: {
           </span>
           <h2>Commission a character</h2>
         </header>
-        <div className="commission-actions">
-          {props.onBack ? (
-            <button type="button" className="commission-button" onClick={props.onBack}>
-              Back
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="commission-button commission-button-primary"
-            disabled={!selectedMode}
-            onClick={() => selectedMode && props.onSelectBuild(selectedMode)}
-          >
-            Open the commission
-          </button>
-        </div>
       </div>
 
       <div className="commission-strip">
@@ -56,8 +41,7 @@ export default memo(function CharacterStartPanel(props: {
               key={item.mode}
               className={`commission-panel commission-panel-${item.mode}${chosen ? " chosen" : ""}`}
               aria-pressed={chosen}
-              onClick={() => setSelectedMode(item.mode)}
-              onDoubleClick={() => props.onSelectBuild(item.mode)}
+              onClick={() => (chosen ? props.onSelectBuild(item.mode) : setSelectedMode(item.mode))}
             >
               <span className="commission-plate" aria-hidden="true">
                 <Image
@@ -75,12 +59,23 @@ export default memo(function CharacterStartPanel(props: {
                 <span className="commission-label">{item.label}</span>
                 <span className="commission-desc">{BUILD_MODE_DESCRIPTORS[item.mode]}</span>
                 <em className="commission-state commission-cue">
-                  {chosen ? "Selected ✦" : "Choose this path →"}
+                  {chosen ? "Open the Commission →" : "Choose this path"}
                 </em>
               </span>
             </button>
           );
         })}
+      </div>
+
+      <div className="commission-foot">
+        {props.onBack ? (
+          <button type="button" className="commission-backlink" onClick={props.onBack}>
+            ← Back
+          </button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        <span className="commission-foot-note">Every path ends at the Seal — review before the hero joins the roster.</span>
       </div>
     </div>
   );

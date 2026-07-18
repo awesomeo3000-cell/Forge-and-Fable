@@ -18,6 +18,8 @@ type Props = {
   onActiveCampaignChange: (campaignId: string | null) => void;
   onCreateCharacter?: () => void;
   onClose: () => void;
+  /** "modal" = scrim + portal (legacy); "page" = inline full-stage surface. */
+  presentation?: "modal" | "page";
   theme?: CharacterTheme | null;
 };
 
@@ -37,6 +39,7 @@ export default memo(function CampaignPanel({
   onCreateCharacter,
   onClose,
   theme,
+  presentation = "modal",
 }: Props) {
   const [view, setView] = useState<PanelView>("list");
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
@@ -142,8 +145,7 @@ export default memo(function CampaignPanel({
       .catch(() => setError("Could not copy the code — copy it by hand."));
   };
 
-  return createPortal(
-    <div className="modal-scrim" role="presentation" onMouseDown={onClose}>
+  const panelSurface = (
       <section
         className="campaign-panel"
         role="dialog"
@@ -366,7 +368,12 @@ export default memo(function CampaignPanel({
 
         {busy ? <div className="import-busy"><Loader2 size={16} className="spin" /><span>Working...</span></div> : null}
       </section>
-    </div>,
+  );
+  if (presentation === "page") {
+    return <div className="campaign-page">{panelSurface}</div>;
+  }
+  return createPortal(
+    <div className="modal-scrim" role="presentation" onMouseDown={onClose}>{panelSurface}</div>,
     document.body,
   );
 });

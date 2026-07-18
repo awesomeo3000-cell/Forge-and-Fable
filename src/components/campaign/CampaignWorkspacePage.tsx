@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
-import { resolveViewerRole } from "@/lib/campaignWorkspaceModel";
+import { resolveViewerRole, type CampaignViewerRole } from "@/lib/campaignWorkspaceModel";
 import type { CampaignSection } from "@/lib/campaignRoute";
 import type { Character } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
@@ -51,7 +51,13 @@ export default function CampaignWorkspacePage(props: {
   onScheduleSession: () => void;
 }) {
   const campaignId = props.detail.campaign.id;
-  const viewerRole = resolveViewerRole(props.detail.campaign.dmUserId, props.currentUserId);
+  // Role is decided by the server (from the session cookie) and carried on the
+  // sync payload — trusting it avoids the stale-localStorage identity mismatch
+  // that made a DM's own workspace render as a player. resolveViewerRole stays
+  // as the fallback when the flag is absent (older payloads / tests).
+  const viewerRole: CampaignViewerRole = props.detail.viewerIsDm
+    ? "dm"
+    : resolveViewerRole(props.detail.campaign.dmUserId, props.currentUserId);
   const { onCampaignClosed, onActiveCampaignChange, onPostEvent } = props;
 
   const [sessions, setSessions] = useState<CampaignSession[]>([]);

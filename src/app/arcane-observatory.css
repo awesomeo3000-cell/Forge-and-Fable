@@ -6984,15 +6984,22 @@
   gap: 12px;
 }
 [data-theme="arcane-observatory"] .ao-hd-name-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 0;
-  border-bottom: 1px solid var(--border-brass);
   padding: 3px 0;
   background: transparent;
-  color: var(--border-brass-bright);
-  font: 600 0.72rem/1.2 var(--font-role-label);
-  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font: 600 0.68rem/1.2 var(--font-role-label);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+[data-theme="arcane-observatory"] .ao-hd-name-edit:hover,
+[data-theme="arcane-observatory"] .ao-hd-name-edit:focus-visible {
+  color: var(--border-brass-bright);
 }
 [data-theme="arcane-observatory"] .ao-hd-name-form {
   display: inline-flex;
@@ -7359,9 +7366,340 @@
 
 /* Narrow phones: retire the wordmark eyebrow so the character/page name keeps
    a usable truncation budget beside the topbar action icons (the seal in the
-   navigation rail still carries the brand). */
+   navigation rail still carries the brand). Tighten the utility-icon cluster
+   too — 5 × 40px icons left the title only ~45px at 390px; primary navigation
+   lives in the bottom bar, so 36px is an acceptable trade here. */
 @media (max-width: 520px) {
   [data-theme="arcane-observatory"] .builder-topbar .ledger-masthead span {
     display: none;
   }
+  [data-theme="arcane-observatory"] .builder-topbar.ledger-topbar {
+    padding-inline: 12px;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .builder-actions {
+    gap: 4px;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .glass-icon.ink-action {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+  }
+  [data-theme="arcane-observatory"] .builder-topbar .ledger-masthead strong {
+    font-size: 1.05rem;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Design-review refinements · P3 — hero sheet showpiece (approved mockup:
+   mockups/sheet.html). Overrides AO-8 rules above; equal specificity, later
+   source order wins.
+   1. Portrait becomes a brass-ringed circular seal (class icon = fallback)
+   2. Four vitals share one anatomy: label → number → sub-label
+   3. Death saves: round labeled pips instead of rotated diamonds
+   4. HP carries the brass emphasis as the hero vital
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* 1 · Brass seal portrait */
+[data-theme="arcane-observatory"] .character-header__portrait {
+  place-self: center;
+  width: clamp(150px, 13vw, 190px);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  border: 2px solid var(--border-brass);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--border-brass) 22%, transparent), 0 12px 26px rgba(0, 0, 0, 0.45);
+}
+[data-theme="arcane-observatory"] .character-header__portrait:focus-visible {
+  outline-offset: 3px;
+}
+
+/* 2 · One vital-card anatomy: label on top, number, sub-label */
+[data-theme="arcane-observatory"] .character-stat > span { margin-top: 0; }
+[data-theme="arcane-observatory"] .character-stat strong { margin-top: 5px; }
+
+/* 3 · Death saves: round pips; row labels brightened for across-table reading */
+[data-theme="arcane-observatory"] .character-header__save {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  transform: none;
+}
+[data-theme="arcane-observatory"] .character-header__save:hover { transform: scale(1.15); }
+[data-theme="arcane-observatory"] .character-header__saves-row > span {
+  width: 86px;
+  color: color-mix(in srgb, var(--ink) 78%, var(--ink-3));
+  font-size: 0.66rem;
+}
+
+/* 4 · HP as the hero vital: brass-tinted card */
+[data-theme="arcane-observatory"] .character-header__hp {
+  border: 1px solid color-mix(in srgb, var(--border-brass) 40%, transparent);
+  border-radius: var(--radius-sm, 6px);
+  background: linear-gradient(180deg, var(--paper-raised) 0%, transparent 130%);
+  padding: 12px 14px;
+}
+
+/* Small screens: keep the seal round when the header stacks */
+@media (max-width: 720px) {
+  [data-theme="arcane-observatory"] .character-header__portrait {
+    width: clamp(132px, 42vw, 180px);
+    height: auto;
+    margin: 16px 0 0;
+    border-bottom: 0;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Design-review refinements · P4 — Forge + topbar (approved mockup: forge.html)
+   1. Chosen commission card: brass ring + top-edge; its cue becomes the CTA
+   2. Topbar consolidation: My data / Snapshots / Import / Feedback → one menu
+   ────────────────────────────────────────────────────────────────────────── */
+[data-theme="arcane-observatory"] .commission-panel.chosen {
+  box-shadow: 0 0 0 1px var(--border-brass), inset 0 2px 0 var(--border-brass-bright), var(--shadow-panel);
+}
+[data-theme="arcane-observatory"] .commission-panel.chosen .commission-cue {
+  display: block;
+  font-weight: 700;
+  border-top: 1px solid color-mix(in srgb, var(--border-brass) 35%, transparent);
+  padding-top: 10px;
+}
+
+[data-theme="arcane-observatory"] .ao-header-menu-wrap { position: relative; display: inline-flex; }
+[data-theme="arcane-observatory"] .ao-header-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 70;
+  min-width: 210px;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  background: var(--surface-overlay, #0a111c);
+  border: 1px solid var(--border-default, rgba(176, 193, 207, 0.22));
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-panel, 0 10px 24px rgba(0, 0, 0, 0.28));
+}
+[data-theme="arcane-observatory"] .ao-header-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #b8c2cc);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+[data-theme="arcane-observatory"] .ao-header-menu button:hover {
+  background: var(--surface-panel-raised, #1a2b40);
+  color: var(--text-primary, #edf1f4);
+}
+[data-theme="arcane-observatory"] .ao-header-menu button:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: -2px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Design-review refinements · P3b — sheet hero rebuilt to the approved
+   mockup (mockups/sheet.html): compact hero card (seal | identity + tags |
+   side column with rest actions + death panel) and the vitals pulled out
+   into their own five-card row, HP as the hero card with a brass bar.
+   Later source order wins over the P3 block and the AO-8 rules above.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Hero: compact card — seal | content */
+[data-theme="arcane-observatory"] .character-header {
+  position: relative;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 0;
+  align-items: center;
+  gap: 26px;
+  padding: 22px 26px;
+  border-radius: 8px;
+}
+[data-theme="arcane-observatory"] .character-header__portrait {
+  width: 124px;
+  align-self: center;
+}
+[data-theme="arcane-observatory"] .character-header__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0;
+}
+[data-theme="arcane-observatory"] .character-header__name {
+  margin: 10px 0 4px;
+  font-size: clamp(1.9rem, 3vw, 2.4rem);
+}
+
+/* Level chip */
+[data-theme="arcane-observatory"] .character-header__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--border-brass) 65%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border-brass) 10%, transparent);
+  color: var(--border-brass-bright);
+}
+[data-theme="arcane-observatory"] .character-header__lvl { color: inherit; }
+
+/* Identity tags (background · ruleset) */
+[data-theme="arcane-observatory"] .character-header__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+[data-theme="arcane-observatory"] .character-header__tag {
+  padding: 5px 11px;
+  border: 1px solid var(--border-default, rgba(176, 193, 207, 0.22));
+  border-radius: 999px;
+  color: var(--text-secondary, #b8c2cc);
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Side column: stacked rest actions + death-save panel */
+[data-theme="arcane-observatory"] .character-header__side {
+  display: grid;
+  gap: 10px;
+  min-width: 232px;
+}
+[data-theme="arcane-observatory"] .character-header__actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+[data-theme="arcane-observatory"] .character-header__action { width: 100%; }
+[data-theme="arcane-observatory"] .character-header__retire {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  min-height: 30px;
+  width: 30px;
+  padding: 0;
+}
+
+/* Hit-dice rest panel sits between hero and vitals */
+[data-theme="arcane-observatory"] .character-header__hd-rest { margin-top: 14px; }
+
+/* Vitals: their own five-card row, HP as the hero card */
+[data-theme="arcane-observatory"] .sheet-vitals {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+[data-theme="arcane-observatory"] .sheet-vital {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--paper-raised);
+  border: 1px solid var(--doc-rule);
+  border-radius: 8px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+[data-theme="arcane-observatory"] button.sheet-vital { cursor: pointer; }
+[data-theme="arcane-observatory"] button.sheet-vital:hover {
+  background: color-mix(in srgb, var(--paper-raised) 88%, #ffffff);
+}
+[data-theme="arcane-observatory"] button.sheet-vital:focus-visible {
+  outline: 2px solid var(--doc-select);
+  outline-offset: 2px;
+}
+[data-theme="arcane-observatory"] .sheet-vital__label {
+  color: var(--ink-3);
+  font: 700 0.62rem/1 var(--font-role-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .sheet-vital__num {
+  display: block;
+  margin-top: auto;
+  color: var(--ink);
+  font-family: var(--font-role-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
+[data-theme="arcane-observatory"] .sheet-vital__num em {
+  font-size: 0.95rem;
+  color: var(--ink-3);
+  font-style: normal;
+  font-weight: 400;
+}
+[data-theme="arcane-observatory"] .sheet-vital__sub {
+  color: var(--ink-3);
+  font-size: 0.7rem;
+}
+[data-theme="arcane-observatory"] .sheet-vital--hp {
+  border-color: color-mix(in srgb, var(--border-brass) 40%, transparent);
+  background: linear-gradient(180deg, var(--paper-raised) 0%, transparent 160%);
+}
+[data-theme="arcane-observatory"] .sheet-vital--hp .character-header__hp-row strong {
+  font-size: 2.1rem;
+}
+[data-theme="arcane-observatory"] .sheet-vital__hpfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+[data-theme="arcane-observatory"] .sheet-vital__hpfoot .character-header__hp-steppers { margin-left: 0; }
+
+/* The HP bar goes brass (was selection-green) */
+[data-theme="arcane-observatory"] .character-header__hp-bar > span {
+  background: linear-gradient(90deg, var(--border-brass), var(--border-brass-bright));
+}
+
+/* Vitals + hero responsive */
+@media (max-width: 960px) {
+  [data-theme="arcane-observatory"] .sheet-vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-theme="arcane-observatory"] .sheet-vital--hp { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  [data-theme="arcane-observatory"] .character-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 18px;
+  }
+  [data-theme="arcane-observatory"] .character-header__content {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  [data-theme="arcane-observatory"] .character-header__tags { justify-content: center; }
+  [data-theme="arcane-observatory"] .character-header__side { min-width: 0; }
+  [data-theme="arcane-observatory"] .character-header__portrait { margin: 0; }
+}
+
+/* Design review (dashboard): the primary action card carries the only brass
+   top-edge on the page, so the recommended next step is unmistakable. */
+[data-theme="arcane-observatory"] .ao-hd-action-card.primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 2px solid var(--border-brass);
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+}
+[data-theme="arcane-observatory"] .ao-hd-action-card.primary:not(.selected) .ao-hd-action-cta {
+  border-color: var(--border-brass);
+  color: var(--border-brass-bright);
 }

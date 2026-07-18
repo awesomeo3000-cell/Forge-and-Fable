@@ -44,6 +44,17 @@ describe("campaign roles and character eligibility", () => {
     expect(listCampaigns("player").some((campaign) => campaign.id === run.id)).toBe(false);
   });
 
+  it("reports the viewer's DM status on the sync payload from the session identity", async () => {
+    const character = await createCharacter("player", characterInput("Rook"));
+    const campaign = createCampaign("dm", "Run Table");
+    joinCampaign("player", campaign.code, character.id);
+
+    // The DM sees viewerIsDm=true; a real player sees false. The workspace
+    // trusts this server-decided flag instead of a client-persisted user id.
+    expect(syncCampaign(campaign.id, "dm").viewerIsDm).toBe(true);
+    expect(syncCampaign(campaign.id, "player").viewerIsDm).toBe(false);
+  });
+
   it("persists the selected campaign theme through summaries and sync", () => {
     const campaign = createCampaign("dm", "Moonlit Table", "forge");
 

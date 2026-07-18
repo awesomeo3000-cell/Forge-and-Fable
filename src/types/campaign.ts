@@ -197,6 +197,13 @@ export type CampaignSyncPayload = {
     themeKey: CampaignThemeId;
     bannerImageUrl?: string | null;
   };
+  /**
+   * Whether the authenticated viewer is this campaign's DM, decided by the
+   * server from the session cookie. The client must trust this rather than
+   * comparing a locally-persisted user id against `campaign.dmUserId` — a
+   * stale localStorage identity would otherwise mis-gate the DM screen.
+   */
+  viewerIsDm: boolean;
   events: CampaignEvent[];
   rolls: Array<{
     id: string;

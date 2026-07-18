@@ -699,6 +699,7 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
       themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
       bannerImageUrl: campaign.banner_image_url ?? null,
     },
+    viewerIsDm: isDm,
     events,
     rolls,
     initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),

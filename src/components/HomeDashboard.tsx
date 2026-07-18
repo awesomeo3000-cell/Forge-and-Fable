@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useMemo, useState } from "react";
 import { preload } from "react-dom";
-import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Clock3, Download, KeyRound, MapPin, Swords } from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Clock3, Download, KeyRound, MapPin, Pencil, Swords } from "lucide-react";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import type { Character, Ruleset } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
@@ -252,11 +252,12 @@ export default memo(function HomeDashboard(props: Props) {
       {/* 1. Welcome banner */}
       <section className="ao-hd-welcome" aria-labelledby="ao-hd-welcome-title">
         <div className="ao-hd-welcome-copy">
-          <span className="ao-dash-eyebrow">{greeting.kicker}</span>
           <div className="ao-hd-name-row">
-            <h1 id="ao-hd-welcome-title">{greeting.title}</h1>
+            <span className="ao-dash-eyebrow">{greeting.kicker}</span>
             {!editingName ? (
-              <button type="button" className="ao-hd-name-edit" onClick={() => setEditingName(true)}>Edit name</button>
+              <button type="button" className="ao-hd-name-edit" aria-label="Edit display name" onClick={() => setEditingName(true)}>
+                <Pencil size={11} aria-hidden="true" /> <span>edit</span>
+              </button>
             ) : (
               <form className="ao-hd-name-form" onSubmit={(event) => { event.preventDefault(); void saveName(); }}>
                 <input
@@ -271,6 +272,7 @@ export default memo(function HomeDashboard(props: Props) {
               </form>
             )}
           </div>
+          <h1 id="ao-hd-welcome-title">{greeting.title}</h1>
           <p>{greeting.text}</p>
           <div className="ao-hd-feature-actions">
             <button className="ao-hd-btn ao-hd-btn-primary" type="button" aria-label={welcome.primaryAria} onClick={welcome.onPrimary}>

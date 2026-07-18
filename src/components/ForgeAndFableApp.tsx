@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  ChevronDown,
   Hammer,
   Home,
   LogOut,
+  Menu,
   MessageSquare,
   RotateCcw,
   ShieldCheck,
@@ -237,6 +239,15 @@ export default function ForgeAndFableApp() {
   const [campaignHandout, setCampaignHandout] = useState<{ title: string; url: string } | null>(null);
   const [readOnlyViewChar, setReadOnlyViewChar] = useState<Character | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!headerMenuOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest(".ao-header-menu-wrap")) setHeaderMenuOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [headerMenuOpen]);
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
@@ -2138,7 +2149,7 @@ export default function ForgeAndFableApp() {
   const dmScreenOpen = Boolean(
     dmTableOpen &&
     campaignSync &&
-    campaignSync.campaign.dmUserId === user?.id,
+    campaignSync.viewerIsDm,
   );
   const diceTrayVisible = characterSheetOpen || dmScreenOpen;
 
@@ -2186,7 +2197,7 @@ export default function ForgeAndFableApp() {
       activeCharacterInitiative={selectedInitiative}
       currentUserId={user.id}
       campaignInitiative={campaignSync?.initiative}
-      campaignIsDm={campaignSync?.campaign.dmUserId === user.id}
+      campaignIsDm={campaignSync?.viewerIsDm ?? false}
       onRollPool={pushPool}
       onCampaignInitiativeUpdate={updateCampaignInitiative}
       onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
@@ -2280,6 +2291,7 @@ export default function ForgeAndFableApp() {
       />
     ) : null}
     {campaignListOpen ? <CampaignPanel
+        presentation="page"
       characters={characters}
       activeCampaignId={activeCampaignId}
       onActiveCampaignChange={(id) => {
@@ -2296,7 +2308,7 @@ export default function ForgeAndFableApp() {
       onClose={() => setCampaignListOpen(false)}
       theme={selected?.theme ?? null}
     /> : null}
-    {dmTableOpen && campaignSync && campaignSync.campaign.dmUserId === user.id ? <DMTablePanel
+    {dmTableOpen && campaignSync && campaignSync.viewerIsDm ? <DMTablePanel
       campaign={campaignSync}
       events={campaignEvents}
       theme={selected?.theme ?? null}
@@ -2308,7 +2320,7 @@ export default function ForgeAndFableApp() {
       openScheduleSession={scheduleSessionOpen}
       onScheduleSessionOpened={() => setScheduleSessionOpen(false)}
     /> : null}
-    {campaignSync && !campaignOpen && campaignSync.campaign.dmUserId !== user.id ? <CampaignTableStrip
+    {campaignSync && !campaignOpen && !campaignSync.viewerIsDm ? <CampaignTableStrip
       campaign={campaignSync}
       events={campaignEvents}
       currentUserId={user.id}
@@ -2411,6 +2423,7 @@ export default function ForgeAndFableApp() {
             <span>Dreamwright</span>
             <strong>
               {campaignOpen ? campaignSync?.campaign.name ?? "Campaign"
+                : campaignListOpen ? "Your Tables"
                 : homeOpen ? "The Hearth"
                 : creationPromptOpen || creatorOpen ? "The Forge"
                 : selected ? selected.name
@@ -2423,23 +2436,39 @@ export default function ForgeAndFableApp() {
           <SaveStatusBadge status={saveStatus} />
           <span className="account-chip ledger-account">{user.name}</span>
           <div className="ao-header-action-cluster" aria-label="Workspace actions">
-            <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setAccountDataOpen(true)} title="Account data">
-              <UserIcon size={16} /><span>My data</span>
-            </button>
             <button className="glass-icon ink-action ao-header-action ao-header-action-primary" type="button" onClick={() => setCampaignListOpen(true)} title="Campaigns">
               <Swords size={17} /><span>Campaigns</span>
             </button>
-            {selected ? (
-              <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setSnapshotsOpen(true)} title="Snapshots">
-                <RotateCcw size={16} /><span>Snapshots</span>
+            <div className="ao-header-menu-wrap">
+              <button
+                className="glass-icon ink-action ao-header-action"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={headerMenuOpen}
+                onClick={() => setHeaderMenuOpen((open) => !open)}
+                title="Workspace menu"
+              >
+                <Menu size={16} /><span>Menu</span><ChevronDown size={10} />
               </button>
-            ) : null}
-            <button className="glass-icon ink-action ao-header-action" type="button" onClick={() => setImportOpen(true)} title="Import character">
-              <Upload size={16} /><span>Import</span>
-            </button>
-            <button className="glass-icon ink-action ao-header-action" type="button" onClick={openFeedback} title="Submit feedback">
-              <MessageSquare size={16} /><span>Feedback</span>
-            </button>
+              {headerMenuOpen ? (
+                <div className="ao-header-menu" role="menu">
+                  <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); setAccountDataOpen(true); }}>
+                    <UserIcon size={14} /><span>My data</span>
+                  </button>
+                  {selected ? (
+                    <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); setSnapshotsOpen(true); }}>
+                      <RotateCcw size={14} /><span>Snapshots</span>
+                    </button>
+                  ) : null}
+                  <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); setImportOpen(true); }}>
+                    <Upload size={14} /><span>Import character</span>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); openFeedback(); }}>
+                    <MessageSquare size={14} /><span>Submit feedback</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
           {user.isAdmin ? (
             <button className="glass-icon ink-action" type="button" onClick={() => setAdminOpen(true)} title="Admin console">
