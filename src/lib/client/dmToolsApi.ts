@@ -30,7 +30,7 @@ export const dmToolsApi={
   scheduleSession:(campaignId:string,input:Record<string,unknown>)=>api<{session:CampaignSession}>(`/api/campaigns/${campaignId}/sessions`,{method:"POST",body:body({action:"schedule",...input})}),
   scheduleSessions:(campaignId:string,input:Record<string,unknown>)=>api<{sessions:CampaignSession[]}>(`/api/campaigns/${campaignId}/sessions`,{method:"POST",body:body({action:"schedule-series",...input})}),
   activateSession:(campaignId:string,id:string)=>api<{session:CampaignSession}>(`/api/campaigns/${campaignId}/sessions/${id}`,{method:"PATCH",body:body({action:"start"})}),
-  endSession:(campaignId:string,id:string)=>api<{session:CampaignSession}>(`/api/campaigns/${campaignId}/sessions/${id}`,{method:"PATCH",body:body({action:"end"})}),
+  endSession:(campaignId:string,id:string)=>api<{session:CampaignSession}>(`/api/campaigns/${campaignId}/sessions/${id}`,{method:"PATCH",body:body({action:"end"})}),  renameSession:(campaignId:string,id:string,title:string)=>api<{session:CampaignSession}>(`/api/campaigns/${campaignId}/sessions/${id}`,{method:"PATCH",body:body({action:"rename",title})}),
   saveSummary:(campaignId:string,id:string,summary:SessionSummary)=>api<{summary:SessionSummary}>(`/api/campaigns/${campaignId}/sessions/${id}/summary`,{method:"PUT",body:body(summary)}),
   publishSummary:(campaignId:string,id:string)=>api<{entry:CampaignJournalEntry}>(`/api/campaigns/${campaignId}/sessions/${id}/summary`,{method:"POST",body:"{}"}),
   pin:(campaignId:string,sessionId:string,input:unknown)=>api<{pin:unknown}>(`/api/campaigns/${campaignId}/sessions/${sessionId}/pins`,{method:"POST",body:body(input)}),

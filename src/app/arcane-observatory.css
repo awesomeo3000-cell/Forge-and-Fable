@@ -3043,14 +3043,64 @@
   color: var(--text-primary);
 }
 
-/* Masthead: engraved lower edge; mode marks in brass, not seal red. */
+/* Masthead: engraved lower edge over a raised-to-panel gradient; segmented mode pill. */
 [data-theme="arcane-observatory"] .dm-table-head {
+  justify-content: flex-start;
+  gap: 0.9rem;
+  padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--rule-engraved-dark);
   box-shadow: 0 1px 0 var(--rule-engraved-light);
+  background: linear-gradient(180deg, var(--surface-panel-raised), var(--surface-panel));
 }
-[data-theme="arcane-observatory"] .dm-workspace-modes button.is-active {
-  box-shadow: inset 0 -2px 0 var(--border-brass);
+[data-theme="arcane-observatory"] .dm-head-who small { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-head-who strong { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-workspace-modes {
+  margin-inline: 0;
+  padding: 2px;
+  background: var(--surface-panel-recessed);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
 }
+[data-theme="arcane-observatory"] .dm-workspace-modes button {
+  min-height: 0;
+  padding: 0.3rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+[data-theme="arcane-observatory"] .dm-workspace-modes button:hover {
+  color: var(--text-primary);
+  border-bottom-color: transparent;
+}
+[data-theme="arcane-observatory"] .dm-workspace-modes button.is-active,
+[data-theme="arcane-observatory"] .dm-workspace-modes button.is-active:hover {
+  background: var(--surface-panel);
+  color: var(--border-brass-bright);
+  box-shadow: inset 0 0 0 1px var(--border-brass);
+}
+[data-theme="arcane-observatory"] .dm-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+[data-theme="arcane-observatory"] .dm-btn-ghost:hover:not(:disabled) {
+  background: rgba(179, 146, 74, 0.1);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+[data-theme="arcane-observatory"] .dm-menu-list {
+  background: var(--surface-panel-raised);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-overlay);
+}
+[data-theme="arcane-observatory"] .dm-menu-list button:hover:not(:disabled) { background: #21334a; }
+[data-theme="arcane-observatory"] .dm-menu-list hr { border-top-color: var(--border-subtle); }
 
 /* The three regions become matte panels floating on the field. */
 [data-theme="arcane-observatory"] .dm-table-grid {
@@ -3166,8 +3216,8 @@
   grid-template-columns: minmax(280px, 330px) minmax(480px, 1fr) minmax(300px, 350px);
 }
 [data-theme="arcane-observatory"] .dm-initiative-rail {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
   background: var(--surface-panel);
@@ -3218,7 +3268,40 @@
   min-width: 0;
 }
 [data-theme="arcane-observatory"] .dm-initiative-rail .dm-visibility { max-width: 110px; }
-[data-theme="arcane-observatory"] .dm-initiative-rail .dm-turn-actions { margin-left: auto; }
+[data-theme="arcane-observatory"] .dm-initiative-rail .dm-turn-actions { margin-left: auto; }[data-theme="arcane-observatory"] .dm-initiative-rail-scroll { flex: 1; }
+[data-theme="arcane-observatory"] .dm-initiative-rail-head strong.dm-round-num {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-family: var(--font-space-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+[data-theme="arcane-observatory"] .dm-rail-label { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-readiness-t { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-readiness-t b { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-readiness .dm-dot[data-state="warn"] { background: var(--state-warning); }
+[data-theme="arcane-observatory"] .dm-readiness .dm-dot[data-state="ok"] { background: var(--state-success); }
+[data-theme="arcane-observatory"] .dm-empty-row { border-color: var(--border-strong); color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-btn-outline { background: transparent; border-color: var(--border-strong); color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-btn-outline:hover:not(:disabled) { background: rgba(179, 146, 74, 0.1); border-color: var(--border-brass); color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .dm-rail-rests { border-top: 1px solid var(--border-subtle); }
+[data-theme="arcane-observatory"] .dm-rail-rests .dm-btn-ghost { color: var(--text-secondary); }[data-theme="arcane-observatory"] .dm-deck-label { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-stage-tips { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-stage.is-empty .dm-stage-name { font-size: 1.5rem; }
+[data-theme="arcane-observatory"] .dm-stage.is-empty .dm-stage-eyebrow::before { content: none; }
+[data-theme="arcane-observatory"] .dm-filter button { border: 0; border-radius: 999px; padding: 0.2rem 0.55rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-filter button:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-filter button.is-active,
+[data-theme="arcane-observatory"] .dm-filter button.is-active:hover { background: rgba(179, 146, 74, 0.12); border: 0; color: var(--border-brass-bright); }[data-theme="arcane-observatory"] .dm-glance { background: var(--surface-panel); border-color: var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-panel); }
+[data-theme="arcane-observatory"] .dm-glance-row { border-bottom-color: var(--border-subtle); }
+[data-theme="arcane-observatory"] .dm-glance-row .dm-dot[data-state="warn"] { background: var(--state-warning); }
+[data-theme="arcane-observatory"] .dm-glance-row .dm-dot[data-state="ok"] { background: var(--state-success); }
+[data-theme="arcane-observatory"] .dm-glance-row .dm-dot[data-state="info"] { background: var(--state-selected); }
+[data-theme="arcane-observatory"] .dm-glance-t { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-glance-t b { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-glance-n { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-glance-div { border-top-color: var(--border-subtle); }
+[data-theme="arcane-observatory"] .dm-glance-hint { color: var(--text-muted); }
 
 /* ── The acting stage: the current creature owns the center ── */
 [data-theme="arcane-observatory"] .dm-stage {

@@ -1030,6 +1030,18 @@ export function activateSession(campaignId: string, userId: string, id: string) 
     return sessionFromRow({ ...row, started_at: startedAt, status: "active" });
   });
 }
+export function renameSession(campaignId: string, userId: string, id: string, input: { title?: unknown }) {
+  requireDm(campaignId, userId);
+  return transaction(() => {
+    const row = getDb().prepare("SELECT * FROM campaign_sessions WHERE id=? AND campaign_id=?").get(id, campaignId) as Parameters<typeof sessionFromRow>[0] | undefined;
+    if (!row) throw new Error("Session not found.");
+    const title = safeText(input.title, 100);
+    if (!title) throw new Error("A session title is required.");
+    getDb().prepare("UPDATE campaign_sessions SET title=? WHERE id=?").run(title, id);
+    insertAuditEvent(campaignId, userId, "session-renamed", { sessionId: id, title });
+    return sessionFromRow({ ...row, title });
+  });
+}
 
 export function startSession(campaignId: string, userId: string, input: { title?: unknown; dmNotes?: unknown }) {
   requireDm(campaignId, userId);
