@@ -1148,11 +1148,16 @@ export default function ForgeAndFableApp() {
       return;
     }
 
+    // The roll's flat modifier is the Constitution bonus applied once per level
+    // (con mod × levels). Spell it out in the label so a negative Con doesn't
+    // read as "starting HP is -2" — it's the per-level Con adjustment.
+    const conMod = request.constitutionModifier;
+    const conNote = conMod === 0 ? "" : ` (Con ${conMod > 0 ? "+" : ""}${conMod}/level)`;
     pushRoll(
-      `${request.className} starting HP`,
+      `${request.className} rolled HP${conNote}`,
       request.hitDie,
       request.count,
-      request.constitutionModifier * request.count,
+      conMod * request.count,
       (outcome) => request.onResult(outcome.rolls),
     );
   }

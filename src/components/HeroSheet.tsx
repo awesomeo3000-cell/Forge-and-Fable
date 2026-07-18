@@ -2127,6 +2127,11 @@ export default memo(function HeroSheet(props: {
       </>
     );
   };
+  // The dropdown is portaled to <body>, outside the .cs-sheet subtree, so it
+  // can't inherit the sheet's skin variables. When a skin is applied we pass
+  // them through explicitly; when there is no skin we map to the Arcane
+  // Observatory shell tokens (defined on <body>) so the menu matches the app
+  // instead of falling back to the retired parchment/tome defaults.
   const skinMenuThemeVars = theme ? {
     ...themeVars,
     "--ground": "var(--paper)",
@@ -2140,7 +2145,19 @@ export default memo(function HeroSheet(props: {
     "--accent": "var(--doc-accent)",
     "--accent-deep": "var(--doc-accent-deep)",
     "--select": "var(--doc-select)",
-  } : {};
+  } : {
+    "--ground": "var(--surface-panel-raised)",
+    "--ground-2": "var(--surface-panel)",
+    "--ground-3": "var(--surface-panel-raised)",
+    "--parchment": "var(--text-primary)",
+    "--parchment-2": "var(--text-secondary)",
+    "--ink-faint": "var(--text-muted)",
+    "--rule": "var(--border-default)",
+    "--rule-soft": "var(--border-subtle)",
+    "--accent": "var(--border-brass)",
+    "--accent-deep": "var(--border-brass-bright)",
+    "--select": "var(--state-selected)",
+  };
   const skinMenuStyle = skinMenuPosition ? ({
     ...skinMenuThemeVars,
     top: skinMenuPosition.top,
@@ -2290,7 +2307,7 @@ export default memo(function HeroSheet(props: {
                 >
                   {props.character.heroicInspiration ? "✦ Inspired" : "◇ Inspiration"}
                 </button>
-                <button className="character-header__retire" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={13} /></button>
+                <button className="character-header__retire" type="button" title="Retire character" aria-label="Retire character" onClick={props.onDelete}><Trash2 size={13} /><span>Retire</span></button>
               </div>
               <div className="character-header__saves" data-dying={props.character.currentHp <= 0 ? "true" : undefined}>
                 <span className="character-header__label"><Skull size={13} aria-hidden="true" /> Death Saves</span>
@@ -2318,8 +2335,8 @@ export default memo(function HeroSheet(props: {
               Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
             </span>
             <div className="cs-hd-rest-actions">
-              <button className="cs-roll-btn cs-roll-btn--compact" type="button" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
-                <DieIcon />Roll HD (1d{heroClass.hitDie}{signed(abilityModifier(props.finalAbilities.constitution))})
+              <button className="cs-roll-btn cs-roll-btn--compact" type="button" title={`Roll a hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
+                <DieIcon />Roll d{heroClass.hitDie}
               </button>
               <button className="character-header__action" type="button" onClick={finishShortRest}>Done</button>
             </div>

@@ -5741,6 +5741,11 @@
 [data-theme="arcane-observatory"] .ao-feature-actions .ao-feature-confirmed {
   margin: 0;
 }
+/* Inside the actions row the confirm button is a flex sibling of "Read the
+   full entry"; its standalone top margin would drop it out of alignment. */
+[data-theme="arcane-observatory"] .ao-feature-actions .ao-feature-confirm {
+  margin-top: 0;
+}
 [data-theme="arcane-observatory"] .ao-decision-card {
   padding: 14px 16px 16px;
   border: 1px solid var(--border-default);
@@ -7588,14 +7593,26 @@
   gap: 8px;
 }
 [data-theme="arcane-observatory"] .character-header__action { width: 100%; }
+/* Retire is its own labelled control at the foot of the action column — a
+   quiet danger button, separated from the rest actions so it is never hit by
+   accident and no longer floats over Short Rest. */
 [data-theme="arcane-observatory"] .character-header__retire {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-  min-height: 30px;
-  width: 30px;
-  padding: 0;
+  position: static;
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, #a75f5b 42%, var(--doc-rule));
+  border-radius: 3px;
+  background: transparent;
+  color: color-mix(in srgb, #d99090 70%, var(--ink-3));
+  font: 700 0.68rem/1 var(--font-role-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* Hit-dice rest panel sits between hero and vitals */

@@ -82,7 +82,7 @@ export default function ClassCommissionDetails(props: {
               : `${hp.display} HP`
           }
           hint={`Level 1: ${hp.firstLevelHP} HP. Later levels use ${hp.methodLabel} d${heroClass.hitDie}${
-            hp.constitutionModifier !== 0 ? ` ${signed(hp.constitutionModifier)}` : ""
+            hp.constitutionModifier !== 0 ? `, Con ${signed(hp.constitutionModifier)} each` : ""
           }.`}
         >
           <label className="ao-class-decision-field">

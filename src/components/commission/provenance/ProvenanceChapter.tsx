@@ -164,7 +164,7 @@ export default function ProvenanceChapter(props: {
               <option value="manual">Manual</option>
             </select>
           </label>
-          <label className="ao-pref-card disabled" aria-disabled="true">
+          <label className="ao-pref-card ao-pref-select disabled" aria-disabled="true">
             <span className="ao-source-card-copy">
               <strong>Encumbrance <em className="cs-coming-soon">Coming soon</em></strong>
               <small>Standard, disabled, or variant carrying rules.</small>

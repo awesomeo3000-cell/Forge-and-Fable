@@ -14289,7 +14289,7 @@ button.dj-card {
 .dm-request-card[data-status="completed"] { opacity:.78; }
 
 /* Rehearsal controls live in the rail now, not the header. */
-.dm-command-party .dm-command-empty { display:grid; gap:10px; justify-items:start; padding:16px 14px; }
+.dm-command-party .dm-command-empty { display:grid; gap:10px; justify-items:center; text-align:center; padding:16px 14px; }
 .dm-command-party .dm-command-empty p { margin:0; }
 .dm-command-party .dm-command-empty small { color:var(--dm-muted,#6b5f4e); line-height:1.5; }
 .dm-rehearsal-mark button { border:0; background:transparent; color:inherit; cursor:pointer; padding:0 0 0 4px; vertical-align:middle; }
@@ -14643,3 +14643,16 @@ button.dj-card {
     padding-bottom: 96px;
   }
 }
+
+/* Initiative combatant name → inspector selection (player rows). Plain-text
+   look so it doesn't read as a button; a hover/selected cue shows it acts. */
+.dm-combatant-select {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 3px;
+}
+.dm-combatant-select:hover strong { text-decoration: underline; text-underline-offset: 2px; }
+.dm-combatant-select:focus-visible { outline: 2px solid var(--dm-select, var(--select, #5c94c8)); outline-offset: 2px; }
+.dm-combatant.is-selected .dm-combatant-select strong { color: var(--dm-select, var(--select, #5c94c8)); }

@@ -902,7 +902,7 @@ export default memo(function LevelUpModal({
                         const selected = pickedCantripsByGroup[group.id] ?? [];
                         return (
                           <div key={group.id}>
-                            <span className="level-rite-eyebrow">{group.label} Â· {selected.length}/{group.count}</span>
+                            <span className="level-rite-eyebrow">{group.label} · {selected.length}/{group.count}</span>
                             <div className="level-rite-choice-grid compact scroll">
                               {cantripOptions(group).map((s) => (
                                 <button
