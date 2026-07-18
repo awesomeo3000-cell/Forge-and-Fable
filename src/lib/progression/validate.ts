@@ -5,6 +5,7 @@ import type { LevelUpChoice } from "@/lib/progression/types";
 import type { Character, FeatureChoiceValue } from "@/types/game";
 import rawSpells from "@/data/spells.json";
 import { progressionChoiceOptions } from "@/lib/progression/choiceOptions";
+import { cantripsKnownAt } from "@/lib/spells";
 
 type SpellRecord = { id: string; level: number; school: string; classes: string[] };
 const SPELLS = new Map((rawSpells as SpellRecord[]).map((spell) => [spell.id, spell]));
@@ -103,6 +104,31 @@ export function validateCharacterProgression(character: Character, requireComple
     toLevel: character.level,
     featureChoices: character.featureChoices,
   });
+  if (requireComplete && character.raceId === "high-elf-legacy") {
+    const hasWizardCantrip = [...character.spellsKnown, ...(character.spellbookSpells ?? [])].some((id) => {
+      const spell = SPELLS.get(id);
+      return spell?.level === 0 && spell.classes.includes("wizard");
+    });
+    if (!hasWizardCantrip) {
+      throw new Error(`Character ${character.id} level ${character.level} field spellsKnown violates high-elf-legacy: a wizard cantrip is required.`);
+    }
+  }
+  if (requireComplete) {
+    const knownSpellIds = new Set([...character.spellsKnown, ...(character.spellbookSpells ?? [])]);
+    const knownCantripIds = [...knownSpellIds].filter((id) => SPELLS.get(id)?.level === 0);
+    const classCantripCount = knownCantripIds.filter((id) => SPELLS.get(id)?.classes.includes(character.classId)).length;
+    const expectedClassCantrips = cantripsKnownAt(character.classId, character.level);
+    if (classCantripCount < expectedClassCantrips) {
+      throw new Error(`Character ${character.id} level ${character.level} field spellsKnown violates cantrips-known: ${expectedClassCantrips} ${character.classId} cantrips are required.`);
+    }
+    const bonusCantripChoices = plan.choices
+      .filter((choice) => choice.choiceId.includes("cantrip") && !/^choose-\d+-cantrips?$/.test(choice.choiceId))
+      .reduce((total, choice) => total + (choice.count ?? Number(choice.choiceId.match(/choose-(\d+)/)?.[1] ?? 1)), 0);
+    const expectedTotalCantrips = expectedClassCantrips + bonusCantripChoices + (character.raceId === "high-elf-legacy" ? 1 : 0);
+    if (knownCantripIds.length < expectedTotalCantrips) {
+      throw new Error(`Character ${character.id} level ${character.level} field spellsKnown violates cantrips-known: ${expectedTotalCantrips} total cantrips are required.`);
+    }
+  }
   for (const spellId of [...character.spellsKnown, ...(character.preparedSpells ?? []), ...(character.alwaysPreparedSpells ?? []), ...(character.spellbookSpells ?? [])]) {
     if (!SPELLS.has(spellId)) throw new Error(`Character ${character.id} level ${character.level} field spells violates progression: spell "${spellId}" is invalid.`);
   }

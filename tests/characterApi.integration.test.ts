@@ -188,7 +188,7 @@ describe("character API persistence", () => {
       classId: "cleric",
       level: 5,
       subclassId: "life-domain",
-      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy"],
+      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy", "light"],
       preparedSpells: ["guidance", "bless", "cure-wounds"],
       asiChoices: [{ type: "asi" as const, level: 4, increases: { wisdom: 2 } }],
     };
@@ -206,7 +206,7 @@ describe("character API persistence", () => {
     closeDb();
     const loaded = await GET(new Request(`http://local/api/characters/${created.id}`, { headers: { cookie } }), { params: Promise.resolve({ id: created.id as string }) });
     expect(await loaded.json()).toMatchObject({ character: {
-      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy"],
+      spellsKnown: ["guidance", "sacred-flame", "thaumaturgy", "light"],
       preparedSpells: ["guidance", "bless", "cure-wounds"],
       alwaysPreparedSpells: expect.arrayContaining(["bless", "revivify"]),
     } });

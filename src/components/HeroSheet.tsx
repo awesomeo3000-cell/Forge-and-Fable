@@ -855,12 +855,12 @@ export default memo(function HeroSheet(props: {
     }
 
     // Resolve spell effects at the selected cast level (from structured scaling data).
-    const resolvedEffects = resolveSpellEffects(spell, atLevel);
+    const resolvedEffects = resolveSpellEffects(spell, atLevel, props.character.level);
 
     // Attack-roll spells: consume the slot but do NOT auto-roll damage.
     // The player must first confirm a hit via the separate attack roll button.
     // Only save-based spells (like Burning Hands) auto-roll damage on cast.
-    const isAttackSpell = !!spell.attack;
+    const isAttackSpell = isAttackRollSpell(spell);
 
     if (!isAttackSpell) {
       // Roll each resolved effect through the dice animation system.
@@ -1633,11 +1633,11 @@ export default memo(function HeroSheet(props: {
           .filter((spell): spell is SpellData => Boolean(spell && isAttackRollSpell(spell)))
           .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
           .map((spell) => {
-            const firstEffect = resolveSpellEffects(spell, spell.level)[0];
+            const firstEffect = resolveSpellEffects(spell, spell.level, props.character.level)[0];
             const damageLabel = firstEffect
               ? `${firstEffect.dice}${firstEffect.type === "damage" && firstEffect.damageType ? ` ${firstEffect.damageType}` : ""}`
               : "—";
-            const damageEffects = resolveSpellEffects(spell, spell.level).filter((effect) => effect.type === "damage");
+            const damageEffects = resolveSpellEffects(spell, spell.level, props.character.level).filter((effect) => effect.type === "damage");
             const spellDamageDice = damageEffects.flatMap((effect) => {
               const parsed = parseSimpleDice(effect.dice);
               return parsed ? [{ ...parsed, damageType: effect.damageType }] : [];
@@ -2435,7 +2435,7 @@ export default memo(function HeroSheet(props: {
                 {spellDetail.damageEffect ? <><strong>Damage:</strong> {spellDetail.damageEffect}</> : null}
                 {spellDetail.damageEffect && spellDetail.save ? " · " : null}
                 {spellDetail.save ? <><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</> : null}
-                {spellDetail.save && !spellDetail.attack ? " · Half on success" : null}
+                {spellDetail.save && !isAttackRollSpell(spellDetail) ? " · Half on success" : null}
               </p>
             ) : null}
             <div className="cs-spell-detail-grid">
@@ -2478,7 +2478,7 @@ export default memo(function HeroSheet(props: {
               ) : null}
             </div>
             {spellcastingBlockedByArmor ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: you cannot cast spells while equipped this way.</p> : null}
-            {spellDetail.attack ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack} — <SheetRollButton label={`Roll ${spellDetail.name} attack, ${signed(spellAttack)}`} display={signed(spellAttack)} onRoll={() => rollD20(`${spellDetail.name} attack`, spellAttack)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle ?? `Roll ${spellDetail.name} attack`} /></p> : null}
+            {isAttackRollSpell(spellDetail) ? <p className="cs-spell-detail-roll"><strong>Attack:</strong> {spellDetail.attack || "Spell attack"} — <SheetRollButton label={`Roll ${spellDetail.name} attack, ${signed(spellAttack)}`} display={signed(spellAttack)} onRoll={() => rollD20(`${spellDetail.name} attack`, spellAttack)} disabled={spellcastingBlockedByArmor} title={spellBlockTitle ?? `Roll ${spellDetail.name} attack`} /></p> : null}
             {spellDetail.save ? <p className="cs-spell-detail-roll"><strong>Save:</strong> {spellDetail.save} vs DC {saveDC}</p> : null}
             <p className="cs-spell-detail-desc">{spellDetail.description}</p>
             {casterType !== "none" || spellDetailStatus.freeUse ? (

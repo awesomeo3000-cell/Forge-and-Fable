@@ -19,6 +19,7 @@ import { progressionCatalog } from "@/lib/progression/packets";
 import { progressionChoiceLabel, progressionChoiceOptions } from "@/lib/progression/choiceOptions";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { LevelUpChoice } from "@/lib/progression/types";
+import { buildCantripSelectionGroups, type CantripSelectionGroup } from "@/lib/cantripProgression";
 import "./LevelUpModal.css";
 
 /** Checklist labels. Plain mechanical nouns — the flavor lives in descriptors,
@@ -101,7 +102,7 @@ export default memo(function LevelUpModal({
   const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
-  const [pickedCantrips, setPickedCantrips] = useState<string[]>([]);
+  const [pickedCantripsByGroup, setPickedCantripsByGroup] = useState<Record<string, string[]>>({});
   const [spellToForget, setSpellToForget] = useState<string | null>(null);
   const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
   const [featureSelections, setFeatureSelections] = useState<Record<string, string[]>>({});
@@ -189,19 +190,28 @@ export default memo(function LevelUpModal({
   // casters included — at the levels where the class total increases
   // (e.g. bard 4/10, artificer 10/14). Per the SRD cantrip-known columns.
   const plannedCantripCount = progressionPlan.spellChanges.find((change) => change.kind === "cantrips-known")?.count;
-  const choiceCantripCount = progressionPlan.choices.map((choice) => Number(choice.choiceId.match(/choose-(\d+).*cantrip/)?.[1] ?? 0)).reduce((max, count) => Math.max(max, count), 0);
-  const newCantripsCount = Math.max(0, plannedCantripCount ?? choiceCantripCount ?? (cantripsKnownAt(classId, newLevel) - cantripsKnownAt(classId, newLevel - 1)));
-  const cantripChoices = progressionPlan.choices.filter((choice) => choice.choiceId.includes("cantrip"));
-  const cantripSourceClass = cantripChoices.some((choice) => choice.choiceId.includes("druid-cantrip")) ? "druid"
-    : cantripChoices.some((choice) => choice.choiceId.includes("wizard-cantrip")) ? "wizard" : classId;
-  const availableCantrips = spellsForClass(cantripSourceClass)
-    .filter((s) => s.level === 0)
-    .filter((s) => !cantripChoices.some((choice) => choice.choiceId === "choose-light-cantrip") || s.id === "light")
-    .filter((s) => !knownSpells.includes(s.id))
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, 50);
-  const cantripTarget = Math.min(newCantripsCount, availableCantrips.length);
+  const cantripGroups = buildCantripSelectionGroups({
+    classId,
+    classCantripGain: plannedCantripCount ?? (cantripsKnownAt(classId, newLevel) - cantripsKnownAt(classId, newLevel - 1)),
+    choices: progressionPlan.choices,
+    includeHighElfCantrip: character.level === 0 && character.raceId === "high-elf-legacy",
+  });
+  const pickedCantrips = cantripGroups.flatMap((group) => pickedCantripsByGroup[group.id] ?? []);
+  const cantripTarget = cantripGroups.reduce((total, group) => total + group.count, 0);
   const hasCantrips = cantripTarget > 0;
+
+  const cantripOptions = (group: CantripSelectionGroup): typeof ALL_SPELLS => {
+    const groupPicked = new Set(pickedCantripsByGroup[group.id] ?? []);
+    const reservedIds = new Set(cantripGroups.flatMap((candidate) => candidate.allowedSpellIds ?? []));
+    return spellsForClass(group.sourceClass)
+      .filter((s) => s.level === 0)
+      .filter((s) => !group.allowedSpellIds || group.allowedSpellIds.includes(s.id))
+      .filter((s) => group.allowedSpellIds || !reservedIds.has(s.id))
+      .filter((s) => !knownSpells.includes(s.id))
+      .filter((s) => !pickedCantrips.includes(s.id) || groupPicked.has(s.id))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 50);
+  };
 
   const steps: LevelUpStep[] = [];
   if (hasHp) steps.push("hp");
@@ -371,13 +381,16 @@ export default memo(function LevelUpModal({
   };
 
   const toggleCantrip = (id: string) => {
-    setPickedCantrips((prev) =>
-      prev.includes(id)
-        ? prev.filter((s) => s !== id)
-        : prev.length < cantripTarget
-          ? [...prev, id]
-          : prev,
-    );
+    const group = cantripGroups.find((candidate) => cantripOptions(candidate).some((spell) => spell.id === id));
+    if (!group) return;
+    setPickedCantripsByGroup((current) => {
+      const selected = current[group.id] ?? [];
+      if (selected.includes(id)) {
+        return { ...current, [group.id]: selected.filter((spellId) => spellId !== id) };
+      }
+      if (selected.length >= group.count || pickedCantrips.includes(id)) return current;
+      return { ...current, [group.id]: [...selected, id] };
+    });
   };
 
   const toggleFeatureChoice = (choice: LevelUpChoice, id: string) => {
@@ -883,19 +896,27 @@ export default memo(function LevelUpModal({
                   {hasCantrips ? (
                     <>
                       <span className="level-rite-eyebrow">New Cantrips · {pickedCantrips.length}/{cantripTarget}</span>
-                      <div className="level-rite-choice-grid compact scroll">
-                        {availableCantrips.map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            className={`level-rite-option${pickedCantrips.includes(s.id) ? " is-selected" : ""}`}
-                            onClick={() => toggleCantrip(s.id)}
-                          >
-                            <span className="level-rite-option-name">{s.name}</span>
-                            <span className="level-rite-option-detail">Cantrip {s.school}</span>
-                          </button>
-                        ))}
-                      </div>
+                      {cantripGroups.map((group) => {
+                        const selected = pickedCantripsByGroup[group.id] ?? [];
+                        return (
+                          <div key={group.id}>
+                            <span className="level-rite-eyebrow">{group.label} Â· {selected.length}/{group.count}</span>
+                            <div className="level-rite-choice-grid compact scroll">
+                              {cantripOptions(group).map((s) => (
+                                <button
+                                  key={`${group.id}-${s.id}`}
+                                  type="button"
+                                  className={`level-rite-option${selected.includes(s.id) ? " is-selected" : ""}`}
+                                  onClick={() => toggleCantrip(s.id)}
+                                >
+                                  <span className="level-rite-option-name">{s.name}</span>
+                                  <span className="level-rite-option-detail">Cantrip {s.school}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </>
                   ) : null}
 

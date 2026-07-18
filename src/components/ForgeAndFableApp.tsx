@@ -57,7 +57,7 @@ import CharacterStartPanel from "@/components/CharacterStartPanel";
 import AdminPanel from "@/components/AdminPanel";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
-import { loadSpells } from "@/lib/spells";
+import { cantripsKnownAt, loadSpells } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
 import { buildClassLevelUpPlan } from "@/lib/progression/engine";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
@@ -129,9 +129,14 @@ type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoice
     Level 1 is included only for level-1-subclass classes (sorcerer/warlock/
     cleric) so a high-level start still picks its origin. HP-only levels are
     skipped — the creator already computes starting HP for the chosen level. */
-function creationChoiceLevels(heroClass: HeroClass, targetLevel: number): number[] {
+function creationChoiceLevels(heroClass: HeroClass, targetLevel: number, raceId?: string): number[] {
   const plan = buildClassLevelUpPlan({ ruleset: "2014", classId: heroClass.id, fromLevel: 0, toLevel: targetLevel });
-  return Array.from(new Set(plan.choices.map((choice) => choice.level))).sort((a, b) => a - b);
+  const levels = plan.choices.map((choice) => choice.level);
+  for (let level = 1; level <= targetLevel; level += 1) {
+    if (cantripsKnownAt(heroClass.id, level) > cantripsKnownAt(heroClass.id, level - 1)) levels.push(level);
+  }
+  if (raceId === "high-elf-legacy" && targetLevel >= 1) levels.push(1);
+  return Array.from(new Set(levels)).sort((a, b) => a - b);
 }
 
 const NORMAL_ROLL_LINGER_MS = 1800;
@@ -1175,7 +1180,7 @@ export default function ForgeAndFableApp() {
     // levels gained, then forge with them. Level-1 starts forge immediately.
     const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
     if (heroClass && draft.level >= 1) {
-      const levels = creationChoiceLevels(heroClass, draft.level);
+      const levels = creationChoiceLevels(heroClass, draft.level, draft.raceId);
       if (levels.length > 0) {
         const base = characterPayload(draft, ruleset);
         setCreationSeq({
@@ -2199,6 +2204,7 @@ export default function ForgeAndFableApp() {
           character={{
             ...creationSeq.soFar,
             ruleset: draft.ruleset,
+            raceId: draft.raceId,
             // The modal derives expertise eligibility from proficiencies and
             // background; soFar doesn't carry them — the draft does.
             skillProficiencies: draft.skillProficiencies,

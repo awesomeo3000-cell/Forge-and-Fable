@@ -271,7 +271,10 @@ export function characterPayload(
     maxHp,
     tempHp: 0,
     inventory: classGear,
-    spellsKnown: heroClass.spellSuggestions.slice(0, 3),
+    // Spell choices are collected by the creation progression modal. Keeping
+    // the legacy suggestion list here would pre-seed cantrips before the
+    // class/racial choice step and make characters exceed their allowed count.
+    spellsKnown: [],
     customRules: [],
     toolProficiencies: [...grantedTools],
     languages: draft.languages ?? [],

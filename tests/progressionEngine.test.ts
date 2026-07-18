@@ -37,6 +37,14 @@ describe("class progression engine", () => {
     expect(warlock.spellChanges.some((change) => change.kind === "spell-slots")).toBe(false);
   });
 
+  it("grants the Warlock's third cantrip at level 4", () => {
+    const levelFour = buildClassLevelUpPlan({ ruleset: "2014", classId: "warlock", fromLevel: 3, toLevel: 4 });
+    expect(levelFour.spellChanges).toContainEqual(expect.objectContaining({ kind: "cantrips-known", before: 2, after: 3, count: 1 }));
+
+    const levelFive = buildClassLevelUpPlan({ ruleset: "2014", classId: "warlock", fromLevel: 4, toLevel: 5 });
+    expect(levelFive.spellChanges.some((change) => change.kind === "cantrips-known")).toBe(false);
+  });
+
   it("is deterministic, supports no-op retries, and explicitly gates research rules", () => {
     const input = { ruleset: "2014" as const, classId: "rogue", fromLevel: 4, toLevel: 9 };
     expect(buildClassLevelUpPlan(input)).toEqual(buildClassLevelUpPlan(input));

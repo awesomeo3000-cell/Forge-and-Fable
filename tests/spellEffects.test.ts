@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import spellCatalog from "@/data/spells.json";
 import {
   parseSimpleDice,
   scaleDicePerSlotLevel,
@@ -241,7 +242,7 @@ describe("resolveSpellEffects", () => {
     expect(effects[1]).toMatchObject({ dice: "2d6" });
   });
 
-  // Cantrips should not apply scaling.
+  // Cantrips scale by character level, never by spell-slot level.
 
   it("returns fallback effects for cantrips without slot scaling", () => {
     const spell = makeSpell({
@@ -258,6 +259,38 @@ describe("resolveSpellEffects", () => {
     if (effects.length > 0) {
       expect(effects[0]).toMatchObject({ dice: "1d10" });
     }
+  });
+
+  it("resolves Frostbite to the character's cantrip tier instead of every listed tier", () => {
+    const frostbite = spellCatalog.find((spell) => spell.id === "frostbite");
+    expect(frostbite).toBeDefined();
+    expect(resolveSpellEffects(frostbite!, 0, 1)).toMatchObject([{ dice: "1d6", damageType: "Cold" }]);
+    expect(resolveSpellEffects(frostbite!, 0, 5)).toMatchObject([{ dice: "2d6" }]);
+    expect(resolveSpellEffects(frostbite!, 0, 17)).toMatchObject([{ dice: "4d6" }]);
+    expect(resolveSpellEffects(frostbite!, 0, 1)).toHaveLength(1);
+  });
+
+  it("normalizes OCR-style cantrip dice notation before scaling", () => {
+    const spell = makeSpell({
+      id: "sapping-sting",
+      name: "Sapping Sting",
+      level: 0,
+      damageEffect: "Necrotic",
+      save: "CON Save",
+      description: "The target must make a Constitution saving throw or take ld4 necrotic damage. This spell's damage increases by ld4 when you reach 5th level (2d4), 11th level (3d4), and 17th level (4d4).",
+    });
+    expect(resolveSpellEffects(spell, 0, 1)).toMatchObject([{ dice: "1d4" }]);
+    expect(resolveSpellEffects(spell, 0, 5)).toMatchObject([{ dice: "2d4" }]);
+  });
+
+  it("keeps every catalog damaging cantrip at its level-one damage tier", () => {
+    const damagingCantrips = spellCatalog.filter((spell) => spell.level === 0 && /(?:\d|l)\s*d\s*\d/i.test(spell.description));
+    const overScaled = damagingCantrips.flatMap((spell) => resolveSpellEffects(spell, 0, 1)
+      .filter((effect) => effect.type === "damage" && Number(effect.dice.match(/^(\d+)d/)?.[1] ?? 0) > 1)
+      .map((effect) => `${spell.name}: ${effect.dice}`));
+
+    expect(damagingCantrips.length).toBeGreaterThan(10);
+    expect(overScaled).toEqual([]);
   });
 
   // Spells with no effects in registry fall back.

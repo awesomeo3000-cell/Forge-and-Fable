@@ -119,5 +119,5 @@ export function parseDamageDice(text: string): { sides: number; count: number }[
 /** Some imported spells have an empty attack field even though their rules
  * text explicitly calls for a melee or ranged spell attack. */
 export function isAttackRollSpell(spell: Pick<SpellData, "attack" | "description">): boolean {
-  return Boolean(spell.attack?.trim()) || /\bmake (?:a|an) (?:melee|ranged )?spell attack\b/i.test(spell.description);
+  return Boolean(spell.attack?.trim()) || /\bmake (?:a|an) (?:(?:melee|ranged) )?spell attack\b/i.test(spell.description);
 }

@@ -117,15 +117,16 @@ function resolveDamageEffect(
  * then falls back to the spell's `higherLevel` bridge field for simple per-level scaling,
  * and finally falls back to the spell's description dice (no scaling).
  *
- * Cantrips (spell.level === 0) always skip slot-based upcasting.
+ * Cantrips (spell.level === 0) scale by character level, not slot level.
  */
 export function resolveSpellEffects(
   spell: SpellData,
   castLevel: number,
+  characterLevel = 1,
 ): ResolvedSpellEffect[] {
-  // Cantrips scale by character level, not slot level — skip slot-based scaling.
+  // Cantrips scale by character level, not slot level.
   if (spell.level === 0) {
-    return buildFallbackEffects(spell);
+    return buildCantripEffects(spell, characterLevel);
   }
 
   // 1. Try the full structured registry.
@@ -200,19 +201,45 @@ function buildFallbackEffects(spell: SpellData): ResolvedSpellEffect[] {
   return effects;
 }
 
+/**
+ * Select the active damage tier for a cantrip. Descriptions conventionally
+ * list 1/2/3/4-die tiers at character levels 1/5/11/17. Some imported text
+ * uses OCR's lowercase "l" for the digit "1", so normalize that before
+ * selecting a tier. Alternatives such as Toll the Dead's d8/d12 remain as
+ * separate choices at the active tier.
+ */
+function buildCantripEffects(spell: SpellData, characterLevel: number): ResolvedSpellEffect[] {
+  const diceList = extractDiceList(spell.description);
+  if (diceList.length === 0 && !spell.damageEffect) return [];
+  if (diceList.length === 0) return [];
+
+  const tierCount = characterLevel >= 17 ? 4 : characterLevel >= 11 ? 3 : characterLevel >= 5 ? 2 : 1;
+  const activeDice = diceList.filter((dice) => parseSimpleDice(dice)?.count === tierCount);
+  const selectedDice = activeDice.length > 0 ? activeDice : [diceList[0]];
+
+  return selectedDice.map((dice, i) => ({
+    id: `${spell.id}-damage-${i}`,
+    type: "damage" as const,
+    dice,
+    damageType: spell.damageEffect || "",
+    saveResult: spell.save ? "half" : undefined,
+  }));
+}
+
 /** Extract the first NdX pattern from text. */
 function extractFirstDice(text: string): string | null {
-  const match = text.match(/(\d+d\d+)/i);
+  const match = normalizeDiceNotation(text).match(/(\d+d\d+)/i);
   return match ? match[1] : null;
 }
 
 /** Extract all unique NdX patterns from text. */
 function extractDiceList(text: string): string[] {
+  const normalized = normalizeDiceNotation(text);
   const dice: string[] = [];
   const seen = new Set<string>();
   const re = /(\d+)d(\d+)/gi;
   let m;
-  while ((m = re.exec(text)) !== null) {
+  while ((m = re.exec(normalized)) !== null) {
     const key = `${m[1]}d${m[2]}`;
     if (!seen.has(key)) {
       seen.add(key);
@@ -220,6 +247,13 @@ function extractDiceList(text: string): string[] {
     }
   }
   return dice;
+}
+
+function normalizeDiceNotation(text: string): string {
+  return text
+    .replace(/\bl\s*d\s*(\d)\s*(\d)\b/gi, "1d$1$2")
+    .replace(/\bl\s*d\s*(\d+)\b/gi, "1d$1")
+    .replace(/\b(\d+)\s*d\s*(\d+)\b/gi, "$1d$2");
 }
 
 // ── Dice Rolling ───────────────────────────────────────────────────────────
@@ -281,8 +315,9 @@ export function rollResolvedEffect(effect: ResolvedSpellEffect): ResolvedSpellRo
 export function resolveAndRollSpell(
   spell: SpellData,
   castLevel: number,
+  characterLevel = 1,
 ): ResolvedSpellRoll[] {
-  const effects = resolveSpellEffects(spell, castLevel);
+  const effects = resolveSpellEffects(spell, castLevel, characterLevel);
   return effects.map(rollResolvedEffect);
 }
 

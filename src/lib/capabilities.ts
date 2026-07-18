@@ -1,6 +1,6 @@
 import rawCapabilities from "@/data/actionCapabilities.json";
 import { getFeat } from "@/lib/feats";
-import { getSpell } from "@/lib/spells";
+import { getSpell, isAttackRollSpell } from "@/lib/spells";
 import type { Character, FeatureResourceState, SpellData } from "@/types/game";
 
 export type CapabilityActivation =
@@ -208,7 +208,7 @@ function spellCapability(spell: SpellData, character: Pick<Character, "featureRe
     resource: spell.level > 0 ? character.featureResources?.["spell-slots"] : undefined,
     rechargeSummary: spell.level > 0 ? "Spell slot" : undefined,
     scalingSummary: spell.higherLevel ? "Can be cast with a higher-level slot" : undefined,
-    resolutionKind: spell.attack ? "attack" : spell.save ? "saving-throw" : "mixed",
+    resolutionKind: isAttackRollSpell(spell) ? "attack" : spell.save ? "saving-throw" : "mixed",
     summary: spell.description,
     trigger: activation === "reaction" ? spell.castingTime.replace(/^1 Reaction\s*\*?\s*/i, "").trim() || undefined : undefined,
     spell,

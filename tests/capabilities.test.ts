@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import spellCatalog from "@/data/spells.json";
 import { capabilitiesForCharacter, spellActivation } from "@/lib/capabilities";
 import { isAttackRollSpell } from "@/lib/spells";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
@@ -48,8 +49,17 @@ describe("character capabilities", () => {
 
   it("recognizes attack-roll spells when catalog metadata is incomplete", () => {
     expect(isAttackRollSpell({ attack: "", description: "Make a ranged spell attack against the target." })).toBe(true);
+    expect(isAttackRollSpell({ attack: "", description: "Make a melee spell attack against the target." })).toBe(true);
     expect(isAttackRollSpell({ attack: "", description: "The target must make a Dexterity saving throw." })).toBe(false);
     expect(isAttackRollSpell({ attack: "Melee", description: "Make an attack." })).toBe(true);
+  });
+
+  it("recognizes every catalog spell that explicitly requires a spell attack, including cantrips", () => {
+    const explicitAttackSpells = spellCatalog.filter((spell) => /\bspell attack\b/i.test(spell.description));
+    const missing = explicitAttackSpells.filter((spell) => !isAttackRollSpell(spell)).map((spell) => spell.name);
+
+    expect(explicitAttackSpells.some((spell) => spell.level === 0)).toBe(true);
+    expect(missing).toEqual([]);
   });
 
   it("resolves spendable class resource formulas", () => {
