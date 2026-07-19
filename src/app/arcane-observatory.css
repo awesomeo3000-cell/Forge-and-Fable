@@ -3302,6 +3302,24 @@
 [data-theme="arcane-observatory"] .dm-glance-n { color: var(--text-primary); }
 [data-theme="arcane-observatory"] .dm-glance-div { border-top-color: var(--border-subtle); }
 [data-theme="arcane-observatory"] .dm-glance-hint { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-sound { border-top-color: var(--border-subtle); background: var(--surface-panel); }
+[data-theme="arcane-observatory"] .dm-sound .note { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-sound-icon { color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .dm-sound-title { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-sound-chip { border-color: var(--border-default); color: var(--text-secondary); background: var(--surface-panel-recessed); }
+[data-theme="arcane-observatory"] .dm-sound-chip-play:hover { color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .dm-sound-chip-x:hover { color: var(--state-warning); }
+[data-theme="arcane-observatory"] .dm-prep .ws-head { border-bottom-color: var(--border-subtle); background: linear-gradient(180deg, var(--surface-panel), var(--surface-panel-recessed)); }
+[data-theme="arcane-observatory"] .dm-prep .ws-head .who small { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-prep .ws-head .who strong { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-prep .ws-head .ctx { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-prep-rail .ws-item { color: var(--text-secondary); }
+[data-theme="arcane-observatory"] .dm-prep-rail .ws-item .count { color: var(--text-muted); }
+[data-theme="arcane-observatory"] .dm-prep-rail .ws-item.on { border-left-color: rgb(179, 146, 74); background: rgba(179, 146, 74, 0.12); color: var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .dm-prep-rail .ws-item:hover { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-prep .ws-empty { border-color: var(--border-subtle); }
+[data-theme="arcane-observatory"] .dm-prep .ws-empty h3 { color: var(--text-primary); }
+[data-theme="arcane-observatory"] .dm-prep .ws-empty p { color: var(--text-secondary); }
 
 /* ── The acting stage: the current creature owns the center ── */
 [data-theme="arcane-observatory"] .dm-stage {
@@ -7810,3 +7828,7 @@
   border-color: var(--border-brass);
   color: var(--border-brass-bright);
 }
+
+/* T8 — workshop list-first editor pane chrome. */
+[data-theme="arcane-observatory"] .dm-editor-pane .ed-head { border-bottom-color: var(--border-subtle); }
+[data-theme="arcane-observatory"] .dm-draft-chip { border-color: color-mix(in srgb, var(--border-brass) 50%, transparent); color: var(--border-brass-bright); background: rgba(179, 146, 74, 0.1); }

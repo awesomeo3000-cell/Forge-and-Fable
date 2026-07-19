@@ -16,7 +16,7 @@ import type {
 
 type Tab = "creatures" | "encounters" | "generator" | "handouts" | "journal" | "sessions";
 type ScheduleMode = "single" | "series";
-type Props = { campaignId: string; onClose: () => void; onEncounterStarted: () => void; initialTab?: Tab };
+type Props = { campaignId: string; campaignName?: string; onClose?: () => void; onEncounterStarted: () => void; initialTab?: Tab };
 const uid = () => crypto.randomUUID();
 const emptyEncounter = (campaignId: string): SavedEncounter => ({
   id: "",
@@ -68,8 +68,13 @@ const features = (value: string) =>
 const featureText = (value?: CreatureLibraryRecord["actions"]) =>
   value?.map((item) => [item.name, item.description, item.damage].filter(Boolean).join(" | ")).join("\n") ?? "";
 
-export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, initialTab = "encounters" }: Props) {
+export default function DMPrepPanel({ campaignId, campaignName = "The table", onClose, onEncounterStarted, initialTab = "encounters" }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
+
+  // Follow a changed initialTab without a setState-in-effect: adjust during
+  // render against the previous prop value (React's documented pattern).
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab !== prevInitialTab) { setPrevInitialTab(initialTab); setTab(initialTab); }
   const [creatures, setCreatures] = useState<CreatureLibraryRecord[]>([]),
     [encounters, setEncounters] = useState<SavedEncounter[]>([]),
     [handouts, setHandouts] = useState<CampaignHandout[]>([]),
@@ -118,6 +123,18 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
     [seriesCount, setSeriesCount] = useState("6"),
     [summarySession, setSummarySession] = useState<CampaignSession | null>(null),
     [summary, setSummary] = useState<SessionSummary | null>(null);
+
+  const sectionLabels: Record<Tab, string> = { creatures: "Creatures", encounters: "Encounters", generator: "Generator", handouts: "Handouts", journal: "Journal", sessions: "Sessions" };
+  const sectionNouns: Record<Tab, string> = { creatures: "Creature", encounters: "Encounter", generator: "Encounter", handouts: "Handout", journal: "Entry", sessions: "Session" };
+  const brassLabel = tab === "generator" ? "Generate Encounter" : tab === "sessions" ? "+ Schedule Session" : `+ New ${sectionNouns[tab]}`;
+  const newAction = () => {
+    if (tab === "encounters") { setEncounterDraft(emptyEncounter(campaignId)); return; }
+    if (tab === "creatures") { setEditingCreatureId(null); setCreatureDraft(blankCreature); document.getElementById("dm-new-creature-name")?.focus(); return; }
+    if (tab === "generator") { document.getElementById("dm-generate-run")?.click(); return; }
+    if (tab === "handouts") { document.getElementById("dm-new-handout-title")?.focus(); return; }
+    if (tab === "journal") { document.getElementById("dm-new-journal-title")?.focus(); return; }
+    document.getElementById("dm-session-title")?.focus();
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -273,7 +290,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
     run(async () => {
       await dmToolsApi.startEncounter(id);
       onEncounterStarted();
-      onClose();
+      onClose?.();
     });
   const generate = () =>
     run(async () => {
@@ -369,33 +386,31 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
     summary && setSummary({ ...summary, [key]: lines(value) } as SessionSummary);
 
   return (
-    <div className="dm-prep-scrim" role="presentation">
-      <section className="dm-prep" role="dialog" aria-modal="true" aria-label="DM preparation tools">
-        <header>
-          <div>
-            <span>Campaign workshop</span>
-            <h2>Prepare the session</h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close preparation tools">
-            <X />
-          </button>
+      <section className="dm-prep dm-prep-inline" aria-label="DM preparation tools">
+        <header className="ws-head">
+          <div className="who"><small>Campaign Workshop</small><strong>{sectionLabels[tab]}</strong></div>
+          <span className="ctx">{campaignName} · {encounters.length} encounters · {creatures.length} creatures · {handouts.length} handouts</span>
+          <span className="spacer" />
+          {onClose ? <button type="button" className="dm-btn dm-btn-ghost" onClick={onClose}>Back to the Table</button> : null}
+          <button type="button" className="dm-btn dm-btn-primary" onClick={newAction}>{brassLabel}</button>
         </header>
         <div className="dm-prep-body">
           <nav className="dm-prep-rail" aria-label="Preparation sections">
             <span className="dm-prep-rail-label">Sections</span>
             {(
               [
-                ["creatures", "Creatures", Library],
-                ["encounters", "Encounters", Swords],
-                ["generator", "Generator", Dices],
-                ["handouts", "Handouts", Send],
-                ["journal", "Journal", BookOpen],
-                ["sessions", "Sessions", Play],
+                ["creatures", "Creatures", Library, creatures.length],
+                ["encounters", "Encounters", Swords, encounters.length],
+                ["generator", "Generator", Dices, null],
+                ["handouts", "Handouts", Send, handouts.length],
+                ["journal", "Journal", BookOpen, journal.length],
+                ["sessions", "Sessions", Play, sessions.length],
               ] as const
-            ).map(([id, label, Icon]) => (
-              <button key={id} type="button" className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+            ).map(([id, label, Icon, count]) => (
+              <button key={id} type="button" className={`ws-item${tab === id ? " on" : ""}`} onClick={() => setTab(id)}>
                 <Icon size={15} />
-                {label}
+                <span>{label}</span>
+                <span className="count">{count ?? ""}</span>
               </button>
             ))}
           </nav>
@@ -466,6 +481,9 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                     <p className="dm-library-more">No creatures match “{search}”.</p>
                   ) : null}
                 </div>
+                {filteredCreatures.length === 0 && !search.trim() ? (
+                  <div className="ws-empty"><h3>No creatures in the library</h3><p>Add a custom creature to power the generator and your encounters — nothing reaches the table until you say so.</p><div className="cta"><button type="button" className="dm-btn dm-btn-primary" onClick={() => { setEditingCreatureId(null); setCreatureDraft(blankCreature); document.getElementById("dm-new-creature-name")?.focus(); }}>New Custom Creature</button><button type="button" className="dm-btn dm-btn-outline" onClick={() => setTab("generator")}>Open the Generator</button></div></div>
+                ) : null}
               </section>
               <section className="dm-editor">
                 <h3>{editingCreatureId ? "Edit custom creature" : "New custom creature"}</h3>
@@ -474,7 +492,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                   <label>
                     Name
                     <input
-                      value={creatureDraft.name}
+                      id="dm-new-creature-name" value={creatureDraft.name}
                       onChange={(e) => setCreatureDraft({ ...creatureDraft, name: e.target.value })}
                     />
                   </label>
@@ -641,7 +659,8 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
             </div>
           ) : null}
           {tab === "encounters" ? (
-            <div className="dm-prep-split">
+            <div className="dm-prep-split dm-prep-solo">
+              {!encounterDraft ? (
               <section>
                 <div className="dm-prep-toolbar">
                   <input
@@ -686,11 +705,20 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                     </article>
                   ))}
                 </div>
+                {filteredEncounters.length === 0 && !search.trim() ? (
+                  <div className="ws-empty"><h3>No encounters in the ledger</h3><p>Build one from your creature library, or let the generator draft a first pass you can edit — nothing reaches the table until you say so.</p><div className="cta"><button type="button" className="dm-btn dm-btn-primary" onClick={() => setEncounterDraft(emptyEncounter(campaignId))}>Build an Encounter</button><button type="button" className="dm-btn dm-btn-outline" onClick={() => setTab("generator")}>Open the Generator</button></div></div>
+                ) : null}
               </section>
-              <section className="dm-editor">
+              ) : (
+              <section className="dm-editor dm-editor-pane">
                 {encounterDraft ? (
                   <>
-                    <h3>{encounterDraft.id ? "Edit encounter" : "Build encounter"}</h3>
+                    <div className="ed-head">
+                      <h3>{encounterDraft.id ? "Edit encounter" : "Build encounter"}</h3>
+                      {!encounterDraft.id ? <span className="chip dm-draft-chip">Draft · unsaved</span> : null}
+                      <span className="ed-head-spacer" />
+                      <button type="button" className="dm-btn dm-btn-ghost" onClick={() => setEncounterDraft(null)}>Back to list</button>
+                    </div>
                     <details open>
                       <summary>Overview</summary>
                       <label>
@@ -951,10 +979,9 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                       ) : null}
                     </div>
                   </>
-                ) : (
-                  <p className="dm-empty">Choose an encounter or begin a new one.</p>
-                )}
+                ) : null}
               </section>
+              )}
             </div>
           ) : null}
           {tab === "generator" ? (
@@ -1034,7 +1061,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                   Reinforcement wave
                 </label>
               </div>
-              <button className="primary" disabled={busy || !generator.seed} onClick={generate}>
+              <button id="dm-generate-run" className="primary" disabled={busy || !generator.seed} onClick={generate}>
                 <Dices size={15} />
                 Generate editable encounter
               </button>
@@ -1078,13 +1105,16 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                     </article>
                   ))}
                 </div>
+                {handouts.length === 0 ? (
+                  <div className="ws-empty"><h3>No handouts yet</h3><p>Letters, maps, and clues you share at the table — create one here, then attach it to an encounter when you build.</p><div className="cta"><button type="button" className="dm-btn dm-btn-primary" onClick={() => document.getElementById("dm-new-handout-title")?.focus()}>Create a Handout</button><button type="button" className="dm-btn dm-btn-outline" onClick={() => setTab("encounters")}>Go to Encounters</button></div></div>
+                ) : null}
               </section>
               <section className="dm-editor">
                 <h3>New handout</h3>
                 <label>
                   Title
                   <input
-                    value={handoutDraft.title}
+                    id="dm-new-handout-title" value={handoutDraft.title}
                     onChange={(e) => setHandoutDraft({ ...handoutDraft, title: e.target.value })}
                   />
                 </label>
@@ -1196,13 +1226,16 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                     </article>
                   ))}
                 </div>
+                {journal.length === 0 ? (
+                  <div className="ws-empty"><h3>The journal is blank</h3><p>Track quests, factions, and table notes here — or plan the next session and let its summary land in the ledger.</p><div className="cta"><button type="button" className="dm-btn dm-btn-primary" onClick={() => document.getElementById("dm-new-journal-title")?.focus()}>New Journal Entry</button><button type="button" className="dm-btn dm-btn-outline" onClick={() => setTab("sessions")}>Plan a Session</button></div></div>
+                ) : null}
               </section>
               <section className="dm-editor">
                 <h3>New journal entry</h3>
                 <label>
                   Title
                   <input
-                    value={journalDraft.title}
+                    id="dm-new-journal-title" value={journalDraft.title}
                     onChange={(e) => setJournalDraft({ ...journalDraft, title: e.target.value })}
                   />
                 </label>
@@ -1280,7 +1313,7 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
                 </header>
                 <div className="dm-form-grid">
                   <label><span>Schedule type</span><select value={scheduleMode} onChange={(event) => setScheduleMode(event.target.value as ScheduleMode)}><option value="single">One session</option><option value="series">Recurring series</option></select></label>
-                  <label><span>Title</span><input value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} placeholder="Chapter IV" /></label>
+                  <label><span>Title</span><input id="dm-session-title" value={sessionTitle} onChange={(event) => setSessionTitle(event.target.value)} placeholder="Chapter IV" /></label>
                   <label><span>Date and time</span><input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label>
                   <div className="dm-schedule-confirm-row">
                     <label><span>Duration</span><select value={scheduledDuration} onChange={(event) => setScheduledDuration(event.target.value)}><option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option></select></label>
@@ -1398,6 +1431,5 @@ export default function DMPrepPanel({ campaignId, onClose, onEncounterStarted, i
           </div>
         </div>
       </section>
-    </div>
   );
 }
