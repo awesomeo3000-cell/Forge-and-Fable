@@ -201,7 +201,12 @@ export default function ForgeAndFableApp() {
   function pushToast(kind: "announce" | "condition" | "turn", title: string, body?: string, sourceId?: string) {
     if (kind === "announce" && sourceId && dismissedAnnouncementIds.includes(sourceId)) return;
     const id = crypto.randomUUID();
-    setToasts((current) => [...current.slice(-3), { id, kind, title, body, sourceId }]);
+    setToasts((current) => {
+      // A campaign can replay the same event while the sync cursor catches up.
+      // Keep the toast stack readable instead of showing identical notices side by side.
+      if (current.some((toast) => toast.kind === kind && toast.title === title && toast.body === body)) return current;
+      return [...current.slice(-3), { id, kind, title, body, sourceId }];
+    });
     window.setTimeout(() => {
       setToasts((current) => current.filter((toast) => toast.id !== id));
     }, kind === "announce" ? 9000 : 6000);
@@ -2240,9 +2245,9 @@ export default function ForgeAndFableApp() {
         } as CSSProperties) : undefined}
       >
         {toasts.map((toast) => (
-          <button key={toast.id} type="button" className={`ff-toast ff-toast-${toast.kind}`} onClick={() => dismissToast(toast)}>
-            <strong>{toast.title}</strong>
-            {toast.body ? <span>{toast.body}</span> : null}
+          <button key={toast.id} type="button" className={`ff-toast ff-toast-${toast.kind}`} onClick={() => dismissToast(toast)} aria-label={`Dismiss notification: ${toast.title}`}>
+            <span className="ff-toast-copy"><strong>{toast.title}</strong>{toast.body ? <span>{toast.body}</span> : null}</span>
+            <X size={14} aria-hidden="true" className="ff-toast-dismiss" />
           </button>
         ))}
       </div>

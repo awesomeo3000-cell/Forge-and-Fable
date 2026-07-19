@@ -675,6 +675,7 @@ export default function CampaignWorkspace(props: {
                   )}
                   <div className="ao-cw-handout-copy">
                     <strong>{handout.title}</strong>
+                    <span className={`ao-cw-handout-privacy ${handout.shared ? "is-shared" : "is-private"}`}>{handout.shared ? "Shared with players" : "Private"}</span>
                     <small>{handout.category} · {handout.shared ? `Shared ${relativeTime(handout.sharedAt)}` : "Private"}</small>
                     {handout.description ? <p>{excerpt(handout.description, 140)}</p> : null}
                     {handout.body ? <p className="ao-cw-handout-body">{excerpt(handout.body, 280)}</p> : null}

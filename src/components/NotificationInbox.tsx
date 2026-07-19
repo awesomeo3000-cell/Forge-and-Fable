@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, X } from "lucide-react";
+import { Bell, CheckCheck, Mail, Settings2, X } from "lucide-react";
 import type { NotificationPreferences, UserNotification } from "@/lib/notificationStore";
 
 export default function NotificationInbox() {
@@ -34,10 +34,10 @@ export default function NotificationInbox() {
   return <div className="notification-inbox-wrap">
     <button type="button" className="glass-icon ink-action ao-header-action" onClick={() => { setOpen((value) => !value); if (!open) void load(); }} aria-label="Notifications" aria-expanded={open}><Bell size={17} />{unread > 0 ? <span className="notification-badge">{unread > 99 ? "99+" : unread}</span> : null}</button>
     {open ? <section className="notification-popover" aria-label="Notifications">
-      <header><div><span className="ledger-eyebrow">Inbox</span><h3>DM notifications</h3></div><button type="button" onClick={() => setOpen(false)} aria-label="Close notifications"><X size={15} /></button></header>
-      <div className="notification-preferences"><label><input type="checkbox" checked={prefs.dmInboxEnabled} onChange={() => void toggle("dmInboxEnabled")} /> In-app inbox</label><label><input type="checkbox" checked={prefs.dmEmailEnabled} onChange={() => void toggle("dmEmailEnabled")} /> Email alerts</label></div>
+      <header className="notification-popover-header"><div><span className="ao-dash-eyebrow">Signal desk</span><h3>Notifications</h3></div><div className="notification-header-actions"><span className="notification-unread-count">{unread ? `${unread} unread` : "All caught up"}</span><button type="button" onClick={() => setOpen(false)} aria-label="Close notifications"><X size={15} /></button></div></header>
+      <div className="notification-preferences"><div className="notification-preferences-heading"><Settings2 size={14} aria-hidden="true" /><span>Delivery</span></div><label><input type="checkbox" checked={prefs.dmInboxEnabled} onChange={() => void toggle("dmInboxEnabled")} /><span><strong>In-app inbox</strong><small>Keep a campaign record here</small></span></label><label><input type="checkbox" checked={prefs.dmEmailEnabled} onChange={() => void toggle("dmEmailEnabled")} /><span><strong>Email alerts</strong><small>Send important DM activity by email</small></span></label></div>
       {error ? <p className="notification-error">{error}</p> : null}
-      <div className="notification-list">{items.length === 0 ? <p className="notification-empty">No notifications yet.</p> : items.map((item) => <button key={item.id} type="button" className={`notification-item${item.readAt ? " is-read" : ""}`} onClick={() => void markRead(item.id)}><strong>{item.title}</strong><span>{item.body}</span><time>{new Date(item.createdAt).toLocaleString()}</time></button>)}</div>
+      <div className="notification-list">{items.length === 0 ? <div className="notification-empty"><CheckCheck size={18} aria-hidden="true" /><p>No notifications yet.</p><small>DM activity will appear here when you opt in.</small></div> : items.map((item) => <button key={item.id} type="button" className={`notification-item${item.readAt ? " is-read" : ""}`} onClick={() => void markRead(item.id)}><span className="notification-item-icon"><Mail size={14} aria-hidden="true" /></span><span className="notification-item-copy"><strong>{item.title}</strong><span>{item.body}</span><time>{new Date(item.createdAt).toLocaleString()}</time></span><span className="notification-item-state">{item.readAt ? "Read" : "New"}</span></button>)}</div>
     </section> : null}
   </div>;
 }
