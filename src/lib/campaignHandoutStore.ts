@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { MAX_TOTAL_MEDIA_STORAGE, totalMediaStorageBytes } from "@/lib/mediaStorage";
 
-export const MAX_CAMPAIGN_HANDOUT_SIZE = 20 * 1024 * 1024;
-export const MAX_CAMPAIGN_HANDOUT_STORAGE = 200 * 1024 * 1024;
+export const MAX_CAMPAIGN_HANDOUT_SIZE = 80 * 1024 * 1024;
+export const MAX_CAMPAIGN_HANDOUT_STORAGE = 400 * 1024 * 1024;
 
 export const CAMPAIGN_HANDOUT_MIME_TYPES = new Set([
   "image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf",

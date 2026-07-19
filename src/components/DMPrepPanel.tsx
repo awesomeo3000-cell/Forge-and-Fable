@@ -1167,7 +1167,7 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", dm
                   </select>
                 </label>
                 <label>
-                  Upload file (optional, max 20 MB)
+                  Upload file (optional, max 80 MB)
                   <input type="file" accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(e) => { const file = e.target.files?.[0] ?? null; setHandoutFile(file); if (file) setHandoutDraft((draft) => ({ ...draft, title: draft.title || file.name, assetType: file.type.startsWith("image/") ? "image" : "document" })); }} />
                 </label>
                 {handoutFile ? <p className="dm-help-text">{handoutFile.name} · {(handoutFile.size / 1024 / 1024).toFixed(1)} MB · will be shared automatically</p> : null}

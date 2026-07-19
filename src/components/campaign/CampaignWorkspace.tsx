@@ -49,6 +49,7 @@ import CampaignPartyGrid from "./CampaignPartyGrid";
 import CampaignSettingsSection from "./CampaignSettingsSection";
 import AnnouncementComposerSheet from "./AnnouncementComposerSheet";
 import ConfirmDialog from "./ConfirmDialog";
+import CampaignHandoutUploadModal from "@/components/CampaignHandoutUploadModal";
 
 const DESCRIPTION_FALLBACK = "A campaign is underway. The next chapter is waiting.";
 const BRIEFING_EXCERPT_LIMIT = 480;
@@ -113,6 +114,7 @@ export default function CampaignWorkspace(props: {
   onPostAnnouncement?: (message: string) => Promise<boolean>;
   onOpenTable?: () => void;
   onOpenHandouts?: () => void;
+  onHandoutsUploaded?: () => void;
   onScheduleSession?: () => void;
   onSaveAppearance?: (themeKey: string, bannerImageUrl: string) => Promise<boolean>;
   onSavePlayerView?: (input: Record<string, boolean>) => Promise<boolean>;
@@ -127,6 +129,7 @@ export default function CampaignWorkspace(props: {
   const [chooseCharacterOpen, setChooseCharacterOpen] = useState(false);
   const [pendingLeave, setPendingLeave] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<{ id: string; name: string } | null>(null);
+  const [uploadHandoutsOpen, setUploadHandoutsOpen] = useState(false);
 
   // A DM without a character of their own is running the table, not failing
   // to get ready — their empty seat stays out of the party, readiness and
@@ -656,7 +659,7 @@ export default function CampaignWorkspace(props: {
 
       {section === "handouts" ? (
         <section className="ao-cw-panel" aria-label="Handouts">
-          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{allHandouts.length} shared</span>{isDm && props.onOpenHandouts ? <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={props.onOpenHandouts}>Upload handout</button> : null}</div>
+          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{allHandouts.length} shared</span>{isDm ? <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={() => setUploadHandoutsOpen(true)}>Upload handouts</button> : null}</div>
           {allHandouts.length > 0 ? (
             <ul className="ao-cw-handout-grid">
               {allHandouts.map((handout) => (
@@ -688,6 +691,14 @@ export default function CampaignWorkspace(props: {
           )}
         </section>
       ) : null}
+
+      {uploadHandoutsOpen && isDm ? <CampaignHandoutUploadModal
+        campaignId={detail.campaign.id}
+        members={detail.members}
+        dmUserId={detail.campaign.dmUserId}
+        onClose={() => setUploadHandoutsOpen(false)}
+        onUploaded={() => props.onHandoutsUploaded?.()}
+      /> : null}
 
       {section === "activity" ? (
         <section className="ao-cw-panel" aria-label="Activity">
