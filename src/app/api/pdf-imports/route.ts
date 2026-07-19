@@ -6,7 +6,7 @@
  * flag is off so the client can fall back to the legacy synchronous analyze.
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { authenticateRequest, AuthError } from "@/lib/auth";
 import { PDF_IMPORT_LIMITS, PDF_IMPORT_ERROR_COPY, pdfImportOcrEnabled } from "@/lib/import/importLimits";
 import { createImportJob, sweepExpiredImportJobs } from "@/lib/import/jobs/importJobStore";
@@ -60,8 +60,11 @@ export async function POST(request: Request) {
 
     const job = createImportJob(userId, file.name, buffer);
 
-    // Detached: the pipeline reports through the job row, not this response.
-    void runImportPipeline(job.id);
+    // Run the pipeline as post-response work via after(): a bare `void` promise
+    // is not guaranteed to run to completion once the request ends (it worked in
+    // local QA but left deployed jobs stuck on "uploaded" — the pipeline never
+    // ran). after() keeps the invocation alive until the pipeline settles.
+    after(() => runImportPipeline(job.id));
 
     return NextResponse.json({ jobId: job.id, status: job.status }, { status: 201 });
   } catch (error) {

@@ -56,7 +56,8 @@ export type PdfImportErrorCode =
   | "PARSER_FAILED"
   | "JOB_EXPIRED"
   | "JOB_NOT_FOUND"
-  | "JOB_ACCESS_DENIED";
+  | "JOB_ACCESS_DENIED"
+  | "STALLED";
 
 /** User-facing copy per code — no internals, no paths, no stderr (§14/§21). */
 export const PDF_IMPORT_ERROR_COPY: Record<PdfImportErrorCode, string> = {
@@ -73,6 +74,7 @@ export const PDF_IMPORT_ERROR_COPY: Record<PdfImportErrorCode, string> = {
   JOB_EXPIRED: "This import expired. Upload the PDF again to continue.",
   JOB_NOT_FOUND: "This import could not be found. Upload the PDF again to continue.",
   JOB_ACCESS_DENIED: "This import belongs to a different account.",
+  STALLED: "The import stopped unexpectedly before it finished. Please try uploading the PDF again.",
 };
 
 export class PdfImportError extends Error {

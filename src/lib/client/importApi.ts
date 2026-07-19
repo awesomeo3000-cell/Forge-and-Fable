@@ -105,7 +105,13 @@ export async function runImportJob(
     void cancelImportJob(jobId);
   });
 
-  // 1s polling (§13); jobs expire server-side so this always terminates.
+  // 1s polling (§13). A healthy job advances its progress percent at every
+  // stage; if it stops advancing for this long the server-side pipeline has
+  // stalled, so give up rather than spin forever (the server self-heals the
+  // job too, but this guarantees the UI never hangs).
+  const STALL_MS = 45_000;
+  let bestPercent = -1;
+  let lastAdvanceAt = Date.now();
   for (;;) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     if (cancelled) throw new Error("Import cancelled.");
@@ -116,6 +122,14 @@ export async function runImportJob(
       message: status.progressMessage ?? "Working…",
       requiresOcr: status.requiresOcr === true,
     });
+
+    if (status.progressPercent > bestPercent) {
+      bestPercent = status.progressPercent;
+      lastAdvanceAt = Date.now();
+    } else if (Date.now() - lastAdvanceAt > STALL_MS) {
+      void cancelImportJob(jobId);
+      throw new Error("The import stalled and did not finish. Please try uploading the PDF again.");
+    }
 
     if (status.status === "ready") {
       const draft = await getImportJobResult(jobId);
