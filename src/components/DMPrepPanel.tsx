@@ -13,11 +13,10 @@ import type {
   SavedEncounter,
   SessionSummary,
 } from "@/types/dmTools";
-import type { CampaignMemberSummary } from "@/types/campaign";
 
 type Tab = "creatures" | "encounters" | "generator" | "handouts" | "journal" | "sessions";
 type ScheduleMode = "single" | "series";
-type Props = { campaignId: string; campaignName?: string; dmUserId?: string; members?: CampaignMemberSummary[]; onClose?: () => void; onEncounterStarted: () => void; initialTab?: Tab };
+type Props = { campaignId: string; campaignName?: string; onClose?: () => void; onEncounterStarted: () => void; initialTab?: Tab };
 const uid = () => crypto.randomUUID();
 const emptyEncounter = (campaignId: string): SavedEncounter => ({
   id: "",
@@ -69,7 +68,7 @@ const features = (value: string) =>
 const featureText = (value?: CreatureLibraryRecord["actions"]) =>
   value?.map((item) => [item.name, item.description, item.damage].filter(Boolean).join(" | ")).join("\n") ?? "";
 
-export default function DMPrepPanel({ campaignId, campaignName = "The table", dmUserId, members = [], onClose, onEncounterStarted, initialTab = "encounters" }: Props) {
+export default function DMPrepPanel({ campaignId, campaignName = "The table", onClose, onEncounterStarted, initialTab = "encounters" }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
   // Follow a changed initialTab without a setState-in-effect: adjust during
@@ -106,7 +105,6 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", dm
     description: "",
     privateNotes: "",
     tags: "",
-    recipientUserId: "",
   });
   const [handoutFile, setHandoutFile] = useState<File | null>(null);
   const [journalDraft, setJournalDraft] = useState({
@@ -333,7 +331,6 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", dm
         description: "",
         privateNotes: "",
         tags: "",
-        recipientUserId: "",
       });
     });
   const uploadHandout = () => {
@@ -342,11 +339,10 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", dm
       const result = await dmToolsApi.uploadHandout(campaignId, handoutFile, {
         title: handoutDraft.title || handoutFile.name,
         category: handoutDraft.category,
-        recipientUserId: handoutDraft.recipientUserId || null,
       });
       setHandouts((current) => [result.handout, ...current]);
       setHandoutFile(null);
-      setHandoutDraft({ title: "", category: "other", assetType: "image", assetUrl: "", body: "", description: "", privateNotes: "", tags: "", recipientUserId: "" });
+      setHandoutDraft({ title: "", category: "other", assetType: "image", assetUrl: "", body: "", description: "", privateNotes: "", tags: "" });
     });
   };
   const createJournal = () =>
@@ -1160,17 +1156,10 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", dm
                   </label>
                 </div>
                 <label>
-                  Share with
-                  <select value={handoutDraft.recipientUserId} onChange={(e) => setHandoutDraft({ ...handoutDraft, recipientUserId: e.target.value })}>
-                    <option value="">Entire party</option>
-                    {members.filter((member) => member.userId !== dmUserId && !member.isGhost).map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}
-                  </select>
-                </label>
-                <label>
                   Upload file (optional, max 80 MB)
                   <input type="file" accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(e) => { const file = e.target.files?.[0] ?? null; setHandoutFile(file); if (file) setHandoutDraft((draft) => ({ ...draft, title: draft.title || file.name, assetType: file.type.startsWith("image/") ? "image" : "document" })); }} />
                 </label>
-                {handoutFile ? <p className="dm-help-text">{handoutFile.name} · {(handoutFile.size / 1024 / 1024).toFixed(1)} MB · will be shared automatically</p> : null}
+                {handoutFile ? <p className="dm-help-text">{handoutFile.name} · {(handoutFile.size / 1024 / 1024).toFixed(1)} MB · uploaded privately</p> : null}
                 {handoutDraft.assetType === "text" ? (
                   <label>
                     Body

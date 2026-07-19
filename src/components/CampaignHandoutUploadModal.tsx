@@ -3,21 +3,17 @@
 import { useRef, useState } from "react";
 import { FolderOpen, Upload, X } from "lucide-react";
 import { dmToolsApi } from "@/lib/client/dmToolsApi";
-import type { CampaignMemberSummary } from "@/types/campaign";
 
 type Props = {
   campaignId: string;
-  members: CampaignMemberSummary[];
-  dmUserId: string;
   onClose: () => void;
   onUploaded: () => void;
 };
 
-export default function CampaignHandoutUploadModal({ campaignId, members, dmUserId, onClose, onUploaded }: Props) {
+export default function CampaignHandoutUploadModal({ campaignId, onClose, onUploaded }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [recipientUserId, setRecipientUserId] = useState("");
   const [category, setCategory] = useState("other");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState("");
@@ -42,12 +38,11 @@ export default function CampaignHandoutUploadModal({ campaignId, members, dmUser
         await dmToolsApi.uploadHandout(campaignId, file, {
           title: file.name,
           category,
-          recipientUserId: recipientUserId || null,
         });
         completed += 1;
       }
       setFiles([]);
-      setProgress(`${completed} handout${completed === 1 ? "" : "s"} uploaded and shared.`);
+      setProgress(`${completed} handout${completed === 1 ? "" : "s"} uploaded privately. Select a file in Handouts to share it.`);
       if (fileInput.current) fileInput.current.value = "";
       if (folderInput.current) folderInput.current.value = "";
       onUploaded();
@@ -59,7 +54,6 @@ export default function CampaignHandoutUploadModal({ campaignId, members, dmUser
     }
   };
 
-  const playerMembers = members.filter((member) => member.userId !== dmUserId && !member.isGhost);
   return (
     <div className="modal-scrim" role="presentation" onMouseDown={onClose}>
       <section className="campaign-handout-upload" role="dialog" aria-modal="true" aria-labelledby="campaign-handout-upload-title" onMouseDown={(event) => event.stopPropagation()}>
@@ -74,10 +68,7 @@ export default function CampaignHandoutUploadModal({ campaignId, members, dmUser
           <input ref={fileInput} hidden type="file" multiple accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(event) => addFiles(event.target.files)} />
           <input ref={folderInput} hidden type="file" multiple accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(event) => addFiles(event.target.files)} {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} />
         </div>
-        <div className="campaign-handout-upload-fields">
-          <label>Share with<select value={recipientUserId} onChange={(event) => setRecipientUserId(event.target.value)} disabled={busy}><option value="">Entire party</option>{playerMembers.map((member) => <option key={member.userId} value={member.userId}>{member.characterName ?? member.userName}</option>)}</select></label>
-          <label>Category<select value={category} onChange={(event) => setCategory(event.target.value)} disabled={busy}>{["location", "npc", "item", "letter", "clue", "map", "lore", "other"].map((value) => <option key={value}>{value}</option>)}</select></label>
-        </div>
+        <div className="campaign-handout-upload-fields"><label>Category<select value={category} onChange={(event) => setCategory(event.target.value)} disabled={busy}>{["location", "npc", "item", "letter", "clue", "map", "lore", "other"].map((value) => <option key={value}>{value}</option>)}</select></label></div>
         <div className="campaign-handout-upload-list" aria-live="polite">
           {files.length ? <ul>{files.map((file) => <li key={`${file.name}:${file.size}:${file.lastModified}`}><span>{file.name}</span><small>{(file.size / 1024 / 1024).toFixed(1)} MB</small><button type="button" onClick={() => setFiles((current) => current.filter((item) => item !== file))} disabled={busy} aria-label={`Remove ${file.name}`}><X size={13} /></button></li>)}</ul> : <p>No files selected yet.</p>}
         </div>

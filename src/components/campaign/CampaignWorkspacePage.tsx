@@ -222,7 +222,7 @@ export default function CampaignWorkspacePage(props: {
       onPostAnnouncement={viewerRole === "dm" ? postAnnouncement : undefined}
       onOpenTable={props.onOpenTable}
       onOpenHandouts={props.onOpenHandouts}
-      onHandoutsUploaded={() => onActiveCampaignChange(campaignId)}
+      onHandoutsChanged={() => onActiveCampaignChange(campaignId)}
       onSavePlayerView={viewerRole === "dm" ? savePlayerView : undefined}
       onScheduleSession={viewerRole === "dm" ? props.onScheduleSession : undefined}
       onSaveAppearance={viewerRole === "dm" ? saveAppearance : undefined}

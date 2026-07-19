@@ -800,7 +800,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         />
         )}
         <section className="dm-table-region dm-encounter">
-          <div className="dm-prep-host" hidden={workspaceMode !== "preparation"}><DMPrepPanel campaignId={campaign.campaign.id} campaignName={campaign.campaign.name} dmUserId={campaign.campaign.dmUserId} members={campaign.members} initialTab={prepInitialTab} onClose={() => setWorkspaceMode("encounter")} onEncounterStarted={() => void refreshWorkspace()}/></div>
+          <div className="dm-prep-host" hidden={workspaceMode !== "preparation"}><DMPrepPanel campaignId={campaign.campaign.id} campaignName={campaign.campaign.name} initialTab={prepInitialTab} onClose={() => setWorkspaceMode("encounter")} onEncounterStarted={() => void refreshWorkspace()}/></div>
           {workspaceMode === "preparation" ? null : workspaceMode === "review" ? (
             <div className="dm-chronicle">
               <div className="dm-chronicle-head">

@@ -97,6 +97,7 @@ export type HandoutView = {
   assetUrl?: string;
   body?: string;
   description?: string;
+  shared: boolean;
   sharedAt: string;
 };
 
@@ -112,6 +113,7 @@ export function selectHandouts(handouts: Array<Omit<CampaignHandout, "privateNot
       assetUrl: item.assetUrl,
       body: item.body,
       description: item.description,
+      shared: item.shared,
       sharedAt: item.lastSharedAt ?? item.firstSharedAt ?? item.updatedAt,
     }))
     .sort((a, b) => b.sharedAt.localeCompare(a.sharedAt))

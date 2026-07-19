@@ -50,6 +50,7 @@ import CampaignSettingsSection from "./CampaignSettingsSection";
 import AnnouncementComposerSheet from "./AnnouncementComposerSheet";
 import ConfirmDialog from "./ConfirmDialog";
 import CampaignHandoutUploadModal from "@/components/CampaignHandoutUploadModal";
+import CampaignHandoutShareModal from "@/components/CampaignHandoutShareModal";
 
 const DESCRIPTION_FALLBACK = "A campaign is underway. The next chapter is waiting.";
 const BRIEFING_EXCERPT_LIMIT = 480;
@@ -114,7 +115,7 @@ export default function CampaignWorkspace(props: {
   onPostAnnouncement?: (message: string) => Promise<boolean>;
   onOpenTable?: () => void;
   onOpenHandouts?: () => void;
-  onHandoutsUploaded?: () => void;
+  onHandoutsChanged?: () => void;
   onScheduleSession?: () => void;
   onSaveAppearance?: (themeKey: string, bannerImageUrl: string) => Promise<boolean>;
   onSavePlayerView?: (input: Record<string, boolean>) => Promise<boolean>;
@@ -130,6 +131,7 @@ export default function CampaignWorkspace(props: {
   const [pendingLeave, setPendingLeave] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<{ id: string; name: string } | null>(null);
   const [uploadHandoutsOpen, setUploadHandoutsOpen] = useState(false);
+  const [shareHandoutId, setShareHandoutId] = useState<string | null>(null);
 
   // A DM without a character of their own is running the table, not failing
   // to get ready — their empty seat stays out of the party, readiness and
@@ -153,6 +155,7 @@ export default function CampaignWorkspace(props: {
   const objectives = useMemo(() => selectObjectives(props.memory?.journal ?? []), [props.memory?.journal]);
   const recentHandouts = useMemo(() => selectHandouts(props.memory?.handouts ?? [], 3), [props.memory?.handouts]);
   const allHandouts = useMemo(() => selectHandouts(props.memory?.handouts ?? []), [props.memory?.handouts]);
+  const selectedShareHandout = props.memory?.handouts.find((handout) => handout.id === shareHandoutId) ?? null;
   const attentionItems = useMemo(
     () => (isDm
       ? selectAttentionItems({ members: partyMembers, sessions: props.sessions, events: props.campaignEvents, journal: props.memory?.journal })
@@ -663,7 +666,7 @@ export default function CampaignWorkspace(props: {
           {allHandouts.length > 0 ? (
             <ul className="ao-cw-handout-grid">
               {allHandouts.map((handout) => (
-                <li key={handout.id} className="ao-cw-handout-card">
+                <li key={handout.id} className={`ao-cw-handout-card${isDm ? " is-shareable" : ""}`} role={isDm ? "button" : undefined} tabIndex={isDm ? 0 : undefined} onClick={isDm ? () => setShareHandoutId(handout.id) : undefined} onKeyDown={isDm ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setShareHandoutId(handout.id); } } : undefined}>
                   {handout.assetType === "image" && handout.assetUrl ? (
                     /* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */
                     <img src={handout.assetUrl} alt={`Handout: ${handout.title}`} loading="lazy" />
@@ -672,14 +675,15 @@ export default function CampaignWorkspace(props: {
                   )}
                   <div className="ao-cw-handout-copy">
                     <strong>{handout.title}</strong>
-                    <small>{handout.category} · Shared {relativeTime(handout.sharedAt)}</small>
+                    <small>{handout.category} · {handout.shared ? `Shared ${relativeTime(handout.sharedAt)}` : "Private"}</small>
                     {handout.description ? <p>{excerpt(handout.description, 140)}</p> : null}
                     {handout.body ? <p className="ao-cw-handout-body">{excerpt(handout.body, 280)}</p> : null}
                     {handout.assetUrl ? (
-                      <a className="ao-cw-link" href={handout.assetUrl} target="_blank" rel="noreferrer">
+                      <a className="ao-cw-link" href={handout.assetUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
                         <ExternalLink size={12} aria-hidden="true" /> Open {handout.assetType}
                       </a>
                     ) : null}
+                    {isDm ? <span className="ao-cw-link">{handout.shared ? "Manage sharing" : "Share handout"}</span> : null}
                   </div>
                 </li>
               ))}
@@ -694,10 +698,16 @@ export default function CampaignWorkspace(props: {
 
       {uploadHandoutsOpen && isDm ? <CampaignHandoutUploadModal
         campaignId={detail.campaign.id}
+        onClose={() => setUploadHandoutsOpen(false)}
+        onUploaded={() => props.onHandoutsChanged?.()}
+      /> : null}
+      {selectedShareHandout && isDm ? <CampaignHandoutShareModal
+        campaignId={detail.campaign.id}
+        handout={selectedShareHandout}
         members={detail.members}
         dmUserId={detail.campaign.dmUserId}
-        onClose={() => setUploadHandoutsOpen(false)}
-        onUploaded={() => props.onHandoutsUploaded?.()}
+        onClose={() => setShareHandoutId(null)}
+        onShared={() => props.onHandoutsChanged?.()}
       /> : null}
 
       {section === "activity" ? (

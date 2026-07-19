@@ -759,7 +759,8 @@ export function createUploadedHandout(campaignId: string, userId: string, input:
     const assetId = saveCampaignHandoutAsset(campaignId, record.id, userId, mime, bytes);
     const assetUrl = `/api/campaigns/${encodeURIComponent(campaignId)}/handouts/${encodeURIComponent(record.id)}/asset/${encodeURIComponent(assetId)}`;
     const updated = updateHandout(campaignId, userId, record.id, { assetUrl });
-    return shareHandout(campaignId, userId, updated.id);
+    // Uploaded handouts are private until the DM explicitly shares them.
+    return updated;
   } catch (error) {
     archiveHandout(campaignId, userId, record.id);
     throw error;
@@ -803,7 +804,7 @@ export function updateHandout(campaignId: string, userId: string, id: string, in
 export function archiveHandout(campaignId: string, userId: string, id: string) {
   return updateHandout(campaignId, userId, id, { archived: true });
 }
-export function shareHandout(campaignId: string, userId: string, id: string) {
+export function shareHandout(campaignId: string, userId: string, id: string, recipientUserId: string | null = null) {
   requireDm(campaignId, userId);
   return transaction(() => {
     const row = getDb()
@@ -821,6 +822,13 @@ export function shareHandout(campaignId: string, userId: string, id: string) {
     if (!row) throw new Error("Handout not found.");
     const record = handoutFromRow(row),
       now = nowIso();
+    if (recipientUserId) {
+      const member = getDb().prepare("SELECT 1 FROM campaign_members WHERE campaign_id = ? AND user_id = ?").get(campaignId, recipientUserId);
+      if (!member) throw new Error("The selected player is not a member of this campaign.");
+      if (recipientUserId === campaignRow(campaignId).dm_user_id) throw new Error("Choose a player, not the DM.");
+    }
+    const sharedRecord = sanitizeHandout({ ...record, recipientUserId }, { id, campaignId, ownerUserId: userId, createdAt: record.createdAt });
+    getDb().prepare("UPDATE campaign_handouts SET data=? WHERE id=?").run(JSON.stringify(sharedRecord), id);
     getDb()
       .prepare(
         "UPDATE campaign_handouts SET shared=1,first_shared_at=COALESCE(first_shared_at,?),last_shared_at=?,share_count=share_count+1,updated_at=? WHERE id=?",
@@ -829,12 +837,12 @@ export function shareHandout(campaignId: string, userId: string, id: string) {
     insertEvent(campaignId, userId, "handout", {
       handoutId: id,
       title: record.title,
-      url: record.assetUrl,
-      body: record.body,
-      assetType: record.assetType,
-    }, record.recipientUserId ?? null);
+      url: sharedRecord.assetUrl,
+      body: sharedRecord.body,
+      assetType: sharedRecord.assetType,
+    }, recipientUserId);
     return {
-      ...record,
+      ...sharedRecord,
       shared: true,
       firstSharedAt: record.firstSharedAt ?? now,
       lastSharedAt: now,
