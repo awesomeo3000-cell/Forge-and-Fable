@@ -58,13 +58,13 @@ export default function CampaignHandoutUploadModal({ campaignId, onClose, onUplo
     <div className="modal-scrim" role="presentation" onMouseDown={onClose}>
       <section className="campaign-handout-upload" role="dialog" aria-modal="true" aria-labelledby="campaign-handout-upload-title" onMouseDown={(event) => event.stopPropagation()}>
         <header>
-          <div><span className="ledger-eyebrow">Campaign handouts</span><h2 id="campaign-handout-upload-title">Upload files</h2></div>
+          <div><span className="ao-dash-eyebrow">Campaign handouts</span><h2 id="campaign-handout-upload-title">Upload files</h2></div>
           <button type="button" className="modal-close glass-icon" onClick={onClose} aria-label="Close upload dialog"><X size={18} /></button>
         </header>
         <p className="campaign-handout-upload-hint">Upload maps, letters, PDFs, images, or reference files. You can select multiple files or an entire folder. Each file may be up to 80 MB.</p>
         <div className="campaign-handout-upload-actions">
-          <button type="button" className="dm-btn dm-btn-primary" onClick={() => fileInput.current?.click()} disabled={busy}><Upload size={15} /> Choose files</button>
-          <button type="button" className="dm-btn" onClick={() => folderInput.current?.click()} disabled={busy}><FolderOpen size={15} /> Choose folder</button>
+          <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={() => fileInput.current?.click()} disabled={busy}><Upload size={15} /> Choose files</button>
+          <button type="button" className="ao-cw-btn" onClick={() => folderInput.current?.click()} disabled={busy}><FolderOpen size={15} /> Choose folder</button>
           <input ref={fileInput} hidden type="file" multiple accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(event) => addFiles(event.target.files)} />
           <input ref={folderInput} hidden type="file" multiple accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(event) => addFiles(event.target.files)} {...({ webkitdirectory: "", directory: "" } as Record<string, string>)} />
         </div>
@@ -74,7 +74,7 @@ export default function CampaignHandoutUploadModal({ campaignId, onClose, onUplo
         </div>
         {progress ? <p className="campaign-handout-upload-status">{progress}</p> : null}
         {error ? <p className="campaign-handout-upload-error">{error}</p> : null}
-        <footer><button type="button" className="dm-btn" onClick={onClose} disabled={busy}>Close</button><button type="button" className="dm-btn dm-btn-primary" onClick={() => void upload()} disabled={busy || files.length === 0}><Upload size={15} /> {busy ? "Uploading…" : `Upload ${files.length || ""} file${files.length === 1 ? "" : "s"}`}</button></footer>
+        <footer><button type="button" className="ao-cw-btn" onClick={onClose} disabled={busy}>Close</button><button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={() => void upload()} disabled={busy || files.length === 0}><Upload size={15} /> {busy ? "Uploading…" : `Upload ${files.length || ""} file${files.length === 1 ? "" : "s"}`}</button></footer>
       </section>
     </div>
   );

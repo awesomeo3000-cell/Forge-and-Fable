@@ -31,11 +31,11 @@ export default function CampaignHandoutShareModal(props: {
   };
   return <div className="modal-scrim" role="presentation" onMouseDown={props.onClose}>
     <section className="campaign-handout-share" role="dialog" aria-modal="true" aria-labelledby="campaign-handout-share-title" onMouseDown={(event) => event.stopPropagation()}>
-      <header><div><span className="ledger-eyebrow">Handout sharing</span><h2 id="campaign-handout-share-title">{props.handout.title}</h2></div><button type="button" className="modal-close glass-icon" onClick={props.onClose} aria-label="Close sharing dialog"><X size={18} /></button></header>
+      <header><div><span className="ao-dash-eyebrow">Handout sharing</span><h2 id="campaign-handout-share-title">{props.handout.title}</h2></div><button type="button" className="modal-close glass-icon" onClick={props.onClose} aria-label="Close sharing dialog"><X size={18} /></button></header>
       <p className="campaign-handout-share-status">{props.handout.shared ? "This handout is already shared. Choose a new audience to share it again." : "Private — only you can see this handout until you share it."}</p>
-      <div className="campaign-handout-share-options"><button type="button" className="dm-btn dm-btn-primary" disabled={busy} onClick={() => void share(null)}><Share2 size={15} /> Share with everyone</button><span>or choose a registered player:</span>{players.length ? <div className="campaign-handout-player-options">{players.map((member) => <button key={member.userId} type="button" className="dm-btn" disabled={busy} onClick={() => void share(member.userId)}>{member.characterName ?? member.userName}</button>)}</div> : <p>No other registered players are currently in this campaign.</p>}</div>
+      <div className="campaign-handout-share-options"><button type="button" className="ao-cw-btn ao-cw-btn-primary" disabled={busy} onClick={() => void share(null)}><Share2 size={15} /> Share with everyone</button><span>or choose a registered player:</span>{players.length ? <div className="campaign-handout-player-options">{players.map((member) => <button key={member.userId} type="button" className="ao-cw-btn" disabled={busy} onClick={() => void share(member.userId)}>{member.characterName ?? member.userName}</button>)}</div> : <p>No other registered players are currently in this campaign.</p>}</div>
       {error ? <p className="campaign-handout-upload-error">{error}</p> : null}
-      <footer><button type="button" className="dm-btn" onClick={props.onClose} disabled={busy}>Cancel</button></footer>
+      <footer><button type="button" className="ao-cw-btn" onClick={props.onClose} disabled={busy}>Cancel</button></footer>
     </section>
   </div>;
 }

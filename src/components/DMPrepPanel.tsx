@@ -106,7 +106,6 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", on
     privateNotes: "",
     tags: "",
   });
-  const [handoutFile, setHandoutFile] = useState<File | null>(null);
   const [journalDraft, setJournalDraft] = useState({
     title: "",
     type: "freeform",
@@ -333,18 +332,6 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", on
         tags: "",
       });
     });
-  const uploadHandout = () => {
-    if (!handoutFile) return;
-    run(async () => {
-      const result = await dmToolsApi.uploadHandout(campaignId, handoutFile, {
-        title: handoutDraft.title || handoutFile.name,
-        category: handoutDraft.category,
-      });
-      setHandouts((current) => [result.handout, ...current]);
-      setHandoutFile(null);
-      setHandoutDraft({ title: "", category: "other", assetType: "image", assetUrl: "", body: "", description: "", privateNotes: "", tags: "" });
-    });
-  };
   const createJournal = () =>
     run(async () => {
       const result = await dmToolsApi.createJournal(campaignId, {
@@ -1155,11 +1142,6 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", on
                     </select>
                   </label>
                 </div>
-                <label>
-                  Upload file (optional, max 80 MB)
-                  <input type="file" accept="image/*,application/pdf,.txt,.md,.docx,.zip" onChange={(e) => { const file = e.target.files?.[0] ?? null; setHandoutFile(file); if (file) setHandoutDraft((draft) => ({ ...draft, title: draft.title || file.name, assetType: file.type.startsWith("image/") ? "image" : "document" })); }} />
-                </label>
-                {handoutFile ? <p className="dm-help-text">{handoutFile.name} · {(handoutFile.size / 1024 / 1024).toFixed(1)} MB · uploaded privately</p> : null}
                 {handoutDraft.assetType === "text" ? (
                   <label>
                     Body
@@ -1198,11 +1180,10 @@ export default function DMPrepPanel({ campaignId, campaignName = "The table", on
                     onChange={(e) => setHandoutDraft({ ...handoutDraft, tags: e.target.value })}
                   />
                 </label>
-                <button className="primary" disabled={busy || !handoutDraft.title || Boolean(handoutFile)} onClick={createHandout}>
+                <button className="primary" disabled={busy || !handoutDraft.title} onClick={createHandout}>
                   <Save size={14} />
                   Save handout
                 </button>
-                {handoutFile ? <button className="primary" disabled={busy || !handoutDraft.title} onClick={uploadHandout}><Send size={14} /> Upload &amp; share</button> : null}
               </section>
             </div>
           ) : null}

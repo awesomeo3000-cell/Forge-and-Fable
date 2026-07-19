@@ -7848,30 +7848,30 @@
 .notification-error { color: #e7a49a; }
 .impersonation-banner { display:flex; align-items:center; justify-content:center; gap:8px; padding:6px 12px; background:#7b4b2a; color:#fff3df; font-size:12px; }
 .impersonation-banner button { border:1px solid #fff6; border-radius:4px; background:transparent; color:inherit; padding:3px 8px; cursor:pointer; }
-.campaign-handout-upload { width:min(680px, calc(100vw - 28px)); max-height:calc(100vh - 40px); overflow:auto; padding:20px; border:1px solid color-mix(in srgb, var(--parchment) 22%, transparent); background:var(--ground, #18120f); color:var(--parchment); box-shadow:0 18px 60px #000b; }
+.campaign-handout-upload { width:min(680px, calc(100vw - 28px)); max-height:calc(100vh - 40px); overflow:auto; padding:24px; border:1px solid var(--border-default); border-radius:var(--radius-md); background:var(--surface-panel); color:var(--text-primary); box-shadow:var(--shadow-overlay); font-family:var(--font-role-body); }
 .campaign-handout-upload > header, .campaign-handout-upload > footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.campaign-handout-upload h2 { margin:4px 0 0; }
+.campaign-handout-upload h2 { margin:4px 0 0; color:var(--text-primary); font-family:var(--font-role-display); }
 .campaign-handout-upload .modal-close { border:0; background:transparent; cursor:pointer; color:inherit; }
-.campaign-handout-upload-hint { color:color-mix(in srgb, var(--parchment) 72%, var(--ground)); line-height:1.5; }
+.campaign-handout-upload-hint { color:var(--text-secondary); line-height:1.5; }
 .campaign-handout-upload-actions { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; }
 .campaign-handout-upload-fields { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .campaign-handout-upload-fields label { display:grid; gap:5px; font-size:12px; }
-.campaign-handout-upload-fields select { padding:8px; background:color-mix(in srgb, var(--parchment) 8%, var(--ground)); color:inherit; border:1px solid #fff3; }
-.campaign-handout-upload-list { min-height:90px; max-height:220px; overflow:auto; margin:16px 0; padding:8px; border:1px dashed #fff4; }
+.campaign-handout-upload-fields select { padding:8px; background:var(--surface-panel-recessed); color:var(--text-primary); border:1px solid var(--border-default); border-radius:var(--radius-sm); }
+.campaign-handout-upload-list { min-height:90px; max-height:220px; overflow:auto; margin:16px 0; padding:8px; border:1px dashed var(--border-default); border-radius:var(--radius-sm); background:var(--surface-panel-recessed); }
 .campaign-handout-upload-list ul { display:grid; gap:5px; margin:0; padding:0; list-style:none; }
-.campaign-handout-upload-list li { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:7px; background:#fff08; font-size:12px; }
-.campaign-handout-upload-list small { color:color-mix(in srgb, var(--parchment) 65%, var(--ground)); }
+.campaign-handout-upload-list li { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; padding:7px; border-bottom:1px solid var(--border-subtle); font-size:12px; }
+.campaign-handout-upload-list small { color:var(--text-muted); }
 .campaign-handout-upload-list button { border:0; background:transparent; color:inherit; cursor:pointer; }
 .campaign-handout-upload-list > p, .campaign-handout-upload-status, .campaign-handout-upload-error { margin:8px; font-size:12px; }
 .campaign-handout-upload-error { color:#e9a29a; }
 .campaign-handout-upload > footer { justify-content:flex-end; margin-top:14px; }
 @media (max-width: 620px) { .campaign-handout-upload-fields { grid-template-columns:1fr; } }
-.campaign-handout-share { width:min(520px, calc(100vw - 28px)); padding:20px; border:1px solid color-mix(in srgb, var(--parchment) 22%, transparent); background:var(--ground, #18120f); color:var(--parchment); box-shadow:0 18px 60px #000b; }
+.campaign-handout-share { width:min(520px, calc(100vw - 28px)); padding:24px; border:1px solid var(--border-default); border-radius:var(--radius-md); background:var(--surface-panel); color:var(--text-primary); box-shadow:var(--shadow-overlay); font-family:var(--font-role-body); }
 .campaign-handout-share > header, .campaign-handout-share > footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.campaign-handout-share h2 { margin:4px 0 0; }
-.campaign-handout-share-status { margin:16px 0; color:color-mix(in srgb, var(--parchment) 72%, var(--ground)); line-height:1.5; }
+.campaign-handout-share h2 { margin:4px 0 0; color:var(--text-primary); font-family:var(--font-role-display); }
+.campaign-handout-share-status { margin:16px 0; color:var(--text-secondary); line-height:1.5; }
 .campaign-handout-share-options { display:grid; gap:10px; }
-.campaign-handout-share-options > span { color:color-mix(in srgb, var(--parchment) 65%, var(--ground)); font-size:12px; }
+.campaign-handout-share-options > span { color:var(--text-muted); font-size:12px; }
 .campaign-handout-player-options { display:flex; flex-wrap:wrap; gap:8px; }
 .campaign-handout-share > footer { justify-content:flex-end; margin-top:18px; }
 .ao-cw-handout-card.is-shareable { cursor:pointer; }

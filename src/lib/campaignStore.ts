@@ -731,10 +731,8 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
     },
     viewerIsDm: isDm,
     events,
-    rolls: !isDm && (!campaign.player_dm_view_enabled || !campaign.player_dm_view_rolls) ? [] : rolls,
-    initiative: !isDm && (!campaign.player_dm_view_enabled || !campaign.player_dm_view_initiative)
-      ? { data: { combatants: [], turnIndex: 0, round: 1 }, version: 0, updatedAt: null }
-      : visibleInitiative(getInitiativeRow(campaignId), isDm),
+    rolls,
+    initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),
     members: listMembers(campaignId, isDm, userId),
     presence: listCampaignPresence(campaignId, userId),
     requests: listCampaignRequests(campaignId, userId),

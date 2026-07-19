@@ -5,6 +5,7 @@ import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
 import { addCampaignTrack, CampaignConflictError, createCampaign, deleteCampaignTrack, joinCampaign, postCampaignEvent, postRoll, syncCampaign, updateCampaignAudio, updateCampaignInitiative } from "@/lib/campaignStore";
 import { saveCampaignAudioAsset, sniffAudioMime } from "@/lib/campaignAudioStore";
+import { sniffHandoutMime } from "@/lib/campaignHandoutStore";
 import { encodeCampaignCursor } from "@/lib/campaignCursor";
 import { createCharacter } from "@/lib/vaultStore";
 import { characterInput } from "./fixtures/character";
@@ -37,6 +38,10 @@ describe("campaign v2 store", () => {
 
     deleteCampaignTrack(campaign.id, "dm", track.id);
     expect(getDb().prepare("SELECT id FROM campaign_audio_assets WHERE id = ?").get(assetId)).toBeUndefined();
+  });
+
+  it("sniffs JPEG handouts from their binary signature", () => {
+    expect(sniffHandoutMime(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00]), "image/jpeg")).toBe("image/jpeg");
   });
 
   it("keeps hidden combatants out of player syncs and versions audio state", async () => {
