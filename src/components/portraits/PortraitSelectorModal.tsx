@@ -24,9 +24,9 @@ function isValidImageLink(value: string): boolean {
   return /^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value);
 }
 
-/* Client-side mirror of the /api/portraits limits — the server re-validates. */
+/* Source images are cropped in the browser before the smaller result is uploaded. */
 const UPLOAD_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
-const MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
+const MAX_SOURCE_IMAGE_SIZE = 20 * 1024 * 1024;
 const CROP_OUTPUT_SIZE = 512;
 const DEFAULT_CROP_VIEWPORT_SIZE = 238;
 
@@ -45,7 +45,7 @@ function cropMetrics(image: CropImageSize, zoom: number, viewportSize: number) {
 
 function validateUploadFile(file: File): string | null {
   if (!UPLOAD_MIME_TYPES.has(file.type)) return "Only PNG, JPEG, WebP, or GIF images are accepted.";
-  if (file.size > MAX_UPLOAD_SIZE) return `Image too large (max ${MAX_UPLOAD_SIZE / 1024 / 1024} MB).`;
+  if (file.size > MAX_SOURCE_IMAGE_SIZE) return `Image too large (max ${MAX_SOURCE_IMAGE_SIZE / 1024 / 1024} MB).`;
   return null;
 }
 
