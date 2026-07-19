@@ -70,40 +70,61 @@ export async function runImportPipeline(jobId: string): Promise<void> {
       throw new PdfImportError(/password/i.test(message) ? "PDF_ENCRYPTED" : "PDF_MALFORMED", message);
     }
 
-    let extracted: ExtractedPdfText;
+    // Fillable AcroForm sheets are the most reliable lane and are destroyed
+    // by rasterization — they always take the fast path, never OCR. Checked
+    // FIRST, on the already-loaded document: form-heavy sheets (MPMB exports
+    // carry 2000+ fields) never need full text extraction, whose pdfjs
+    // structures are the pipeline's memory peak — extracting anyway pushed one
+    // real import past a 512MB container and took the whole service down.
+    const numPages = doc.numPages;
+    let formFields: Record<string, string> = {};
+    let extracted: ExtractedPdfText | null = null;
     const extractStart = Date.now();
     try {
-      extracted = await extractPdfText(doc);
-    } catch (error) {
-      throw new PdfImportError("TEXT_EXTRACTION_FAILED", error instanceof Error ? error.message : String(error));
+      formFields = await analyzeFormFields(doc);
+      if (Object.keys(formFields).length === 0) {
+        try {
+          extracted = await extractPdfText(doc);
+        } catch (error) {
+          throw new PdfImportError("TEXT_EXTRACTION_FAILED", error instanceof Error ? error.message : String(error));
+        }
+      }
     } finally {
       await doc.destroy().catch(() => {});
     }
-    updateImportJob(jobId, { pageCount: extracted.numPages });
-    stage("extract-text", { pages: extracted.pages.length, characters: extracted.totalCharacters }, Date.now() - extractStart);
-
-    // Fillable AcroForm sheets are the most reliable lane and are destroyed
-    // by rasterization — they always take the fast path, never OCR.
-    const formFields = await analyzeFormFields(buffer);
     const hasFormFields = Object.keys(formFields).length > 0;
+    updateImportJob(jobId, { pageCount: numPages });
+    stage(
+      hasFormFields ? "form-fields" : "extract-text",
+      hasFormFields
+        ? { fields: Object.keys(formFields).length }
+        : { pages: extracted?.pages.length, characters: extracted?.totalCharacters },
+      Date.now() - extractStart,
+    );
 
-    // ── Assess ──
+    // ── Assess (text lane only — form sheets never OCR) ──
     if (jobStopped(jobId)) return;
-    updateImportJob(jobId, { status: "assessing-text", progressPercent: 32, progressMessage: "Checking text quality" });
-    const assessment = assessPdfText(extracted);
-    diag.assessment = assessment;
-    const requiresOcr = !hasFormFields && (assessment.requiresOcr || pdfImportOcrForced());
-    updateImportJob(jobId, {
-      requiresOcr,
-      ocrReason: assessment.reasons.join(" ") || (pdfImportOcrForced() ? "PDF_IMPORT_OCR_FORCE" : ""),
-      textQualityScore: Math.round(assessment.textCoverageScore * 100) / 100,
-    });
-    stage("assess-text", { requiresOcr, reasons: assessment.reasons, hasFormFields });
+    let requiresOcr = false;
+    if (!hasFormFields && extracted) {
+      updateImportJob(jobId, { status: "assessing-text", progressPercent: 32, progressMessage: "Checking text quality" });
+      const assessment = assessPdfText(extracted);
+      diag.assessment = assessment;
+      requiresOcr = assessment.requiresOcr || pdfImportOcrForced();
+      updateImportJob(jobId, {
+        requiresOcr,
+        ocrReason: assessment.reasons.join(" ") || (pdfImportOcrForced() ? "PDF_IMPORT_OCR_FORCE" : ""),
+        textQualityScore: Math.round(assessment.textCoverageScore * 100) / 100,
+      });
+      stage("assess-text", { requiresOcr, reasons: assessment.reasons, hasFormFields });
+    } else {
+      updateImportJob(jobId, { requiresOcr: false, ocrReason: "" });
+      stage("assess-text", { requiresOcr: false, hasFormFields, skipped: "form-fields lane" });
+    }
 
     // ── OCR when required ──
     let parseInput = extracted;
     let usedOcrText = false;
-    if (requiresOcr) {
+    if (requiresOcr && extracted) {
       if (extracted.numPages > PDF_IMPORT_LIMITS.maxOcrPages) {
         throw new PdfImportError("TOO_MANY_PAGES", `numPages=${extracted.numPages}`);
       }
@@ -145,11 +166,14 @@ export async function runImportPipeline(jobId: string): Promise<void> {
     const parseStart = Date.now();
     try {
       if (hasFormFields) {
-        const source: ImportSource = { kind: "fillable-pdf", pages: extracted.numPages, fileName: job.originalFilename };
+        const source: ImportSource = { kind: "fillable-pdf", pages: numPages, fileName: job.originalFilename };
         const { mapFormFieldsToDraft } = await import("../importMapper");
         draft = mapFormFieldsToDraft(formFields, source);
+      } else if (parseInput) {
+        draft = await draftFromPageTexts(parseInput.pages, numPages, job.originalFilename);
       } else {
-        draft = await draftFromPageTexts(parseInput.pages, extracted.numPages, job.originalFilename);
+        // Unreachable: no form fields implies extraction ran (or threw).
+        throw new PdfImportError("TEXT_EXTRACTION_FAILED", "no parse input");
       }
     } catch (error) {
       throw new PdfImportError("PARSER_FAILED", error instanceof Error ? error.message : String(error));

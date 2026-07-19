@@ -5,19 +5,23 @@
  * Uses pdfjs-dist to inspect the document's form field annotations.
  */
 
-import { loadPdfFromBuffer } from "./pdfJsServer";
+import type { loadPdfFromBuffer } from "./pdfJsServer";
+
+type LoadedPdfDocument = Awaited<ReturnType<typeof loadPdfFromBuffer>>;
 
 /**
- * Try to extract form fields from a PDF buffer.
+ * Try to extract form fields from an already-loaded PDF document.
  * Returns a flat key→value record of all form fields found.
  * Returns empty object if no form fields exist (flattened PDF).
+ *
+ * Takes the caller's loaded document rather than a buffer: form-heavy sheets
+ * (MPMB exports carry 2000+ fields) cost hundreds of MB of pdfjs structures,
+ * and loading a second copy here pushed one import past a 512MB container.
  */
-export async function analyzeFormFields(buffer: Buffer): Promise<Record<string, string>> {
+export async function analyzeFormFields(doc: LoadedPdfDocument): Promise<Record<string, string>> {
   const fields: Record<string, string> = {};
 
   try {
-    const doc = await loadPdfFromBuffer(buffer);
-
     // pdfjs-dist doesn't directly expose form fields via its public API.
     // We try to access them through the document's metadata/annotations.
     // For form-field-rich PDFs, we'd use a different library (pdf-lib).

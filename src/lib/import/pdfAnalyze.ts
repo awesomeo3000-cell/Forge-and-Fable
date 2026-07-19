@@ -93,22 +93,23 @@ export async function analyzePdf(
   }
 
   const doc = await loadPdfFromBuffer(buffer);
-  const numPages = doc.numPages;
+  try {
+    const numPages = doc.numPages;
 
-  // Extract page texts with positions
-  const extracted = await extractPdfText(doc);
+    // Lane A first: fillable sheets never need full text extraction, whose
+    // pdfjs structures dominate memory (form-heavy MPMB exports OOM'd a
+    // 512MB container when both ran). One loaded document serves both checks.
+    const formFields = await analyzeFormFields(doc);
+    if (Object.keys(formFields).length > 0) {
+      const source: ImportSource = { kind: "fillable-pdf", pages: numPages, fileName };
+      const { mapFormFieldsToDraft } = await import("./importMapper");
+      return mapFormFieldsToDraft(formFields, source);
+    }
 
-  // Try form fields first (Lane A)
-  const formFields = await analyzeFormFields(buffer);
-  const hasFormFields = Object.keys(formFields).length > 0;
-
-  // Lane A: Fillable PDF
-  if (hasFormFields) {
-    const source: ImportSource = { kind: "fillable-pdf", pages: numPages, fileName };
-    const { mapFormFieldsToDraft } = await import("./importMapper");
-    return mapFormFieldsToDraft(formFields, source);
+    // Lanes B/C share the positioned-text path with the OCR pipeline.
+    const extracted = await extractPdfText(doc);
+    return draftFromPageTexts(extracted.pages, numPages, fileName);
+  } finally {
+    await doc.destroy().catch(() => {});
   }
-
-  // Lanes B/C share the positioned-text path with the OCR pipeline.
-  return draftFromPageTexts(extracted.pages, numPages, fileName);
 }
