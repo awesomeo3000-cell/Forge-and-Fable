@@ -491,6 +491,30 @@
   border-bottom-color: var(--doc-accent, var(--accent));
 }
 
+.level-rite-spell-search {
+  width: 100%;
+  margin: 8px 0 4px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--parchment) 30%, var(--ground));
+  background: color-mix(in srgb, var(--parchment) 6%, var(--ground));
+  color: var(--parchment);
+  font: inherit;
+}
+.level-rite-spell-search::placeholder {
+  color: color-mix(in srgb, var(--parchment) 55%, var(--ground));
+}
+.level-rite-spell-search:focus {
+  outline: 2px solid var(--doc-accent, var(--accent));
+  outline-offset: 1px;
+}
+.level-rite-spell-search-note {
+  margin: 3px 0 6px;
+  color: color-mix(in srgb, var(--parchment) 66%, var(--ground));
+  font-size: 12px;
+  font-style: italic;
+}
+
 /* ── ASI numerals ── */
 .level-rite-asi-row {
   display: flex;

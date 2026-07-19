@@ -1,4 +1,4 @@
-import { authenticateRequest, AuthError } from "@/lib/auth";
+import { authenticateActorRequest, AuthError } from "@/lib/auth";
 import { getUserById } from "@/lib/vaultStore";
 import { isAdminEmail } from "@/lib/adminEmail";
 
@@ -12,7 +12,7 @@ export { isAdminEmail } from "@/lib/adminEmail";
  * admin route handler.
  */
 export async function requireAdmin(request: Request): Promise<string> {
-  const userId = await authenticateRequest(request);
+  const userId = await authenticateActorRequest(request);
   const user = getUserById(userId);
   if (!user || !isAdminEmail(user.email)) {
     throw new AuthError("Administrator access required.", 403);

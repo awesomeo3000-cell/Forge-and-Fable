@@ -156,6 +156,21 @@ export default function CampaignWorkspacePage(props: {
     }
   }, [campaignId, onActiveCampaignChange]);
 
+  const savePlayerView = useCallback(async (input: Record<string, boolean>) => {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}`, { method: "PATCH", headers: authHeaders(), body: JSON.stringify(input) });
+      if (!response.ok) return false;
+      onActiveCampaignChange(campaignId);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [campaignId, onActiveCampaignChange]);
+
   const deleteCampaign = useCallback(async () => {
     setBusy(true);
     setError("");
@@ -204,7 +219,8 @@ export default function CampaignWorkspacePage(props: {
       onRespondLoot={props.onRespondLoot}
       onResolveEvent={props.onResolveEvent}
       onPostAnnouncement={viewerRole === "dm" ? postAnnouncement : undefined}
-      onOpenTable={viewerRole === "dm" ? props.onOpenTable : undefined}
+      onOpenTable={props.onOpenTable}
+      onSavePlayerView={viewerRole === "dm" ? savePlayerView : undefined}
       onScheduleSession={viewerRole === "dm" ? props.onScheduleSession : undefined}
       onSaveAppearance={viewerRole === "dm" ? saveAppearance : undefined}
       onDeleteCampaign={viewerRole === "dm" ? deleteCampaign : undefined}

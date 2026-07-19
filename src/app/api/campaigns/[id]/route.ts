@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { authenticateRequest, AuthError } from "@/lib/auth";
-import { getCampaignDetail, deleteCampaign, updateCampaignAppearance } from "@/lib/campaignStore";
+import { getCampaignDetail, deleteCampaign, updateCampaignAppearance, updateCampaignPlayerView } from "@/lib/campaignStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,8 +56,11 @@ export async function PATCH(
   try {
     const userId = await authenticateRequest(request);
     const { id } = await params;
-    const body = await request.json().catch(() => ({})) as { themeKey?: unknown; bannerImageUrl?: unknown };
-    return NextResponse.json({ campaign: updateCampaignAppearance(id, userId, body) });
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const campaign = ("playerDmViewEnabled" in body || "playerDmViewInitiative" in body || "playerDmViewParty" in body || "playerDmViewRolls" in body)
+      ? updateCampaignPlayerView(id, userId, body)
+      : updateCampaignAppearance(id, userId, body);
+    return NextResponse.json({ campaign });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

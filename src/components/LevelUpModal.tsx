@@ -103,6 +103,7 @@ export default memo(function LevelUpModal({
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const [pickedCantripsByGroup, setPickedCantripsByGroup] = useState<Record<string, string[]>>({});
+  const [spellSearch, setSpellSearch] = useState("");
   const [spellToForget, setSpellToForget] = useState<string | null>(null);
   const [pickedExpertise, setPickedExpertise] = useState<string[]>([]);
   const [featureSelections, setFeatureSelections] = useState<Record<string, string[]>>({});
@@ -177,8 +178,11 @@ export default memo(function LevelUpModal({
   const availableSpells = (anyClassSpellChoice ? filterSpellsBySources(ALL_SPELLS, character.sourceIds) : spellsForClassAndSources(spellSourceClass, character.sourceIds))
     .filter((s) => s.level <= maxCastableLevel && s.level > 0)
     .filter((s) => restrictedSchools.length === 0 || restrictedSchools.includes(s.school.toLowerCase()))
-    .filter((s) => !knownSpells.includes(s.id))
-    .slice(0, 50);
+    .filter((s) => !knownSpells.includes(s.id));
+  const normalizedSpellSearch = spellSearch.trim().toLowerCase();
+  const visibleSpells = availableSpells
+    .filter((s) => !normalizedSpellSearch || `${s.name} ${s.school} ${s.description}`.toLowerCase().includes(normalizedSpellSearch))
+    .slice(0, normalizedSpellSearch ? 100 : 50);
   const plannedSpellCount = progressionPlan.spellChanges.find((change) => change.kind === "spells-known" || change.kind === "spellbook-spells")?.count;
   const choiceSpellCount = progressionPlan.choices.map((choice) => Number(choice.choiceId.match(/choose-(\d+).*(?:spell)/)?.[1] ?? 0)).reduce((max, count) => Math.max(max, count), 0);
   const newSpellsCount = Math.max(0, plannedSpellCount ?? choiceSpellCount ?? spellsLearnedReachingLevel(classId, newLevel));
@@ -925,8 +929,21 @@ export default memo(function LevelUpModal({
                   {hasSpells ? (
                     <>
                       <span className="level-rite-eyebrow">Learn Spells · {pickedSpells.length}/{spellTarget}</span>
+                      <input
+                        className="level-rite-spell-search"
+                        type="search"
+                        value={spellSearch}
+                        placeholder="Search spells by name, school, or effect..."
+                        aria-label="Search spells"
+                        onChange={(event) => setSpellSearch(event.target.value)}
+                      />
+                      {!normalizedSpellSearch && availableSpells.length > visibleSpells.length ? (
+                        <p className="level-rite-spell-search-note">Showing the first {visibleSpells.length} of {availableSpells.length} spells. Search to find another.</p>
+                      ) : normalizedSpellSearch && visibleSpells.length === 0 ? (
+                        <p className="level-rite-spell-search-note">No spells match that search.</p>
+                      ) : null}
                       <div className="level-rite-choice-grid compact scroll">
-                        {availableSpells.map((s) => (
+                        {visibleSpells.map((s) => (
                           <button
                             key={s.id}
                             type="button"

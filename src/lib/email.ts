@@ -98,6 +98,30 @@ export async function sendPasswordResetEmail(
   return data?.id ?? "";
 }
 
+export async function sendNotificationEmail(params: {
+  email: string;
+  name: string;
+  title: string;
+  body: string;
+}): Promise<string> {
+  const resend = getResend();
+  const { data, error } = await resend.emails.send({
+    from: `${BRAND_NAME} <${TRANSACTIONAL_EMAIL}>`,
+    to: [params.email],
+    subject: `${params.title} · ${BRAND_NAME}`,
+    html: `
+      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px 16px;color:#2c1810;background:#faf7f2;border:1px solid #d4b896;border-radius:8px">
+        <h1 style="font-size:24px;margin:0 0 8px;color:#8b3a2a">${BRAND_NAME}</h1>
+        <p style="font-size:16px;margin:0 0 16px">Hello, ${escapeHtml(params.name)}.</p>
+        <h2 style="font-size:20px;margin:0 0 12px">${escapeHtml(params.title)}</h2>
+        <p style="font-size:16px;margin:0;white-space:pre-line">${escapeHtml(params.body)}</p>
+      </div>`,
+    text: `Hello, ${params.name}.\n\n${params.title}\n\n${params.body}`,
+  });
+  if (error) throw new Error(error.message);
+  return data?.id ?? "";
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

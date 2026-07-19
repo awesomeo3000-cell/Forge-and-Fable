@@ -21,6 +21,7 @@ import { DEFAULT_CAMPAIGN_THEME_ID, isCampaignThemeId } from "@/lib/campaignThem
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
 import { scheduleRehearsalEvent } from "@/lib/dmTable/rehearsal";
+import { notifyCampaignDm } from "@/lib/notificationStore";
 
 // -- Types -----------------------------------------------------------------
 
@@ -31,6 +32,10 @@ export type CampaignRow = {
   dm_user_id: string;
   theme_key: CampaignThemeId;
   banner_image_url: string | null;
+  player_dm_view_enabled: number;
+  player_dm_view_initiative: number;
+  player_dm_view_party: number;
+  player_dm_view_rolls: number;
   created_at: string;
 };
 
@@ -80,6 +85,10 @@ export type CampaignDetail = {
   dmUserId: string;
   themeKey: CampaignThemeId;
   bannerImageUrl: string | null;
+  playerDmViewEnabled: boolean;
+  playerDmViewInitiative: boolean;
+  playerDmViewParty: boolean;
+  playerDmViewRolls: boolean;
   createdAt: string;
   members: CampaignMemberSummary[];
   rolls: CampaignRollRow[];
@@ -548,7 +557,7 @@ export function createCampaign(userId: string, name: string, themeKey: CampaignT
     db.prepare("INSERT INTO campaign_audio (campaign_id, loop, version) VALUES (?, 1, 0)")
       .run(id);
     db.exec("COMMIT");
-    return { id, name: trimmedName, code, dm_user_id: userId, theme_key: safeThemeKey, banner_image_url: null, created_at: createdAt };
+    return { id, name: trimmedName, code, dm_user_id: userId, theme_key: safeThemeKey, banner_image_url: null, player_dm_view_enabled: 0, player_dm_view_initiative: 1, player_dm_view_party: 1, player_dm_view_rolls: 0, created_at: createdAt };
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
@@ -599,6 +608,15 @@ export function joinCampaign(userId: string, code: string, characterId: string):
     throw error;
   }
 
+  const joiner = db.prepare("SELECT name FROM users WHERE id = ?").get(userId) as { name: string } | undefined;
+  void notifyCampaignDm({
+    campaignId: campaign.id,
+    kind: "campaign-joined",
+    title: "A player joined your campaign",
+    body: `${joiner?.name ?? "A player"} joined ${campaign.name}.`,
+    dedupeKey: `campaign-join:${campaign.id}:${userId}`,
+  });
+
   return campaign;
 }
 
@@ -629,6 +647,10 @@ export function listCampaigns(userId: string): CampaignSummary[] {
       dmUserId: row.dm_user_id,
       themeKey: isCampaignThemeId(row.theme_key) ? row.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
       bannerImageUrl: row.banner_image_url ?? null,
+      playerDmViewEnabled: row.player_dm_view_enabled === 1,
+      playerDmViewInitiative: row.player_dm_view_initiative === 1,
+      playerDmViewParty: row.player_dm_view_party === 1,
+      playerDmViewRolls: row.player_dm_view_rolls === 1,
       createdAt: row.created_at,
       memberCount: row.member_count,
       myRole: row.dm_user_id === userId ? "dm" as const : "player" as const,
@@ -659,6 +681,10 @@ export function getCampaignDetail(campaignId: string, userId: string): CampaignD
     dmUserId: campaign.dm_user_id,
     themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
     bannerImageUrl: campaign.banner_image_url ?? null,
+    playerDmViewEnabled: campaign.player_dm_view_enabled === 1,
+    playerDmViewInitiative: campaign.player_dm_view_initiative === 1,
+    playerDmViewParty: campaign.player_dm_view_party === 1,
+    playerDmViewRolls: campaign.player_dm_view_rolls === 1,
     createdAt: campaign.created_at,
     members,
     rolls: rolls.reverse(),
@@ -698,11 +724,17 @@ export function syncCampaign(campaignId: string, userId: string, cursors: Campai
       dmUserId: campaign.dm_user_id,
       themeKey: isCampaignThemeId(campaign.theme_key) ? campaign.theme_key : DEFAULT_CAMPAIGN_THEME_ID,
       bannerImageUrl: campaign.banner_image_url ?? null,
+      playerDmViewEnabled: campaign.player_dm_view_enabled === 1,
+      playerDmViewInitiative: campaign.player_dm_view_initiative === 1,
+      playerDmViewParty: campaign.player_dm_view_party === 1,
+      playerDmViewRolls: campaign.player_dm_view_rolls === 1,
     },
     viewerIsDm: isDm,
     events,
-    rolls,
-    initiative: visibleInitiative(getInitiativeRow(campaignId), isDm),
+    rolls: !isDm && (!campaign.player_dm_view_enabled || !campaign.player_dm_view_rolls) ? [] : rolls,
+    initiative: !isDm && (!campaign.player_dm_view_enabled || !campaign.player_dm_view_initiative)
+      ? { data: { combatants: [], turnIndex: 0, round: 1 }, version: 0, updatedAt: null }
+      : visibleInitiative(getInitiativeRow(campaignId), isDm),
     members: listMembers(campaignId, isDm, userId),
     presence: listCampaignPresence(campaignId, userId),
     requests: listCampaignRequests(campaignId, userId),
@@ -929,8 +961,26 @@ export function updateCampaignAppearance(
     dm_user_id: campaign.dm_user_id,
     theme_key: themeKey,
     banner_image_url: bannerImageUrl,
+    player_dm_view_enabled: campaign.player_dm_view_enabled,
+    player_dm_view_initiative: campaign.player_dm_view_initiative,
+    player_dm_view_party: campaign.player_dm_view_party,
+    player_dm_view_rolls: campaign.player_dm_view_rolls,
     created_at: campaign.created_at,
   } satisfies CampaignRow;
+}
+
+export function updateCampaignPlayerView(campaignId: string, userId: string, input: Record<string, unknown>) {
+  const campaign = requireDm(campaignId, userId);
+  const value = (key: string, fallback: number) => typeof input[key] === "boolean" ? (input[key] ? 1 : 0) : fallback;
+  const next = {
+    enabled: value("playerDmViewEnabled", campaign.player_dm_view_enabled),
+    initiative: value("playerDmViewInitiative", campaign.player_dm_view_initiative),
+    party: value("playerDmViewParty", campaign.player_dm_view_party),
+    rolls: value("playerDmViewRolls", campaign.player_dm_view_rolls),
+  };
+  getDb().prepare("UPDATE campaigns SET player_dm_view_enabled=?, player_dm_view_initiative=?, player_dm_view_party=?, player_dm_view_rolls=? WHERE id=?")
+    .run(next.enabled, next.initiative, next.party, next.rolls, campaignId);
+  return { ...next, enabled: next.enabled === 1, initiative: next.initiative === 1, party: next.party === 1, rolls: next.rolls === 1 };
 }
 
 export function deleteCampaign(campaignId: string, userId: string): void {

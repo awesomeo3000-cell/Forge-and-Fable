@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classActionsAtLevel, ruleset } from "@/lib/ruleset";
 import { getClassData, getSubclass, subclassesData } from "@/lib/subclasses";
 import { EXPERTISE_COUNTS } from "@/components/LevelUpModal";
+import { LANGUAGES } from "@/lib/srd";
 
 describe("2014 class progression audit fixes", () => {
   it("keeps subclass thresholds aligned across the builder and level-up flow", () => {
@@ -88,5 +89,17 @@ describe("2014 class progression audit fixes", () => {
         expect(subclass.features?.length, `${classData.id}/${subclass.id}`).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("keeps the core background catalog complete and exposes Common as a language choice", () => {
+    expect(ruleset.backgrounds).toEqual(expect.arrayContaining([
+      "Acolyte", "Charlatan", "Criminal", "Entertainer", "Folk Hero", "Guild Artisan",
+      "Hermit", "Noble", "Outlander", "Sage", "Sailor", "Soldier", "Urchin",
+    ]));
+    expect(LANGUAGES).toContain("Common");
+  });
+
+  it("includes Order of Scribes in the Wizard subclass catalog", () => {
+    expect(getSubclass("wizard", "order-of-scribes")?.name).toBe("Order of Scribes");
   });
 });

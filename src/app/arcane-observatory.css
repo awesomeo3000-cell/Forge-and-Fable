@@ -7832,3 +7832,19 @@
 /* T8 — workshop list-first editor pane chrome. */
 [data-theme="arcane-observatory"] .dm-editor-pane .ed-head { border-bottom-color: var(--border-subtle); }
 [data-theme="arcane-observatory"] .dm-draft-chip { border-color: color-mix(in srgb, var(--border-brass) 50%, transparent); color: var(--border-brass-bright); background: rgba(179, 146, 74, 0.1); }
+.notification-inbox-wrap { position: relative; }
+.notification-badge { position: absolute; top: -5px; right: -5px; min-width: 16px; padding: 1px 4px; border-radius: 999px; background: var(--accent, #b87333); color: var(--ground, #18120f); font-size: 10px; line-height: 14px; text-align: center; }
+.notification-popover { position: absolute; top: calc(100% + 10px); right: 0; z-index: 80; width: min(360px, calc(100vw - 24px)); padding: 14px; border: 1px solid color-mix(in srgb, var(--parchment) 20%, transparent); background: var(--ground, #18120f); box-shadow: 0 14px 36px #0008; }
+.notification-popover > header { display:flex; justify-content:space-between; align-items:flex-start; }
+.notification-popover > header h3 { margin: 2px 0 8px; }
+.notification-popover > header button { background:none; border:0; color:inherit; cursor:pointer; }
+.notification-preferences { display:flex; gap:14px; padding: 8px 0; border-block: 1px solid #ffffff18; font-size: 12px; }
+.notification-list { max-height: 300px; overflow:auto; }
+.notification-item { display:grid; gap:3px; width:100%; padding:10px 4px; border:0; border-bottom:1px solid #ffffff12; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.notification-item span, .notification-item time { color: color-mix(in srgb, var(--parchment) 68%, var(--ground)); font-size:12px; }
+.notification-item time { font-size:10px; }
+.notification-item.is-read { opacity:.65; }
+.notification-empty, .notification-error { margin: 14px 0 4px; font-size: 12px; }
+.notification-error { color: #e7a49a; }
+.impersonation-banner { display:flex; align-items:center; justify-content:center; gap:8px; padding:6px 12px; background:#7b4b2a; color:#fff3df; font-size:12px; }
+.impersonation-banner button { border:1px solid #fff6; border-radius:4px; background:transparent; color:inherit; padding:3px 8px; cursor:pointer; }

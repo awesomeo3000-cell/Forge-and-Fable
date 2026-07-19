@@ -78,9 +78,9 @@ export const CLASS_SKILL_CHOICES: Record<string, { count: number; options: strin
   artificer: { count: 2, options: ["arcana", "history", "investigation", "medicine", "nature", "perception", "sleight-of-hand"] },
 };
 
-/** Standard 5e languages (Common is assumed known by every character and not tracked as a choice). */
+/** Standard 5e languages. Common remains available as an explicit background choice. */
 export const LANGUAGES: string[] = [
-  "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orc",
+  "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orc",
   "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal", "Primordial", "Sylvan", "Undercommon",
 ];
 

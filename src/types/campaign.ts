@@ -196,6 +196,10 @@ export type CampaignSyncPayload = {
     dmUserId: string;
     themeKey: CampaignThemeId;
     bannerImageUrl?: string | null;
+    playerDmViewEnabled: boolean;
+    playerDmViewInitiative: boolean;
+    playerDmViewParty: boolean;
+    playerDmViewRolls: boolean;
   };
   /**
    * Whether the authenticated viewer is this campaign's DM, decided by the

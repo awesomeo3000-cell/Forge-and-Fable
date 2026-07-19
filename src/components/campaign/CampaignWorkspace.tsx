@@ -114,6 +114,7 @@ export default function CampaignWorkspace(props: {
   onOpenTable?: () => void;
   onScheduleSession?: () => void;
   onSaveAppearance?: (themeKey: string, bannerImageUrl: string) => Promise<boolean>;
+  onSavePlayerView?: (input: Record<string, boolean>) => Promise<boolean>;
   onDeleteCampaign?: () => Promise<boolean>;
   busy?: boolean;
   error?: string;
@@ -228,6 +229,7 @@ export default function CampaignWorkspace(props: {
       ) : (
         <button className="ao-cw-btn" type="button" onClick={props.onCreateCharacter}>Commission a New Character</button>
       )}
+      {detail.campaign.playerDmViewEnabled ? <button className="ao-cw-btn" type="button" onClick={props.onOpenTable}>Open shared table view</button> : null}
     </>
   );
 
@@ -704,13 +706,14 @@ export default function CampaignWorkspace(props: {
         </section>
       ) : null}
 
-      {section === "settings" && isDm && props.onSaveAppearance && props.onDeleteCampaign ? (
+      {section === "settings" && isDm && props.onSaveAppearance && props.onSavePlayerView && props.onDeleteCampaign ? (
         <CampaignSettingsSection
           campaign={detail.campaign}
           busy={props.busy ?? false}
           copiedCode={props.copiedCode}
           onCopyCode={props.onCopyCode}
           onSaveAppearance={props.onSaveAppearance}
+          onSavePlayerView={props.onSavePlayerView}
           onDeleteCampaign={props.onDeleteCampaign}
         />
       ) : null}

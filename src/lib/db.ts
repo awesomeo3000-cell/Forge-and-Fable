@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 21;
+const SCHEMA_REVISION = 23;
 
 export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -523,6 +523,37 @@ function migrateSchema(db: DatabaseSync) {
     // banner assets, so a fresh revision avoids treating that history as the
     // password-recovery migration on existing installations.
     recordMigration(db, 21, "schema history reconciliation after development-branch drift");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS user_notification_preferences (
+        user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        dm_inbox_enabled INTEGER NOT NULL DEFAULT 0,
+        dm_email_enabled INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS user_notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        campaign_id TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+        dedupe_key TEXT UNIQUE,
+        kind TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        read_at TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_notifications_user_created
+        ON user_notifications(user_id, created_at DESC);
+    `);
+    recordMigration(db, 22, "DM notification preferences and inbox");
+    for (const column of [
+      ["player_dm_view_enabled", "INTEGER NOT NULL DEFAULT 0"],
+      ["player_dm_view_initiative", "INTEGER NOT NULL DEFAULT 1"],
+      ["player_dm_view_party", "INTEGER NOT NULL DEFAULT 1"],
+      ["player_dm_view_rolls", "INTEGER NOT NULL DEFAULT 0"],
+    ] as const) {
+      if (!tableHasColumn(db, "campaigns", column[0])) db.exec(`ALTER TABLE campaigns ADD COLUMN ${column[0]} ${column[1]}`);
+    }
+    recordMigration(db, 23, "DM-controlled player table view");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, Inbox, KeyRound, LayoutList, Loader2, Plus, Trash2, X } from "lucide-react";
+import { Check, Copy, Eye, Inbox, KeyRound, LayoutList, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { FeedbackEntry } from "@/types/game";
 import type { AdminOverview, InviteCode } from "@/lib/adminStore";
 
@@ -25,6 +25,7 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
   const [newLabel, setNewLabel] = useState("");
   const [newMaxUses, setNewMaxUses] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [impersonating, setImpersonating] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError("");
@@ -97,6 +98,15 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
       setCopied(text);
       window.setTimeout(() => setCopied((c) => (c === text ? "" : c)), 1600);
     }).catch(() => setError("Could not copy."));
+  };
+
+  const impersonate = async (userId: string) => {
+    setImpersonating(userId); setError("");
+    try {
+      const res = await fetch("/api/admin/impersonation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetUserId: userId }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not impersonate user.");
+      window.location.reload();
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not impersonate user."); setImpersonating(null); }
   };
 
   return createPortal(
@@ -189,6 +199,9 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
                     <button type="button" className="admin-icon-btn" onClick={() => void deleteUser(u.id, u.email)} disabled={deleting === u.id} aria-label={`Delete ${u.email}`}>
                       {deleting === u.id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
                     </button>
+                    {!u.isAdmin ? <button type="button" className="admin-icon-btn" onClick={() => void impersonate(u.id)} disabled={impersonating === u.id} aria-label={`View as ${u.email}`} title="View as this user">
+                      {impersonating === u.id ? <Loader2 size={14} className="spin" /> : <Eye size={14} />}
+                    </button> : null}
                   </li>
                 ))}
               </ul>

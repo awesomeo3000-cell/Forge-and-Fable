@@ -57,6 +57,7 @@ import SplashScreen from "@/components/SplashScreen";
 import AuthScreen from "@/components/AuthScreen";
 import CharacterStartPanel from "@/components/CharacterStartPanel";
 import AdminPanel from "@/components/AdminPanel";
+import NotificationInbox from "@/components/NotificationInbox";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
 import { cantripsKnownAt, loadSpells } from "@/lib/spells";
@@ -90,6 +91,7 @@ const FeedbackModal = dynamic(() => import("@/components/FeedbackModal"), { ssr:
 const CampaignPanel = dynamic(() => import("@/components/CampaignPanel"), { ssr: false });
 const CampaignWorkspacePage = dynamic(() => import("@/components/campaign/CampaignWorkspacePage"), { ssr: false });
 const DMTablePanel = dynamic(() => import("@/components/DMTablePanel"), { ssr: false });
+const PlayerDMTablePanel = dynamic(() => import("@/components/PlayerDMTablePanel"), { ssr: false });
 const CharacterImportModal = dynamic(() => import("@/components/CharacterImportModal"), { ssr: false });
 const QuickbuilderPanel = dynamic(() => import("@/components/QuickbuilderPanel"), { ssr: false });
 const HeroSheet = dynamic(() => import("@/components/HeroSheet"), { ssr: false });
@@ -159,6 +161,7 @@ export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
   const [ruleset, setRuleset] = useState<Ruleset | null>(null);
   const [user, setUser] = useState<PublicUser | null>(null);
+  const [impersonationActor, setImpersonationActor] = useState<PublicUser | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [creationPromptOpen, setCreationPromptOpen] = useState(false);
@@ -398,6 +401,16 @@ export default function ForgeAndFableApp() {
     if (!user) {
       return;
     }
+
+    void fetch("/api/auth/profile", { headers: authHeaders() }).then(async (response) => {
+      if (!response.ok) return;
+      const data = await response.json() as { user?: PublicUser; impersonating?: PublicUser | null };
+      if (data.user) {
+        setUser(data.user);
+        window.localStorage.setItem("forge-and-fable-user", JSON.stringify(data.user));
+      }
+      setImpersonationActor(data.impersonating ?? null);
+    }).catch(() => {});
 
     let mounted = true;
     fetch("/api/characters", {
@@ -919,6 +932,7 @@ export default function ForgeAndFableApp() {
     void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     saveCoordinatorRef.current?.reset();
     setUser(null);
+    setImpersonationActor(null);
     setCharactersLoadedForUser(null);
     setCharacters([]);
     setSelectedId("");
@@ -2208,6 +2222,11 @@ export default function ForgeAndFableApp() {
       onCampaignInitiativeRoll={submitCampaignInitiativeRoll}
       onClearHistory={clearHistory}
     /> : null}
+    {dmTableOpen && campaignSync && !campaignSync.viewerIsDm && campaignSync.campaign.playerDmViewEnabled ? <PlayerDMTablePanel
+      campaign={campaignSync}
+      events={campaignEvents}
+      onClose={() => setDmTableOpen(false)}
+    /> : null}
     {toasts.length > 0 ? (
       <div
         className={`ff-toast-stack${toasts.some((toast) => toast.kind === "announce") ? " has-announcement" : ""}`}
@@ -2422,6 +2441,7 @@ export default function ForgeAndFableApp() {
         <div className="ao-nav-spacer" />
         <div className="ao-nav-user" title={user.name} aria-hidden="true">{user.name.trim().charAt(0).toUpperCase() || "?"}</div>
       </nav>
+      {impersonationActor ? <div className="impersonation-banner" role="status">Viewing as <strong>{user.name}</strong> · admin {impersonationActor.name}<button type="button" onClick={async () => { await fetch("/api/admin/impersonation", { method: "DELETE" }); window.location.reload(); }}>Stop impersonating</button></div> : null}
       <header className="builder-topbar ledger-topbar">
         <div className="builder-brand ledger-masthead">
           <div>
@@ -2474,6 +2494,7 @@ export default function ForgeAndFableApp() {
                 </div>
               ) : null}
             </div>
+            <NotificationInbox />
           </div>
           {user.isAdmin ? (
             <button className="glass-icon ink-action" type="button" onClick={() => setAdminOpen(true)} title="Admin console">
