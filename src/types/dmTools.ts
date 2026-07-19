@@ -161,6 +161,8 @@ export type CampaignHandout = {
   tags: string[];
   assetType: "image" | "document" | "url" | "text";
   assetUrl?: string;
+  /** Null means shared with the whole party; otherwise visible only to this player. */
+  recipientUserId?: string | null;
   body?: string;
   shared: boolean;
   firstSharedAt?: string;

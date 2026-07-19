@@ -53,6 +53,7 @@ type Props = {
   /** Open the preparation tools directly on the session scheduler. */
   openScheduleSession?: boolean;
   onScheduleSessionOpened?: () => void;
+  initialPreparationTab?: "encounters" | "sessions" | "handouts";
 };
 
 function parsePayload(event: CampaignEvent) {
@@ -81,7 +82,7 @@ function eventLine(event: CampaignEvent) {
   return "Table event.";
 }
 
-export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate, onOpenCampaigns, openScheduleSession, onScheduleSessionOpened }: Props) {
+export default memo(function DMTablePanel({ campaign, events, theme, onClose, onOpenSheet, onPostEvent, onInitiativeUpdate, onOpenCampaigns, openScheduleSession, onScheduleSessionOpened, initialPreparationTab = "encounters" }: Props) {
   const [tracks, setTracks] = useState<CampaignTrack[]>([]);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackUrl, setTrackUrl] = useState("");
@@ -119,7 +120,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
   const [error, setError] = useState("");
   const [trackUploading, setTrackUploading] = useState(false);
   const [trackFormOpen, setTrackFormOpen] = useState(false);
-  const [prepInitialTab, setPrepInitialTab] = useState<"encounters" | "sessions">("encounters");
+  const [prepInitialTab, setPrepInitialTab] = useState<"encounters" | "sessions" | "handouts">(initialPreparationTab);
   const [activeSession, setActiveSession] = useState<CampaignSession | null>(null);
   const [activeEncounter, setActiveEncounter] = useState<EncounterRun | null>(null);
   const [savedHandouts, setSavedHandouts] = useState<CampaignHandout[]>([]);
@@ -799,7 +800,7 @@ export default memo(function DMTablePanel({ campaign, events, theme, onClose, on
         />
         )}
         <section className="dm-table-region dm-encounter">
-          <div className="dm-prep-host" hidden={workspaceMode !== "preparation"}><DMPrepPanel campaignId={campaign.campaign.id} campaignName={campaign.campaign.name} initialTab={prepInitialTab} onClose={() => setWorkspaceMode("encounter")} onEncounterStarted={() => void refreshWorkspace()}/></div>
+          <div className="dm-prep-host" hidden={workspaceMode !== "preparation"}><DMPrepPanel campaignId={campaign.campaign.id} campaignName={campaign.campaign.name} dmUserId={campaign.campaign.dmUserId} members={campaign.members} initialTab={prepInitialTab} onClose={() => setWorkspaceMode("encounter")} onEncounterStarted={() => void refreshWorkspace()}/></div>
           {workspaceMode === "preparation" ? null : workspaceMode === "review" ? (
             <div className="dm-chronicle">
               <div className="dm-chronicle-head">

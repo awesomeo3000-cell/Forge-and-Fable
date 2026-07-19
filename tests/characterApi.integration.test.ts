@@ -92,7 +92,7 @@ describe("character API persistence", () => {
     const db = getDb();
     const columns = db.prepare("PRAGMA table_info(characters)").all() as Array<{ name: string }>;
     expect(columns.some((column) => column.name === "revision")).toBe(true);
-    expect(db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get()).toMatchObject({ version: 23 });
+    expect(db.prepare("SELECT MAX(version) AS version FROM schema_migrations").get()).toMatchObject({ version: 24 });
   });
 
   it("creates, lists, advances, reloads, and deletes through route handlers", async () => {

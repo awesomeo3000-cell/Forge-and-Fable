@@ -19,6 +19,7 @@ export const dmToolsApi={
   generateEncounter:(input:unknown)=>api<{encounter:SavedEncounter}>("/api/encounters/generate",{method:"POST",body:body(input)}),
   listHandouts:(campaignId:string)=>api<{handouts:CampaignHandout[]}>(`/api/campaigns/${campaignId}/handouts`),
   createHandout:(campaignId:string,input:unknown)=>api<{handout:CampaignHandout}>(`/api/campaigns/${campaignId}/handouts`,{method:"POST",body:body(input)}),
+  uploadHandout:async (campaignId:string,file:File,input:{title:string;category:string;recipientUserId?:string|null})=>{const form=new FormData();form.set("file",file);form.set("title",input.title);form.set("category",input.category);if(input.recipientUserId)form.set("recipientUserId",input.recipientUserId);const response=await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/handouts/upload`,{method:"POST",credentials:"include",body:form});const data=await response.json().catch(()=>({})) as {handout?:CampaignHandout;error?:string};if(!response.ok||!data.handout)throw new Error(data.error??"Could not upload handout.");return {handout:data.handout};},
   updateHandout:(campaignId:string,id:string,input:unknown)=>api<{handout:CampaignHandout}>(`/api/campaigns/${campaignId}/handouts/${id}`,{method:"PATCH",body:body(input)}),
   archiveHandout:(campaignId:string,id:string)=>api<{ok:true}>(`/api/campaigns/${campaignId}/handouts/${id}`,{method:"DELETE"}),
   shareHandout:(campaignId:string,id:string)=>api<{handout:CampaignHandout}>(`/api/campaigns/${campaignId}/handouts/${id}/share`,{method:"POST",body:"{}"}),

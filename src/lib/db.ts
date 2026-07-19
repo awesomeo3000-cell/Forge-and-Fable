@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 23;
+const SCHEMA_REVISION = 24;
 
 export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -554,6 +554,20 @@ function migrateSchema(db: DatabaseSync) {
       if (!tableHasColumn(db, "campaigns", column[0])) db.exec(`ALTER TABLE campaigns ADD COLUMN ${column[0]} ${column[1]}`);
     }
     recordMigration(db, 23, "DM-controlled player table view");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS campaign_handout_assets (
+        id TEXT PRIMARY KEY,
+        handout_id TEXT NOT NULL REFERENCES campaign_handouts(id) ON DELETE CASCADE,
+        campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+        mime TEXT NOT NULL,
+        bytes BLOB NOT NULL,
+        size INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_handout_assets_handout ON campaign_handout_assets(handout_id);
+      CREATE INDEX IF NOT EXISTS idx_handout_assets_campaign ON campaign_handout_assets(campaign_id);
+    `);
+    recordMigration(db, 24, "Uploaded campaign handout files");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

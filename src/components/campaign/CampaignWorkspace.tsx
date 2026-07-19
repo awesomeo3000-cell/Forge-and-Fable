@@ -112,6 +112,7 @@ export default function CampaignWorkspace(props: {
   /* DM-only capabilities — presence implies permission (checked upstream). */
   onPostAnnouncement?: (message: string) => Promise<boolean>;
   onOpenTable?: () => void;
+  onOpenHandouts?: () => void;
   onScheduleSession?: () => void;
   onSaveAppearance?: (themeKey: string, bannerImageUrl: string) => Promise<boolean>;
   onSavePlayerView?: (input: Record<string, boolean>) => Promise<boolean>;
@@ -655,7 +656,7 @@ export default function CampaignWorkspace(props: {
 
       {section === "handouts" ? (
         <section className="ao-cw-panel" aria-label="Handouts">
-          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{allHandouts.length} shared</span></div>
+          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{allHandouts.length} shared</span>{isDm && props.onOpenHandouts ? <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={props.onOpenHandouts}>Upload handout</button> : null}</div>
           {allHandouts.length > 0 ? (
             <ul className="ao-cw-handout-grid">
               {allHandouts.map((handout) => (
@@ -681,7 +682,7 @@ export default function CampaignWorkspace(props: {
               ))}
             </ul>
           ) : isDm ? (
-            <p className="ao-cw-panel-empty">Share a map, letter or note with the party from the Table.</p>
+            <p className="ao-cw-panel-empty">Upload a map, letter, PDF or note for the party or a specific player.</p>
           ) : (
             <p className="ao-cw-panel-empty">No handouts have been shared.</p>
           )}

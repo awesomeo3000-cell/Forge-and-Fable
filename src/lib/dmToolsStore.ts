@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { BUILT_IN_CREATURES, getBuiltInCreature } from "@/lib/builtInCreatures";
 import { generateEncounter, type GenerateEncounterInput } from "@/lib/encounterGenerator";
 import { syncCampaign } from "@/lib/campaignStore";
+import { saveCampaignHandoutAsset } from "@/lib/campaignHandoutStore";
 import { parseDiceFormula, rollFormula } from "@/lib/utils";
 import type {
   CampaignHandout,
@@ -690,7 +691,15 @@ function sanitizeHandout(
     ? (raw.assetType as CampaignHandout["assetType"])
     : "image";
   const url = safeText(raw.assetUrl, 500);
-  if (url && !/^https:\/\//i.test(url)) throw new Error("Handout URL must use https.");
+  if (url && !/^https:\/\//i.test(url) && !/^\/api\/campaigns\//i.test(url)) throw new Error("Handout URL must use https.");
+  const recipientUserId = raw.recipientUserId === null || raw.recipientUserId === undefined || raw.recipientUserId === ""
+    ? null
+    : safeText(raw.recipientUserId, 100);
+  if (recipientUserId) {
+    const member = getDb().prepare("SELECT 1 FROM campaign_members WHERE campaign_id = ? AND user_id = ?").get(identity.campaignId, recipientUserId);
+    if (!member) throw new Error("The selected player is not a member of this campaign.");
+    if (campaignRow(identity.campaignId).dm_user_id === recipientUserId) throw new Error("Choose a player, not the DM.");
+  }
   return {
     id: identity.id,
     campaignId: identity.campaignId,
@@ -702,6 +711,7 @@ function sanitizeHandout(
     tags: safeStringArray(raw.tags, 20),
     assetType: type,
     ...(url ? { assetUrl: url } : {}),
+    ...(recipientUserId ? { recipientUserId } : { recipientUserId: null }),
     ...(safeText(raw.body, 10000) ? { body: safeText(raw.body, 10000) } : {}),
     shared: false,
     shareCount: 0,
@@ -726,7 +736,9 @@ export function listHandouts(campaignId: string, userId: string) {
     share_count: number;
     archived: number;
   }>;
-  return rows.map(handoutFromRow).map((item) => (dm ? item : { ...item, privateNotes: undefined }));
+  return rows.map(handoutFromRow)
+    .filter((item) => dm || !item.recipientUserId || item.recipientUserId === userId)
+    .map((item) => (dm ? item : { ...item, privateNotes: undefined }));
 }
 export function createHandout(campaignId: string, userId: string, input: unknown) {
   requireDm(campaignId, userId);
@@ -738,6 +750,20 @@ export function createHandout(campaignId: string, userId: string, input: unknown
     )
     .run(record.id, campaignId, userId, JSON.stringify(record), createdAt, record.updatedAt);
   return record;
+}
+
+export function createUploadedHandout(campaignId: string, userId: string, input: unknown, mime: string, bytes: Buffer) {
+  requireDm(campaignId, userId);
+  const record = createHandout(campaignId, userId, input);
+  try {
+    const assetId = saveCampaignHandoutAsset(campaignId, record.id, userId, mime, bytes);
+    const assetUrl = `/api/campaigns/${encodeURIComponent(campaignId)}/handouts/${encodeURIComponent(record.id)}/asset/${encodeURIComponent(assetId)}`;
+    const updated = updateHandout(campaignId, userId, record.id, { assetUrl });
+    return shareHandout(campaignId, userId, updated.id);
+  } catch (error) {
+    archiveHandout(campaignId, userId, record.id);
+    throw error;
+  }
 }
 export function updateHandout(campaignId: string, userId: string, id: string, input: unknown) {
   requireDm(campaignId, userId);
@@ -806,7 +832,7 @@ export function shareHandout(campaignId: string, userId: string, id: string) {
       url: record.assetUrl,
       body: record.body,
       assetType: record.assetType,
-    });
+    }, record.recipientUserId ?? null);
     return {
       ...record,
       shared: true,
@@ -1376,12 +1402,12 @@ export function getPlayerMemory(campaignId: string, userId: string): PlayerCampa
   };
 }
 
-function insertEvent(campaignId: string, userId: string, type: string, payload: unknown) {
+function insertEvent(campaignId: string, userId: string, type: string, payload: unknown, targetUserId: string | null = null) {
   getDb()
     .prepare(
-      "INSERT INTO campaign_events(id,campaign_id,target_user_id,type,payload,created_by,created_at)VALUES(?,?,NULL,?,?,?,?)",
+      "INSERT INTO campaign_events(id,campaign_id,target_user_id,type,payload,created_by,created_at)VALUES(?,?,?,?,?,?,?)",
     )
-    .run(randomUUID(), campaignId, type, JSON.stringify(payload), userId, nowIso());
+    .run(randomUUID(), campaignId, targetUserId, type, JSON.stringify(payload), userId, nowIso());
 }
 function insertAuditEvent(campaignId: string, userId: string, action: string, payload: unknown) {
   insertEvent(campaignId, userId, "campaign-audit", {

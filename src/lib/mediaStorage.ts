@@ -8,7 +8,8 @@ export function totalMediaStorageBytes(): number {
   const row = getDb().prepare(`
     SELECT
       COALESCE((SELECT SUM(size) FROM user_portraits), 0) +
-      COALESCE((SELECT SUM(size) FROM campaign_audio_assets), 0) AS total
+      COALESCE((SELECT SUM(size) FROM campaign_audio_assets), 0) +
+      COALESCE((SELECT SUM(size) FROM campaign_handout_assets), 0) AS total
   `).get() as { total: number };
   return Number(row.total);
 }

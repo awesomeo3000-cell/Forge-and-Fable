@@ -225,6 +225,7 @@ export default function ForgeAndFableApp() {
   // workspace, launched by "Prepare Session" / "Open DM Screen" (handoff §2.3:
   // live controls belong at the Table, not on the campaign page).
   const [dmTableOpen, setDmTableOpen] = useState(false);
+  const [dmTablePreparationTab, setDmTablePreparationTab] = useState<"encounters" | "sessions" | "handouts">("encounters");
   const [campaignSection, setCampaignSection] = useState<CampaignSection>(
     () => (typeof window !== "undefined" ? parseCampaignHash(window.location.hash)?.section : undefined) ?? "overview",
   );
@@ -2343,6 +2344,7 @@ export default function ForgeAndFableApp() {
       onOpenCampaigns={() => setCampaignListOpen(true)}
       openScheduleSession={scheduleSessionOpen}
       onScheduleSessionOpened={() => setScheduleSessionOpen(false)}
+      initialPreparationTab={dmTablePreparationTab}
     /> : null}
     {campaignSync && !campaignOpen && !campaignSync.viewerIsDm ? <CampaignTableStrip
       campaign={campaignSync}
@@ -2543,6 +2545,7 @@ export default function ForgeAndFableApp() {
             onResolveEvent={resolveCampaignEvent}
             onPostEvent={postCampaignEvent}
             onOpenTable={() => setDmTableOpen(true)}
+            onOpenHandouts={() => { setDmTablePreparationTab("handouts"); setDmTableOpen(true); }}
             onScheduleSession={() => { setScheduleSessionOpen(true); setDmTableOpen(true); }}
           />
         ) : (

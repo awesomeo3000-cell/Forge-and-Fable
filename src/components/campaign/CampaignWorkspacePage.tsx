@@ -48,6 +48,7 @@ export default function CampaignWorkspacePage(props: {
   onResolveEvent: (eventId: string) => void;
   onPostEvent: (type: CampaignEvent["type"], payload: Record<string, unknown>, targetUserId?: string | null) => Promise<boolean>;
   onOpenTable: () => void;
+  onOpenHandouts?: () => void;
   onScheduleSession: () => void;
 }) {
   const campaignId = props.detail.campaign.id;
@@ -220,6 +221,7 @@ export default function CampaignWorkspacePage(props: {
       onResolveEvent={props.onResolveEvent}
       onPostAnnouncement={viewerRole === "dm" ? postAnnouncement : undefined}
       onOpenTable={props.onOpenTable}
+      onOpenHandouts={props.onOpenHandouts}
       onSavePlayerView={viewerRole === "dm" ? savePlayerView : undefined}
       onScheduleSession={viewerRole === "dm" ? props.onScheduleSession : undefined}
       onSaveAppearance={viewerRole === "dm" ? saveAppearance : undefined}
