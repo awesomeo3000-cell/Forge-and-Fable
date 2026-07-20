@@ -7939,3 +7939,11 @@
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-private { background:var(--surface-panel); color:var(--text-muted); }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-shared { background:color-mix(in srgb, var(--border-brass) 16%, transparent); color:var(--border-brass-bright); }
 @media (max-width:620px) { [data-theme="arcane-observatory"] .campaign-handout-upload-intro { display:grid; } [data-theme="arcane-observatory"] .campaign-handout-upload-intro > span { white-space:normal; } [data-theme="arcane-observatory"] .campaign-handout-upload-selection { display:grid; gap:4px; } }
+
+/* UX audit 2026-07 fix #1: the hero-sheet "First look" tour card leaked the
+   retired Forge-red --accent (#b2452f) because the Observatory palette never
+   re-points --accent for the sheet. Old gold matches the rest of the sheet
+   chrome (border, left rule and wash all read from --accent). */
+[data-theme="arcane-observatory"] .cs-tour-card {
+  --accent: var(--border-brass);
+}

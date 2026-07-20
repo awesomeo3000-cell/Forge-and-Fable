@@ -194,7 +194,7 @@ export default memo(function CampaignPanel({
         {view === "list" ? (
           <div className="campaign-body">
             <div className="campaign-actions-bar">
-              <button className="dj-btn" type="button" onClick={() => { setNewName(""); setCreated(null); setError(""); setView("create"); }}>
+              <button className="dj-btn dj-btn-primary" type="button" onClick={() => { setNewName(""); setCreated(null); setError(""); setView("create"); }}>
                 <Plus size={16} /> New Campaign
               </button>
               <button className="dj-btn" type="button" onClick={() => { setJoinCode(""); setJoinCharId(""); setError(""); setView("join"); }}>
