@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest, AuthError, getImpersonationSession } from "@/lib/auth";
 import { getUserById, updateUserName } from "@/lib/vaultStore";
+import { isAdminEmail } from "@/lib/adminEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     const impersonation = await getImpersonationSession(request);
     const actor = impersonation ? getUserById(impersonation.actorUserId) : null;
     return NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+      user: { id: user.id, name: user.name, email: user.email, isAdmin: isAdminEmail(user.email) },
       impersonating: actor ? { id: actor.id, name: actor.name, email: actor.email } : null,
     });
   } catch (error) {
