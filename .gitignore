@@ -79,3 +79,4 @@ tmp/*.log
 # temp/scratch directory
 /tmp/
 *.md
+AGENTS.md
