@@ -1,0 +1,58 @@
+{
+  "panelBox": {
+    "x": 93,
+    "y": 307.828125,
+    "width": 790,
+    "height": 359.28125,
+    "top": 307.828125,
+    "right": 883,
+    "bottom": 667.109375,
+    "left": 93
+  },
+  "gridBox": {
+    "x": 110,
+    "y": 380.828125,
+    "width": 756,
+    "height": 269.28125,
+    "top": 380.828125,
+    "right": 866,
+    "bottom": 650.109375,
+    "left": 110
+  },
+  "cards": [
+    {
+      "title": "June_2026_Spending_Addendum.pdf",
+      "cardBox": {
+        "x": 110,
+        "y": 380.828125,
+        "width": 372,
+        "height": 269.28125,
+        "top": 380.828125,
+        "right": 482,
+        "bottom": 650.109375,
+        "left": 110
+      },
+      "overflowsPanel": false,
+      "titleScrollWidth": 346,
+      "titleClientWidth": 346
+    },
+    {
+      "title": "wexfordemo.png",
+      "cardBox": {
+        "x": 494,
+        "y": 380.828125,
+        "width": 372,
+        "height": 269.28125,
+        "top": 380.828125,
+        "right": 866,
+        "bottom": 650.109375,
+        "left": 494
+      },
+      "overflowsPanel": false,
+      "titleScrollWidth": 346,
+      "titleClientWidth": 346
+    }
+  ],
+  "panelScrollWidth": 788,
+  "panelClientWidth": 788
+}

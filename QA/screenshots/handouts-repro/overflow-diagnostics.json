@@ -1,0 +1,30 @@
+{
+  "gridBox": {
+    "x": 33,
+    "y": 900.34375,
+    "width": 324,
+    "height": 550.5625,
+    "top": 900.34375,
+    "right": 357,
+    "bottom": 1450.90625,
+    "left": 33
+  },
+  "cards": [
+    {
+      "cardHeight": 269.28125,
+      "cardRight": 357,
+      "overflowsGrid": false,
+      "thumbHeight": 150,
+      "thumbComputedHeight": "150px",
+      "links": []
+    },
+    {
+      "cardHeight": 269.28125,
+      "cardRight": 357,
+      "overflowsGrid": false,
+      "thumbHeight": 150,
+      "thumbComputedHeight": "150px",
+      "links": []
+    }
+  ]
+}

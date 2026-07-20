@@ -17,6 +17,7 @@ import {
   PenLine,
   Scroll,
   ScrollText,
+  Share2,
   Sparkles,
   Swords,
   Users,
@@ -666,7 +667,7 @@ export default function CampaignWorkspace(props: {
           {allHandouts.length > 0 ? (
             <ul className="ao-cw-handout-grid">
               {allHandouts.map((handout) => (
-                <li key={handout.id} className={`ao-cw-handout-card${isDm ? " is-shareable" : ""}`} role={isDm ? "button" : undefined} tabIndex={isDm ? 0 : undefined} onClick={isDm ? () => setShareHandoutId(handout.id) : undefined} onKeyDown={isDm ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setShareHandoutId(handout.id); } } : undefined}>
+                <li key={handout.id} className="ao-cw-handout-card">
                   {handout.assetType === "image" && handout.assetUrl ? (
                     /* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */
                     <img src={handout.assetUrl} alt={`Handout: ${handout.title}`} loading="lazy" />
@@ -679,12 +680,18 @@ export default function CampaignWorkspace(props: {
                     <small>{handout.category} · {handout.shared ? `Shared ${relativeTime(handout.sharedAt)}` : "Private"}</small>
                     {handout.description ? <p>{excerpt(handout.description, 140)}</p> : null}
                     {handout.body ? <p className="ao-cw-handout-body">{excerpt(handout.body, 280)}</p> : null}
-                    {handout.assetUrl ? (
-                      <a className="ao-cw-link" href={handout.assetUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
-                        <ExternalLink size={12} aria-hidden="true" /> Open {handout.assetType}
-                      </a>
-                    ) : null}
-                    {isDm ? <span className="ao-cw-link">{handout.shared ? "Manage sharing" : "Share handout"}</span> : null}
+                    <div className="ao-cw-handout-actions">
+                      {handout.assetUrl ? (
+                        <a className="ao-cw-handout-action" href={handout.assetUrl} target="_blank" rel="noreferrer">
+                          <ExternalLink size={12} aria-hidden="true" /> Open {handout.assetType}
+                        </a>
+                      ) : null}
+                      {isDm ? (
+                        <button type="button" className="ao-cw-handout-action" onClick={() => setShareHandoutId(handout.id)}>
+                          <Share2 size={12} aria-hidden="true" /> {handout.shared ? "Manage sharing" : "Share handout"}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </li>
               ))}

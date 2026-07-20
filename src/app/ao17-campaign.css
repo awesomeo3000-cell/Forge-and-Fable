@@ -861,12 +861,19 @@
 [data-theme="arcane-observatory"] .ao-cw-handout-card {
   display: grid;
   gap: 10px;
+  min-width: 0;
   padding: var(--space-3);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--surface-panel-recessed);
+  /* Belt-and-suspenders: grid items default to a min-width of their content,
+     so an unbroken long filename/URL can force the card wider than its
+     track and visually spill past the panel edge. Clamp it here rather
+     than trust every possible title to contain a soft-wrap point. */
+  overflow: hidden;
 }
-[data-theme="arcane-observatory"] .ao-cw-handout-card img {
+[data-theme="arcane-observatory"] .ao-cw-handout-card img,
+[data-theme="arcane-observatory"] .ao-cw-handout-thumb {
   width: 100%;
   height: 150px;
   object-fit: cover;
@@ -877,14 +884,18 @@
 [data-theme="arcane-observatory"] .ao-cw-handout-thumb {
   display: grid;
   place-items: center;
-  height: 76px;
-  border: 1px dashed var(--border-default);
-  border-radius: var(--radius-sm);
-  background: var(--surface-panel);
+  border-style: dashed;
+  border-color: var(--border-default);
   color: var(--border-brass-bright);
 }
-[data-theme="arcane-observatory"] .ao-cw-handout-copy { display: grid; gap: 4px; }
-[data-theme="arcane-observatory"] .ao-cw-handout-copy strong { color: var(--text-primary); font-family: var(--font-role-section); font-size: 0.95rem; }
+[data-theme="arcane-observatory"] .ao-cw-handout-copy { display: grid; gap: 4px; min-width: 0; }
+[data-theme="arcane-observatory"] .ao-cw-handout-copy strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-family: var(--font-role-section);
+  font-size: 0.95rem;
+}
 [data-theme="arcane-observatory"] .ao-cw-handout-copy small {
   color: var(--text-muted);
   font-family: var(--font-role-label);
@@ -892,7 +903,42 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-[data-theme="arcane-observatory"] .ao-cw-handout-copy p { margin: 0; color: var(--text-secondary); font-size: 0.84rem; line-height: 1.5; }
+[data-theme="arcane-observatory"] .ao-cw-handout-copy p { margin: 0; overflow-wrap: anywhere; color: var(--text-secondary); font-size: 0.84rem; line-height: 1.5; }
+/* Open / Manage sharing: real buttons, not bare text links pretending to be
+   controls (the "Manage sharing" span used to ride the whole card's click
+   handler with no focusable element of its own). */
+[data-theme="arcane-observatory"] .ao-cw-handout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--state-selected);
+  font-family: var(--font-role-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-action:hover {
+  border-color: var(--border-brass);
+  color: var(--border-brass-bright);
+  background: var(--surface-panel-raised);
+}
+[data-theme="arcane-observatory"] .ao-cw-handout-action:focus-visible {
+  outline: 2px solid var(--state-selected);
+  outline-offset: 2px;
+}
 [data-theme="arcane-observatory"] .ao-cw-handout-body {
   padding: 8px 10px;
   border-left: 2px solid var(--border-brass);

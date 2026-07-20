@@ -7906,8 +7906,6 @@
 .campaign-handout-share-options > span { color:var(--text-muted); font-size:12px; }
 .campaign-handout-player-options { display:flex; flex-wrap:wrap; gap:8px; }
 .campaign-handout-share > footer { justify-content:flex-end; margin-top:18px; }
-.ao-cw-handout-card.is-shareable { cursor:pointer; }
-.ao-cw-handout-card.is-shareable:focus-visible { outline:2px solid var(--doc-accent, var(--accent)); outline-offset:2px; }
 [data-theme="arcane-observatory"] .modal-scrim { background:rgba(4, 8, 13, .78); backdrop-filter:blur(4px); }
 [data-theme="arcane-observatory"] .campaign-handout-upload,
 [data-theme="arcane-observatory"] .campaign-handout-share { background:var(--surface-overlay); }
@@ -7936,7 +7934,6 @@
 [data-theme="arcane-observatory"] .campaign-handout-share-group { display:grid; gap:8px; }
 [data-theme="arcane-observatory"] .campaign-handout-share-label { color:var(--text-muted); font:600 .62rem/1 var(--font-role-label); letter-spacing:.08em; text-transform:uppercase; }
 [data-theme="arcane-observatory"] .campaign-handout-share-empty { margin:0; padding:12px; border:1px dashed var(--border-default); border-radius:var(--radius-sm); color:var(--text-muted); font-size:.75rem; line-height:1.45; }
-[data-theme="arcane-observatory"] .ao-cw-handout-card.is-shareable:hover { border-color:var(--border-strong); background:var(--surface-panel-raised); transform:translateY(-1px); box-shadow:var(--shadow-panel); }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy { width:max-content; padding:3px 6px; border-radius:999px; font:600 .58rem/1 var(--font-role-label); letter-spacing:.06em; text-transform:uppercase; }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-private { background:var(--surface-panel); color:var(--text-muted); }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-shared { background:color-mix(in srgb, var(--border-brass) 16%, transparent); color:var(--border-brass-bright); }
