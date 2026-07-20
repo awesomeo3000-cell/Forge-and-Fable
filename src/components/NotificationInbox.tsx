@@ -17,7 +17,20 @@ export default function NotificationInbox() {
     const data = await response.json() as { notifications: UserNotification[]; unreadCount: number; preferences: NotificationPreferences };
     setItems(data.notifications); setUnread(data.unreadCount); setPrefs(data.preferences);
   };
-  useEffect(() => { void load(); }, []);
+  // Inline, cancel-guarded fetch on mount (matches HomeDashboard) so the
+  // state updates land after an explicit await boundary — the shape
+  // react-hooks/set-state-in-effect accepts — and never after unmount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const response = await fetch("/api/notifications");
+      if (!response.ok || cancelled) return;
+      const data = await response.json() as { notifications: UserNotification[]; unreadCount: number; preferences: NotificationPreferences };
+      if (cancelled) return;
+      setItems(data.notifications); setUnread(data.unreadCount); setPrefs(data.preferences);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const toggle = async (key: keyof NotificationPreferences) => {
     const next = { ...prefs, [key]: !prefs[key] };
