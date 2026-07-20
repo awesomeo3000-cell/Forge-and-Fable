@@ -11,11 +11,16 @@ export default function NotificationInbox() {
   const [prefs, setPrefs] = useState<NotificationPreferences>({ dmInboxEnabled: false, dmEmailEnabled: false });
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = async (): Promise<boolean> => {
     const response = await fetch("/api/notifications");
-    if (!response.ok) return;
+    if (!response.ok) {
+      setError("Could not load notifications.");
+      return false;
+    }
     const data = await response.json() as { notifications: UserNotification[]; unreadCount: number; preferences: NotificationPreferences };
     setItems(data.notifications); setUnread(data.unreadCount); setPrefs(data.preferences);
+    setError("");
+    return true;
   };
   // Inline, cancel-guarded fetch on mount (matches HomeDashboard) so the
   // state updates land after an explicit await boundary — the shape
@@ -39,13 +44,36 @@ export default function NotificationInbox() {
     if (!response.ok) { setPrefs(prefs); setError("Could not save notification preferences."); }
   };
   const markRead = async (id: string) => {
-    await fetch(`/api/notifications/${encodeURIComponent(id)}`, { method: "PATCH" });
+    const item = items.find((candidate) => candidate.id === id);
+    const response = await fetch(`/api/notifications/${encodeURIComponent(id)}`, { method: "PATCH" });
+    if (!response.ok) {
+      setError("Could not update notification.");
+      return;
+    }
     setItems((current) => current.map((item) => item.id === id ? { ...item, readAt: item.readAt ?? new Date().toISOString() } : item));
-    setUnread((count) => Math.max(0, count - (items.find((item) => item.id === id)?.readAt ? 0 : 1)));
+    setUnread((count) => Math.max(0, count - (item?.readAt ? 0 : 1)));
+  };
+  const markAllRead = async () => {
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markAllRead: true }),
+    });
+    if (!response.ok) {
+      setError("Could not clear notifications.");
+      return;
+    }
+    setItems((current) => current.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() })));
+    setUnread(0);
+    setError("");
   };
 
   return <div className="notification-inbox-wrap">
-    <button type="button" className="glass-icon ink-action ao-header-action" onClick={() => { setOpen((value) => !value); if (!open) void load(); }} aria-label="Notifications" aria-expanded={open}><Bell size={17} />{unread > 0 ? <span className="notification-badge">{unread > 99 ? "99+" : unread}</span> : null}</button>
+    <button type="button" className="glass-icon ink-action ao-header-action" onClick={() => {
+      const nextOpen = !open;
+      setOpen(nextOpen);
+      if (nextOpen) void (async () => { if (await load()) await markAllRead(); })();
+    }} aria-label="Notifications" aria-expanded={open}><Bell size={17} />{unread > 0 ? <span className="notification-badge">{unread > 99 ? "99+" : unread}</span> : null}</button>
     {open ? <section className="notification-popover" aria-label="Notifications">
       <header className="notification-popover-header"><div><span className="ao-dash-eyebrow">Signal desk</span><h3>Notifications</h3></div><div className="notification-header-actions"><span className="notification-unread-count">{unread ? `${unread} unread` : "All caught up"}</span><button type="button" onClick={() => setOpen(false)} aria-label="Close notifications"><X size={15} /></button></div></header>
       <div className="notification-preferences"><div className="notification-preferences-heading"><Settings2 size={14} aria-hidden="true" /><span>Delivery</span></div><label><input type="checkbox" checked={prefs.dmInboxEnabled} onChange={() => void toggle("dmInboxEnabled")} /><span><strong>In-app inbox</strong><small>Keep a campaign record here</small></span></label><label><input type="checkbox" checked={prefs.dmEmailEnabled} onChange={() => void toggle("dmEmailEnabled")} /><span><strong>Email alerts</strong><small>Send important DM activity by email</small></span></label></div>

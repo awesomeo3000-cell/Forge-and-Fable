@@ -245,7 +245,6 @@ export default function ForgeAndFableApp() {
   const [campaignSync, setCampaignSync] = useState<CampaignSyncPayload | null>(null);
   const [campaignEvents, setCampaignEvents] = useState<CampaignEvent[]>([]);
   const [resolvedCampaignEvents, setResolvedCampaignEvents] = useState<Set<string>>(() => new Set());
-  const [campaignHandout, setCampaignHandout] = useState<{ title: string; url: string } | null>(null);
   const [readOnlyViewChar, setReadOnlyViewChar] = useState<Character | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
@@ -500,8 +499,9 @@ export default function ForgeAndFableApp() {
    * open. Returns the created_at of the last event fully handled — the sync
    * loop must not advance its cursor past an unhandled condition event.
    */
-  const processCampaignEvents = useEffectEvent((events: CampaignEvent[], members: CampaignSyncPayload["members"]): CampaignEvent | null => {
+  const processCampaignEvents = useEffectEvent((events: CampaignEvent[], members: CampaignSyncPayload["members"], options?: { notifyTransient?: boolean }): CampaignEvent | null => {
     if (events.length === 0) return null;
+    const notifyTransient = options?.notifyTransient ?? true;
     const myMembership = members?.find((member) => member.userId === user?.id);
     const myCharacter = myMembership?.characterId
       ? characters.find((character) => character.id === myMembership.characterId) ?? null
@@ -532,7 +532,7 @@ export default function ForgeAndFableApp() {
               } as CharacterEffect,
             ];
             changedEffects = true;
-            if (!processedCampaignEventsRef.current.has(event.id)) {
+            if (notifyTransient && !processedCampaignEventsRef.current.has(event.id)) {
               pushToast("condition", `DM applied ${label}`, myCharacter.name);
             }
           }
@@ -541,41 +541,38 @@ export default function ForgeAndFableApp() {
           if (filtered.length !== nextEffects.length) {
             nextEffects = filtered;
             changedEffects = true;
-            if (!processedCampaignEventsRef.current.has(event.id)) {
+            if (notifyTransient && !processedCampaignEventsRef.current.has(event.id)) {
               pushToast("condition", `DM removed ${label}`, myCharacter.name);
             }
           }
         }
       } else if (event.type === "announce") {
         const message = typeof payload.message === "string" ? payload.message.trim() : "";
-        if (message && !processedCampaignEventsRef.current.has(event.id)) {
+        if (notifyTransient && message && !processedCampaignEventsRef.current.has(event.id)) {
           pushToast("announce", message, undefined, event.id);
         }
       } else if (event.type === "roll-request") {
         // The Roll button lives in the campaign panel; surface the ask so a
         // player on their sheet knows to open it — with the full description
         // (what, advantage, revealed DC).
-        if (!processedCampaignEventsRef.current.has(event.id)) {
+        if (notifyTransient && !processedCampaignEventsRef.current.has(event.id)) {
           pushToast("turn", "The DM asks for a roll", summarizeRollRequest(payload));
         }
       } else if (event.type === "concentration-end" || event.type === "death-save-update") {
         if (!myCharacter) break;
         if (event.type === "concentration-end") {
           void updateCharacterById(myCharacter.id, { concentratingOn: null });
-          if (!processedCampaignEventsRef.current.has(event.id)) pushToast("condition", "Concentration ended", myCharacter.name);
+          if (notifyTransient && !processedCampaignEventsRef.current.has(event.id)) pushToast("condition", "Concentration ended", myCharacter.name);
         } else {
           const action = typeof payload.action === "string" ? payload.action as DeathSaveAction : "reset";
           const amount = typeof payload.amount === "number" ? payload.amount : 0;
           void updateCharacterById(myCharacter.id, deathSavePatch(myCharacter, action, amount));
-          if (!processedCampaignEventsRef.current.has(event.id)) pushToast("condition", `Death saves: ${action.replaceAll("-", " ")}`, myCharacter.name);
+          if (notifyTransient && !processedCampaignEventsRef.current.has(event.id)) pushToast("condition", `Death saves: ${action.replaceAll("-", " ")}`, myCharacter.name);
         }
       } else if (event.type === "handout") {
-        const title = typeof payload.title === "string" ? payload.title.trim() : "Handout";
-        const url = typeof payload.url === "string" ? payload.url.trim() : "";
-        if (!processedCampaignEventsRef.current.has(event.id)) {
-          pushToast("announce", `The DM shared a handout: ‹${title}›.`, undefined, event.id);
-          if (url) setCampaignHandout({ title, url });
-        }
+        // Handouts are durable inbox items now. Do not replay them as a
+        // centered login modal or transient toast; the global bell is the
+        // single notification surface.
       }
 
       processedCampaignEventsRef.current.add(event.id);
@@ -751,12 +748,13 @@ export default function ForgeAndFableApp() {
           return { ...data, rolls: merged };
         });
         rememberCampaignEvents(data.events);
-        const lastHandled = processCampaignEvents(data.events, data.members);
+        const hasEventCursor = Boolean(cursors?.events);
+        const lastHandled = processCampaignEvents(data.events, data.members, { notifyTransient: hasEventCursor });
 
         const myTurnId = user.id ? `player:${user.id}` : null;
         const sorted = [...data.initiative.data.combatants].sort((a, b) => b.initiative - a.initiative);
         const currentCombatant = sorted[data.initiative.data.turnIndex]?.id ?? null;
-        if (myTurnId && currentCombatant === myTurnId && lastTurnCombatantRef.current !== currentCombatant) {
+        if (hasEventCursor && myTurnId && currentCombatant === myTurnId && lastTurnCombatantRef.current !== currentCombatant) {
           pushToast("turn", "Your turn!", `Round ${data.initiative.data.round}`);
         }
         lastTurnCombatantRef.current = currentCombatant;
@@ -2367,16 +2365,6 @@ export default function ForgeAndFableApp() {
           logOut();
         }}
       />
-    ) : null}
-    {campaignHandout ? (
-      <div className="modal-scrim" role="presentation" onMouseDown={() => setCampaignHandout(null)}>
-        <figure className="campaign-handout" onMouseDown={(event) => event.stopPropagation()}>
-          <button type="button" className="glass-icon modal-close" onClick={() => setCampaignHandout(null)} aria-label="Close handout"><X size={18}/></button>
-          {/* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */}
-          <img src={campaignHandout.url} alt={campaignHandout.title}/>
-          <figcaption>{campaignHandout.title}</figcaption>
-        </figure>
-      </div>
     ) : null}
     {readOnlyViewChar ? (
       <div className="modal-scrim dm-sheet-overlay" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>

@@ -3,6 +3,7 @@ import { authenticateRequest, AuthError } from "@/lib/auth";
 import {
   getNotificationPreferences,
   listNotifications,
+  markAllNotificationsRead,
   unreadNotificationCount,
   updateNotificationPreferences,
 } from "@/lib/notificationStore";
@@ -28,6 +29,14 @@ export async function PATCH(request: Request) {
   try {
     const userId = await authenticateRequest(request);
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    if (body.markAllRead === true) {
+      markAllNotificationsRead(userId);
+      return NextResponse.json({
+        ok: true,
+        unreadCount: 0,
+        preferences: getNotificationPreferences(userId),
+      });
+    }
     return NextResponse.json({
       preferences: updateNotificationPreferences(userId, {
         dmInboxEnabled: typeof body.dmInboxEnabled === "boolean" ? body.dmInboxEnabled : undefined,

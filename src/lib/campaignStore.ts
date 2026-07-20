@@ -21,7 +21,7 @@ import { DEFAULT_CAMPAIGN_THEME_ID, isCampaignThemeId } from "@/lib/campaignThem
 import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
 import { scheduleRehearsalEvent } from "@/lib/dmTable/rehearsal";
-import { notifyCampaignDm } from "@/lib/notificationStore";
+import { notifyCampaignDm, notifyCampaignMembers } from "@/lib/notificationStore";
 
 // -- Types -----------------------------------------------------------------
 
@@ -867,6 +867,23 @@ export function postCampaignEvent(
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;
+  }
+
+  if (type === "handout") {
+    const handoutPayload = payload && typeof payload === "object" && !Array.isArray(payload)
+      ? payload as Record<string, unknown>
+      : {};
+    const title = typeof handoutPayload.title === "string" && handoutPayload.title.trim()
+      ? handoutPayload.title.trim()
+      : "A new handout";
+    notifyCampaignMembers({
+      campaignId,
+      recipientUserId: target,
+      kind: "handout-shared",
+      title: "New handout from the DM",
+      body: `${title} is ready in your campaign Handouts tab.`,
+      dedupeKey: `campaign-event:${id}`,
+    });
   }
 
   if (targetUserId) scheduleRehearsalEvent(campaignId, id, type, targetUserId, payload);

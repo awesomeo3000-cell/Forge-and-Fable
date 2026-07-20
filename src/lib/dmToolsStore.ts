@@ -5,6 +5,7 @@ import { generateEncounter, type GenerateEncounterInput } from "@/lib/encounterG
 import { syncCampaign } from "@/lib/campaignStore";
 import { saveCampaignHandoutAsset } from "@/lib/campaignHandoutStore";
 import { parseDiceFormula, rollFormula } from "@/lib/utils";
+import { notifyCampaignMembers } from "@/lib/notificationStore";
 import type {
   CampaignHandout,
   CampaignJournalEntry,
@@ -841,6 +842,14 @@ export function shareHandout(campaignId: string, userId: string, id: string, rec
       body: sharedRecord.body,
       assetType: sharedRecord.assetType,
     }, recipientUserId);
+    notifyCampaignMembers({
+      campaignId,
+      recipientUserId,
+      kind: "handout-shared",
+      title: "New handout from the DM",
+      body: `${record.title} is ready in your campaign Handouts tab.`,
+      dedupeKey: `handout-share:${campaignId}:${id}:${record.shareCount + 1}`,
+    });
     return {
       ...sharedRecord,
       shared: true,

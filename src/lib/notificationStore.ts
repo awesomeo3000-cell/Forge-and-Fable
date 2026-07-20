@@ -103,6 +103,54 @@ export function markNotificationRead(userId: string, notificationId: string): bo
   ).run(new Date().toISOString(), notificationId, userId).changes > 0;
 }
 
+export function markAllNotificationsRead(userId: string): number {
+  return getDb().prepare(
+    "UPDATE user_notifications SET read_at = COALESCE(read_at, ?) WHERE user_id = ? AND read_at IS NULL",
+  ).run(new Date().toISOString(), userId).changes;
+}
+
+/**
+ * Deliver an in-app notification to one campaign player or the whole party.
+ * Recipients must explicitly opt into the inbox; the DM is never included in
+ * a party delivery. The recipient suffix keeps the durable dedupe key unique
+ * when the same event is sent to several players.
+ */
+export function notifyCampaignMembers(input: {
+  campaignId: string;
+  kind: string;
+  title: string;
+  body: string;
+  dedupeKey: string;
+  recipientUserId?: string | null;
+}): void {
+  const db = getDb();
+  const campaign = db.prepare("SELECT dm_user_id FROM campaigns WHERE id = ?")
+    .get(input.campaignId) as { dm_user_id: string } | undefined;
+  if (!campaign) return;
+
+  const recipients = input.recipientUserId
+    ? [{ user_id: input.recipientUserId }]
+    : db.prepare(
+      "SELECT user_id FROM campaign_members WHERE campaign_id = ? AND user_id <> ? AND COALESCE(is_ghost, 0) = 0",
+    ).all(input.campaignId, campaign.dm_user_id) as { user_id: string }[];
+
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO user_notifications
+      (id, user_id, campaign_id, dedupe_key, kind, title, body, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const createdAt = new Date().toISOString();
+  for (const recipient of recipients) {
+    if (recipient.user_id === campaign.dm_user_id) continue;
+    if (!getNotificationPreferences(recipient.user_id).dmInboxEnabled) continue;
+    insert.run(
+      randomUUID(), recipient.user_id, input.campaignId,
+      `${input.dedupeKey}:${recipient.user_id}`,
+      input.kind, input.title, input.body, createdAt,
+    );
+  }
+}
+
 /**
  * Deliver a DM notification according to the DM's explicit preferences.
  * Inbox delivery is durable; email failure is deliberately non-fatal because
