@@ -6581,7 +6581,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(0.82) brightness(0.62);
+  /* Idle art was too dark to read as a scene; the bottom/left copy scrim
+     (::after) carries text contrast, so the base can sit brighter. */
+  filter: saturate(0.92) brightness(0.72);
 }
 /* Per-artwork focal points (§9): faces and task light sit toward the right. */
 [data-theme="arcane-observatory"] .ao-hd-action-card[data-art="character"] .ao-hd-action-art img { object-position: 78% 24%; }
@@ -6673,10 +6675,10 @@
   box-shadow: inset 0 0 0 1px rgba(217, 185, 103, 0.2);
 }
 [data-theme="arcane-observatory"] .ao-hd-action-card.primary .ao-hd-action-art img {
-  filter: saturate(0.95) brightness(0.72);
+  filter: saturate(1) brightness(0.8);
 }
 [data-theme="arcane-observatory"] .ao-hd-action-card:hover .ao-hd-action-art img {
-  filter: saturate(0.95) brightness(0.74);
+  filter: saturate(1) brightness(0.84);
 }
 /* Selected card: the user's highlighted pick — strong brass frame, brighter
    art, and a filled CTA that reads clearly as the next click. */
@@ -6685,7 +6687,7 @@
   box-shadow: inset 0 0 0 2px rgba(217, 185, 103, 0.35);
 }
 [data-theme="arcane-observatory"] .ao-hd-action-card.selected .ao-hd-action-art img {
-  filter: saturate(1) brightness(0.82);
+  filter: saturate(1) brightness(0.9);
 }
 [data-theme="arcane-observatory"] .ao-hd-action-card.selected .ao-hd-action-cta {
   border-color: var(--border-brass-bright);
@@ -7946,4 +7948,23 @@
    chrome (border, left rule and wash all read from --accent). */
 [data-theme="arcane-observatory"] .cs-tour-card {
   --accent: var(--border-brass);
+}
+
+/* UX audit 2026-07 fix #7: compact the sheet Adv/Dis arm control — a small
+   "Next roll" label + two short toggles that sit inline in the narrow
+   abilities column instead of two wrapped full-width pills. */
+[data-theme="arcane-observatory"] .ao-dice-arm-label {
+  font: 600 0.6rem/1 var(--font-role-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+[data-theme="arcane-observatory"] .cs-roll-arm { flex-wrap: nowrap; }
+
+/* UX audit 2026-07 fix #4 (light touch): the Menu caret read as a detached
+   third glyph. Mute it and pull it in so it subordinates to the label. */
+[data-theme="arcane-observatory"] .ao-header-menu-wrap .ao-header-action svg:last-child {
+  margin-left: -3px;
+  opacity: 0.5;
 }

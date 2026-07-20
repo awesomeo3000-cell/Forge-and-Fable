@@ -1367,23 +1367,26 @@ export default memo(function HeroSheet(props: {
         <>
         {!isReadOnly && props.onRollModeChange ? (
           <div className="ao-dice-arm cs-roll-arm" role="group" aria-label="Advantage for your next d20 roll">
+            <span className="ao-dice-arm-label">Next roll</span>
             <button
               type="button"
               className={props.rollMode === "advantage" ? "is-armed" : ""}
               aria-pressed={props.rollMode === "advantage"}
+              aria-label="Advantage on your next d20 roll"
               title="Advantage — your next d20 rolls twice and keeps the higher"
               onClick={() => props.onRollModeChange!(props.rollMode === "advantage" ? "normal" : "advantage")}
             >
-              Advantage
+              Adv
             </button>
             <button
               type="button"
               className={props.rollMode === "disadvantage" ? "is-armed" : ""}
               aria-pressed={props.rollMode === "disadvantage"}
+              aria-label="Disadvantage on your next d20 roll"
               title="Disadvantage — your next d20 rolls twice and keeps the lower"
               onClick={() => props.onRollModeChange!(props.rollMode === "disadvantage" ? "normal" : "disadvantage")}
             >
-              Disadvantage
+              Dis
             </button>
             {props.rollMode !== "normal" && props.rollModeIsFromEffect ? <span className="ao-dice-arm-hint">from effects</span> : null}
           </div>

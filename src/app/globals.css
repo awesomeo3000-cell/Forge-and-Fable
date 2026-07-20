@@ -14696,12 +14696,19 @@ button.dj-card {
   bottom: 0;
   z-index: 40;
   overflow-y: auto;
+  /* Centre the panel in the work area so short/empty states don't strand a
+     full-height void below the card; the panel bounds its own height and
+     scrolls internally, so centring never clips tall content. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background: var(--surface-app, #070d16);
   padding: 26px clamp(18px, 4vw, 44px) 60px;
 }
 .campaign-page .campaign-panel {
   width: min(1080px, 100%);
-  max-height: none;
+  max-height: calc(100dvh - 62px - 92px);
   margin: 0 auto;
 }
 @media (max-width: 760px) {

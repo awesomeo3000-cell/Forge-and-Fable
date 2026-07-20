@@ -33,12 +33,12 @@ card leaks the legacy root value. Every other sheet accent is old gold, so
 the red reads as a mistake. Desktop + mobile. **High confidence.**
 Fix: AO-scoped `.cs-tour-card` → brass border/wash.
 
-### 2. Campaigns empty state leaves a full-height void
-The campaigns view renders `.campaign-panel` (max-height 760, shrinks to its
-short empty-state content) top-anchored in the main column, leaving ~55% of
-the viewport as dead dark space below it on desktop. Reads as unfinished.
-**High confidence it looks wrong; fix is a layout choice** (center the panel
-in the column, or cap the column width and top-pad) — flagged for direction.
+### 2. Campaigns empty state leaves a full-height void  ✅ fixed
+`.campaign-page` now centres the panel (flex column, `justify-content:
+center`) and the panel bounds its own height (`max-height: calc(100dvh -
+62px - 92px)`, internal list scroll), so short/empty states sit centred
+instead of stranding dead space, and tall content still scrolls without
+clipping.
 
 ### 3. Campaigns empty state has no primary action
 "New Campaign" and "Join a Campaign" are equal-weight dark buttons. For an
@@ -50,26 +50,28 @@ carry the brass CTA weight (matches the dashboard's one-primary grammar).
 
 ## P2 — noticeable rough edges
 
-### 4. Top-right header cluster is crowded
+### 4. Top-right header cluster is crowded  ◑ partial (chevron muted)
 CAMPAIGNS (boxed) + MENU (hamburger + a slightly detached chevron) + bell +
-logout sit tightly against the user-id string. On mobile the same icons pack
-into ~140px and the boxed campaigns glyph tints seal-red. Wants more gap,
-alignment of the MENU chevron, and the id de-emphasized or moved.
+logout sit tightly against the user-id string. Muted/tightened the MENU
+caret so it subordinates to the label; the broader spacing/id treatment was
+left alone to avoid churning the many header media-query overrides.
 
-### 5. Dashboard right column strands a large gap
+### 5. Dashboard right column strands a large gap  — left (empty-state only)
 Empty-account dashboard: "Next Session" + "Needs Attention" fill only the top
-of the right rail; the third-row height under them is empty while the action
-cards run two rows on the left. The columns are visually unbalanced at 1440.
+of the right rail. This balances out once the account has a session/heroes,
+so it's an empty-state-only imbalance; left as-is rather than restructure the
+owner-approved AO-16 dashboard.
 
-### 6. Action-card artwork is too dark/muddy
-The four "Begin your journey" cards have very low-luminance art behind the
-copy; they read as near-black rectangles rather than distinct scenes. A
-lighter scrim floor or brighter art crop would let each card's scene register.
+### 6. Action-card artwork is too dark/muddy  ✅ fixed
+Idle art was `brightness(0.62)`; the scenes read as near-black. Raised idle to
+`saturate(0.92) brightness(0.72)` and re-stepped primary/hover/selected
+(0.8/0.84/0.9) so scenes register while the bottom/left copy scrim still
+carries text contrast and selection stays the brightest.
 
-### 7. Sheet abilities Adv/Dis toggle is heavy
-The advantage/disadvantage arm control (added with the dice-tray work) renders
-as two full-width stacked buttons above the ability grid — bulky for a
-two-state control. Could be a compact inline segmented pair.
+### 7. Sheet abilities Adv/Dis toggle is heavy  ✅ fixed
+Now a compact inline control: a small "Next roll" label + short "Adv"/"Dis"
+toggles (full names kept in `aria-label`/tooltip) that sit on one line in the
+narrow abilities column instead of two wrapped full-width pills.
 
 ---
 
