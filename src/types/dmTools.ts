@@ -163,12 +163,21 @@ export type CampaignHandout = {
   assetUrl?: string;
   /** Null means shared with the whole party; otherwise visible only to this player. */
   recipientUserId?: string | null;
+  folderId?: string | null;
   body?: string;
   shared: boolean;
   firstSharedAt?: string;
   lastSharedAt?: string;
   shareCount: number;
   archived?: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CampaignHandoutFolder = {
+  id: string;
+  campaignId: string;
+  name: string;
   createdAt: string;
   updatedAt: string;
 };

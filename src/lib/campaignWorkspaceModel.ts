@@ -93,6 +93,7 @@ export type HandoutView = {
   id: string;
   title: string;
   category: string;
+  folderId?: string | null;
   assetType: CampaignHandout["assetType"];
   assetUrl?: string;
   body?: string;
@@ -109,6 +110,7 @@ export function selectHandouts(handouts: Array<Omit<CampaignHandout, "privateNot
       id: item.id,
       title: item.title,
       category: item.category,
+      folderId: item.folderId ?? null,
       assetType: item.assetType,
       assetUrl: item.assetUrl,
       body: item.body,

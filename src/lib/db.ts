@@ -22,7 +22,7 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 24;
+const SCHEMA_REVISION = 25;
 
 export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -568,6 +568,19 @@ function migrateSchema(db: DatabaseSync) {
       CREATE INDEX IF NOT EXISTS idx_handout_assets_campaign ON campaign_handout_assets(campaign_id);
     `);
     recordMigration(db, 24, "Uploaded campaign handout files");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS campaign_handout_folders (
+        id TEXT PRIMARY KEY,
+        campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+        owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(campaign_id, name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_handout_folders_campaign ON campaign_handout_folders(campaign_id, name);
+    `);
+    recordMigration(db, 25, "Campaign handout folders");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

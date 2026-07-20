@@ -6,7 +6,7 @@ import { resolveViewerRole, type CampaignViewerRole } from "@/lib/campaignWorksp
 import type { CampaignSection } from "@/lib/campaignRoute";
 import type { Character } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
-import type { CampaignSession, PlayerCampaignMemory } from "@/types/dmTools";
+import type { CampaignHandoutFolder, CampaignSession, PlayerCampaignMemory } from "@/types/dmTools";
 import CampaignWorkspace from "./CampaignWorkspace";
 
 function authHeaders(): Record<string, string> {
@@ -63,6 +63,8 @@ export default function CampaignWorkspacePage(props: {
 
   const [sessions, setSessions] = useState<CampaignSession[]>([]);
   const [memory, setMemory] = useState<PlayerCampaignMemory | null>(null);
+  const [handoutFolders, setHandoutFolders] = useState<CampaignHandoutFolder[]>([]);
+  const [handoutRefreshKey, setHandoutRefreshKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copiedCode, setCopiedCode] = useState("");
@@ -87,8 +89,13 @@ export default function CampaignWorkspacePage(props: {
       .then(async (response) => (response.ok ? await response.json() as PlayerCampaignMemory : null))
       .then((data) => { if (active && data) setMemory(data); })
       .catch(() => { /* modules show their empty states */ });
+    void dmToolsApi.listHandoutFolders(campaignId)
+      .then(({ folders }) => { if (active) setHandoutFolders(folders); })
+      .catch(() => { if (active) setHandoutFolders([]); });
     return () => { active = false; };
-  }, [campaignId, handoutEventCount]);
+  }, [campaignId, handoutEventCount, handoutRefreshKey]);
+
+  const refreshHandoutData = useCallback(() => setHandoutRefreshKey((key) => key + 1), []);
 
   const copyCode = useCallback((code: string) => {
     navigator.clipboard.writeText(code)
@@ -205,6 +212,7 @@ export default function CampaignWorkspacePage(props: {
       resolvedEventIds={props.resolvedEventIds}
       sessions={sessions}
       memory={memory}
+      handoutFolders={handoutFolders}
       viewerRole={viewerRole}
       section={props.section}
       onSectionChange={props.onSectionChange}
@@ -222,7 +230,8 @@ export default function CampaignWorkspacePage(props: {
       onPostAnnouncement={viewerRole === "dm" ? postAnnouncement : undefined}
       onOpenTable={props.onOpenTable}
       onOpenHandouts={props.onOpenHandouts}
-      onHandoutsChanged={() => onActiveCampaignChange(campaignId)}
+      onHandoutsChanged={refreshHandoutData}
+      onHandoutFoldersChanged={refreshHandoutData}
       onSavePlayerView={viewerRole === "dm" ? savePlayerView : undefined}
       onScheduleSession={viewerRole === "dm" ? props.onScheduleSession : undefined}
       onSaveAppearance={viewerRole === "dm" ? saveAppearance : undefined}

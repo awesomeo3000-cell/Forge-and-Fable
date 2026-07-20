@@ -10,6 +10,9 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Folder,
+  FolderPlus,
+  GripVertical,
   Image as ImageIcon,
   Link2,
   MapPin,
@@ -20,6 +23,7 @@ import {
   Share2,
   Sparkles,
   Swords,
+  Trash2,
   Users,
 } from "lucide-react";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
@@ -28,7 +32,7 @@ import { getCampaignTheme } from "@/lib/campaignThemes";
 import { describeRollRequest, summarizeRollRequest } from "@/lib/rollRequest";
 import type { Character } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
-import type { CampaignSession, PlayerCampaignMemory } from "@/types/dmTools";
+import type { CampaignHandoutFolder, CampaignSession, PlayerCampaignMemory } from "@/types/dmTools";
 import type { CampaignSection } from "@/lib/campaignRoute";
 import {
   relativeTime,
@@ -52,6 +56,7 @@ import AnnouncementComposerSheet from "./AnnouncementComposerSheet";
 import ConfirmDialog from "./ConfirmDialog";
 import CampaignHandoutUploadModal from "@/components/CampaignHandoutUploadModal";
 import CampaignHandoutShareModal from "@/components/CampaignHandoutShareModal";
+import { dmToolsApi } from "@/lib/client/dmToolsApi";
 
 const DESCRIPTION_FALLBACK = "A campaign is underway. The next chapter is waiting.";
 const BRIEFING_EXCERPT_LIMIT = 480;
@@ -117,6 +122,8 @@ export default function CampaignWorkspace(props: {
   onOpenTable?: () => void;
   onOpenHandouts?: () => void;
   onHandoutsChanged?: () => void;
+  handoutFolders: CampaignHandoutFolder[];
+  onHandoutFoldersChanged?: () => void;
   onScheduleSession?: () => void;
   onSaveAppearance?: (themeKey: string, bannerImageUrl: string) => Promise<boolean>;
   onSavePlayerView?: (input: Record<string, boolean>) => Promise<boolean>;
@@ -133,6 +140,13 @@ export default function CampaignWorkspace(props: {
   const [pendingSwitch, setPendingSwitch] = useState<{ id: string; name: string } | null>(null);
   const [uploadHandoutsOpen, setUploadHandoutsOpen] = useState(false);
   const [shareHandoutId, setShareHandoutId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState("all");
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [folderBusy, setFolderBusy] = useState(false);
+  const [handoutActionError, setHandoutActionError] = useState("");
+  const [draggingHandoutId, setDraggingHandoutId] = useState<string | null>(null);
+  const [pendingDeleteHandout, setPendingDeleteHandout] = useState<HandoutView | null>(null);
 
   // A DM without a character of their own is running the table, not failing
   // to get ready — their empty seat stays out of the party, readiness and
@@ -156,6 +170,12 @@ export default function CampaignWorkspace(props: {
   const objectives = useMemo(() => selectObjectives(props.memory?.journal ?? []), [props.memory?.journal]);
   const recentHandouts = useMemo(() => selectHandouts(props.memory?.handouts ?? [], 3), [props.memory?.handouts]);
   const allHandouts = useMemo(() => selectHandouts(props.memory?.handouts ?? []), [props.memory?.handouts]);
+  const visibleHandouts = useMemo(
+    () => selectedFolderId === "all"
+      ? allHandouts
+      : allHandouts.filter((handout) => selectedFolderId === "unfiled" ? !handout.folderId : handout.folderId === selectedFolderId),
+    [allHandouts, selectedFolderId],
+  );
   const selectedShareHandout = props.memory?.handouts.find((handout) => handout.id === shareHandoutId) ?? null;
   const attentionItems = useMemo(
     () => (isDm
@@ -207,6 +227,53 @@ export default function CampaignWorkspace(props: {
   const openHandout = (handout: HandoutView) => {
     if (handout.assetUrl) window.open(handout.assetUrl, "_blank", "noopener,noreferrer");
     else goTo("handouts");
+  };
+
+  const createHandoutFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name || folderBusy) return;
+    setFolderBusy(true);
+    setHandoutActionError("");
+    try {
+      await dmToolsApi.createHandoutFolder(detail.campaign.id, name);
+      setNewFolderName("");
+      setNewFolderOpen(false);
+      props.onHandoutFoldersChanged?.();
+    } catch (error) {
+      setHandoutActionError(error instanceof Error ? error.message : "Could not create folder.");
+    } finally {
+      setFolderBusy(false);
+    }
+  };
+
+  const moveHandout = async (handoutId: string, folderId: string | null) => {
+    if (!isDm || folderBusy) return;
+    setFolderBusy(true);
+    setHandoutActionError("");
+    try {
+      await dmToolsApi.updateHandout(detail.campaign.id, handoutId, { folderId });
+      props.onHandoutsChanged?.();
+    } catch (error) {
+      setHandoutActionError(error instanceof Error ? error.message : "Could not move handout.");
+    } finally {
+      setFolderBusy(false);
+      setDraggingHandoutId(null);
+    }
+  };
+
+  const deleteHandout = async () => {
+    if (!pendingDeleteHandout || folderBusy) return;
+    setFolderBusy(true);
+    setHandoutActionError("");
+    try {
+      await dmToolsApi.archiveHandout(detail.campaign.id, pendingDeleteHandout.id);
+      setPendingDeleteHandout(null);
+      props.onHandoutsChanged?.();
+    } catch (error) {
+      setHandoutActionError(error instanceof Error ? error.message : "Could not delete handout.");
+    } finally {
+      setFolderBusy(false);
+    }
   };
 
   /* ── Hero actions (§6.6): permission- and state-aware ── */
@@ -663,11 +730,25 @@ export default function CampaignWorkspace(props: {
 
       {section === "handouts" ? (
         <section className="ao-cw-panel" aria-label="Handouts">
-          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{allHandouts.length} shared</span>{isDm ? <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={() => setUploadHandoutsOpen(true)}>Upload handouts</button> : null}</div>
-          {allHandouts.length > 0 ? (
+          <div className="ao-cw-panel-head"><h3><Scroll size={15} aria-hidden="true" /> Handouts</h3><span className="ao-cw-count">{visibleHandouts.length} shown · {allHandouts.length} total</span><div className="ao-cw-handout-head-actions">{isDm ? <button type="button" className="ao-cw-btn" onClick={() => setNewFolderOpen((open) => !open)}><FolderPlus size={14} aria-hidden="true" /> New folder</button> : null}{isDm ? <button type="button" className="ao-cw-btn ao-cw-btn-primary" onClick={() => setUploadHandoutsOpen(true)}>Upload handouts</button> : null}</div></div>
+          {newFolderOpen && isDm ? (
+            <form className="ao-cw-handout-folder-create" onSubmit={(event) => { event.preventDefault(); void createHandoutFolder(); }}>
+              <Folder size={15} aria-hidden="true" />
+              <input value={newFolderName} onChange={(event) => setNewFolderName(event.target.value)} placeholder="Folder name" maxLength={80} autoFocus aria-label="New handout folder name" />
+              <button type="submit" className="ao-cw-btn ao-cw-btn-primary" disabled={folderBusy || !newFolderName.trim()}>Create</button>
+              <button type="button" className="ao-cw-btn" onClick={() => { setNewFolderOpen(false); setNewFolderName(""); }}>Cancel</button>
+            </form>
+          ) : null}
+          <div className="ao-cw-handout-folders" aria-label="Handout folders">
+            <button type="button" className={`ao-cw-folder-drop${selectedFolderId === "all" ? " is-active" : ""}`} onClick={() => setSelectedFolderId("all")} onDragOver={(event) => { if (isDm) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggingHandoutId) void moveHandout(draggingHandoutId, null); }}><Scroll size={14} aria-hidden="true" /> All handouts <span>{allHandouts.length}</span></button>
+            <button type="button" className={`ao-cw-folder-drop${selectedFolderId === "unfiled" ? " is-active" : ""}`} onClick={() => setSelectedFolderId("unfiled")} onDragOver={(event) => { if (isDm) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggingHandoutId) void moveHandout(draggingHandoutId, null); }}><Folder size={14} aria-hidden="true" /> Unfiled <span>{allHandouts.filter((handout) => !handout.folderId).length}</span></button>
+            {props.handoutFolders.map((folder) => <button key={folder.id} type="button" className={`ao-cw-folder-drop${selectedFolderId === folder.id ? " is-active" : ""}`} onClick={() => setSelectedFolderId(folder.id)} onDragOver={(event) => { if (isDm) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggingHandoutId) void moveHandout(draggingHandoutId, folder.id); }}><Folder size={14} aria-hidden="true" /> {folder.name} <span>{allHandouts.filter((handout) => handout.folderId === folder.id).length}</span></button>)}
+          </div>
+          {handoutActionError ? <p className="campaign-handout-upload-error" role="alert">{handoutActionError}</p> : null}
+          {visibleHandouts.length > 0 ? (
             <ul className="ao-cw-handout-grid">
-              {allHandouts.map((handout) => (
-                <li key={handout.id} className="ao-cw-handout-card">
+              {visibleHandouts.map((handout) => (
+                <li key={handout.id} className="ao-cw-handout-card" draggable={isDm} onDragStart={() => { if (isDm) setDraggingHandoutId(handout.id); }} onDragEnd={() => setDraggingHandoutId(null)}>
                   {handout.assetType === "image" && handout.assetUrl ? (
                     /* Handouts are arbitrary player-facing URLs; Next image optimization cannot safely whitelist them. */
                     <img src={handout.assetUrl} alt={`Handout: ${handout.title}`} loading="lazy" />
@@ -677,6 +758,7 @@ export default function CampaignWorkspace(props: {
                   <div className="ao-cw-handout-copy">
                     <strong>{handout.title}</strong>
                     <span className={`ao-cw-handout-privacy ${handout.shared ? "is-shared" : "is-private"}`}>{handout.shared ? "Shared with players" : "Private"}</span>
+                    {isDm ? <span className="ao-cw-handout-drag-hint"><GripVertical size={12} aria-hidden="true" /> Drag to a folder</span> : null}
                     <small>{handout.category} · {handout.shared ? `Shared ${relativeTime(handout.sharedAt)}` : "Private"}</small>
                     {handout.description ? <p>{excerpt(handout.description, 140)}</p> : null}
                     {handout.body ? <p className="ao-cw-handout-body">{excerpt(handout.body, 280)}</p> : null}
@@ -691,6 +773,8 @@ export default function CampaignWorkspace(props: {
                           <Share2 size={12} aria-hidden="true" /> {handout.shared ? "Manage sharing" : "Share handout"}
                         </button>
                       ) : null}
+                      {isDm ? <select className="ao-cw-handout-folder-select" value={handout.folderId ?? ""} onChange={(event) => void moveHandout(handout.id, event.target.value || null)} aria-label={`Folder for ${handout.title}`} disabled={folderBusy}><option value="">Unfiled</option>{props.handoutFolders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select> : null}
+                      {isDm ? <button type="button" className="ao-cw-handout-action ao-cw-handout-delete" onClick={() => setPendingDeleteHandout(handout)}><Trash2 size={12} aria-hidden="true" /> Delete</button> : null}
                     </div>
                   </div>
                 </li>
@@ -804,6 +888,18 @@ export default function CampaignWorkspace(props: {
           busy={props.busy}
           onCancel={() => setPendingSwitch(null)}
           onConfirm={() => { const id = pendingSwitch.id; setPendingSwitch(null); props.onSwitchCharacter(id); }}
+        />
+      ) : null}
+
+      {pendingDeleteHandout ? (
+        <ConfirmDialog
+          title="Delete handout?"
+          body={`Delete “${pendingDeleteHandout.title}”? The uploaded file and its stored asset will be removed from this campaign.`}
+          confirmLabel="Delete handout"
+          danger
+          busy={folderBusy}
+          onCancel={() => setPendingDeleteHandout(null)}
+          onConfirm={() => void deleteHandout()}
         />
       ) : null}
     </div>

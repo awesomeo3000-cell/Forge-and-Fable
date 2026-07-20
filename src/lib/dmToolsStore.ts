@@ -8,6 +8,7 @@ import { parseDiceFormula, rollFormula } from "@/lib/utils";
 import { notifyCampaignMembers } from "@/lib/notificationStore";
 import type {
   CampaignHandout,
+  CampaignHandoutFolder,
   CampaignJournalEntry,
   CampaignSession,
   CreatureFeature,
@@ -701,6 +702,14 @@ function sanitizeHandout(
     if (!member) throw new Error("The selected player is not a member of this campaign.");
     if (campaignRow(identity.campaignId).dm_user_id === recipientUserId) throw new Error("Choose a player, not the DM.");
   }
+  const folderId = raw.folderId === null || raw.folderId === undefined || raw.folderId === ""
+    ? null
+    : safeText(raw.folderId, 100);
+  if (folderId) {
+    const folder = getDb().prepare("SELECT 1 FROM campaign_handout_folders WHERE id = ? AND campaign_id = ?")
+      .get(folderId, identity.campaignId);
+    if (!folder) throw new Error("The selected handout folder does not exist.");
+  }
   return {
     id: identity.id,
     campaignId: identity.campaignId,
@@ -713,6 +722,7 @@ function sanitizeHandout(
     assetType: type,
     ...(url ? { assetUrl: url } : {}),
     ...(recipientUserId ? { recipientUserId } : { recipientUserId: null }),
+    ...(folderId ? { folderId } : { folderId: null }),
     ...(safeText(raw.body, 10000) ? { body: safeText(raw.body, 10000) } : {}),
     shared: false,
     shareCount: 0,
@@ -804,6 +814,42 @@ export function updateHandout(campaignId: string, userId: string, id: string, in
 }
 export function archiveHandout(campaignId: string, userId: string, id: string) {
   return updateHandout(campaignId, userId, id, { archived: true });
+}
+export function deleteHandout(campaignId: string, userId: string, id: string): void {
+  requireDm(campaignId, userId);
+  const result = getDb().prepare("DELETE FROM campaign_handouts WHERE id = ? AND campaign_id = ?").run(id, campaignId);
+  if (result.changes === 0) throw new Error("Handout not found.");
+}
+
+function handoutFolderFromRow(row: { id: string; campaign_id: string; name: string; created_at: string; updated_at: string }): CampaignHandoutFolder {
+  return { id: row.id, campaignId: row.campaign_id, name: row.name, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+export function listHandoutFolders(campaignId: string, userId: string): CampaignHandoutFolder[] {
+  requireMember(campaignId, userId);
+  const folders = (getDb().prepare(
+    "SELECT id, campaign_id, name, created_at, updated_at FROM campaign_handout_folders WHERE campaign_id = ? ORDER BY name COLLATE NOCASE",
+  ).all(campaignId) as { id: string; campaign_id: string; name: string; created_at: string; updated_at: string }[]).map(handoutFolderFromRow);
+  if (isDm(campaignId, userId)) return folders;
+  const visibleFolderIds = new Set(listHandouts(campaignId, userId).map((handout) => handout.folderId).filter((id): id is string => Boolean(id)));
+  return folders.filter((folder) => visibleFolderIds.has(folder.id));
+}
+
+export function createHandoutFolder(campaignId: string, userId: string, name: string): CampaignHandoutFolder {
+  requireDm(campaignId, userId);
+  const normalized = safeText(name, 80);
+  if (!normalized) throw new Error("Folder name is required.");
+  const id = randomUUID();
+  const now = nowIso();
+  try {
+    getDb().prepare(
+      "INSERT INTO campaign_handout_folders(id, campaign_id, owner_user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).run(id, campaignId, userId, normalized, now, now);
+  } catch (error) {
+    if (error instanceof Error && /unique|constraint/i.test(error.message)) throw new Error("A folder with that name already exists.");
+    throw error;
+  }
+  return { id, campaignId, name: normalized, createdAt: now, updatedAt: now };
 }
 export function shareHandout(campaignId: string, userId: string, id: string, recipientUserId: string | null = null) {
   requireDm(campaignId, userId);

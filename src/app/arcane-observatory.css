@@ -7937,6 +7937,18 @@
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy { width:max-content; padding:3px 6px; border-radius:999px; font:600 .58rem/1 var(--font-role-label); letter-spacing:.06em; text-transform:uppercase; }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-private { background:var(--surface-panel); color:var(--text-muted); }
 [data-theme="arcane-observatory"] .ao-cw-handout-privacy.is-shared { background:color-mix(in srgb, var(--border-brass) 16%, transparent); color:var(--border-brass-bright); }
+[data-theme="arcane-observatory"] .ao-cw-handout-head-actions { display:flex; flex-wrap:wrap; gap:8px; }
+[data-theme="arcane-observatory"] .ao-cw-handout-folders { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0 16px; padding:10px; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); background:var(--surface-panel-recessed); }
+[data-theme="arcane-observatory"] .ao-cw-folder-drop { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:0 10px; border:1px solid transparent; border-radius:var(--radius-xs); background:transparent; color:var(--text-secondary); font:600 .66rem/1 var(--font-role-label); letter-spacing:.04em; cursor:pointer; }
+[data-theme="arcane-observatory"] .ao-cw-folder-drop span { color:var(--text-muted); }
+[data-theme="arcane-observatory"] .ao-cw-folder-drop:hover, [data-theme="arcane-observatory"] .ao-cw-folder-drop.is-active { border-color:var(--border-brass); background:color-mix(in srgb, var(--border-brass) 12%, transparent); color:var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-cw-handout-folder-create { display:flex; align-items:center; gap:8px; margin:14px 0; padding:10px; border:1px solid var(--border-brass); border-radius:var(--radius-sm); background:var(--surface-panel-recessed); }
+[data-theme="arcane-observatory"] .ao-cw-handout-folder-create input { min-width:0; flex:1; padding:8px 9px; border:1px solid var(--border-default); border-radius:var(--radius-xs); background:var(--surface-panel); color:var(--text-primary); }
+[data-theme="arcane-observatory"] .ao-cw-handout-card[draggable="true"] { cursor:grab; }
+[data-theme="arcane-observatory"] .ao-cw-handout-card[draggable="true"]:active { cursor:grabbing; }
+[data-theme="arcane-observatory"] .ao-cw-handout-drag-hint { display:inline-flex; align-items:center; gap:4px; color:var(--text-muted); font:500 .58rem/1 var(--font-role-label); letter-spacing:.04em; text-transform:uppercase; }
+[data-theme="arcane-observatory"] .ao-cw-handout-folder-select { max-width:140px; padding:5px 7px; border:1px solid var(--border-subtle); border-radius:var(--radius-xs); background:var(--surface-panel-recessed); color:var(--text-secondary); font-size:.68rem; }
+[data-theme="arcane-observatory"] .ao-cw-handout-delete { color:var(--state-danger); }
 @media (max-width:620px) { [data-theme="arcane-observatory"] .campaign-handout-upload-intro { display:grid; } [data-theme="arcane-observatory"] .campaign-handout-upload-intro > span { white-space:normal; } [data-theme="arcane-observatory"] .campaign-handout-upload-selection { display:grid; gap:4px; } }
 
 /* UX audit 2026-07 fix #1: the hero-sheet "First look" tour card leaked the

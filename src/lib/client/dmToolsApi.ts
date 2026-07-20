@@ -1,4 +1,4 @@
-import type { CampaignHandout, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionPin, SessionSummary } from "@/types/dmTools";
+import type { CampaignHandout, CampaignHandoutFolder, CampaignJournalEntry, CampaignNpc, CampaignScene, CampaignSession, CreatureLibraryRecord, EncounterRun, LootParcel, SavedEncounter, SessionPin, SessionSummary } from "@/types/dmTools";
 import type { CampaignCharacterNote, CampaignRequest, CampaignRequestResponse } from "@/types/campaign";
 
 async function api<T>(url:string,init?:RequestInit):Promise<T>{const response=await fetch(url,{...init,headers:{"Content-Type":"application/json",...(init?.headers??{})}});const data=await response.json().catch(()=>({})) as T&{error?:string};if(!response.ok)throw new Error(data.error??"Request failed.");return data;}
@@ -22,6 +22,8 @@ export const dmToolsApi={
   uploadHandout:async (campaignId:string,file:File,input:{title:string;category:string})=>{const form=new FormData();form.set("file",file);form.set("title",input.title);form.set("category",input.category);const response=await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}/handouts/upload`,{method:"POST",credentials:"include",body:form});const data=await response.json().catch(()=>({})) as {handout?:CampaignHandout;error?:string};if(!response.ok||!data.handout)throw new Error(data.error??"Could not upload handout.");return {handout:data.handout};},
   updateHandout:(campaignId:string,id:string,input:unknown)=>api<{handout:CampaignHandout}>(`/api/campaigns/${campaignId}/handouts/${id}`,{method:"PATCH",body:body(input)}),
   archiveHandout:(campaignId:string,id:string)=>api<{ok:true}>(`/api/campaigns/${campaignId}/handouts/${id}`,{method:"DELETE"}),
+  listHandoutFolders:(campaignId:string)=>api<{folders:CampaignHandoutFolder[]}>(`/api/campaigns/${campaignId}/handout-folders`),
+  createHandoutFolder:(campaignId:string,name:string)=>api<{folder:CampaignHandoutFolder}>(`/api/campaigns/${campaignId}/handout-folders`,{method:"POST",body:body({name})}),
   shareHandout:(campaignId:string,id:string,recipientUserId?:string|null)=>api<{handout:CampaignHandout}>(`/api/campaigns/${campaignId}/handouts/${id}/share`,{method:"POST",body:body({recipientUserId:recipientUserId||null})}),
   listJournal:(campaignId:string)=>api<{entries:CampaignJournalEntry[]}>(`/api/campaigns/${campaignId}/journal`),
   createJournal:(campaignId:string,input:unknown)=>api<{entry:CampaignJournalEntry}>(`/api/campaigns/${campaignId}/journal`,{method:"POST",body:body(input)}),
