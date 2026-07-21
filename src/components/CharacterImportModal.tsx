@@ -288,8 +288,11 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
       if (jobIdRef.current) void completeImportJob(jobIdRef.current);
       setStep("creating");
       onCreated();
-    } catch {
-      setError("Network error — please try again.");
+    } catch (e) {
+      // Surface the real reason (e.g. "Class 'X' is not in this ruleset")
+      // instead of a misleading generic network error, so the user can fix
+      // the flagged field on the review screen and retry.
+      setError(e instanceof Error ? e.message : "Could not create the character. Please try again.");
     }
     setBusy(false);
   };

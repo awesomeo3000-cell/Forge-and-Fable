@@ -5,7 +5,7 @@ import type { HeroClass } from "@/types/game";
 // ruleset flows through) without depending on catalog internals or on 2024
 // being production-enabled.
 const buildPlanMock = vi.hoisted(() => vi.fn(() => ({ choices: [] as { level: number }[] })));
-const cantripsMock = vi.hoisted(() => vi.fn(() => 0));
+const cantripsMock = vi.hoisted(() => vi.fn<(classId: string, level: number) => number>(() => 0));
 vi.mock("@/lib/progression/engine", () => ({ buildClassLevelUpPlan: buildPlanMock }));
 vi.mock("@/lib/spells", () => ({ cantripsKnownAt: cantripsMock }));
 

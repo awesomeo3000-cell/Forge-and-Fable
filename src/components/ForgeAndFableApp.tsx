@@ -2287,13 +2287,21 @@ export default function ForgeAndFableApp() {
       <CharacterImportModal
         onCreated={() => {
           setImportOpen(false);
-          // Refetch characters to include the imported one
+          // Refetch characters to include the imported one, then land on its
+          // sheet so a successful import is unmistakable (the modal used to
+          // just close, leaving the user on the dashboard with no confirmation).
           fetch("/api/characters", { headers: authHeaders() })
             .then((r) => r.ok ? r.json() as Promise<{ characters: Character[] }> : null)
             .then((data) => {
               if (data) {
                 setCharacters(data.characters);
-                setSelectedId(data.characters[0]?.id ?? "");
+                const importedId = data.characters[0]?.id ?? "";
+                setSelectedId(importedId);
+                if (importedId) {
+                  setHomeOpen(false);
+                  setCreationPromptOpen(false);
+                  setCreatorOpen(false);
+                }
               }
             })
             .catch(() => {});
