@@ -50,11 +50,20 @@ try {
   const who = await page.evaluate(async () => (await (await fetch("/api/characters", { credentials: "include" })).json()));
   console.log("auth check /api/characters:", who.error ? `ERR ${who.error}` : `${(who.characters ?? []).length} chars`);
 
-  // Open the import modal via MENU → Import character.
-  const menu = page.locator('button:has-text("MENU")').first();
-  if (await menu.count()) { await menu.click(); await page.waitForTimeout(500); await page.locator('text=Import character').first().click().catch(() => {}); }
+  // Open import via the dashboard "Import a Character" card (the user's path).
+  const entry = process.env.ENTRY ?? "card";
+  if (entry === "menu") {
+    const menu = page.locator('button:has-text("MENU")').first();
+    if (await menu.count()) { await menu.click(); await page.waitForTimeout(500); await page.locator('text=Import character').first().click().catch(() => {}); }
+  } else {
+    const card = page.locator('button:has-text("Import Now"), button:has-text("IMPORT NOW")').first();
+    console.log("import card found:", await card.count());
+    await card.click().catch((e) => console.log("card click failed:", String(e).slice(0, 100)));
+  }
   await page.waitForTimeout(1500);
-  await page.screenshot({ path: path.join(DIR, "1-modal-open.png") });
+  await page.screenshot({ path: path.join(DIR, "1-modal-open.png"), fullPage: true });
+  console.log("file input present after open:", await page.locator('input[type="file"]').count());
+  console.log("commission page shown:", (await page.locator('text=Commission a character').count()) > 0 || (await page.locator('text=Quickbuilder').count()) > 0);
 
   const input = page.locator('input[type="file"]').first();
   await input.setInputFiles(PDF);

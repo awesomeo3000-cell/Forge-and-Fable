@@ -2574,7 +2574,12 @@ export default function ForgeAndFableApp() {
             setCreationPromptOpen(true);
             setCreatorOpen(false);
           }}
-          onImportCharacter={() => { setHomeOpen(false); setImportOpen(true); }}
+          // Keep home open as the backdrop — the import modal is an overlay.
+          // Closing home dropped an empty roster onto the commission
+          // (standard/quick/premade) page, which showed through the modal and
+          // stranded the user there if they cancelled or an analyze failed.
+          // (Success still navigates to the new sheet via onCreated.)
+          onImportCharacter={() => { setImportOpen(true); }}
           onNameChange={async (name) => {
             try {
               const response = await fetch("/api/auth/profile", { method: "PATCH", headers: authHeaders(), body: JSON.stringify({ name }) });
