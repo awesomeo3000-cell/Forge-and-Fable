@@ -6,6 +6,7 @@ import type { Character, FeatureChoiceValue } from "@/types/game";
 import rawSpells from "@/data/spells.json";
 import { progressionChoiceOptions } from "@/lib/progression/choiceOptions";
 import { cantripsKnownAt } from "@/lib/spells";
+import { isHomebrewClass } from "@/lib/homebrewIdentity";
 
 type SpellRecord = { id: string; level: number; school: string; classes: string[] };
 const SPELLS = new Map((rawSpells as SpellRecord[]).map((spell) => [spell.id, spell]));
@@ -88,6 +89,21 @@ function validateChoice(character: Character, choice: LevelUpChoice, expectedCou
 export function validateCharacterProgression(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
   const normalizedSubclassId = character.subclassId || undefined;
   const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${character.classId}`);
+  if (!classPacket && isHomebrewClass(character)) {
+    if (!character.customClassName?.trim()) {
+      throw new Error(`Character ${character.id} is missing its homebrew class name.`);
+    }
+    if (normalizedSubclassId) {
+      throw new Error(`Character ${character.id} cannot use catalog subclass "${normalizedSubclassId}" with a homebrew class.`);
+    }
+    if (character.progressionState) {
+      throw new Error(`Character ${character.id} cannot use catalog progression state with a homebrew class.`);
+    }
+    for (const spellId of [...character.spellsKnown, ...(character.preparedSpells ?? []), ...(character.alwaysPreparedSpells ?? []), ...(character.spellbookSpells ?? [])]) {
+      if (!SPELLS.has(spellId)) throw new Error(`Character ${character.id} level ${character.level} field spells violates progression: spell "${spellId}" is invalid.`);
+    }
+    return;
+  }
   if (!classPacket) throw new Error(`Character ${character.id} level ${character.level} field classId violates progression: class "${character.classId}" is invalid for ${character.ruleset}.`);
   if (normalizedSubclassId) {
     const subclass = progressionCatalog.subclasses.get(`${character.ruleset}:${normalizedSubclassId}`);

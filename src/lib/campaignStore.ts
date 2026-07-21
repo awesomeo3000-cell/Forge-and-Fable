@@ -22,6 +22,7 @@ import { decodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCu
 import { listCampaignPresence, listCampaignRequests } from "@/lib/dmTable/store";
 import { scheduleRehearsalEvent } from "@/lib/dmTable/rehearsal";
 import { notifyCampaignDm, notifyCampaignMembers } from "@/lib/notificationStore";
+import { isHomebrewClass, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 
 // -- Types -----------------------------------------------------------------
 
@@ -453,10 +454,10 @@ function calculateMemberSummary(
     .filter((effect) => effect.active && (effect.source === "DM" || effect.advantageMode))
     .map((effect) => effect.label.slice(0, 32))
     .slice(0, 8);
-  const heroClass = ruleset.classes.find((item) => item.id === characterJson.classId);
-  const race = ruleset.races.find((item) => item.id === characterJson.raceId);
-  const casterType = heroClass?.casterType ?? "none";
-  const spellSaveDc = heroClass?.spellcastingAbility
+  const heroClass = resolveCharacterClass(characterJson, ruleset);
+  const race = resolveCharacterRace(characterJson, ruleset);
+  const casterType = heroClass.casterType ?? "none";
+  const spellSaveDc = heroClass.spellcastingAbility
     ? 8 + profBonus + abilityModifier(raced[heroClass.spellcastingAbility])
     : null;
   const slots = maxSlots(casterType, characterJson.level, characterJson.classId);
@@ -476,13 +477,13 @@ function calculateMemberSummary(
     ...(isDm && isGhost ? { isGhost: true } : {}),
     characterId,
     characterName: characterJson.name,
-    characterClass: characterJson.classId,
+    characterClass: isHomebrewClass(characterJson) ? heroClass.name : characterJson.classId,
     characterLevel: characterJson.level,
     currentHp: characterJson.currentHp,
     maxHp: characterJson.maxHp,
     tempHp: characterJson.tempHp ?? 0,
     ac,
-    speed: race?.speed ?? null,
+    speed: race.speed,
     passivePerception,
     passiveInsight,
     passiveInvestigation,

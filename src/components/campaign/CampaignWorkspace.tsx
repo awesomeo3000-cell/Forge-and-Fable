@@ -33,6 +33,8 @@ import { describeRollRequest, summarizeRollRequest } from "@/lib/rollRequest";
 import type { Character } from "@/types/game";
 import type { CampaignEvent, CampaignSyncPayload } from "@/types/campaign";
 import type { CampaignHandoutFolder, CampaignSession, PlayerCampaignMemory } from "@/types/dmTools";
+import { characterClassName } from "@/lib/homebrewIdentity";
+import { ruleset } from "@/lib/ruleset";
 import type { CampaignSection } from "@/lib/campaignRoute";
 import {
   relativeTime,
@@ -852,7 +854,7 @@ export default function CampaignWorkspace(props: {
                   <li key={character.id}>
                     <button type="button" onClick={() => { setChooseCharacterOpen(false); props.onSwitchCharacter(character.id); }}>
                       <strong>{character.name}</strong>
-                      <small>Level {character.level} {character.classId}</small>
+                      <small>Level {character.level} {characterClassName(character, ruleset)}</small>
                     </button>
                   </li>
                 ))}

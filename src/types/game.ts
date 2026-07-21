@@ -364,6 +364,10 @@ export type Character = {
   generalNotes: string;
   raceId: string;
   classId: string;
+  /** Original identity labels for PDF imports that do not match the enabled catalog. */
+  customRaceName?: string;
+  customClassName?: string;
+  customRaceSpeed?: string;
   sourceIds: string[];
   settings: CharacterSettings;
   abilities: AbilityScores;

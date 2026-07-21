@@ -1,6 +1,7 @@
 import { Download, Plus } from "lucide-react";
 import type { Character, Ruleset } from "@/types/game";
 import CharacterPortrait from "@/components/portraits/CharacterPortrait";
+import { characterClassName, characterRaceName } from "@/lib/homebrewIdentity";
 
 /**
  * Your Heroes (dashboard handoff §10): real character cards — portrait, name,
@@ -33,8 +34,8 @@ export default function DashboardCharacters(props: {
   }
 
   const heroLine = (character: Character) => {
-    const race = props.ruleset?.races.find((item) => item.id === character.raceId)?.name;
-    const heroClass = props.ruleset?.classes.find((item) => item.id === character.classId)?.name;
+    const race = props.ruleset ? characterRaceName(character, props.ruleset) : character.customRaceName;
+    const heroClass = props.ruleset ? characterClassName(character, props.ruleset) : character.customClassName;
     return [`Level ${character.level}`, race, heroClass].filter(Boolean).join(" · ");
   };
 

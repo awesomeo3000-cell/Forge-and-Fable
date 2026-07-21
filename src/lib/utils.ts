@@ -285,9 +285,9 @@ export function characterPayload(
 }
 
 export function applyRaceBonuses(abilities: AbilityScores, raceId: string, ruleset: Ruleset) {
-  const race = ruleset.races.find((item) => item.id === raceId) ?? ruleset.races[0];
+  const race = ruleset.races.find((item) => item.id === raceId);
   return abilityKeys.reduce((scores, key) => {
-    scores[key] = abilities[key] + (race.bonuses[key] ?? 0);
+    scores[key] = abilities[key] + (race?.bonuses[key] ?? 0);
     return scores;
   }, {} as AbilityScores);
 }

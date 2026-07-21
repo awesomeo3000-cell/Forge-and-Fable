@@ -25,6 +25,7 @@ import type {
 } from "@/types/game";
 import { ruleset } from "@/lib/ruleset";
 import { SKILLS } from "@/lib/srd";
+import { HOMEBREW_CLASS_ID, HOMEBREW_RACE_ID } from "@/lib/homebrewIdentity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,10 +79,9 @@ function findNamedId<T extends { id: string; name: string }>(items: T[], rawName
 
   if (partial.length === 1) return partial[0].id;
   if (partial.length > 1) {
-    throw new Error(`${label} "${rawName}" matches more than one option. Please make it more specific before importing.`);
+    throw new Error(`${label} "${rawName}" matches more than one standard option. Please make it more specific, or enter the full homebrew name.`);
   }
-
-  throw new Error(`${label} "${rawName}" is not in this ruleset. Please correct it before importing.`);
+  return null;
 }
 
 function mapAbilityName(value: string): AbilityKey | null {
@@ -231,8 +231,10 @@ function draftToCharacterPayload(draft: ImportDraft): Omit<Character, "id" | "us
   const className = requireText(draft.identity.className.value, "Class");
   const species = requireText(draft.identity.species.value, "Species");
   const level = requireInteger(draft.identity.level.value, "Level", 1, 20);
-  const classId = findNamedId(ruleset.classes, className, "Class");
-  const raceId = findNamedId(ruleset.races, species, "Species");
+  const matchedClassId = findNamedId(ruleset.classes, className, "Class");
+  const matchedRaceId = findNamedId(ruleset.races, species, "Species");
+  const classId = matchedClassId ?? HOMEBREW_CLASS_ID;
+  const raceId = matchedRaceId ?? HOMEBREW_RACE_ID;
 
   const missingAbilities = abilityKeys.filter((key) => typeof draft.abilities[key]?.value !== "number");
   if (missingAbilities.length > 0) {
@@ -283,6 +285,11 @@ function draftToCharacterPayload(draft: ImportDraft): Omit<Character, "id" | "us
     generalNotes: draft.notes.backstory.value ?? "",
     raceId,
     classId,
+    ...(matchedRaceId ? {} : {
+      customRaceName: species,
+      ...(draft.vitals.speed.value?.trim() ? { customRaceSpeed: draft.vitals.speed.value.trim() } : {}),
+    }),
+    ...(matchedClassId ? {} : { customClassName: className }),
     sourceIds: ["phb"],
     settings: {
       diceRollingEnabled: true,

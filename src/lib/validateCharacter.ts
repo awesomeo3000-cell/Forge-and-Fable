@@ -1,6 +1,7 @@
 import { assertSnapshotCharacter } from "@/lib/characterSnapshots";
 import { isSupportedRuleset } from "@/lib/characterRuleset";
 import { isCatalogPortrait } from "@/data/portraits";
+import { HOMEBREW_CLASS_ID, HOMEBREW_RACE_ID } from "@/lib/homebrewIdentity";
 
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
@@ -41,7 +42,7 @@ function assertPlainObjectOrString(value: unknown, label: string, maxStringLengt
 export const ALLOWED_PATCH_FIELDS = new Set([
   "name", "portraitUrl", "ruleset", "level", "alignment", "background",
   "physicalCharacteristics", "personalCharacteristics", "generalNotes",
-  "raceId", "classId", "sourceIds", "settings",
+  "raceId", "classId", "customRaceName", "customClassName", "customRaceSpeed", "sourceIds", "settings",
   "abilities", "currentHp", "maxHp", "tempHp",
   "inventory", "spellsKnown", "customRules",
   "skillProficiencies", "skillExpertise", "raceBonusChoices", "savingThrowProficiencies",
@@ -93,6 +94,17 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
       case "level":
         if (!isPatch) assertInteger(val, "level", 1, 20);
         else if (val !== undefined) assertInteger(val, "level", 1, 20);
+        break;
+      case "raceId":
+      case "classId":
+        if (!isPatch || val !== undefined) assertString(val, key, 80);
+        break;
+      case "customRaceName":
+      case "customClassName":
+        if (val !== undefined) assertString(val, key, 100);
+        break;
+      case "customRaceSpeed":
+        if (val !== undefined) assertString(val, key, 40);
         break;
       case "currentHp":
       case "tempHp":
@@ -387,6 +399,14 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
 
   if (!isPatch && !sanitized.ruleset) {
     throw new Error(`"ruleset" is required.`);
+  }
+
+  if (sanitized.classId === HOMEBREW_CLASS_ID && !(sanitized.customClassName as string | undefined)?.trim()) {
+    throw new Error(`"customClassName" is required for a homebrew class.`);
+  }
+
+  if (sanitized.raceId === HOMEBREW_RACE_ID && !(sanitized.customRaceName as string | undefined)?.trim()) {
+    throw new Error(`"customRaceName" is required for a homebrew species.`);
   }
 
   return sanitized;

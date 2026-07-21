@@ -4,7 +4,7 @@ import { memo, useState, useRef, useEffect } from "react";
 import { Upload, X, Check, AlertTriangle, HelpCircle, FileText, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import type { ImportDraft, ImportField, ImportConfidence } from "@/lib/import/pdfTypes";
-import type { AbilityKey } from "@/types/game";
+import type { AbilityKey, Character } from "@/types/game";
 import { abilityLabels } from "@/lib/utils";
 import {
   analyzePdf,
@@ -19,7 +19,7 @@ import {
 type ImportStep = "upload" | "review" | "creating";
 
 type Props = {
-  onCreated: () => void;
+  onCreated: (character: Character) => void;
   onClose: () => void;
 };
 
@@ -132,6 +132,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
   const jobIdRef = useRef<string | null>(null);
   const cancelJobRef = useRef<(() => void) | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -149,6 +150,14 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
       queueMicrotask(() => triggerRef.current?.focus());
     };
   }, [onClose]);
+
+  useEffect(() => {
+    if (!error) return;
+    queueMicrotask(() => {
+      errorRef.current?.scrollIntoView({ block: "nearest" });
+      errorRef.current?.focus({ preventScroll: true });
+    });
+  }, [error]);
 
   // ── Upload & analyze ──
 
@@ -283,11 +292,11 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
     setError("");
 
     try {
-      await createCharacterFromPdfDraft(draft);
+      const character = await createCharacterFromPdfDraft(draft);
       // Fire-and-forget: lets the server drop the job's temp files early.
       if (jobIdRef.current) void completeImportJob(jobIdRef.current);
       setStep("creating");
-      onCreated();
+      onCreated(character);
     } catch (e) {
       // Surface the real reason (e.g. "Class 'X' is not in this ruleset")
       // instead of a misleading generic network error, so the user can fix
@@ -350,7 +359,7 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
         </div>
 
         {/* Error banner */}
-        {error && <div className="import-error-banner">{error}</div>}
+        {error && <div ref={errorRef} className="import-error-banner" role="alert" tabIndex={-1}>{error}</div>}
 
         {/* Step: Upload */}
         {step === "upload" && (

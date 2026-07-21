@@ -52,6 +52,7 @@ import AppearancePanel from "@/components/AppearancePanel";
 import SheetSection from "@/components/SheetSection";
 import SheetRollButton, { D20Icon, DieIcon } from "@/components/SheetRollButton";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
+import { isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 
 const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 
@@ -194,10 +195,10 @@ export default memo(function HeroSheet(props: {
 }) {
   const isReadOnly = props.readOnly === true;
 
-  const race =
-    props.ruleset.races.find((r) => r.id === props.character.raceId) ?? props.ruleset.races[0];
-  const heroClass =
-    props.ruleset.classes.find((c) => c.id === props.character.classId) ?? props.ruleset.classes[0];
+  const race = resolveCharacterRace(props.character, props.ruleset);
+  const heroClass = resolveCharacterClass(props.character, props.ruleset);
+  const hasHomebrewClass = isHomebrewClass(props.character);
+  const hasHomebrewRace = isHomebrewRace(props.character);
   const subclassLevel = getClassData(heroClass.id)?.subclassLevel ?? heroClass.subclassLevel ?? 3;
   const subclassFeatures = props.character.subclassId
     ? subclassFeaturesForLevel(heroClass.id, props.character.subclassId, props.character.level)
@@ -806,7 +807,7 @@ export default memo(function HeroSheet(props: {
 
   /* ── Spell preparation & casting ── */
   const preparedIds = props.character.preparedSpells ?? [];
-  const effectiveFeatureResources = props.character.ruleset === "2014"
+  const effectiveFeatureResources = props.character.ruleset === "2014" && !hasHomebrewClass
     ? progressionPatchForCharacter(props.character).featureResources ?? props.character.featureResources ?? {}
     : props.character.featureResources ?? {};
   const prepLimit = _isPrepared && spellAbility
@@ -983,6 +984,11 @@ export default memo(function HeroSheet(props: {
     const level = props.character.level;
     if (level <= 1) return;
     const newLevel = level - 1;
+    if (hasHomebrewClass) {
+      if (!window.confirm(`Change this homebrew character to level ${newLevel}? Class features and hit points will not be adjusted automatically.`)) return;
+      props.onUpdate({ level: newLevel });
+      return;
+    }
     if (!window.confirm(`Revert to level ${newLevel}? This undoes the HP, feat, and subclass gains from the removed level.`)) return;
 
     const conMod = abilityModifier(props.finalAbilities.constitution);
@@ -2287,7 +2293,15 @@ export default memo(function HeroSheet(props: {
               <div className="character-header__eyebrow">
                 <button className="character-header__lvl" type="button" title="Level down" aria-label="Level down" onClick={handleLevelDown}><Minus size={11} /></button>
                 <span>Level {props.character.level} · {heroClass.name}</span>
-                <button className="character-header__lvl" type="button" title="Level up" aria-label="Level up" onClick={() => { if (props.character.level < 20) setLevelUpTarget(props.character.level + 1); }}><Plus size={11} /></button>
+                <button className="character-header__lvl" type="button" title={hasHomebrewClass ? "Change homebrew level manually" : "Level up"} aria-label="Level up" onClick={() => {
+                  if (props.character.level >= 20) return;
+                  const nextLevel = props.character.level + 1;
+                  if (hasHomebrewClass) {
+                    if (window.confirm(`Change this homebrew character to level ${nextLevel}? Class features and hit points will not be adjusted automatically.`)) props.onUpdate({ level: nextLevel });
+                    return;
+                  }
+                  setLevelUpTarget(nextLevel);
+                }}><Plus size={11} /></button>
               </div>
               <h1 className="character-header__name" id="cs-char-name">{props.character.name}</h1>
               <p className="character-header__summary">
@@ -2295,6 +2309,8 @@ export default memo(function HeroSheet(props: {
               </p>
               <div className="character-header__tags">
                 {props.character.background ? <span className="character-header__tag">{props.character.background}</span> : null}
+                {hasHomebrewClass ? <span className="character-header__tag">Homebrew class</span> : null}
+                {hasHomebrewRace ? <span className="character-header__tag">Homebrew species</span> : null}
                 <span className="character-header__tag">{props.character.ruleset === "2024" ? "5e 2024 Rules" : "5e Core Rules"}</span>
               </div>
             </header>
@@ -2601,7 +2617,7 @@ export default memo(function HeroSheet(props: {
           </div>
         </div>
       ) : null}
-      {levelUpTarget != null ? (
+      {levelUpTarget != null && !hasHomebrewClass ? (
         <LevelUpModal
           character={props.character}
           characterName={props.character.name}

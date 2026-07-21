@@ -78,6 +78,7 @@ import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
 import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
+import { resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 import { patchFromSnapshot } from "@/lib/characterSnapshots";
 import { encodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { formatCampaignHash, parseCampaignHash, type CampaignSection } from "@/lib/campaignRoute";
@@ -2285,26 +2286,13 @@ export default function ForgeAndFableApp() {
     ) : null}
     {importOpen ? (
       <CharacterImportModal
-        onCreated={() => {
+        onCreated={(character) => {
           setImportOpen(false);
-          // Refetch characters to include the imported one, then land on its
-          // sheet so a successful import is unmistakable (the modal used to
-          // just close, leaving the user on the dashboard with no confirmation).
-          fetch("/api/characters", { headers: authHeaders() })
-            .then((r) => r.ok ? r.json() as Promise<{ characters: Character[] }> : null)
-            .then((data) => {
-              if (data) {
-                setCharacters(data.characters);
-                const importedId = data.characters[0]?.id ?? "";
-                setSelectedId(importedId);
-                if (importedId) {
-                  setHomeOpen(false);
-                  setCreationPromptOpen(false);
-                  setCreatorOpen(false);
-                }
-              }
-            })
-            .catch(() => {});
+          setCharacters((current) => [character, ...current.filter((entry) => entry.id !== character.id)]);
+          setSelectedId(character.id);
+          setHomeOpen(false);
+          setCreationPromptOpen(false);
+          setCreatorOpen(false);
         }}
         onClose={() => setImportOpen(false)}
       />
@@ -2609,9 +2597,9 @@ export default function ForgeAndFableApp() {
               </>
             ) : (
               filteredVaultChars.map((character) => {
-              const race = ruleset.races.find((item) => item.id === character.raceId);
-              const heroClass = ruleset.classes.find((item) => item.id === character.classId);
-              const recordLine = [race?.name, heroClass?.name, `${ordinalLevel(character.level)} level`]
+              const race = resolveCharacterRace(character, ruleset);
+              const heroClass = resolveCharacterClass(character, ruleset);
+              const recordLine = [race.name, heroClass.name, `${ordinalLevel(character.level)} level`]
                 .filter(Boolean)
                 .join(" · ");
               return (

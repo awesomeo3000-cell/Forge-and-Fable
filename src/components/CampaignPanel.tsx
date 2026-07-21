@@ -7,6 +7,8 @@ import { FONT_STACKS } from "@/lib/skins";
 import { CAMPAIGN_THEMES, getCampaignTheme } from "@/lib/campaignThemes";
 import type { CampaignSummary } from "@/lib/campaignStore";
 import type { Character, CharacterTheme } from "@/types/game";
+import { characterClassName } from "@/lib/homebrewIdentity";
+import { ruleset } from "@/lib/ruleset";
 
 type PanelView = "list" | "create" | "join";
 
@@ -342,7 +344,7 @@ export default memo(function CampaignPanel({
                 <select value={joinCharId} onChange={(event) => setJoinCharId(event.currentTarget.value)}>
                   <option value="">Select a character</option>
                   {characters.map((character) => (
-                    <option key={character.id} value={character.id}>{character.name} (Level {character.level} {character.classId})</option>
+                    <option key={character.id} value={character.id}>{character.name} (Level {character.level} {characterClassName(character, ruleset)})</option>
                   ))}
                 </select>
                 {characters.length === 0 ? (
