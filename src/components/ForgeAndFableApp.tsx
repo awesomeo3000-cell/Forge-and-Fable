@@ -31,7 +31,6 @@ import type {
   CustomRule,
   DraftCharacter,
   FeedbackEntry,
-  HeroClass,
   InventoryItem,
   PublicUser,
   RollMode,
@@ -60,9 +59,9 @@ import AdminPanel from "@/components/AdminPanel";
 import NotificationInbox from "@/components/NotificationInbox";
 import type { FeedbackInput } from "@/components/FeedbackModal";
 import CampaignTableStrip from "@/components/CampaignTableStrip";
-import { cantripsKnownAt, loadSpells } from "@/lib/spells";
+import { loadSpells } from "@/lib/spells";
 import { getClassData } from "@/lib/subclasses";
-import { buildClassLevelUpPlan } from "@/lib/progression/engine";
+import { creationChoiceLevels } from "@/lib/progression/creationChoices";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { RollingDie } from "@/components/DiceRollOverlay";
 import type { RollHistoryEntry } from "@/components/RollDrawer";
@@ -126,22 +125,6 @@ type CreationChoices = {
 };
 
 type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
-
-/** Levels 1..target that require a player choice when starting above level 1:
-    subclass, ASI/feat, a spell pick for known casters, or a cantrip gain (any
-    caster with cantrips — prepared casters included, e.g. cleric at 4/10).
-    Level 1 is included only for level-1-subclass classes (sorcerer/warlock/
-    cleric) so a high-level start still picks its origin. HP-only levels are
-    skipped — the creator already computes starting HP for the chosen level. */
-function creationChoiceLevels(heroClass: HeroClass, targetLevel: number, raceId?: string): number[] {
-  const plan = buildClassLevelUpPlan({ ruleset: "2014", classId: heroClass.id, fromLevel: 0, toLevel: targetLevel });
-  const levels = plan.choices.map((choice) => choice.level);
-  for (let level = 1; level <= targetLevel; level += 1) {
-    if (cantripsKnownAt(heroClass.id, level) > cantripsKnownAt(heroClass.id, level - 1)) levels.push(level);
-  }
-  if (raceId === "high-elf-legacy" && targetLevel >= 1) levels.push(1);
-  return Array.from(new Set(levels)).sort((a, b) => a - b);
-}
 
 const NORMAL_ROLL_LINGER_MS = 1800;
 const KEPT_D20_LINGER_MS = 4200;
@@ -1232,7 +1215,7 @@ export default function ForgeAndFableApp() {
     // levels gained, then forge with them. Level-1 starts forge immediately.
     const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
     if (heroClass && draft.level >= 1) {
-      const levels = creationChoiceLevels(heroClass, draft.level, draft.raceId);
+      const levels = creationChoiceLevels(ruleset.id, heroClass, draft.level, draft.raceId);
       if (levels.length > 0) {
         const base = characterPayload(draft, ruleset);
         setCreationSeq({

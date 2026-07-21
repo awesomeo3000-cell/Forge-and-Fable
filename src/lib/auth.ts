@@ -67,7 +67,14 @@ function getCookieValue(request: Request, name: string): string | null {
   for (const part of cookieHeader.split(";")) {
     const [rawKey, ...rawValue] = part.trim().split("=");
     if (rawKey === name) {
-      return decodeURIComponent(rawValue.join("="));
+      try {
+        return decodeURIComponent(rawValue.join("="));
+      } catch {
+        // Malformed percent-encoding (e.g. `ff_session=%`) throws URIError.
+        // Treat it as an absent cookie so callers return a controlled 401
+        // instead of a 500 (DW-009).
+        return null;
+      }
     }
   }
 
@@ -103,8 +110,12 @@ export async function authenticateActorRequest(request: Request): Promise<string
   }
 }
 
-export async function getImpersonationSession(request: Request): Promise<ImpersonationPayload | null> {
-  const actorUserId = await authenticateActorRequest(request);
+/**
+ * Resolve the impersonation target for an already-authenticated actor. Split
+ * out so callers that have verified the actor session don't verify it a second
+ * time (DW-010).
+ */
+async function resolveImpersonationTarget(request: Request, actorUserId: string): Promise<ImpersonationPayload | null> {
   const token = getCookieValue(request, IMPERSONATION_COOKIE_NAME);
   if (!token) return null;
   try {
@@ -117,10 +128,15 @@ export async function getImpersonationSession(request: Request): Promise<Imperso
   }
 }
 
+export async function getImpersonationSession(request: Request): Promise<ImpersonationPayload | null> {
+  const actorUserId = await authenticateActorRequest(request);
+  return resolveImpersonationTarget(request, actorUserId);
+}
+
 /** Authenticate the effective user, honoring a short-lived admin impersonation cookie. */
 export async function authenticateRequest(request: Request): Promise<string> {
   const actorUserId = await authenticateActorRequest(request);
-  const impersonation = await getImpersonationSession(request);
+  const impersonation = await resolveImpersonationTarget(request, actorUserId);
   return impersonation?.targetUserId ?? actorUserId;
 }
 

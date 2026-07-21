@@ -38,6 +38,18 @@ export class CharacterConflictError extends Error {
   }
 }
 
+/**
+ * Thrown by loginUser when the email/password pair does not match a vault.
+ * A distinct type lets the login route return 401 only for genuine credential
+ * failures, sending infrastructure faults to 500 instead (DW-004).
+ */
+export class InvalidCredentialsError extends Error {
+  constructor(message = "The email or password does not match a vault.") {
+    super(message);
+    this.name = "InvalidCredentialsError";
+  }
+}
+
 function publicUser(user: StoredUser): PublicUser {
   return {
     id: user.id,
@@ -203,7 +215,7 @@ export async function loginUser(input: {
   const user = row ? storedUserFromRow(row) : null;
   const passwordMatches = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
   if (!user || !passwordMatches) {
-    throw new Error("The email or password does not match a vault.");
+    throw new InvalidCredentialsError();
   }
 
   return publicUser(user);
