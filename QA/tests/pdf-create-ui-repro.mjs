@@ -12,7 +12,7 @@ import { SignJWT } from "jose";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const PDF = path.join(ROOT, "tests", "fixtures", "pdf-import", "searchable.pdf");
+const PDF = path.join(ROOT, "tests", "fixtures", "pdf-import", process.env.PDF ?? "searchable.pdf");
 const DIR = path.join(ROOT, "QA", "screenshots", "pdf-create-repro");
 fs.mkdirSync(DIR, { recursive: true });
 
