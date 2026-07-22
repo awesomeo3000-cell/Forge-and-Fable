@@ -5,6 +5,7 @@ import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
 import { signToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { POST } from "@/app/api/import/pdf/create/route";
+import { GET as LIST_CHARACTERS } from "@/app/api/characters/route";
 import { emptyDraft, reviewField, type ImportDraft } from "@/lib/import/pdfTypes";
 import { HOMEBREW_CLASS_ID, HOMEBREW_RACE_ID, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 import { ruleset } from "@/lib/ruleset";
@@ -60,16 +61,17 @@ function importDraft(className: string, species: string): ImportDraft {
 
 async function createFromDraft(draft: ImportDraft) {
   const cookie = await seededCookie();
-  return POST(new Request("http://local/api/import/pdf/create", {
+  const response = await POST(new Request("http://local/api/import/pdf/create", {
     method: "POST",
     headers: { cookie, "Content-Type": "application/json" },
     body: JSON.stringify({ draft }),
   }));
+  return { response, cookie };
 }
 
 describe("PDF character creation", () => {
   it("keeps catalog matches on standard class and species IDs", { timeout: 15_000 }, async () => {
-    const response = await createFromDraft(importDraft("Ranger", "Wood"));
+    const { response } = await createFromDraft(importDraft("Ranger", "Wood"));
     expect(response.status, JSON.stringify(await response.clone().json())).toBe(201);
     const character = (await response.json()).character as Character;
 
@@ -79,7 +81,7 @@ describe("PDF character creation", () => {
   });
 
   it("persists non-catalog class and species names as homebrew identity", { timeout: 15_000 }, async () => {
-    const response = await createFromDraft(importDraft("Echo Knight Savant", "Starling-Born"));
+    const { response, cookie } = await createFromDraft(importDraft("Echo Knight Savant", "Starling-Born"));
     expect(response.status, JSON.stringify(await response.clone().json())).toBe(201);
     const character = (await response.json()).character as Character;
 
@@ -94,10 +96,16 @@ describe("PDF character creation", () => {
     });
     expect(resolveCharacterClass(character, ruleset)).toMatchObject({ name: "Echo Knight Savant", casterType: "none" });
     expect(resolveCharacterRace(character, ruleset)).toMatchObject({ name: "Starling-Born", speed: "40 ft.", bonuses: {} });
+
+    const reloaded = await LIST_CHARACTERS(new Request("http://local/api/characters", { headers: { cookie } }));
+    expect(reloaded.status).toBe(200);
+    await expect(reloaded.json()).resolves.toMatchObject({
+      characters: [expect.objectContaining({ id: character.id, customClassName: "Echo Knight Savant", customRaceName: "Starling-Born" })],
+    });
   });
 
   it("asks for a more specific name when a partial standard match is ambiguous", { timeout: 15_000 }, async () => {
-    const response = await createFromDraft(importDraft("Ranger", "Dwa"));
+    const { response } = await createFromDraft(importDraft("Ranger", "Dwa"));
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       error: expect.stringMatching(/matches more than one standard option/i),

@@ -386,8 +386,10 @@ export default function ForgeAndFableApp() {
     }
   }, []);
 
+  const signedInUserId = user?.id ?? null;
+
   useEffect(() => {
-    if (!user) {
+    if (!signedInUserId) {
       return;
     }
 
@@ -422,19 +424,19 @@ export default function ForgeAndFableApp() {
         if (!data || !mounted) return;
         setCharacters(data.characters);
         setSelectedId((current) => current || data.characters[0]?.id || "");
-        setCharactersLoadedForUser(user.id);
+        setCharactersLoadedForUser(signedInUserId);
       })
       .catch((error: Error) => {
         if (mounted) {
           setStatus(error.message);
-          setCharactersLoadedForUser(user.id);
+          setCharactersLoadedForUser(signedInUserId);
         }
       })
 
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [signedInUserId]);
 
   const charactersLoading = Boolean(user && charactersLoadedForUser !== user.id);
 
