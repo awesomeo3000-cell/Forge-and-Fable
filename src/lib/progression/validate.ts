@@ -7,6 +7,7 @@ import rawSpells from "@/data/spells.json";
 import { progressionChoiceOptions } from "@/lib/progression/choiceOptions";
 import { cantripsKnownAt } from "@/lib/spells";
 import { isHomebrewClass } from "@/lib/homebrewIdentity";
+import { CharacterValidationError } from "@/lib/validateCharacter";
 
 type SpellRecord = { id: string; level: number; school: string; classes: string[] };
 const SPELLS = new Map((rawSpells as SpellRecord[]).map((spell) => [spell.id, spell]));
@@ -86,7 +87,7 @@ function validateChoice(character: Character, choice: LevelUpChoice, expectedCou
   }
 }
 
-export function validateCharacterProgression(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
+function validateCharacterProgressionUnchecked(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
   const normalizedSubclassId = character.subclassId || undefined;
   const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${character.classId}`);
   if (!classPacket && isHomebrewClass(character)) {
@@ -176,5 +177,15 @@ export function validateCharacterProgression(character: Character, requireComple
         throw new Error(`Character ${character.id} level ${character.level} field featureResources.${resourceId}.maximum violates the expected maximum.`);
       }
     }
+  }
+}
+
+/** Progression mismatches are client input errors, not database outages. */
+export function validateCharacterProgression(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
+  try {
+    validateCharacterProgressionUnchecked(character, requireComplete, choicesFromLevel);
+  } catch (error) {
+    if (error instanceof CharacterValidationError) throw error;
+    throw new CharacterValidationError(error instanceof Error ? error.message : "Invalid character progression.");
   }
 }

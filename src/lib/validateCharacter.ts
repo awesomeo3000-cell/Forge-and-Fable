@@ -38,6 +38,13 @@ function assertPlainObjectOrString(value: unknown, label: string, maxStringLengt
   }
 }
 
+export class CharacterValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CharacterValidationError";
+  }
+}
+
 /** Fields that may be updated via PATCH or set at creation. id, userId, and createdAt are immutable. */
 export const ALLOWED_PATCH_FIELDS = new Set([
   "name", "portraitUrl", "ruleset", "level", "alignment", "background",
@@ -55,7 +62,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
 ]);
 
 /** Validate a character creation payload or partial update patch. */
-export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<string, unknown> {
+function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record<string, unknown> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Body must be a JSON object.");
   }
@@ -425,4 +432,14 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
   }
 
   return sanitized;
+}
+
+/** Keep malformed client payloads distinguishable from persistence failures. */
+export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<string, unknown> {
+  try {
+    return validateCharacterInputUnchecked(raw, isPatch);
+  } catch (error) {
+    if (error instanceof CharacterValidationError) throw error;
+    throw new CharacterValidationError(error instanceof Error ? error.message : "Invalid character payload.");
+  }
 }

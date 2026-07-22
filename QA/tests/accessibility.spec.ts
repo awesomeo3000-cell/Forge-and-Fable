@@ -34,8 +34,12 @@ test("authenticated home and account dialog pass automated WCAG and keyboard che
   await expect(page.getByRole("heading", { name: "Welcome to the Hearth" })).toBeVisible({ timeout: 15_000 });
   await expectNoSeriousAxeViolations(page);
 
-  await page.getByTitle("Account data").focus();
-  await page.getByTitle("Account data").press("Enter");
+  const workspaceMenu = page.getByTitle("Workspace menu");
+  await workspaceMenu.focus();
+  await workspaceMenu.press("Enter");
+  const accountData = page.getByRole("menuitem", { name: "My data" });
+  await accountData.focus();
+  await accountData.press("Enter");
   const dialog = page.getByRole("dialog", { name: "Your data" });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator(":focus")).toHaveCount(1);
@@ -43,7 +47,8 @@ test("authenticated home and account dialog pass automated WCAG and keyboard che
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 
-  await page.getByTitle("Account data").click();
+  await workspaceMenu.click();
+  await page.getByRole("menuitem", { name: "My data" }).click();
   await page.getByLabel("Confirm password").fill(password);
   page.once("dialog", (nativeDialog) => nativeDialog.accept());
   await page.getByRole("button", { name: "Delete my account" }).click();

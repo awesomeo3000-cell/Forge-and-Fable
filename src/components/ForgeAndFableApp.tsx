@@ -288,6 +288,10 @@ export default function ForgeAndFableApp() {
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const saveCoordinatorRef = useRef<CharacterSaveCoordinator | null>(null);
+  // A character can be created while the initial roster request is still in
+  // flight. Keep those confirmed POST results from being overwritten by the
+  // older GET response (the old race made a successful Seal look unsaved).
+  const pendingCharacterIdsRef = useRef<Set<string>>(new Set());
   if (!saveCoordinatorRef.current) {
     saveCoordinatorRef.current = new CharacterSaveCoordinator({
       send: updateCharacterApi,
@@ -457,7 +461,19 @@ export default function ForgeAndFableApp() {
       })
       .then((data) => {
         if (!data || !mounted) return;
-        setCharacters(data.characters);
+        const serverIds = new Set(data.characters.map((character) => character.id));
+        for (const id of pendingCharacterIdsRef.current) {
+          if (serverIds.has(id)) pendingCharacterIdsRef.current.delete(id);
+        }
+        setCharacters((current) => {
+          const serverCharacters = new Map(data.characters.map((character) => [character.id, character]));
+          for (const character of current) {
+            if (pendingCharacterIdsRef.current.has(character.id) && !serverCharacters.has(character.id)) {
+              serverCharacters.set(character.id, character);
+            }
+          }
+          return Array.from(serverCharacters.values());
+        });
         setSelectedId((current) => current || data.characters[0]?.id || "");
         setCharactersLoadedForUser(signedInUserId);
       })
@@ -959,6 +975,7 @@ export default function ForgeAndFableApp() {
     setUser(null);
     setImpersonationActor(null);
     setCharactersLoadedForUser(null);
+    pendingCharacterIdsRef.current.clear();
     setCharacters([]);
     setSelectedId("");
     setCreationPromptOpen(false);
@@ -1264,6 +1281,7 @@ export default function ForgeAndFableApp() {
   }
 
   function addCreatedCharacter(character: Character) {
+    pendingCharacterIdsRef.current.add(character.id);
     setCharacters((current) => [character, ...current.filter((entry) => entry.id !== character.id)]);
     setSelectedId(character.id);
     setCreationPromptOpen(false);
@@ -1594,6 +1612,7 @@ export default function ForgeAndFableApp() {
         return;
       }
 
+      pendingCharacterIdsRef.current.delete(selected.id);
       setCharacters((current) => current.filter((character) => character.id !== selected.id));
       setSelectedId("");
       setStatus(`${selected.name} retired`);
@@ -2471,8 +2490,7 @@ export default function ForgeAndFableApp() {
       <CharacterImportModal
         onCreated={(character) => {
           setImportOpen(false);
-          setCharacters((current) => [character, ...current.filter((entry) => entry.id !== character.id)]);
-          setSelectedId(character.id);
+          addCreatedCharacter(character);
           setHomeOpen(false);
           setCreationPromptOpen(false);
           setCreatorOpen(false);

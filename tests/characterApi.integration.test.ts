@@ -1,10 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { closeDb, getDb } from "@/lib/db";
 import { createCharacter } from "@/lib/vaultStore";
+import * as vaultStore from "@/lib/vaultStore";
 import { signToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { GET, PUT } from "@/app/api/characters/[id]/route";
 import { DELETE } from "@/app/api/characters/[id]/route";
@@ -131,6 +132,29 @@ describe("character API persistence", () => {
     expect(deleted.status).toBe(200);
     const missing = await GET(new Request(`http://local/api/characters/${created.id}`, { headers: { cookie } }), context);
     expect(missing.status).toBe(404);
+  });
+
+  it("keeps malformed payloads at 400 and reports storage failures as 500", async () => {
+    const { cookie } = await seededUser();
+    const invalid = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "", ruleset: "2014" }),
+    }));
+    expect(invalid.status).toBe(400);
+
+    const createSpy = vi.spyOn(vaultStore, "createCharacter").mockRejectedValueOnce(new Error("disk unavailable"));
+    try {
+      const failed = await POST(new Request("http://local/api/characters", {
+        method: "POST",
+        headers: { cookie, "Content-Type": "application/json" },
+        body: JSON.stringify(characterInput("Storage Failure")),
+      }));
+      expect(failed.status).toBe(500);
+      expect(await failed.json()).toEqual({ error: "Could not create character." });
+    } finally {
+      createSpy.mockRestore();
+    }
   });
 
   it("reports database write health", async () => {

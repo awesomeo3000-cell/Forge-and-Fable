@@ -70,8 +70,9 @@ test("register, log in, export data, and delete the account", async ({ page }, t
   await expect(page.getByRole("button", { name: "Enter" })).toBeVisible();
   await page.getByRole("button", { name: "Enter" }).click();
 
-  await expect(page.getByTitle("Account data")).toBeVisible({ timeout: 15_000 });
-  await page.getByTitle("Account data").click();
+  await expect(page.getByTitle("Workspace menu")).toBeVisible({ timeout: 15_000 });
+  await page.getByTitle("Workspace menu").click();
+  await page.getByRole("menuitem", { name: "My data" }).click();
   await expect(page.getByRole("heading", { name: "Your data" })).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
