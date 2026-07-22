@@ -134,6 +134,32 @@ describe("character API persistence", () => {
     expect(missing.status).toBe(404);
   });
 
+  it("loads the full roster when a stored character references a retired catalog portrait", async () => {
+    const { userId, cookie } = await seededUser();
+    const current = await createCharacter(userId, characterInput("Current Portrait Hero"));
+    const createdAt = new Date(Date.now() - 1_000).toISOString();
+    const legacy = {
+      ...characterInput("Legacy Portrait Hero"),
+      id: "legacy-portrait-character",
+      userId,
+      createdAt,
+      portraitUrl: "portrait-aasimar-02",
+    };
+    getDb().prepare("INSERT INTO characters (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(legacy.id, userId, JSON.stringify(legacy), createdAt, createdAt);
+
+    const response = await LIST(new Request("http://local/api/characters", { headers: { cookie } }));
+    expect(response.status).toBe(200);
+    const characters = (await response.json()).characters as Array<Record<string, unknown>>;
+    expect(characters).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: current.id, name: "Current Portrait Hero" }),
+    ]));
+    expect(characters.find((character) => character.id === legacy.id)).toMatchObject({
+      name: "Legacy Portrait Hero",
+    });
+    expect(characters.find((character) => character.id === legacy.id)).not.toHaveProperty("portraitUrl");
+  });
+
   it("keeps malformed payloads at 400 and reports storage failures as 500", async () => {
     const { cookie } = await seededUser();
     const invalid = await POST(new Request("http://local/api/characters", {

@@ -45,6 +45,10 @@ export class CharacterValidationError extends Error {
   }
 }
 
+export function isAllowedPortraitReference(value: string): boolean {
+  return value === "" || isCatalogPortrait(value) || /^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value);
+}
+
 /** Fields that may be updated via PATCH or set at creation. id, userId, and createdAt are immutable. */
 export const ALLOWED_PATCH_FIELDS = new Set([
   "name", "portraitUrl", "ruleset", "level", "alignment", "background",
@@ -93,7 +97,7 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
       case "portraitUrl":
         if (val !== undefined) {
           assertString(val, "portraitUrl", 500);
-          if (val && !isCatalogPortrait(val) && !/^https?:\/\//i.test(val) && !/^\/(?!\/)/.test(val)) {
+          if (!isAllowedPortraitReference(val)) {
             throw new Error(`"portraitUrl" must be a catalog portrait ID, an http(s) URL, or a site-relative path.`);
           }
         }

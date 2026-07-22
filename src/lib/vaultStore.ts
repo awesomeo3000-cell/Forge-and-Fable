@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { getDb } from "@/lib/db";
-import { validateCharacterInput } from "@/lib/validateCharacter";
+import { isAllowedPortraitReference, validateCharacterInput } from "@/lib/validateCharacter";
 import { isAdminEmail } from "@/lib/adminEmail";
 import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
 import { validateCharacterProgression } from "@/lib/progression/validate";
@@ -123,6 +123,15 @@ function parseCharacter(row: JsonRow): Character {
     ...(parsed as Record<string, unknown>),
     ruleset: normalizeStoredRuleset((parsed as Record<string, unknown>).ruleset),
   } as Character;
+  // Built-in portrait catalogs change over time. Older characters can still
+  // reference a retired opaque portrait ID whose asset no longer exists. That
+  // is recoverable display metadata, not a reason to make the owner's entire
+  // character roster unreadable. Keep new writes strict, but clear retired
+  // references while hydrating stored records so the user can choose a current
+  // portrait the next time they edit the character.
+  if (typeof character.portraitUrl === "string" && !isAllowedPortraitReference(character.portraitUrl)) {
+    delete character.portraitUrl;
+  }
   if (
     typeof character.id !== "string" ||
     typeof character.userId !== "string" ||
