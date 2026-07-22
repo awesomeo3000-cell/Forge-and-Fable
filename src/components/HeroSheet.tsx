@@ -1944,7 +1944,7 @@ export default memo(function HeroSheet(props: {
             </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
               <div className="cs-inventory-actions">
-                <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowItemCatalog((open) => !open)}>{showItemCatalog ? "Close item catalog" : "Add Item"}</button>
+                <button type="button" className="cs-glass-btn cs-inv-add ao-btn ao-btn-brass" onClick={() => setShowItemCatalog((open) => !open)}>{showItemCatalog ? "Close item catalog" : "Add Item"}</button>
               </div>
               {itemCatalogPanel()}
               <div className="cs-currency-panel">
