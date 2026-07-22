@@ -84,6 +84,7 @@ export default memo(function CreatorPanel(props: {
     onResult: (rolls: number[]) => void;
   }) => void;
   onBackToBuildModes?: () => void;
+  saving?: boolean;
   onCreate: () => void;
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
@@ -774,6 +775,8 @@ export default memo(function CreatorPanel(props: {
                 <button
                   className="ledger-button ledger-button-primary"
                   type="button"
+                  disabled={props.saving}
+                  aria-busy={props.saving || undefined}
                   onClick={() => {
                     // Missing prerequisites send the builder back to the first
                     // unfinished chapter instead of only flashing a message.
@@ -784,7 +787,7 @@ export default memo(function CreatorPanel(props: {
                     props.onCreate();
                   }}
                 >
-                  {CHAPTERS[6].action}
+                  {props.saving ? "Saving…" : CHAPTERS[6].action}
                 </button>
               </>
             )}

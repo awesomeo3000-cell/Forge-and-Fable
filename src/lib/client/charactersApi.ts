@@ -59,7 +59,7 @@ export async function createCharacter(payload: Record<string, unknown>) {
   const data = (await response.json()) as { character?: Character; error?: string };
 
   if (!response.ok || !data.character) {
-    throw new Error(data.error || "Unable to create character.");
+    throw new CharacterApiError(data.error || "Unable to create character.", response.status);
   }
 
   return data.character;

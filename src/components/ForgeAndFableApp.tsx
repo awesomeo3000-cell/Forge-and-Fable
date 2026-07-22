@@ -76,7 +76,7 @@ import { activeD20Riders, effectTotal, effectiveAdvantageMode } from "@/lib/effe
 import { combineRollModes, rollRequestDescriptor, rollRequestMode, summarizeRollRequest } from "@/lib/rollRequest";
 import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
-import { CharacterApiError, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
+import { CharacterApiError, createCharacter as createCharacterApi, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
 import { resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 import { patchFromSnapshot } from "@/lib/characterSnapshots";
@@ -125,7 +125,7 @@ type CreationChoices = {
   progressionState?: Character["progressionState"];
 };
 
-type CreationSeqState = { levels: number[]; index: number; soFar: CreationChoices };
+type CreationSeqState = { characterId: string; levels: number[]; index: number; soFar: CreationChoices };
 
 const NORMAL_ROLL_LINGER_MS = 1800;
 const KEPT_D20_LINGER_MS = 4200;
@@ -249,6 +249,7 @@ export default function ForgeAndFableApp() {
   // An explicit pick wins for exactly one roll, then reverts to null.
   const [manualRollMode, setManualRollMode] = useState<RollMode | null>(null);
   const [creationSeq, setCreationSeq] = useState<CreationSeqState | null>(null);
+  const [forgeSaving, setForgeSaving] = useState(false);
   const [spellsReady, setSpellsReady] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -1184,8 +1185,57 @@ export default function ForgeAndFableApp() {
     });
   }
 
+  function buildCreationPayload(choices: CreationChoices | null, provisional = false) {
+    if (!ruleset || !draft) return null;
+    const basePayload = characterPayload(draft, ruleset);
+    const racedAbilities = applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
+    const creationHp = applyCreationHpBonuses({
+      maxHp: basePayload.maxHp,
+      currentHp: basePayload.currentHp,
+      hpGains: basePayload.hpRolls ?? [],
+      level: draft.level,
+      baseConstitution: racedAbilities.constitution,
+      choices: choices?.asiChoices,
+    });
+    const payload = {
+      ...basePayload,
+      maxHp: creationHp.maxHp,
+      currentHp: creationHp.currentHp,
+      hpRolls: creationHp.hpGains,
+      ...(choices ? {
+        asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
+        subclassId: choices.subclassId,
+        spellsKnown: choices.spellsKnown,
+        spellStatuses: choices.spellStatuses,
+        skillExpertise: choices.skillExpertise,
+        featureChoices: choices.featureChoices,
+        featureResources: choices.featureResources,
+        alwaysPreparedSpells: choices.alwaysPreparedSpells,
+        spellbookSpells: choices.spellbookSpells,
+        progressionState: choices.progressionState,
+      } : {}),
+    };
+    if (!provisional) {
+      Object.assign(payload, progressionPatchForCharacter({
+        ruleset: payload.ruleset,
+        classId: payload.classId,
+        subclassId: payload.subclassId,
+        level: draft.level,
+        abilities: payload.abilities,
+        featureChoices: payload.featureChoices,
+      }));
+    }
+    return payload;
+  }
+
+  function addCreatedCharacter(character: Character) {
+    setCharacters((current) => [character, ...current.filter((entry) => entry.id !== character.id)]);
+    setSelectedId(character.id);
+    setCreationPromptOpen(false);
+  }
+
   async function createHero() {
-    if (!user || !ruleset || !draft) {
+    if (!user || !ruleset || !draft || forgeSaving) {
       return;
     }
 
@@ -1214,26 +1264,45 @@ export default function ForgeAndFableApp() {
       return;
     }
 
-    // Starting above level 1: collect the feat/ASI/subclass/spell choices for the
-    // levels gained, then forge with them. Level-1 starts forge immediately.
+    // Seal the record immediately. If starting-level choices remain, apply them
+    // to this already-persisted character after the choice modal completes.
     const heroClass = ruleset.classes.find((item) => item.id === draft.classId);
     if (heroClass && draft.level >= 1) {
       const levels = creationChoiceLevels(ruleset.id, heroClass, draft.level, draft.raceId);
       if (levels.length > 0) {
-        const base = characterPayload(draft, ruleset);
-        setCreationSeq({
-          levels,
-          index: 0,
-          soFar: {
-            level: 0,
-            maxHp: base.maxHp,
-            currentHp: base.currentHp,
-            subclassId: undefined,
-            spellsKnown: [...base.spellsKnown],
-            asiChoices: [],
-            hpRolls: base.hpRolls,
-          },
-        });
+        setForgeSaving(true);
+        setStatus("Saving hero…");
+        try {
+          const payload = buildCreationPayload(null, true);
+          if (!payload) return;
+          const character = await createCharacterApi(payload);
+          addCreatedCharacter(character);
+          setCreatorOpen(false);
+          setCreationSeq({
+            characterId: character.id,
+            levels,
+            index: 0,
+            soFar: {
+              level: 0,
+              maxHp: payload.maxHp,
+              currentHp: payload.currentHp,
+              subclassId: undefined,
+              spellsKnown: [...payload.spellsKnown],
+              asiChoices: [],
+              hpRolls: payload.hpRolls,
+            },
+          });
+          setStatus(`${character.name} saved — finish starting choices`);
+        } catch (error) {
+          if (error instanceof CharacterApiError && error.status === 401) {
+            logOut();
+            setStatus("Session expired — please log in again.");
+          } else {
+            setStatus(error instanceof Error ? error.message : "Hero could not be saved.");
+          }
+        } finally {
+          setForgeSaving(false);
+        }
         return;
       }
     }
@@ -1244,80 +1313,72 @@ export default function ForgeAndFableApp() {
   /** POST the drafted character, applying any level-up choices collected during
       the creation sequence. */
   async function forgeCharacter(choices: CreationChoices | null) {
-    if (!user || !ruleset || !draft) {
+    if (!user || !ruleset || !draft || forgeSaving) {
       return;
     }
 
+    setForgeSaving(true);
+    setStatus("Saving hero…");
     try {
-      const basePayload = characterPayload(draft, ruleset);
-      const racedAbilities = applyRaceBonuses(draft.abilities, draft.raceId, ruleset);
-      const creationHp = applyCreationHpBonuses({
-        maxHp: basePayload.maxHp,
-        currentHp: basePayload.currentHp,
-        hpGains: basePayload.hpRolls ?? [],
-        level: draft.level,
-        baseConstitution: racedAbilities.constitution,
-        choices: choices?.asiChoices,
-      });
-      const payload = {
-        ...basePayload,
-        maxHp: creationHp.maxHp,
-        currentHp: creationHp.currentHp,
-        hpRolls: creationHp.hpGains,
-        ...(choices
-          ? {
-              asiChoices: choices.asiChoices.length > 0 ? choices.asiChoices : undefined,
-              subclassId: choices.subclassId,
-              spellsKnown: choices.spellsKnown,
-              spellStatuses: choices.spellStatuses,
-              skillExpertise: choices.skillExpertise,
-              featureChoices: choices.featureChoices,
-              featureResources: choices.featureResources,
-              alwaysPreparedSpells: choices.alwaysPreparedSpells,
-              spellbookSpells: choices.spellbookSpells,
-              progressionState: choices.progressionState,
-            }
-          : {}),
-      };
-      Object.assign(payload, progressionPatchForCharacter({
-        ruleset: payload.ruleset,
-        classId: payload.classId,
-        subclassId: payload.subclassId,
-        level: draft.level,
-        abilities: payload.abilities,
-        featureChoices: payload.featureChoices,
-      }));
+      const payload = buildCreationPayload(choices);
+      if (!payload) return;
 
-      const response = await fetch("/api/characters", {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-
-      const data = (await response.json()) as { character?: Character; error?: string };
-
-      if (response.status === 401) {
-        logOut();
-        setStatus("Session expired — please log in again.");
-        return;
-      }
-
-      if (!response.ok || !data.character) {
-        setStatus(data.error ?? "Hero could not be forged.");
-        return;
-      }
-
-      setCharacters((current) => [data.character!, ...current]);
-      setSelectedId(data.character.id);
-      setCreationPromptOpen(false);
+      const character = await createCharacterApi(payload);
+      addCreatedCharacter(character);
       setCreatorOpen(false);
       setCreatorStep(0);
       setDraft(createInitialDraft(ruleset) as DraftCharacter);
       setStatMethod(null);
       setCreationSeq(null);
-      setStatus(`${data.character.name} forged`);
-    } catch {
-      setStatus("Connection lost — please try again.");
+      setStatus(`${character.name} forged and saved`);
+    } catch (error) {
+      if (error instanceof CharacterApiError && error.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Hero could not be saved.");
+      }
+    } finally {
+      setForgeSaving(false);
+    }
+  }
+
+  async function finalizeCreation(characterId: string, choices: CreationChoices) {
+    if (!user || !ruleset || !draft || forgeSaving) {
+      return;
+    }
+
+    const current = characters.find((character) => character.id === characterId);
+    const payload = buildCreationPayload(choices);
+    if (!current || !payload) {
+      setStatus("Saved hero could not be finalized. It remains in your roster.");
+      return;
+    }
+
+    setForgeSaving(true);
+    setStatus("Saving starting choices…");
+    try {
+      const result = await updateCharacterApi(characterId, payload, current.revision ?? 0);
+      if (result.conflict) {
+        setCharacters((entries) => entries.map((entry) => (entry.id === characterId ? result.character : entry)));
+        setStatus("The saved hero changed elsewhere. Reload its latest version and try again.");
+        return;
+      }
+
+      setCharacters((entries) => entries.map((entry) => (entry.id === characterId ? result.character : entry)));
+      setCreationSeq(null);
+      setDraft(createInitialDraft(ruleset) as DraftCharacter);
+      setStatMethod(null);
+      setStatus(`${result.character.name} forged and saved`);
+    } catch (error) {
+      if (error instanceof CharacterApiError && error.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Starting choices could not be saved.");
+      }
+    } finally {
+      setForgeSaving(false);
     }
   }
 
@@ -1344,7 +1405,7 @@ export default function ForgeAndFableApp() {
     if (creationSeq.index + 1 < creationSeq.levels.length) {
       setCreationSeq({ ...creationSeq, index: creationSeq.index + 1, soFar });
     } else {
-      void forgeCharacter(soFar);
+      void finalizeCreation(creationSeq.characterId, soFar);
     }
   }
 
@@ -2690,6 +2751,7 @@ export default function ForgeAndFableApp() {
                 setBuildMode("standard");
               }}
               onCreate={createHero}
+              saving={forgeSaving}
             />
           ) : selected && selectedFinalAbilities ? (
             <HeroSheet
