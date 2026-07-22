@@ -31,6 +31,7 @@ import { SAVE_PROFICIENCIES, SKILLS, BACKGROUND_SKILLS, type SkillDef } from "@/
 import { FONT_STACKS, SKIN_PRESETS, loadUserPresets } from "@/lib/skins";
 import { DEFAULT_LAYOUT, mergeWithDefaults, moveSheetTab, PINNED_BOTTOM, SECTION_TITLES } from "@/lib/sheetLayout";
 import { getSpell, isAttackRollSpell, isWizardSpellbook, learnsIndividualSpells, parseDamageDice, PREPARED_CASTERS, SPELLS_LEARNED_PER_LEVEL, spellsForClassAndSources } from "@/lib/spells";
+import { getFeat } from "@/lib/feats";
 import { resolveSpellEffects, previewDiceForLevel, parseSimpleDice, getScalingNote } from "@/lib/spellEffects";
 import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, getWeapon, inventoryArmorProficiencyInfo, inventoryWeaponToDef, isArmorCategoryProficient, isShieldProficient, preparedSpellLimit, totalCarriedWeight, weaponAbility, type WeaponDef } from "@/lib/equipment";
 import { ITEM_CATALOG, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
@@ -49,6 +50,7 @@ import ClassIconPlaceholder from "@/components/icons/ClassIcon";
 import PortraitSelectorModal from "@/components/portraits/PortraitSelectorModal";
 import { isCatalogPortrait, portraitPanelCss, suggestPortraitAncestry } from "@/data/portraits";
 import AppearancePanel from "@/components/AppearancePanel";
+import ManageFeatsModal from "@/components/ManageFeatsModal";
 import SheetSection from "@/components/SheetSection";
 import SheetRollButton, { D20Icon, DieIcon } from "@/components/SheetRollButton";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
@@ -122,6 +124,7 @@ function catalogBackedInventoryItem(item: InventoryItem): InventoryItem {
     damageType: item.damageType || base.damageType,
     properties: item.properties || base.properties,
     cost: item.cost || base.cost,
+    quantity: Math.max(1, Math.floor(item.quantity ?? base.quantity ?? 1)),
   };
 }
 
@@ -346,6 +349,7 @@ export default memo(function HeroSheet(props: {
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
+  const [manageFeatsOpen, setManageFeatsOpen] = useState(false);
   const [tourDismissed, setTourDismissed] = useState(true);
   const [prepareHintDismissed, setPrepareHintDismissed] = useState(true);
 
@@ -505,6 +509,7 @@ export default memo(function HeroSheet(props: {
     const item = {
       id: crypto.randomUUID(),
       name: invName.trim(),
+      quantity: 1,
       rarity: invRarity,
       attunement: false,
       notes: invNotes.trim(),
@@ -517,7 +522,18 @@ export default memo(function HeroSheet(props: {
     setShowInvForm(false);
   };
   const addCatalogItem = (catalogItem: CatalogItem) => {
-    props.onUpdate({ inventory: [...inventory, catalogItemToInventory(catalogItem)] });
+    const catalogInventoryItem = catalogItemToInventory(catalogItem);
+    const existing = inventory.find((item) => item.sourceItemId === catalogItem.id);
+    const equippable = isArmorItem(catalogInventoryItem) || isShieldItem(catalogInventoryItem) || isWeaponItem(catalogInventoryItem) || isBonusEquipmentItem(catalogInventoryItem);
+    if (existing && !equippable) {
+      props.onUpdate({ inventory: inventory.map((item) => item.id === existing.id ? { ...item, quantity: Math.max(1, Math.floor(item.quantity ?? 1)) + 1 } : item) });
+      return;
+    }
+    props.onUpdate({ inventory: [...inventory, catalogInventoryItem] });
+  };
+  const updateItemQuantity = (id: string, quantity: number) => {
+    const nextQuantity = Math.max(1, Math.min(999, Math.floor(quantity) || 1));
+    props.onUpdate({ inventory: inventory.map((item) => item.id === id ? { ...item, quantity: nextQuantity } : item) });
   };
   const removeItem = (id: string) => {
     props.onUpdate({
@@ -682,7 +698,7 @@ export default memo(function HeroSheet(props: {
   const [itemSearch, setItemSearch] = useState("");
   const [itemCategory, setItemCategory] = useState("All");
   const [itemRarity, setItemRarity] = useState("All");
-  const [showEquipmentCatalog, setShowEquipmentCatalog] = useState(false);
+  const [showItemCatalog, setShowItemCatalog] = useState(false);
   const itemMatches = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
     return ITEM_CATALOG.filter((item) => {
@@ -705,6 +721,18 @@ export default memo(function HeroSheet(props: {
     });
   }, [itemCategory, itemRarity, itemSearch]);
   const visibleItemMatches = itemMatches.slice(0, 24);
+  const itemCatalogPanel = () => showItemCatalog ? (
+    <div className="cs-item-catalog cs-equipment-catalog">
+      <div className="cs-item-catalog-controls">
+        <input type="search" placeholder="Search items…" aria-label="Search items" value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} />
+        <select value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}><option value="All">All types</option>{EQUIPMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select>
+        <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}><option value="All">All rarities</option>{ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}</select>
+      </div>
+      <div className="cs-item-results">{visibleItemMatches.map((item) => <div className="cs-item-result" key={item.id}><div><strong data-rarity={item.rarity}>{item.name}</strong><span>{equipmentCatalogCategory(item)} <i aria-hidden="true">|</i> <em data-rarity={item.rarity}>{item.rarity}</em>{itemMetaParts(item).map((part) => <Fragment key={part}> <i aria-hidden="true">|</i> {part}</Fragment>)}</span>{item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "…" : ""}</p> : null}</div><button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button></div>)}{visibleItemMatches.length === 0 ? <p className="cs-muted">No matching items yet.</p> : null}</div>
+      {itemMatches.length > visibleItemMatches.length ? <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p> : null}
+      {showInvForm ? <div className="cs-inv-form"><input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} /><select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}><option value="Mundane">Mundane</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Very Rare">Very Rare</option><option value="Legendary">Legendary</option></select><input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} /><input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} /><div className="cs-inv-form-actions"><button type="button" className="cs-glass-btn" onClick={addItem}>Add custom item</button><button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button></div></div> : <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Create custom item</button>}
+    </div>
+  ) : null;
   const [hitDiceRolling, setHitDiceRolling] = useState(false);
   const [showHitDiceRest, setShowHitDiceRest] = useState(false);
   // Split-panel header (AO-8): the portrait panel doubles as the picker trigger.
@@ -1510,7 +1538,7 @@ export default memo(function HeroSheet(props: {
                 const weapon = getWeapon(weaponId);
                 return weapon ? <label className="cs-equipment-option" key={weaponId}><input type="checkbox" checked onChange={() => toggleWeapon(weaponId)} /><span><strong>{weapon.name}</strong><small>Legacy weapon · {weapon.damage} {weapon.damageType}</small></span></label> : null;
               })}
-              {inventoryItems.map((item) => {
+              {inventoryItems.filter((item) => isArmorItem(item) || isShieldItem(item) || isWeaponItem(item) || isBonusEquipmentItem(item)).map((item) => {
                 const state = inventoryItemEquipState(item);
                 const equippable = isArmorItem(item) || isShieldItem(item) || isWeaponItem(item) || isBonusEquipmentItem(item);
                 const equipped = state.armor || state.shield || state.weapon || state.bonus;
@@ -1525,25 +1553,12 @@ export default memo(function HeroSheet(props: {
                   </label>
                 );
               })}
-              {!armor && !equipment.shield && (equipment.weaponIds ?? []).length === 0 && inventory.length === 0 ? <p className="cs-muted">No equipment added yet.</p> : null}
+              {!armor && !equipment.shield && (equipment.weaponIds ?? []).length === 0 && !inventoryItems.some((item) => isArmorItem(item) || isShieldItem(item) || isWeaponItem(item) || isBonusEquipmentItem(item)) ? <p className="cs-muted">No equipment added yet.</p> : null}
             </div>
             <p className="cs-rule-note">AC {armorClass} — {acInfo.label}{ruleAc !== 0 ? ` ${signed(ruleAc)} rules` : ""}{(props.featAcBonus ?? 0) > 0 ? ` +${props.featAcBonus} feat` : ""}</p>
             {armorProficiencyIssue.hasIssue ? <p className="cs-rule-note cs-rule-warning">{armorPenaltyReason}: STR/DEX checks, saves, and attacks roll with disadvantage; spellcasting is blocked.</p> : null}
             {acInfo.stealthDisadvantage ? <p className="cs-rule-note">Disadvantage on Stealth checks</p> : null}
             {acInfo.strengthWarning ? <p className="cs-rule-note">Needs Str {acInfo.strengthRequirement ?? armor?.strengthReq}: speed reduced by 10 ft.</p> : null}
-            <button type="button" className="cs-glass-btn cs-equipment-add" onClick={() => setShowEquipmentCatalog((open) => !open)}>{showEquipmentCatalog ? "Close equipment catalog" : "+ Add equipment"}</button>
-            {showEquipmentCatalog ? (
-              <div className="cs-item-catalog cs-equipment-catalog">
-                <div className="cs-item-catalog-controls">
-                  <input type="search" placeholder="Search equipment…" aria-label="Search equipment" value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} />
-                  <select value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}><option value="All">All types</option>{EQUIPMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</select>
-                  <select value={itemRarity} onChange={(e) => setItemRarity(e.target.value)}><option value="All">All rarities</option>{ITEM_RARITIES.map((rarity) => <option key={rarity} value={rarity}>{rarity}</option>)}</select>
-                </div>
-                <div className="cs-item-results">{visibleItemMatches.map((item) => <div className="cs-item-result" key={item.id}><div><strong data-rarity={item.rarity}>{item.name}</strong><span>{equipmentCatalogCategory(item)} <i aria-hidden="true">|</i> <em data-rarity={item.rarity}>{item.rarity}</em>{itemMetaParts(item).map((part) => <Fragment key={part}> <i aria-hidden="true">|</i> {part}</Fragment>)}</span>{item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "…" : ""}</p> : null}</div><button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button></div>)}{visibleItemMatches.length === 0 ? <p className="cs-muted">No matching equipment yet.</p> : null}</div>
-                {itemMatches.length > visibleItemMatches.length ? <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p> : null}
-                {showInvForm ? <div className="cs-inv-form"><input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} /><select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}><option value="Mundane">Mundane</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Very Rare">Very Rare</option><option value="Legendary">Legendary</option></select><input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} /><input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} /><div className="cs-inv-form-actions"><button type="button" className="cs-glass-btn" onClick={addItem}>Add custom item</button><button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button></div></div> : <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Create custom item</button>}
-              </div>
-            ) : null}
           </section>
         );
       }
@@ -1703,6 +1718,11 @@ export default memo(function HeroSheet(props: {
             <div className={activeRefTab === "features" ? "" : "cs-reftab-hidden"}>
               <div className="cs-feature-group">
                 <span className="cs-spell-level-head">Class Features</span>
+                {props.character.asiChoices?.some((choice) => choice.type === "feat") ? (
+                  <div className="cs-feat-chip-list" aria-label="Current feats">
+                    {props.character.asiChoices.filter((choice) => choice.type === "feat").map((choice, index) => <span className="cs-feat-chip" key={`${choice.featId}-${choice.level}-${index}`}>{getFeat(choice.featId)?.name ?? choice.featId}</span>)}
+                  </div>
+                ) : null}
                 {featuresUpToLevel.length > 0 ? featuresUpToLevel.map((f, i) => (<div className="cs-feature-card" key={`${f.name}-${i}`}><strong>{f.name}</strong><p>{f.description}</p></div>)) : <p className="cs-muted">No class features at this level</p>}
               </div>
               {props.character.progressionState ? (
@@ -1922,6 +1942,10 @@ export default memo(function HeroSheet(props: {
               </div>
             </div>
             <div className={refTab === "inventory" ? "" : "cs-reftab-hidden"}>
+              <div className="cs-inventory-actions">
+                <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowItemCatalog((open) => !open)}>{showItemCatalog ? "Close item catalog" : "Add Item"}</button>
+              </div>
+              {itemCatalogPanel()}
               <div className="cs-currency-panel">
                 <div className="cs-currency-row">
                   {(["cp", "sp", "ep", "gp", "pp"] as const).map((denomination) => (
@@ -1972,7 +1996,7 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                       </div>
-                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
+                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<span className="cs-inv-quantity" aria-label={`${item.name} quantity`}><button type="button" onClick={() => updateItemQuantity(item.id, (item.quantity ?? 1) - 1)} aria-label={`Decrease ${item.name} quantity`}>−</button><input type="number" min={1} max={999} value={item.quantity ?? 1} onChange={(event) => updateItemQuantity(item.id, Number(event.target.value))} aria-label={`${item.name} quantity`} /><button type="button" onClick={() => updateItemQuantity(item.id, (item.quantity ?? 1) + 1)} aria-label={`Increase ${item.name} quantity`}>+</button></span><button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
                     </div>
                   );
                 })}</div>
@@ -2130,6 +2154,11 @@ export default memo(function HeroSheet(props: {
             {tabs.map((tabId) => (
               <ModuleTab key={tabId} groupId={moduleId} sectionId={tabId} title={tabTitle(moduleId, tabId)} active={tabId === activeTab} editMode={editMode} onSelect={() => setActiveModuleTabs((current) => ({ ...current, [moduleId]: tabId }))} />
             ))}
+          </div>
+        ) : null}
+        {activeTab === "features" && !isReadOnly ? (
+          <div className="cs-manage-feats-toolbar">
+            <button type="button" className="cs-glass-btn cs-manage-feats-btn" onClick={() => setManageFeatsOpen(true)}><Plus size={13} /> Manage feats</button>
           </div>
         ) : null}
         {sectionContent(activeTab)}
@@ -2616,6 +2645,19 @@ export default memo(function HeroSheet(props: {
             <p className="cs-rule-note">Toggle contributions in Effects &amp; Conditions or the Equipment section.</p>
           </div>
         </div>
+      ) : null}
+      {manageFeatsOpen && !isReadOnly ? (
+        <ManageFeatsModal
+          character={props.character}
+          finalAbilities={props.finalAbilities}
+          raceName={race.name}
+          casterType={casterType}
+          proficiencies={effectiveProficiencies}
+          usePrerequisites={settings.useFeatPrerequisites}
+          onUpdate={props.onUpdate}
+          onNotify={props.onNotify}
+          onClose={() => setManageFeatsOpen(false)}
+        />
       ) : null}
       {levelUpTarget != null && !hasHomebrewClass ? (
         <LevelUpModal

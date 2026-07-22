@@ -371,7 +371,7 @@ export function totalCarriedWeight(
   currency: Currency | undefined,
   ignoreCoinWeight: boolean,
 ): number {
-  const inventoryWeight = inventory.reduce((sum, item) => sum + (item.weight ?? 0), 0);
+  const inventoryWeight = inventory.reduce((sum, item) => sum + (item.weight ?? 0) * Math.max(1, Math.floor(item.quantity ?? 1)), 0);
   const staticArmorWeight = equipment?.armorId ? getArmor(equipment.armorId)?.weight ?? 0 : 0;
   const staticWeaponWeight = (equipment?.weaponIds ?? []).reduce((sum, id) => sum + (getWeapon(id)?.weight ?? 0), 0);
   const staticShieldWeight = equipment?.shield ? SHIELD_WEIGHT : 0;

@@ -182,6 +182,7 @@ export function catalogItemToInventory(item: CatalogItem): InventoryItem {
     id: crypto.randomUUID(),
     sourceItemId: item.id,
     name: item.name,
+    quantity: 1,
     rarity: item.rarity,
     attunement: item.attunement,
     notes: itemMetaParts(item).join(" | "),

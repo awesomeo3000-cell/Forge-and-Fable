@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeArmorClass } from "@/lib/equipment";
-import type { AbilityScores, Equipment } from "@/types/game";
+import { computeArmorClass, totalCarriedWeight } from "@/lib/equipment";
+import type { AbilityScores, Equipment, InventoryItem } from "@/types/game";
 
 function makeAbilities(dex: number, extra: Partial<AbilityScores> = {}): AbilityScores {
   return {
@@ -76,5 +76,12 @@ describe("computeArmorClass", () => {
       [],
     );
     expect(result.total).toBe(15); // 10 + 3 dex + 2 wis
+  });
+});
+
+describe("totalCarriedWeight", () => {
+  it("multiplies item weight by its inventory quantity", () => {
+    const item: InventoryItem = { id: "torch", name: "Torch", rarity: "Mundane", attunement: false, notes: "", weight: 1, quantity: 6 };
+    expect(totalCarriedWeight([item], undefined, undefined, true)).toBe(6);
   });
 });

@@ -150,6 +150,8 @@ export type FeedbackEntry = {
 export type InventoryItem = {
   id: string;
   name: string;
+  /** Number of identical items represented by this inventory row. */
+  quantity?: number;
   rarity: string;
   attunement: boolean;
   notes: string;

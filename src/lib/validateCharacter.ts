@@ -131,7 +131,13 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
         if (val !== undefined) {
           assertArray(val, key);
           if (val.length > 500) throw new Error(`"${key}" must have at most 500 entries.`);
-          for (const entry of val) assertPlainObjectOrString(entry, `${key}[]`);
+          for (const entry of val) {
+            assertPlainObjectOrString(entry, `${key}[]`);
+            if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+              const quantity = (entry as Record<string, unknown>).quantity;
+              if (quantity !== undefined) assertInteger(quantity, `${key}[].quantity`, 1, 999);
+            }
+          }
         }
         break;
       case "spellsKnown":
