@@ -20,6 +20,7 @@ import { progressionChoiceLabel, progressionChoiceOptions } from "@/lib/progress
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import type { LevelUpChoice } from "@/lib/progression/types";
 import { buildCantripSelectionGroups, type CantripSelectionGroup } from "@/lib/cantripProgression";
+import { ELDRITCH_INVOCATIONS, INVOCATION_SPELLS, spellsGrantedByInvocations } from "@/lib/featChoices";
 import "./LevelUpModal.css";
 
 /** Checklist labels. Plain mechanical nouns — the flavor lives in descriptors,
@@ -100,6 +101,10 @@ export default memo(function LevelUpModal({
   const [pickedFeat, setPickedFeat] = useState("");
   const [featAbilityChoice, setFeatAbilityChoice] = useState<AbilityKey | null>(null);
   const [featSpellChoices, setFeatSpellChoices] = useState<string[]>([]);
+  const [featCantripChoices, setFeatCantripChoices] = useState<string[]>([]);
+  const [featSkillProficiency, setFeatSkillProficiency] = useState("");
+  const [featSkillExpertise, setFeatSkillExpertise] = useState("");
+  const [featInvocationChoices, setFeatInvocationChoices] = useState<string[]>([]);
   const [asiIncreases, setAsiIncreases] = useState<Partial<AbilityScores>>({});
   const [pickedSpells, setPickedSpells] = useState<string[]>([]);
   const [pickedCantripsByGroup, setPickedCantripsByGroup] = useState<Record<string, string[]>>({});
@@ -291,6 +296,14 @@ export default memo(function LevelUpModal({
         if (feat?.grantsSpells?.choose) {
           if (featSpellChoices.length < feat.grantsSpells.choose.count) return false;
         }
+        if (feat?.grantsSpells?.chooseCantrips) {
+          if (featCantripChoices.length < feat.grantsSpells.chooseCantrips.count) return false;
+        }
+        if (feat?.skillChoices) {
+          if (feat.skillChoices.proficiency && !featSkillProficiency) return false;
+          if (feat.skillChoices.expertise && !featSkillExpertise) return false;
+        }
+        if (feat?.invocationChoices && featInvocationChoices.length < feat.invocationChoices.count) return false;
         return true;
       }
       case "spells":
@@ -328,11 +341,31 @@ export default memo(function LevelUpModal({
     // feat's spell grant is independent of the class list, so this works for
     // non-casters (Fighter/Rogue/etc.) too, not just spellcasters.
     let candidates = ALL_SPELLS.filter((s) => s.level === spellLevel && !knownSpells.includes(s.id));
+    if (feat.grantsSpells.choose.classes?.length) {
+      candidates = candidates.filter((spell) => spell.classes?.some((entry) => feat.grantsSpells?.choose?.classes?.includes(entry)));
+    }
     if (schools && schools.length > 0) {
       candidates = candidates.filter((s) => schools.includes(s.school.toLowerCase()));
     }
     return candidates.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 40);
   })();
+
+  const selectedFeat = pickedFeat && pickedFeat !== "asi" ? getFeat(pickedFeat) : undefined;
+  const featCantripOptions = selectedFeat?.grantsSpells?.chooseCantrips
+    ? ALL_SPELLS
+      .filter((spell) => spell.level === 0 && !knownSpells.includes(spell.id))
+      .filter((spell) => !selectedFeat.grantsSpells?.chooseCantrips?.schools?.length || selectedFeat.grantsSpells.chooseCantrips.schools.includes(spell.school.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 60)
+    : [];
+  const featSkillOptions = selectedFeat?.skillChoices ? SKILLS : [];
+  const existingSkillIds = new Set([...(character.skillProficiencies ?? []), ...bgSkillIds]);
+  const featExpertiseOptions = selectedFeat?.skillChoices
+    ? SKILLS.filter((skill) => existingSkillIds.has(skill.id) || skill.id === featSkillProficiency)
+    : [];
+  const featInvocationOptions = selectedFeat?.invocationChoices
+    ? (selectedFeat.invocationChoices.options ?? [...ELDRITCH_INVOCATIONS]).filter((id) => !(character.featureChoices?.["eldritch-invocations"] as string[] | undefined)?.includes(id))
+    : [];
 
   const rollHp = () => {
     if (hpRolling || hpRolled) return;
@@ -423,6 +456,11 @@ export default memo(function LevelUpModal({
     } else if (pickedFeat) {
       const featChoice: ASIChoice = { type: "feat", level: newLevel, featId: pickedFeat };
       if (featAbilityChoice) featChoice.abilityChoice = featAbilityChoice;
+      if (featSkillProficiency) featChoice.skillProficiency = featSkillProficiency;
+      if (featSkillExpertise) featChoice.skillExpertise = featSkillExpertise;
+      if (featInvocationChoices.length > 0) featChoice.invocationChoices = featInvocationChoices;
+      if (featSpellChoices.length > 0) featChoice.spellChoices = featSpellChoices;
+      if (featCantripChoices.length > 0) featChoice.cantripChoices = featCantripChoices;
       choices.push(featChoice);
     }
     return choices;
@@ -476,14 +514,34 @@ export default memo(function LevelUpModal({
       data.spellsKnown = updated;
       if (classId === "wizard") data.spellbookSpells = Array.from(new Set([...(character.spellbookSpells ?? knownSpells), ...pickedCantrips, ...pickedSpells]));
     }
+    if (pickedFeat && pickedFeat !== "asi") {
+      const feat = getFeat(pickedFeat);
+      if (feat?.skillChoices) {
+        if (featSkillProficiency) data.skillProficiencies = Array.from(new Set([...(character.skillProficiencies ?? []), featSkillProficiency]));
+        if (featSkillExpertise) data.skillExpertise = Array.from(new Set([...(data.skillExpertise as string[] ?? character.skillExpertise ?? []), featSkillExpertise]));
+      }
+      if (feat?.invocationChoices && featInvocationChoices.length > 0) {
+        const existingInvocations = typeof character.featureChoices?.["eldritch-invocations"] === "string"
+          ? [character.featureChoices["eldritch-invocations"] as string]
+          : Array.isArray(character.featureChoices?.["eldritch-invocations"])
+            ? character.featureChoices["eldritch-invocations"].map(String)
+            : [];
+        data.featureChoices = {
+          ...(data.featureChoices as Record<string, FeatureChoiceValue> | undefined ?? character.featureChoices ?? {}),
+          "eldritch-invocations": Array.from(new Set([...existingInvocations, ...featInvocationChoices])),
+        };
+      }
+    }
     // Feat-granted spells: add both fixed and chosen spells, and register them
     // as free-use (once per long rest, no slot) with the feat as their source.
     if (pickedFeat && pickedFeat !== "asi") {
       const feat = getFeat(pickedFeat);
-      if (feat?.grantsSpells) {
+      if (feat?.grantsSpells || feat?.invocationChoices) {
         const grantSpells: string[] = [
-          ...(feat.grantsSpells.fixed ?? []),
+          ...(feat?.grantsSpells?.fixed ?? []),
           ...featSpellChoices,
+          ...featCantripChoices,
+          ...spellsGrantedByInvocations(featInvocationChoices),
         ];
         if (grantSpells.length > 0) {
           data.spellsKnown = [...(data.spellsKnown as string[] ?? knownSpells), ...grantSpells];
@@ -785,7 +843,7 @@ export default memo(function LevelUpModal({
                     <button
                       type="button"
                       className={`level-rite-card${pickedFeat && pickedFeat !== "asi" ? " is-selected" : ""}`}
-                      onClick={() => { if (!pickedFeat || pickedFeat === "asi") { setPickedFeat(feats[0]?.id ?? ""); } setFeatAbilityChoice(null); setFeatSpellChoices([]); }}
+                      onClick={() => { if (!pickedFeat || pickedFeat === "asi") { setPickedFeat(feats[0]?.id ?? ""); } setFeatAbilityChoice(null); setFeatSpellChoices([]); setFeatCantripChoices([]); setFeatSkillProficiency(""); setFeatSkillExpertise(""); setFeatInvocationChoices([]); }}
                     >
                       <strong>Claim a Feat</strong>
                       <p>Choose a feat to gain new power.</p>
@@ -817,7 +875,7 @@ export default memo(function LevelUpModal({
                             key={f.id}
                             type="button"
                             className={`level-rite-card${pickedFeat === f.id ? " is-selected" : ""}`}
-                            onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); setFeatSpellChoices([]); }}
+                            onClick={() => { setPickedFeat(f.id); setFeatAbilityChoice(null); setFeatSpellChoices([]); setFeatCantripChoices([]); setFeatSkillProficiency(""); setFeatSkillExpertise(""); setFeatInvocationChoices([]); }}
                           >
                             <strong>{f.name}</strong>
                             <p>{f.description.slice(0, 150)}</p>
@@ -862,6 +920,57 @@ export default memo(function LevelUpModal({
                           </div>
                         );
                       })()}
+
+                      {selectedFeat?.skillChoices ? (
+                        <div className="level-rite-choice-grid compact">
+                          {selectedFeat.skillChoices.proficiency ? (
+                            <label className="level-rite-field">
+                              <span className="level-rite-eyebrow">Gain proficiency in</span>
+                              <select value={featSkillProficiency} onChange={(event) => { setFeatSkillProficiency(event.target.value); if (event.target.value === featSkillExpertise) setFeatSkillExpertise(""); }}>
+                                <option value="">Choose a skill…</option>
+                                {featSkillOptions.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}
+                              </select>
+                            </label>
+                          ) : null}
+                          {selectedFeat.skillChoices.expertise ? (
+                            <label className="level-rite-field">
+                              <span className="level-rite-eyebrow">Gain expertise in</span>
+                              <select value={featSkillExpertise} onChange={(event) => setFeatSkillExpertise(event.target.value)}>
+                                <option value="">Choose a proficient skill…</option>
+                                {featExpertiseOptions.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}
+                              </select>
+                            </label>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {selectedFeat?.invocationChoices ? (
+                        <div>
+                          <span className="level-rite-eyebrow">Choose {selectedFeat.invocationChoices.count} Eldritch Invocation</span>
+                          <div className="level-rite-choice-grid compact">
+                            {featInvocationOptions.map((id) => (
+                              <button key={id} type="button" className={`level-rite-option${featInvocationChoices.includes(id) ? " is-selected" : ""}`} onClick={() => setFeatInvocationChoices((current) => current.includes(id) ? current.filter((value) => value !== id) : current.length < selectedFeat.invocationChoices!.count ? [...current, id] : current)}>
+                                <span className="level-rite-option-name">{id.split("-").map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ")}</span>
+                                {INVOCATION_SPELLS[id] ? <span className="level-rite-option-detail">Casts {INVOCATION_SPELLS[id].split("-").map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ")}</span> : null}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {featCantripOptions.length > 0 ? (
+                        <div>
+                          <span className="level-rite-eyebrow">Choose {selectedFeat?.grantsSpells?.chooseCantrips?.count ?? 0} cantrip{(selectedFeat?.grantsSpells?.chooseCantrips?.count ?? 0) > 1 ? "s" : ""}</span>
+                          <div className="level-rite-choice-grid compact">
+                            {featCantripOptions.map((spell) => (
+                              <button key={spell.id} type="button" className={`level-rite-option${featCantripChoices.includes(spell.id) ? " is-selected" : ""}`} onClick={() => setFeatCantripChoices((current) => current.includes(spell.id) ? current.filter((id) => id !== spell.id) : current.length < (selectedFeat?.grantsSpells?.chooseCantrips?.count ?? 0) ? [...current, spell.id] : current)}>
+                                <span className="level-rite-option-name">{spell.name}</span>
+                                <span className="level-rite-option-detail">Cantrip {spell.school}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
 
                       {/* Feat-granted spell choices */}
                       {featSpellOptions.length > 0 ? (

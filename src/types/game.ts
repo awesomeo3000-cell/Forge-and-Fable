@@ -103,7 +103,24 @@ export type FeatGrantSpells = {
     level: number;
     /** Optional school filter (e.g. "divination", "enchantment"). */
     schools?: string[];
+    /** Optional class-list filter, used by Magic/Artificer Initiate. */
+    classes?: string[];
   };
+  /** Optional cantrip choices, used by Magic Initiate and similar feats. */
+  chooseCantrips?: {
+    count: number;
+    schools?: string[];
+  };
+};
+
+export type FeatSkillChoices = {
+  proficiency?: number;
+  expertise?: number;
+};
+
+export type FeatInvocationChoices = {
+  count: number;
+  options?: string[];
 };
 
 export type Feat = {
@@ -112,11 +129,25 @@ export type Feat = {
   racialPrereq: string; otherPrereq: string; source: string;
   /** If present, the feat grants spells — the UI must prompt for choices. */
   grantsSpells?: FeatGrantSpells;
+  /** Skill choices granted by the feat (for example Skill Expert). */
+  skillChoices?: FeatSkillChoices;
+  /** Invocation choices granted by the feat (for example Eldritch Adept). */
+  invocationChoices?: FeatInvocationChoices;
 };
 
 export type ASIChoice =
   | { type: "asi"; level: number; increases: Partial<AbilityScores> }
-  | { type: "feat"; level: number; featId: string; abilityChoice?: AbilityKey };
+  | {
+      type: "feat";
+      level: number;
+      featId: string;
+      abilityChoice?: AbilityKey;
+      skillProficiency?: string;
+      skillExpertise?: string;
+      invocationChoices?: string[];
+      spellChoices?: string[];
+      cantripChoices?: string[];
+    };
 
 export type CasterType = "full" | "half" | "third" | "pact" | "none";
 

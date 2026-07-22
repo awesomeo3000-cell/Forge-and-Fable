@@ -6,6 +6,8 @@ import type { AbilityKey, AbilityScores, ASIChoice, CasterType, Character, Spell
 import { abilityLabels } from "@/lib/utils";
 import { ALL_SPELLS } from "@/lib/spells";
 import { availableFeats, getFeat } from "@/lib/feats";
+import { ELDRITCH_INVOCATIONS, INVOCATION_SPELLS, spellsGrantedByInvocations } from "@/lib/featChoices";
+import { BACKGROUND_SKILLS, SKILLS } from "@/lib/srd";
 
 type CharacterPatch = Partial<Omit<Character, "id" | "userId" | "createdAt">>;
 
@@ -23,6 +25,10 @@ export default function ManageFeatsModal(props: {
   const [selectedFeatId, setSelectedFeatId] = useState("");
   const [abilityChoice, setAbilityChoice] = useState<AbilityKey | "">("");
   const [spellChoices, setSpellChoices] = useState<string[]>([]);
+  const [cantripChoices, setCantripChoices] = useState<string[]>([]);
+  const [skillProficiency, setSkillProficiency] = useState("");
+  const [skillExpertise, setSkillExpertise] = useState("");
+  const [invocationChoices, setInvocationChoices] = useState<string[]>([]);
   const onClose = props.onClose;
   const existingChoices = props.character.asiChoices ?? [];
   const existingFeatChoices = existingChoices.filter((choice): choice is Extract<ASIChoice, { type: "feat" }> => choice.type === "feat");
@@ -48,6 +54,15 @@ export default function ManageFeatsModal(props: {
     return ALL_SPELLS
       .filter((spell) => spell.level === choose.level && !known.has(spell.id) && !fixed.has(spell.id))
       .filter((spell) => !choose.schools?.length || choose.schools.includes(spell.school.toLowerCase()))
+      .filter((spell) => !choose.classes?.length || spell.classes?.some((entry) => choose.classes?.includes(entry)))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [props.character.spellsKnown, selectedFeat]);
+  const featCantripOptions = useMemo(() => {
+    const choose = selectedFeat?.grantsSpells?.chooseCantrips;
+    if (!choose) return [];
+    return ALL_SPELLS
+      .filter((spell) => spell.level === 0 && !(props.character.spellsKnown ?? []).includes(spell.id))
+      .filter((spell) => !choose.schools?.length || choose.schools.includes(spell.school.toLowerCase()))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [props.character.spellsKnown, selectedFeat]);
 
@@ -61,9 +76,20 @@ export default function ManageFeatsModal(props: {
 
   const requiresAbilityChoice = !!selectedFeat?.chooseAbility && selectedFeat.abilityBonuses.length > 1;
   const requiredSpellCount = selectedFeat?.grantsSpells?.choose?.count ?? 0;
+  const requiredCantripCount = selectedFeat?.grantsSpells?.chooseCantrips?.count ?? 0;
+  const skillOptions = selectedFeat?.skillChoices ? SKILLS : [];
+  const existingSkillIds = new Set([...(props.character.skillProficiencies ?? []), ...(BACKGROUND_SKILLS[props.character.background] ?? [])]);
+  const expertiseOptions = skillOptions.filter((skill) => existingSkillIds.has(skill.id) || skill.id === skillProficiency);
+  const invocationOptions = selectedFeat?.invocationChoices
+    ? (selectedFeat.invocationChoices.options ?? [...ELDRITCH_INVOCATIONS])
+    : [];
   const addDisabled = !selectedFeat
     || (requiresAbilityChoice && !abilityChoice)
-    || spellChoices.length < requiredSpellCount;
+    || spellChoices.length < requiredSpellCount
+    || cantripChoices.length < requiredCantripCount
+    || (selectedFeat.skillChoices?.proficiency && !skillProficiency)
+    || (selectedFeat.skillChoices?.expertise && !skillExpertise)
+    || (selectedFeat.invocationChoices && invocationChoices.length < selectedFeat.invocationChoices.count);
 
   const addFeat = () => {
     if (!selectedFeat || addDisabled) return;
@@ -74,10 +100,18 @@ export default function ManageFeatsModal(props: {
         level: props.character.level,
         featId: selectedFeat.id,
         ...(abilityChoice ? { abilityChoice } : {}),
+        ...(skillProficiency ? { skillProficiency } : {}),
+        ...(skillExpertise ? { skillExpertise } : {}),
+        ...(invocationChoices.length > 0 ? { invocationChoices } : {}),
+        ...(spellChoices.length > 0 ? { spellChoices } : {}),
+        ...(cantripChoices.length > 0 ? { cantripChoices } : {}),
       },
     ];
-    const grantSpells = [...(selectedFeat.grantsSpells?.fixed ?? []), ...spellChoices];
+    const grantSpells = [...(selectedFeat.grantsSpells?.fixed ?? []), ...spellChoices, ...cantripChoices, ...spellsGrantedByInvocations(invocationChoices)];
     const patch: CharacterPatch = { asiChoices: nextChoices };
+    if (skillProficiency) patch.skillProficiencies = Array.from(new Set([...(props.character.skillProficiencies ?? []), skillProficiency]));
+    if (skillExpertise) patch.skillExpertise = Array.from(new Set([...(props.character.skillExpertise ?? []), skillExpertise]));
+    if (invocationChoices.length > 0) patch.featureChoices = { ...(props.character.featureChoices ?? {}), "eldritch-invocations": Array.from(new Set([...(Array.isArray(props.character.featureChoices?.["eldritch-invocations"]) ? props.character.featureChoices["eldritch-invocations"].map(String) : []), ...invocationChoices])) };
     if (grantSpells.length > 0) {
       const spellsKnown = Array.from(new Set([...(props.character.spellsKnown ?? []), ...grantSpells]));
       const spellStatuses: Record<string, SpellStatus> = { ...(props.character.spellStatuses ?? {}) };
@@ -88,6 +122,12 @@ export default function ManageFeatsModal(props: {
     props.onUpdate(patch);
     props.onNotify?.(`${selectedFeat.name} added to ${props.character.name}.`);
     setSelectedFeatId("");
+    setAbilityChoice("");
+    setSpellChoices([]);
+    setCantripChoices([]);
+    setSkillProficiency("");
+    setSkillExpertise("");
+    setInvocationChoices([]);
   };
 
   const removeFeat = (index: number) => {
@@ -95,10 +135,8 @@ export default function ManageFeatsModal(props: {
     if (!removed) return;
     const nextChoices = existingChoices.filter((choice) => choice !== removed);
     const removedFeat = getFeat(removed.featId);
-    const remainingFeatNames = new Set(
-      nextChoices.filter((choice): choice is Extract<ASIChoice, { type: "feat" }> => choice.type === "feat")
-        .map((choice) => getFeat(choice.featId)?.name),
-    );
+    const remainingFeatChoices = nextChoices.filter((choice): choice is Extract<ASIChoice, { type: "feat" }> => choice.type === "feat");
+    const remainingFeatNames = new Set(remainingFeatChoices.map((choice) => getFeat(choice.featId)?.name));
     const spellStatuses = { ...(props.character.spellStatuses ?? {}) };
     const removableSpellIds = removedFeat
       ? Object.entries(spellStatuses)
@@ -106,6 +144,22 @@ export default function ManageFeatsModal(props: {
         .map(([spellId]) => spellId)
       : [];
     const patch: CharacterPatch = { asiChoices: nextChoices };
+    if (removed.skillProficiency && !remainingFeatChoices.some((choice) => choice.skillProficiency === removed.skillProficiency)) {
+      patch.skillProficiencies = (props.character.skillProficiencies ?? []).filter((id) => id !== removed.skillProficiency);
+    }
+    if (removed.skillExpertise && !remainingFeatChoices.some((choice) => choice.skillExpertise === removed.skillExpertise)) {
+      patch.skillExpertise = (props.character.skillExpertise ?? []).filter((id) => id !== removed.skillExpertise);
+    }
+    if (removed.invocationChoices?.length) {
+      const stillChosen = new Set(remainingFeatChoices.flatMap((choice) => choice.invocationChoices ?? []));
+      const currentInvocations = Array.isArray(props.character.featureChoices?.["eldritch-invocations"])
+        ? props.character.featureChoices["eldritch-invocations"].map(String)
+        : [];
+      patch.featureChoices = {
+        ...(props.character.featureChoices ?? {}),
+        "eldritch-invocations": currentInvocations.filter((id) => !removed.invocationChoices?.includes(id) || stillChosen.has(id)),
+      };
+    }
     if (removableSpellIds.length > 0) {
       patch.spellsKnown = (props.character.spellsKnown ?? []).filter((spellId) => !removableSpellIds.includes(spellId));
       for (const spellId of removableSpellIds) delete spellStatuses[spellId];
@@ -150,7 +204,7 @@ export default function ManageFeatsModal(props: {
           <div className="cs-feat-manager-section">
             <span className="cs-spell-level-head">Add a feat</span>
             <label className="cs-feat-manager-field"><span>Feat</span>
-              <select value={selectedFeatId} onChange={(event) => { setSelectedFeatId(event.target.value); setAbilityChoice(""); setSpellChoices([]); }}>
+              <select value={selectedFeatId} onChange={(event) => { setSelectedFeatId(event.target.value); setAbilityChoice(""); setSpellChoices([]); setCantripChoices([]); setSkillProficiency(""); setSkillExpertise(""); setInvocationChoices([]); }}>
                 <option value="">Choose a feat…</option>
                 {feats.map((feat) => <option key={feat.id} value={feat.id}>{feat.name}</option>)}
               </select>
@@ -172,6 +226,19 @@ export default function ManageFeatsModal(props: {
                 )) : <p className="cs-muted">Spell catalog is unavailable or all matching spells are already known.</p>}
               </div>
             ) : null}
+            {requiredCantripCount > 0 ? (
+              <div className="cs-feat-manager-spells">
+                <div className="cs-feat-manager-spell-head"><span>Choose {requiredCantripCount} cantrip{requiredCantripCount === 1 ? "" : "s"}</span><small>{cantripChoices.length}/{requiredCantripCount} selected</small></div>
+                {featCantripOptions.map((spell) => <button type="button" key={spell.id} className={`cs-feat-manager-spell${cantripChoices.includes(spell.id) ? " is-selected" : ""}`} onClick={() => setCantripChoices((current) => current.includes(spell.id) ? current.filter((id) => id !== spell.id) : current.length >= requiredCantripCount ? current : [...current, spell.id])}><span>{spell.name}</span><small>{spell.school} · cantrip</small>{cantripChoices.includes(spell.id) ? <Check size={14} /> : <Plus size={14} />}</button>)}
+              </div>
+            ) : null}
+            {selectedFeat?.skillChoices ? (
+              <div className="cs-feat-manager-spells">
+                {selectedFeat.skillChoices.proficiency ? <label className="cs-feat-manager-field"><span>Gain proficiency in</span><select value={skillProficiency} onChange={(event) => { setSkillProficiency(event.target.value); if (event.target.value === skillExpertise) setSkillExpertise(""); }}><option value="">Choose a skill…</option>{skillOptions.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</select></label> : null}
+                {selectedFeat.skillChoices.expertise ? <label className="cs-feat-manager-field"><span>Gain expertise in</span><select value={skillExpertise} onChange={(event) => setSkillExpertise(event.target.value)}><option value="">Choose a proficient skill…</option>{expertiseOptions.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</select></label> : null}
+              </div>
+            ) : null}
+            {selectedFeat?.invocationChoices ? <div className="cs-feat-manager-spells"><div className="cs-feat-manager-spell-head"><span>Choose {selectedFeat.invocationChoices.count} Eldritch Invocation</span><small>{invocationChoices.length}/{selectedFeat.invocationChoices.count} selected</small></div>{invocationOptions.map((id) => <button type="button" key={id} className={`cs-feat-manager-spell${invocationChoices.includes(id) ? " is-selected" : ""}`} onClick={() => setInvocationChoices((current) => current.includes(id) ? current.filter((value) => value !== id) : current.length >= (selectedFeat.invocationChoices?.count ?? 0) ? current : [...current, id])}><span>{id.split("-").map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ")}</span>{INVOCATION_SPELLS[id] ? <small>Cast {INVOCATION_SPELLS[id].split("-").map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ")}</small> : null}{invocationChoices.includes(id) ? <Check size={14} /> : <Plus size={14} />}</button>)}</div> : null}
             <div className="cs-feat-manager-actions">
               <button type="button" className="cs-glass-btn" onClick={onClose}>Done</button>
               <button type="button" className="cs-glass-btn cs-feat-add" disabled={addDisabled} onClick={addFeat}><Plus size={14} /> Add feat</button>

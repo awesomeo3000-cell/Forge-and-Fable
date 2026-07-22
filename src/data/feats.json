@@ -32,7 +32,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"grantsSpells": { "chooseCantrips": { "count": 1 }, "choose": { "count": 1, "level": 1, "classes": ["artificer"] } }
 },
 {
 "id": "athlete",
@@ -159,7 +160,8 @@
 "chooseAbility": false,
 "racialPrereq": "Elf (drow)",
 "otherPrereq": "",
-"source": "XGtE"
+"source": "XGtE",
+"grantsSpells": { "fixed": ["detect-magic", "levitate", "dispel-magic"] }
 },
 {
 "id": "dual-wielder",
@@ -218,7 +220,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "Spellcasting or Pact Magic feature",
-"source": "TCoE"
+"source": "TCoE",
+"invocationChoices": { "count": 1 }
 },
 {
 "id": "elemental-adept",
@@ -288,7 +291,8 @@
 "chooseAbility": true,
 "racialPrereq": "Elf (high)",
 "otherPrereq": "",
-"source": "XGtE"
+"source": "XGtE",
+"grantsSpells": { "fixed": ["misty-step"] }
 },
 {
 "id": "fey-touched",
@@ -381,7 +385,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "FToD"
+"source": "FToD",
+"grantsSpells": { "fixed": ["cure-wounds"] }
 },
 {
 "id": "grappler",
@@ -580,7 +585,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "PHB"
+"source": "PHB",
+"grantsSpells": { "chooseCantrips": { "count": 2 }, "choose": { "count": 1, "level": 1 } }
 },
 {
 "id": "martial-adept",
@@ -764,7 +770,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "Spellcasting feature or Rune Carver background",
-"source": "GotG"
+"source": "GotG",
+"grantsSpells": { "fixed": ["comprehend-languages"] }
 },
 {
 "id": "savage-attacker",
@@ -857,7 +864,8 @@
 "chooseAbility": true,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"skillChoices": { "proficiency": 1, "expertise": 1 }
 },
 {
 "id": "skilled",
@@ -919,7 +927,8 @@
 "chooseAbility": false,
 "racialPrereq": "",
 "otherPrereq": "The ability to cast at least one spell",
-"source": "PHB"
+"source": "PHB",
+"grantsSpells": { "chooseCantrips": { "count": 1 } }
 },
 {
 "id": "squat-nimbleness",
@@ -973,7 +982,8 @@
 "chooseAbility": true,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"grantsSpells": { "fixed": ["mage-hand"] }
 },
 {
 "id": "telepathic",
@@ -988,7 +998,8 @@
 "chooseAbility": true,
 "racialPrereq": "",
 "otherPrereq": "",
-"source": "TCoE"
+"source": "TCoE",
+"grantsSpells": { "fixed": ["detect-thoughts"] }
 },
 {
 "id": "tough",
@@ -1050,6 +1061,7 @@
 "chooseAbility": false,
 "racialPrereq": "Elf (wood)",
 "otherPrereq": "",
-"source": "XGtE"
+"source": "XGtE",
+"grantsSpells": { "fixed": ["longstrider", "pass-without-trace"], "chooseCantrips": { "count": 1 } }
 }
 ]

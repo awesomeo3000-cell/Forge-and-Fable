@@ -184,6 +184,7 @@ export default memo(function HeroSheet(props: {
   onRollD20?: (label: string, modifier: number, riders: { sides: number; count: number }[], options?: RollD20Options) => void;
   onUpdate: (patch: Partial<Omit<Character, "id" | "userId" | "createdAt">>) => void;
   onDelete: () => void;
+  onOpenBuilder?: () => void;
   onNotify?: (message: string) => void;
   consoleInput: string;
   consoleLog: string[];
@@ -2345,6 +2346,7 @@ export default memo(function HeroSheet(props: {
             </header>
             <div className="character-header__side">
               <div className="character-header__actions">
+                {!isReadOnly && props.onOpenBuilder ? <button className="character-header__action" type="button" onClick={props.onOpenBuilder}>Edit in Builder</button> : null}
                 <button className="character-header__action" type="button" onClick={doShortRest}>Short Rest</button>
                 <button
                   className={`character-header__action character-header__inspire${props.character.heroicInspiration ? " is-on" : ""}`}

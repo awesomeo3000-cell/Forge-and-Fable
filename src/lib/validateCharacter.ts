@@ -366,6 +366,15 @@ export function validateCharacterInput(raw: unknown, isPatch: boolean): Record<s
                   throw new Error(`"asiChoices[].abilityChoice" must be a valid ability key.`);
                 }
               }
+              for (const field of ["skillProficiency", "skillExpertise"] as const) {
+                if (c[field] !== undefined) assertString(c[field], `asiChoices[].${field}`, 96);
+              }
+              for (const field of ["invocationChoices", "spellChoices", "cantripChoices"] as const) {
+                if (c[field] !== undefined) {
+                  assertArray(c[field], `asiChoices[].${field}`);
+                  for (const value of c[field] as unknown[]) assertString(value, `asiChoices[].${field}[]`, 96);
+                }
+              }
             }
           }
         }

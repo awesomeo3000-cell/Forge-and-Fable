@@ -46,6 +46,7 @@ import {
   characterPayload,
   createInitialDraft,
   defaultAssignments,
+  defaultCharacterSettings,
   emptyAbilities,
   pointCosts,
   rollDie,
@@ -141,6 +142,38 @@ function rollDetailWithTotal(detail: string, total: number) {
 
 type D20RollOptions = { forcedMode?: RollMode };
 
+function draftFromCharacter(character: Character): DraftCharacter {
+  return {
+    name: character.name,
+    ruleset: character.ruleset,
+    level: character.level,
+    alignment: character.alignment,
+    background: character.background,
+    physicalCharacteristics: character.physicalCharacteristics,
+    personalCharacteristics: character.personalCharacteristics,
+    generalNotes: character.generalNotes,
+    raceId: character.raceId,
+    classId: character.classId,
+    portraitUrl: character.portraitUrl ?? "",
+    sourceIds: [...character.sourceIds],
+    settings: { ...defaultCharacterSettings(), ...(character.settings ?? {}) },
+    abilities: { ...character.abilities },
+    currentHp: character.currentHp,
+    maxHp: character.maxHp,
+    tempHp: character.tempHp,
+    inventory: [...character.inventory],
+    spellsKnown: [...character.spellsKnown],
+    customRules: [...character.customRules],
+    skillProficiencies: [...(character.skillProficiencies ?? [])],
+    raceBonusChoices: character.raceBonusChoices ? { ...character.raceBonusChoices } : undefined,
+    toolProficiencies: [...(character.toolProficiencies ?? [])],
+    languages: [...(character.languages ?? [])],
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0, ...(character.currency ?? {}) },
+    startingHpRolls: [...(character.hpRolls ?? [])],
+    deathSaves: { ...character.deathSaves },
+  };
+}
+
 export default function ForgeAndFableApp() {
   const [introDone, setIntroDone] = useState(false);
   const [ruleset, setRuleset] = useState<Ruleset | null>(null);
@@ -152,6 +185,7 @@ export default function ForgeAndFableApp() {
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [creatorStep, setCreatorStep] = useState(0);
   const [buildMode, setBuildMode] = useState<BuildMode>("standard");
+  const [editingCharacterId, setEditingCharacterId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftCharacter | null>(null);
   // null = the player has not chosen an attribute method yet (Chapter VI
   // starts at the method decision; an untouched chapter is not "decided").
@@ -939,6 +973,7 @@ export default function ForgeAndFableApp() {
     }
 
     setBuildMode(mode);
+    setEditingCharacterId(null);
     if (mode === "standard") {
       setDraft(createInitialDraft(ruleset) as DraftCharacter);
       setStatMethod(null);
@@ -1234,6 +1269,86 @@ export default function ForgeAndFableApp() {
     setCreationPromptOpen(false);
   }
 
+  function openCharacterBuilder(character: Character) {
+    setSelectedId(character.id);
+    setEditingCharacterId(character.id);
+    setDraft(draftFromCharacter(character));
+    setStatMethod("manual");
+    setCreatorStep(0);
+    setCreationSeq(null);
+    setBuildMode("standard");
+    setHomeOpen(false);
+    setCampaignOpen(false);
+    setCreationPromptOpen(false);
+    setCreatorOpen(true);
+  }
+
+  function buildEditedCharacterPatch(character: Character, nextDraft: DraftCharacter): CharacterPatch {
+    return {
+      name: nextDraft.name,
+      level: nextDraft.level,
+      alignment: nextDraft.alignment,
+      background: nextDraft.background,
+      physicalCharacteristics: nextDraft.physicalCharacteristics,
+      personalCharacteristics: nextDraft.personalCharacteristics,
+      generalNotes: nextDraft.generalNotes,
+      raceId: nextDraft.raceId,
+      classId: nextDraft.classId,
+      portraitUrl: nextDraft.portraitUrl,
+      sourceIds: [...nextDraft.sourceIds],
+      settings: nextDraft.settings,
+      abilities: { ...nextDraft.abilities },
+      currentHp: character.currentHp,
+      maxHp: character.maxHp,
+      tempHp: character.tempHp,
+      inventory: [...nextDraft.inventory],
+      spellsKnown: [...nextDraft.spellsKnown],
+      customRules: [...nextDraft.customRules],
+      skillProficiencies: [...nextDraft.skillProficiencies],
+      raceBonusChoices: nextDraft.raceBonusChoices,
+      toolProficiencies: [...nextDraft.toolProficiencies],
+      languages: [...nextDraft.languages],
+      currency: { ...nextDraft.currency },
+      deathSaves: { ...nextDraft.deathSaves },
+    };
+  }
+
+  async function saveEditedCharacter() {
+    if (!editingCharacterId || !draft || forgeSaving) return;
+    const current = characters.find((character) => character.id === editingCharacterId);
+    if (!current) {
+      setStatus("That character is no longer in your roster.");
+      return;
+    }
+
+    setForgeSaving(true);
+    setStatus("Saving builder changes…");
+    try {
+      const result = await updateCharacterApi(current.id, buildEditedCharacterPatch(current, draft), current.revision ?? 0);
+      if (result.conflict) {
+        setCharacters((entries) => entries.map((entry) => (entry.id === current.id ? result.character : entry)));
+        setStatus("The character changed elsewhere. Reload its latest version before saving builder changes.");
+        return;
+      }
+      setCharacters((entries) => entries.map((entry) => (entry.id === current.id ? result.character : entry)));
+      setEditingCharacterId(null);
+      setCreatorOpen(false);
+      setCreationPromptOpen(false);
+      setDraft(createInitialDraft(ruleset!) as DraftCharacter);
+      setStatMethod(null);
+      setStatus(`${result.character.name} updated and saved`);
+    } catch (error) {
+      if (error instanceof CharacterApiError && error.status === 401) {
+        logOut();
+        setStatus("Session expired — please log in again.");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Builder changes could not be saved.");
+      }
+    } finally {
+      setForgeSaving(false);
+    }
+  }
+
   async function createHero() {
     if (!user || !ruleset || !draft || forgeSaving) {
       return;
@@ -1261,6 +1376,11 @@ export default function ForgeAndFableApp() {
 
     if (!draft.raceId) {
       setStatus("Unable to forge: no species chosen");
+      return;
+    }
+
+    if (editingCharacterId) {
+      await saveEditedCharacter();
       return;
     }
 
@@ -2446,7 +2566,7 @@ export default function ForgeAndFableApp() {
             type="button"
             className={`ao-nav-item${!homeOpen && !campaignOpen && (creationPromptOpen || creatorOpen) ? " active" : ""}`}
             aria-current={!homeOpen && !campaignOpen && (creationPromptOpen || creatorOpen) ? "page" : undefined}
-            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setCreationPromptOpen(true); setCreatorOpen(false); }}
+            onClick={() => { setHomeOpen(false); setCampaignOpen(false); setEditingCharacterId(null); setCreationPromptOpen(true); setCreatorOpen(false); }}
           >
             <Hammer size={19} /><span>Forge</span>
           </button>
@@ -2487,7 +2607,7 @@ export default function ForgeAndFableApp() {
               {campaignOpen ? campaignSync?.campaign.name ?? "Campaign"
                 : campaignListOpen ? "Your Tables"
                 : homeOpen ? "The Hearth"
-                : creationPromptOpen || creatorOpen ? "The Forge"
+                : creationPromptOpen || creatorOpen ? (editingCharacterId ? "Edit Character" : "The Forge")
                 : selected ? selected.name
                 : "Character Ledger"}
             </strong>
@@ -2746,12 +2866,21 @@ export default function ForgeAndFableApp() {
               onRollStats={rollStatBlock}
               onRollStartingHp={rollStartingHp}
               onBackToBuildModes={() => {
-                setCreatorOpen(false);
-                setCreationPromptOpen(true);
-                setBuildMode("standard");
+                if (editingCharacterId) {
+                  setCreatorOpen(false);
+                  setCreationPromptOpen(false);
+                  setEditingCharacterId(null);
+                  setDraft(createInitialDraft(ruleset!) as DraftCharacter);
+                  setStatMethod(null);
+                } else {
+                  setCreatorOpen(false);
+                  setCreationPromptOpen(true);
+                  setBuildMode("standard");
+                }
               }}
               onCreate={createHero}
               saving={forgeSaving}
+              editing={Boolean(editingCharacterId)}
             />
           ) : selected && selectedFinalAbilities ? (
             <HeroSheet
@@ -2768,6 +2897,7 @@ export default function ForgeAndFableApp() {
               onRollModeChange={setRollMode}
               onUpdate={updateSelected}
               onDelete={deleteSelected}
+              onOpenBuilder={() => openCharacterBuilder(selected)}
               onNotify={setStatus}
               consoleInput={consoleInput}
               consoleLog={consoleLog}

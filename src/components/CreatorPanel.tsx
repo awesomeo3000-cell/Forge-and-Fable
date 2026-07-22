@@ -85,6 +85,7 @@ export default memo(function CreatorPanel(props: {
   }) => void;
   onBackToBuildModes?: () => void;
   saving?: boolean;
+  editing?: boolean;
   onCreate: () => void;
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
@@ -787,7 +788,7 @@ export default memo(function CreatorPanel(props: {
                     props.onCreate();
                   }}
                 >
-                  {props.saving ? "Saving…" : CHAPTERS[6].action}
+                  {props.saving ? "Saving…" : props.editing ? "Save changes" : CHAPTERS[6].action}
                 </button>
               </>
             )}
