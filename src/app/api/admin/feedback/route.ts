@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     await requireAdmin(request);
-    const feedback = await listAllFeedback();
+    const includeResolved = new URL(request.url).searchParams.get("status") === "all";
+    const feedback = await listAllFeedback(includeResolved);
     return NextResponse.json({ feedback });
   } catch (error) {
     if (error instanceof AuthError) {

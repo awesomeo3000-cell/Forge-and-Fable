@@ -6,6 +6,7 @@ import { isAllowedPortraitReference, normalizeStoredAbilities, validateCharacter
 import { isAdminEmail } from "@/lib/adminEmail";
 import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
 import { validateCharacterProgression } from "@/lib/progression/validate";
+import { sendNotificationEmail } from "@/lib/email";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -357,11 +358,51 @@ export async function listFeedback(userId: string): Promise<FeedbackEntry[]> {
 }
 
 /** Every submission across all users — admin only (gated at the route). */
-export async function listAllFeedback(): Promise<FeedbackEntry[]> {
+export async function listAllFeedback(includeResolved = false): Promise<FeedbackEntry[]> {
   const rows = getDb()
     .prepare("SELECT data FROM feedback ORDER BY created_at DESC")
     .all() as JsonRow[];
-  return rows.map(parseFeedback);
+  const feedback = rows.map(parseFeedback);
+  return includeResolved ? feedback : feedback.filter((entry) => entry.status !== "done");
+}
+
+/** Mark feedback resolved once, then notify its submitter without making the
+ * admin action depend on the external email provider being available. */
+export async function resolveFeedback(feedbackId: string, resolvedBy: string): Promise<{ feedback: FeedbackEntry; emailSent: boolean }> {
+  const db = getDb();
+  let feedback: FeedbackEntry;
+  const resolvedAt = new Date().toISOString();
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const row = db.prepare("SELECT data FROM feedback WHERE id = ?").get(feedbackId) as JsonRow | undefined;
+    if (!row) throw new Error("Feedback not found.");
+    const current = parseFeedback(row);
+    if (current.status === "done") {
+      db.exec("COMMIT");
+      return { feedback: current, emailSent: false };
+    }
+    feedback = { ...current, status: "done", resolvedAt, resolvedBy };
+    db.prepare("UPDATE feedback SET data = ? WHERE id = ?").run(JSON.stringify(feedback), feedbackId);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  if (!process.env.RESEND_API_KEY) return { feedback: feedback!, emailSent: false };
+  try {
+    await sendNotificationEmail({
+      email: feedback!.userEmail,
+      name: feedback!.userName,
+      title: "Your feedback was resolved",
+      body: `Thanks for taking the time to write in about “${feedback!.title}”. We reviewed it and marked it resolved.`,
+    });
+    return { feedback: feedback!, emailSent: true };
+  } catch (error) {
+    console.error("Failed to send feedback resolution email:", error instanceof Error ? error.message : error);
+    return { feedback: feedback!, emailSent: false };
+  }
 }
 
 export async function createFeedback(

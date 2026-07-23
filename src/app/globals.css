@@ -13550,6 +13550,11 @@ button.dj-card {
 .admin-chip-high, .admin-chip-blocking { border-color: var(--ledger-seal, #8c2f22); color: var(--ledger-seal, #8c2f22); }
 .admin-feedback-details { margin: 6px 0; color: color-mix(in srgb, var(--ledger-ink, #2a2018) 82%, var(--ledger-paper, #e9dfc8)); font-size: 13.5px; line-height: 1.55; }
 .admin-feedback-meta { color: var(--ledger-ghost, #a08d6c); font-size: 11.5px; font-style: italic; }
+.admin-feedback-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.admin-resolve-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--ledger-accent, #9b7b3e) 58%, var(--ledger-rule, #cfc2a2)); border-radius: 5px; background: color-mix(in srgb, var(--ledger-accent, #9b7b3e) 10%, transparent); color: var(--ledger-ink, #2a2018); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.admin-resolve-btn:hover { background: color-mix(in srgb, var(--ledger-accent, #9b7b3e) 20%, transparent); }
+.admin-resolve-btn:focus-visible { outline: 2px solid var(--ledger-accent, #9b7b3e); outline-offset: 2px; }
+.admin-resolve-btn:disabled { cursor: wait; opacity: 0.65; }
 
 /* Invites */
 .admin-invite-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }

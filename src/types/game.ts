@@ -176,6 +176,8 @@ export type FeedbackEntry = {
   characterName?: string;
   status: "new" | "reviewed" | "planned" | "done";
   createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
 };
 
 export type InventoryItem = {

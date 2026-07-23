@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, Eye, Inbox, KeyRound, LayoutList, Loader2, Plus, Trash2, X } from "lucide-react";
+import { Check, CheckCircle2, Copy, Eye, Inbox, KeyRound, LayoutList, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { FeedbackEntry } from "@/types/game";
 import type { AdminOverview, InviteCode } from "@/lib/adminStore";
 
@@ -26,6 +26,7 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
   const [newMaxUses, setNewMaxUses] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [impersonating, setImpersonating] = useState<string | null>(null);
+  const [resolvingFeedback, setResolvingFeedback] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError("");
@@ -109,6 +110,20 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not impersonate user."); setImpersonating(null); }
   };
 
+  const resolveFeedbackItem = async (feedbackId: string) => {
+    setResolvingFeedback(feedbackId);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/feedback/${encodeURIComponent(feedbackId)}`, { method: "PATCH" });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not resolve feedback.");
+      setFeedback((current) => current.filter((entry) => entry.id !== feedbackId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not resolve feedback.");
+    } finally {
+      setResolvingFeedback(null);
+    }
+  };
+
   return createPortal(
     <div className="modal-scrim admin-scrim" role="presentation" onMouseDown={onClose}>
       <section className="admin-panel ledger-page" role="dialog" aria-modal="true" aria-label="Admin console" onMouseDown={(e) => e.stopPropagation()}>
@@ -132,7 +147,7 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
 
         <div className="admin-body">
           {tab === "feedback" ? (
-            feedback.length === 0 ? <p className="admin-empty">No feedback yet.</p> : (
+            feedback.length === 0 ? <p className="admin-empty">No open feedback.</p> : (
               <div className="admin-feedback-list">
                 {feedback.map((f) => (
                   <article key={f.id} className="admin-feedback-item">
@@ -145,6 +160,12 @@ export default memo(function AdminPanel({ onClose }: { onClose: () => void }) {
                     <div className="admin-feedback-meta">
                       {f.userName} · {f.userEmail} · {f.area}
                       {f.characterName ? ` · ${f.characterName}` : ""} · {new Date(f.createdAt).toLocaleString()}
+                    </div>
+                    <div className="admin-feedback-actions">
+                      <button type="button" className="admin-resolve-btn" onClick={() => void resolveFeedbackItem(f.id)} disabled={resolvingFeedback === f.id}>
+                        {resolvingFeedback === f.id ? <Loader2 size={14} className="spin" /> : <CheckCircle2 size={14} />}
+                        {resolvingFeedback === f.id ? "Resolving…" : "Mark resolved"}
+                      </button>
                     </div>
                   </article>
                 ))}
