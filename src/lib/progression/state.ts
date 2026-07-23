@@ -1,5 +1,6 @@
 import { buildLevelUpPlan } from "@/lib/progression/engine";
 import type { LevelUpPlan } from "@/lib/progression/types";
+import { isHomebrewClass } from "@/lib/homebrewIdentity";
 import type { Character, CharacterPatch, FeatureResourceState } from "@/types/game";
 
 function abilityModifier(score: number | undefined) {
@@ -59,6 +60,11 @@ function expandedSpellLists(plan: LevelUpPlan): Record<string, string[]> {
 }
 
 export function progressionPatchForCharacter(character: Pick<Character, "ruleset" | "classId" | "subclassId" | "level" | "featureChoices" | "featureResources" | "progressionState"> & { abilities?: Character["abilities"] }): CharacterPatch {
+  // Manual homebrew classes intentionally have no catalog progression packet, so
+  // there is no plan to build. Return an empty patch (never a progressionState —
+  // validateCharacterProgression rejects catalog progression on a homebrew class).
+  if (isHomebrewClass(character)) return {};
+
   const plan = buildLevelUpPlan({
     ruleset: character.ruleset,
     classId: character.classId,

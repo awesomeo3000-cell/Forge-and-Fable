@@ -3,7 +3,7 @@ import type { CatalogItem, Equipment, InventoryItem } from "@/types/game";
 
 export const ITEM_CATALOG = rawItems as CatalogItem[];
 
-type ItemLike = Pick<InventoryItem, "name"> &
+export type ItemLike = Pick<InventoryItem, "name"> &
   Partial<
     Pick<
       InventoryItem,

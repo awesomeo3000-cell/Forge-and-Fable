@@ -211,6 +211,20 @@ export function getVersion(userId: string, definitionId: string, versionId: stri
   return toVersionDto(versionRow);
 }
 
+/**
+ * Read a pinned version's payload for runtime content resolution, WITHOUT an
+ * ownership/visibility check. A character keeps resolving content it is already
+ * pinned to even after campaign access is revoked or the version is deprecated
+ * (proposal §11.2). Never expose this on a route that lists or discovers content;
+ * it is only for resolving refs a character already holds.
+ */
+export function readPinnedVersionPayload(definitionId: string, versionId: string): HomebrewPayload | null {
+  const row = getDb()
+    .prepare("SELECT payload_json FROM homebrew_versions WHERE id = ? AND definition_id = ?")
+    .get(versionId, definitionId) as { payload_json: string } | undefined;
+  return row ? (JSON.parse(row.payload_json) as HomebrewPayload) : null;
+}
+
 // ── Writes ───────────────────────────────────────────────────────────────────
 export type CreateDefinitionInput = {
   kind: HomebrewKind;
