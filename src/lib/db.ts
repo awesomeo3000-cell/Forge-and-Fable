@@ -22,7 +22,72 @@ declare global {
   var __forgeDbLastWriteHealthAt: number | undefined;
 }
 
-const SCHEMA_REVISION = 25;
+const SCHEMA_REVISION = 26;
+
+/**
+ * Homebrew Studio content tables (schema revision 26). Shared between the base
+ * schema (fresh installs) and the ordered migration (existing installs) so both
+ * paths produce identical structure. See docs/ai-project-proposal-homebrew-studio.md §4.4.
+ *
+ * `current_version_id` / `latest_published_version_id` are plain TEXT pointers,
+ * not foreign keys, to avoid a circular definitions<->versions constraint;
+ * their integrity is maintained transactionally in the store layer.
+ */
+const HOMEBREW_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS homebrew_definitions (
+    id TEXT PRIMARY KEY,
+    owner_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    kind TEXT NOT NULL,
+    ruleset TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    title TEXT NOT NULL,
+    visibility TEXT NOT NULL,
+    current_version_id TEXT,
+    latest_published_version_id TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
+    archived_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_homebrew_owner_slug
+    ON homebrew_definitions(owner_user_id, kind, slug)
+    WHERE owner_user_id IS NOT NULL AND archived_at IS NULL;
+
+  CREATE INDEX IF NOT EXISTS idx_homebrew_definitions_owner
+    ON homebrew_definitions(owner_user_id, kind);
+
+  CREATE TABLE IF NOT EXISTS homebrew_versions (
+    id TEXT PRIMARY KEY,
+    definition_id TEXT NOT NULL REFERENCES homebrew_definitions(id) ON DELETE RESTRICT,
+    ordinal INTEGER NOT NULL,
+    label TEXT,
+    status TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    parent_version_id TEXT REFERENCES homebrew_versions(id) ON DELETE RESTRICT,
+    baseline_json TEXT,
+    change_summary TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL,
+    published_at TEXT,
+    UNIQUE(definition_id, ordinal)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_homebrew_versions_definition
+    ON homebrew_versions(definition_id, ordinal);
+
+  CREATE TABLE IF NOT EXISTS campaign_homebrew_access (
+    campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    definition_id TEXT NOT NULL REFERENCES homebrew_definitions(id) ON DELETE CASCADE,
+    allowed_version_id TEXT NOT NULL REFERENCES homebrew_versions(id) ON DELETE RESTRICT,
+    added_by_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL,
+    revoked_at TEXT,
+    PRIMARY KEY (campaign_id, definition_id, allowed_version_id)
+  );
+`;
 
 export function getDataDir() {
   const configuredDir = process.env.FORGE_VAULT_DIR?.trim() || process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
@@ -374,7 +439,7 @@ function createSchema(db: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_user_portraits_user ON user_portraits(user_id);
-
+    ${HOMEBREW_TABLES_SQL}
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
@@ -581,6 +646,8 @@ function migrateSchema(db: DatabaseSync) {
       CREATE INDEX IF NOT EXISTS idx_handout_folders_campaign ON campaign_handout_folders(campaign_id, name);
     `);
     recordMigration(db, 25, "Campaign handout folders");
+    db.exec(HOMEBREW_TABLES_SQL);
+    recordMigration(db, 26, "Homebrew content definitions, immutable versions, and campaign access");
     db.exec(`PRAGMA user_version = ${SCHEMA_REVISION}`);
     db.exec("COMMIT");
   } catch (error) {

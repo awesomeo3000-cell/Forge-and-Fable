@@ -699,7 +699,7 @@ Rules:
 - Standard full/half/third/pact templates pre-fill reviewed tables.
 - Custom tables require all 20 rows and strict validation.
 - The UI label "partial caster" maps to half-caster by default.
-- Source filtering still applies to spell choices; homebrew cannot silently expose every catalog spell.
+- Source filtering still applies to spell choices; homebrew cannot silently expose every catalog spell. The one sanctioned exception is the explicit, Manual-tagged any-spell attachment in §10A.6, which never widens the automated lists.
 - Combined multiclass slots are computed from per-class caster contributions. Pact slots remain separate.
 
 ### 8.4 Level guide
@@ -815,6 +815,107 @@ Compatibility:
 - Repeatability checks count instances of the same definition, not display names.
 - `requiresDistinctChoices` compares normalized choice selections.
 - Server validation rejects selection above the maximum or without prerequisites.
+
+---
+
+## 10A. Freeform and manual authoring mode
+
+Added after implementation feedback. Two creator needs sit outside the
+structured/automated model and must be first-class, not worked around.
+
+### 10A.1 Motivation
+
+1. **Escape hatch.** The structured schema cannot express every homebrew idea.
+   A creator must always be able to write a class, lineage (species), or feat
+   feature in prose even when no `MechanicEffect` or progression field fits.
+2. **Brainstorming.** A creator may want to draft rough content without
+   satisfying full structured validation.
+
+Freeform content is **display-only**. Its numbers are not auto-calculated and do
+not feed derived stats or dice rolls. It is clearly badged **Manual** on every
+surface. This mode applies to **classes, subclasses, species, and feats**. Items
+are out of scope for freeform in this iteration (deferred by product owner).
+
+### 10A.2 Authoring mode flag
+
+Add an explicit mode to the class, subclass, species, and feat payloads:
+
+```ts
+authoringMode: "structured" | "freeform";
+```
+
+- `structured` (default) keeps the existing validated schema and automation.
+- `freeform` relaxes structured requirements in favor of prose blocks.
+
+### 10A.3 Freeform payload relaxations
+
+When `authoringMode` is `freeform`:
+
+- Structured requirements become optional: a class need not define all 20 levels,
+  a spellcasting object, ability arrays, or saving throws; a species need not
+  define ability-score mode, size, or speed as structured fields.
+- Content is authored as ordered freeform blocks, each with an optional level tag:
+
+```ts
+type FreeformBlock = {
+  id: string;
+  level?: number;        // optional level tag for display grouping
+  title: string;
+  body: string;          // plain text or sanitized Markdown only — never executable
+};
+
+type FreeformContent = {
+  blocks: FreeformBlock[];
+};
+```
+
+- `MechanicEffect`s remain permitted but optional; any present still resolve
+  normally. A freeform block with no effect simply renders as text.
+- Only plain text or sanitized Markdown is stored. No HTML persistence, no
+  executable expressions (consistent with §18).
+
+### 10A.4 Relaxed draft validation
+
+- Draft-stage validation for freeform content is **structure-lite**: it checks
+  types, sizes, and sanitization, but does not require mechanical completeness.
+- Publish-stage validation still applies the byte/size/nesting/sanitization
+  limits in §17. A freeform version is publishable once its blocks are well-formed
+  and within limits.
+
+### 10A.5 Character integration
+
+- Freeform class/lineage/feat content attaches to a character as displayed,
+  Manual-badged sections. It renders alongside the existing freeform sheet
+  surfaces (`pages`, notes, custom rules) and does **not** enter the progression
+  engine or `progressionState`.
+- It does **not** require the multiclass/progression foundation (Phase 5) or the
+  runtime resolver (Phase 2), because it is not auto-calculated. It rides on the
+  versioned storage from Phase 1 and the sheet's manual surfaces. It could
+  therefore ship earlier than its studio phase if reprioritized.
+- A creator may promote freeform content toward structured later; this is a
+  new-version edit, never an automatic conversion.
+
+### 10A.6 Manual spell attachment (any-spell escape hatch)
+
+Independently of authoring mode, a player may manually attach **any** spell from
+the catalog to a character or a homebrew feature, bypassing class/source
+filtering.
+
+- This is an explicit, opt-in action. The added spell is tagged with
+  `addedManually` provenance and shown as **Manual** so it is visually distinct
+  from automated, class-filtered grants.
+- This is the **sanctioned exception** to the source-filtering rule in §8.3. The
+  default automated pickers still filter by class/source; only the explicit
+  manual action exposes the whole catalog.
+- Server validation records the manual provenance; it does **not** silently widen
+  the automated spell lists.
+
+### 10A.7 Non-goals for freeform
+
+- Freeform content is not balanced, validated for correctness, or mechanically
+  resolved.
+- Freeform is prose only; it never introduces executable formulas, scripts, or
+  auto-scaling.
 
 ---
 
@@ -1194,6 +1295,9 @@ Deliverables:
 - Creation and level-up selection.
 - Character-sheet features, resources, actions, spells, and class labels.
 - Class/subclass version upgrade preview and snapshot rollback.
+- Freeform authoring mode for classes/subclasses (§10A): `authoringMode` flag,
+  prose blocks, relaxed draft validation, and Manual-badged sheet display with no
+  progression-engine integration.
 - `docs/CHANGES-HB-6.md`.
 
 Gate scenarios:
@@ -1221,6 +1325,11 @@ Deliverables:
 - Feat editor with repeatability rules.
 - Instance-based feat selections and compatibility adapter for `ASIChoice`.
 - Version upgrades and choice migration previews.
+- Freeform authoring mode for species/feats (§10A): prose blocks, relaxed draft
+  validation, Manual-badged sheet display.
+- Manual any-spell attachment (§10A.6): explicit whole-catalog spell add with
+  `addedManually` provenance, surfaced on the character sheet. The sheet control
+  may land earlier if freeform is reprioritized ahead of this phase.
 - `docs/CHANGES-HB-7.md`.
 
 Gate scenarios:
@@ -1516,6 +1625,8 @@ These can be future projects after the content registry proves stable.
 | Upgrade | Diff, new choices, snapshot, apply, and rollback work. |
 | Campaign access | DM allow/revoke controls new use without breaking existing sheets. |
 | Existing data | Built-in and legacy manual-homebrew characters remain valid. |
+| Freeform authoring | A class/lineage/feat can be authored as prose with no mechanics, published, and shown Manual on the sheet; draft save does not require structured completeness. |
+| Manual spell attach | Any catalog spell can be added to a character, tagged `addedManually`/Manual, without widening the automated class/source spell lists. |
 
 ---
 
