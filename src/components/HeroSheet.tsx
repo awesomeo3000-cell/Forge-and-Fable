@@ -354,6 +354,30 @@ export default memo(function HeroSheet(props: {
   const [tourDismissed, setTourDismissed] = useState(true);
   const [prepareHintDismissed, setPrepareHintDismissed] = useState(true);
   const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
+  const [quantityEditorId, setQuantityEditorId] = useState<string | null>(null);
+  const quantityControlRef = useRef<HTMLDivElement | null>(null);
+  const quantityToggleRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!quantityEditorId) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && quantityControlRef.current?.contains(target)) return;
+      setQuantityEditorId(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setQuantityEditorId(null);
+      quantityToggleRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [quantityEditorId]);
 
   const toggleSkillProficiency = (skillId: string) => {
     if (isBackgroundSkill(skillId)) return; // background-granted — cannot toggle
@@ -550,6 +574,7 @@ export default memo(function HeroSheet(props: {
     commitItemQuantity(id, (Number.isFinite(currentQuantity) ? currentQuantity : 1) + delta);
   };
   const removeItem = (id: string) => {
+    setQuantityEditorId((current) => current === id ? null : current);
     setQuantityDrafts((current) => {
       if (!(id in current)) return current;
       const next = { ...current };
@@ -2016,7 +2041,16 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                       </div>
-                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<span className="cs-inv-quantity" aria-label={`${item.name} quantity`}><button type="button" onClick={() => adjustItemQuantity(item.id, -1)} aria-label={`Decrease ${item.name} quantity`}>−</button><input type="number" min={1} max={999} value={quantityDrafts[item.id] ?? String(item.quantity ?? 1)} onChange={(event) => setQuantityDrafts((current) => ({ ...current, [item.id]: event.currentTarget.value }))} onBlur={(event) => commitItemQuantity(item.id, event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.currentTarget.blur(); } }} aria-label={`${item.name} quantity`} /><button type="button" onClick={() => adjustItemQuantity(item.id, 1)} aria-label={`Increase ${item.name} quantity`}>+</button></span><button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
+                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<div ref={quantityEditorId === item.id ? quantityControlRef : undefined} className={`cs-inv-quantity${quantityEditorId === item.id ? " is-open" : ""}`} aria-label={`${item.name} quantity`}>
+                        <button ref={quantityEditorId === item.id ? quantityToggleRef : undefined} type="button" className="cs-inv-quantity-toggle" aria-expanded={quantityEditorId === item.id} onClick={() => setQuantityEditorId((current) => current === item.id ? null : item.id)}>
+                          <span aria-hidden="true">Qty</span> {item.quantity ?? 1}
+                        </button>
+                        {quantityEditorId === item.id ? <div className="cs-inv-quantity-editor">
+                          <button type="button" onClick={() => adjustItemQuantity(item.id, -1)} aria-label={`Decrease ${item.name} quantity`}>−</button>
+                          <input type="number" min={1} max={999} value={quantityDrafts[item.id] ?? String(item.quantity ?? 1)} onChange={(event) => setQuantityDrafts((current) => ({ ...current, [item.id]: event.currentTarget.value }))} onBlur={(event) => commitItemQuantity(item.id, event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} aria-label={`${item.name} quantity`} />
+                          <button type="button" onClick={() => adjustItemQuantity(item.id, 1)} aria-label={`Increase ${item.name} quantity`}>+</button>
+                        </div> : null}
+                      </div><button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
                     </div>
                   );
                 })}</div>
