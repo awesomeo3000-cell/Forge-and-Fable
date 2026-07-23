@@ -79,4 +79,5 @@ tmp/*.log
 # temp/scratch directory
 /tmp/
 *.md
+!docs/ai-project-proposal-homebrew-studio.md
 AGENTS.md
