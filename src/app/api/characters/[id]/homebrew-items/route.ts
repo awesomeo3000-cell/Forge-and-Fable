@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateRequest, AuthError } from "@/lib/auth";
 import { readPinnedItemVersion } from "@/lib/homebrew/homebrewStore";
-import { getCharacter } from "@/lib/vaultStore";
+import { getCharacter, getCharacterForDmReadOnly } from "@/lib/vaultStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +10,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     const userId = await authenticateRequest(request);
     const { id } = await context.params;
-    const character = await getCharacter(userId, id);
+    const readOnlyDmView = new URL(request.url).searchParams.get("mode") === "dm-readonly";
+    const character = readOnlyDmView
+      ? await getCharacterForDmReadOnly(userId, id)
+      : await getCharacter(userId, id);
     if (!character) return NextResponse.json({ error: "Character not found." }, { status: 404 });
 
     const items = character.inventory.flatMap((item) => {

@@ -7,7 +7,7 @@ const baseURL = externalBaseURL || localBaseURL;
 
 export default defineConfig({
   testDir: "./QA/tests",
-  testMatch: /(release-.*|accessibility)\.spec\.ts/,
+  testMatch: /(release-.*|homebrew-.*|accessibility)\.spec\.ts/,
   outputDir: ".tmp/playwright-results",
   fullyParallel: false,
   workers: 1,

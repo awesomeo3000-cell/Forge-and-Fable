@@ -14970,6 +14970,15 @@ button.dj-card {
 .hb-effect-card { padding: 14px; border: 1px solid rgba(225, 211, 174, .12); border-radius: 8px; background: rgba(4, 8, 7, .25); }
 .hb-effect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: #d7c49d; text-transform: capitalize; font-size: 12px; letter-spacing: .05em; }
 .hb-effect-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.hb-prerequisite-editor { display: grid; gap: 10px; padding: 13px; border: 1px solid rgba(225, 211, 174, .12); border-radius: 8px; background: rgba(4, 8, 7, .2); }
+.hb-subsection-title { display: grid; gap: 3px; color: #d7c49d; font-size: 12px; }
+.hb-subsection-title span { color: #829086; font-size: 11px; font-weight: 400; }
+.hb-prerequisite-card { display: grid; gap: 9px; padding: 10px; border: 1px solid rgba(225, 211, 174, .1); border-radius: 7px; background: rgba(10, 15, 13, .45); }
+.hb-prerequisite-head { display: flex; align-items: center; gap: 8px; }
+.hb-prerequisite-head select { flex: 1; }
+.hb-prerequisite-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.hb-prerequisite-children { display: grid; gap: 8px; padding-left: 13px; border-left: 1px solid rgba(211, 171, 91, .25); }
+.hb-prerequisite-children .hb-add-line { font-size: 11px; }
 .hb-empty { color: #7d8881; font-size: 12px; }
 .hb-phase-note { display: flex; align-items: center; gap: 8px; margin-top: 17px; padding-top: 14px; color: #829086; border-top: 1px solid rgba(230, 218, 188, .08); font-size: 11px; }
 .hb-save-panel { display: grid; gap: 15px; padding: 4px 2px; }

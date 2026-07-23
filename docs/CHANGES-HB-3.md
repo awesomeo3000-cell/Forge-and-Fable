@@ -10,6 +10,11 @@ Date: 2026-07-23
 - The Phase 2 mechanics gate was rerun before this work: 5 files / 29 tests passed.
 - The worktree was clean before Phase 3 began.
 
+Repository history note: commit `9199119` is the Phase 3 Item Studio commit,
+despite its `phase4homebrew` subject. Phase 4 has not started; staged growth,
+stage transitions, counters, milestone history, and campaign aura propagation
+remain explicitly deferred below.
+
 This corrects the initial assumption that Phase 2 was uncommitted. Phase 3 had
 not started in source and this document records the first Phase 3 implementation.
 
@@ -128,7 +133,49 @@ not started in source and this document records the first Phase 3 implementation
   - authorized published pins;
   - private-definition rejection;
   - continued use after deprecation;
-  - rejection of a newly added copy after deprecation.
+  - rejection of a newly added copy after deprecation;
+  - DM-only read-only resolution for a character enrolled in the DM's campaign.
+
+## Closure work added after the initial vertical slice
+
+- Replaced the compromised repository `AGENTS.md` with project-only workflow
+  guidance. It no longer requests hidden reasoning, persona adoption, or
+  unconditional compliance.
+- Preserved `docs/CHANGES-HB-*.md` in `.gitignore`, exposing the Phase 0, 1,
+  and 2 changelogs that were already present on disk but previously ignored.
+- Added component interaction coverage for structured prerequisite authoring,
+  focus trapping, Escape dismissal, and opener focus restoration.
+- Added recursive structured prerequisite editing for attunement rules, covering
+  atomic rules plus `all`, `any`, and `not` composition. Display text remains
+  optional explanatory copy and is not treated as a rules gate.
+- Added an authenticated DM read-only resolver path. It only resolves a
+  character's pinned item versions when the viewer is the DM of a campaign in
+  which that character is enrolled; the sheet hides add/edit/upgrade controls
+  in that mode.
+- Added `QA/tests/homebrew-item-lifecycle.spec.ts` and included `homebrew-*`
+  specs in the Playwright test match so the authenticated add/equip/roll/save,
+  reload, v2 publish, v1 retention, and explicit one-copy upgrade flow is an
+  executable gate.
+
+## Closure verification
+
+- `npm run typecheck` — passed.
+- `npm run lint:ci` — passed with zero warnings.
+- Focused Phase 3 suite — 5 files / 21 tests passed, including the new
+  component and DM-resolution coverage.
+- `npm run build` — passed under Next.js 16.2.9; the homebrew item resolver
+  route is present in the production route table.
+- `npx playwright test QA/tests/homebrew-item-lifecycle.spec.ts` — 2 passed
+  (desktop Chromium and mobile Chromium). The authenticated lifecycle covered
+  add, equip, roll, save, reload, v2 publish, v1 retention, and an explicit
+  upgrade of one copy.
+- The complete `npm test` command did not finish within a four-minute local
+  run, so full-suite completion remains an open verification issue; all focused
+  Phase 3 suites and the production build passed.
+
+The Phase 1-era freeform authoring amendment remains intentionally deferred. No
+Phase 3 code silently changes the frozen class/subclass freeform contracts;
+that amendment should land before Phase 6/7 as the proposal requires.
 
 ## Deliberate Phase 3 boundary
 

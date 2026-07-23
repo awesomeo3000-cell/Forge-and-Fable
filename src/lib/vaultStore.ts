@@ -321,6 +321,31 @@ export async function getCharacter(userId: string, id: string): Promise<Characte
   return row ? parseCharacter(row) : null;
 }
 
+/**
+ * Read-only DM resolution for a character that is actually seated in one of
+ * the viewer's campaigns. This deliberately does not widen ordinary character
+ * reads or provide a write path; the campaign membership and DM relationship
+ * are checked in the same query as the character lookup.
+ */
+export async function getCharacterForDmReadOnly(userId: string, id: string): Promise<Character | null> {
+  const row = getDb()
+    .prepare(`
+      SELECT c.id, c.data, c.revision
+      FROM characters c
+      WHERE c.id = ?
+        AND EXISTS (
+          SELECT 1
+          FROM campaign_members member
+          INNER JOIN campaigns campaign ON campaign.id = member.campaign_id
+          WHERE member.character_id = c.id
+            AND member.user_id = c.user_id
+            AND campaign.dm_user_id = ?
+        )
+    `)
+    .get(id, userId) as JsonRow | undefined;
+  return row ? parseCharacter(row) : null;
+}
+
 export async function updateCharacter(
   userId: string,
   id: string,

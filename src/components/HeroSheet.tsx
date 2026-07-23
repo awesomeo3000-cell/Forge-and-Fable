@@ -226,21 +226,24 @@ export default memo(function HeroSheet(props: {
 
   useEffect(() => {
     let cancelled = false;
-    void fetch(`/api/characters/${props.character.id}/homebrew-items`)
+    void fetch(`/api/characters/${props.character.id}/homebrew-items${isReadOnly ? "?mode=dm-readonly" : ""}`)
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Pinned item versions could not be resolved.")))
       .then((data: { items?: ResolvedHomebrewItem[] }) => { if (!cancelled) setResolvedHomebrewItems(data.items ?? []); })
       .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
     return () => { cancelled = true; };
-  }, [props.character.id, props.character.inventory]);
+  }, [props.character.id, props.character.inventory, isReadOnly]);
 
   useEffect(() => {
+    if (isReadOnly) {
+      return;
+    }
     let cancelled = false;
     void fetch(`/api/homebrew/library/items?ruleset=${props.character.ruleset}`)
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Homebrew item library could not be loaded.")))
       .then((data: { items?: AvailableHomebrewItem[] }) => { if (!cancelled) setAvailableHomebrewItems(data.items ?? []); })
       .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
     return () => { cancelled = true; };
-  }, [props.character.ruleset]);
+  }, [props.character.ruleset, isReadOnly]);
 
   const race = resolveCharacterRace(props.character, props.ruleset);
   const heroClass = resolveCharacterClass(props.character, props.ruleset);
@@ -893,7 +896,7 @@ export default memo(function HeroSheet(props: {
       </div>
       <div className="cs-item-results">{visibleItemMatches.map((item) => <div className="cs-item-result" key={item.id}><div><strong data-rarity={item.rarity}>{item.name}</strong><span>{equipmentCatalogCategory(item)} <i aria-hidden="true">|</i> <em data-rarity={item.rarity}>{item.rarity}</em>{itemMetaParts(item).map((part) => <Fragment key={part}> <i aria-hidden="true">|</i> {part}</Fragment>)}</span>{item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "…" : ""}</p> : null}</div><button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button></div>)}{visibleItemMatches.length === 0 ? <p className="cs-muted">No matching items yet.</p> : null}</div>
       {itemMatches.length > visibleItemMatches.length ? <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p> : null}
-      {availableHomebrewItems.length > 0 ? <div className="cs-homebrew-library">
+      {!isReadOnly && availableHomebrewItems.length > 0 ? <div className="cs-homebrew-library">
         <h4>Published homebrew</h4>
         {availableHomebrewItems
           .filter((entry) => !itemSearch.trim() || entry.payload.name.toLowerCase().includes(itemSearch.trim().toLowerCase()))
@@ -2178,7 +2181,7 @@ export default memo(function HeroSheet(props: {
                   const equippedAsBonus = (equipment.bonusItemIds ?? []).includes(item.id);
                   const resolvedHomebrew = resolvedHomebrewByItemId.get(item.id);
                   const homebrewRef = item.homebrew?.contentRef;
-                  const newerHomebrew = homebrewRef?.source === "homebrew"
+                  const newerHomebrew = !isReadOnly && homebrewRef?.source === "homebrew"
                     ? availableHomebrewItems.find((entry) => entry.definition.id === homebrewRef.definitionId)
                     : undefined;
                   return (
@@ -2194,15 +2197,17 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                         {item.homebrew ? <div className="cs-homebrew-instance">
-                          <div className="cs-homebrew-version"><span>Homebrew · pinned v{resolvedHomebrew?.version.ordinal ?? "?"}</span>{newerHomebrew && homebrewRef?.source === "homebrew" && newerHomebrew.version.id !== homebrewRef.versionId ? <button type="button" className="cs-glass-btn" onClick={() => setUpgradeItem({ item, available: newerHomebrew, changes: describeItemUpgrade(resolvedHomebrew?.payload ?? newerHomebrew.payload, newerHomebrew.payload) })}>Preview v{newerHomebrew.version.ordinal} upgrade</button> : null}</div>
-                          <div className="cs-homebrew-controls">
-                            <label><input type="checkbox" checked={item.homebrew.equipped} onChange={(event) => updateHomebrewItem(item, { equipped: event.target.checked })} /> Equipped</label>
-                            {item.attunement ? <label><input type="checkbox" checked={item.homebrew.attuned} onChange={(event) => updateHomebrewItem(item, { attuned: event.target.checked })} /> Attuned</label> : null}
-                            <label>Body location<input value={item.homebrew.bodyLocation ?? ""} placeholder="Right hand, left ring…" onChange={(event) => updateHomebrewItem(item, { bodyLocation: event.target.value || undefined })} /></label>
-                            <label>Weight override<input type="number" min={0} value={item.homebrew.weightOverride ?? ""} onChange={(event) => updateHomebrewItem(item, { weightOverride: event.target.value === "" ? undefined : Number(event.target.value) })} /></label>
-                          </div>
-                          {resolvedHomebrew?.payload.toggles.map((toggle) => <label className="cs-homebrew-toggle" key={toggle.id}><input type="checkbox" checked={item.homebrew!.activeToggleIds.includes(toggle.id)} onChange={(event) => updateHomebrewItem(item, { activeToggleIds: event.target.checked ? [...item.homebrew!.activeToggleIds, toggle.id] : item.homebrew!.activeToggleIds.filter((id) => id !== toggle.id) })} /> {toggle.label}</label>)}
-                          <label className="cs-homebrew-notes">Instance notes<textarea value={item.homebrew.instanceNotes ?? ""} onChange={(event) => updateHomebrewItem(item, { instanceNotes: event.target.value || undefined })} /></label>
+                          <div className="cs-homebrew-version"><span>Homebrew · pinned v{resolvedHomebrew?.version.ordinal ?? "?"}</span>{isReadOnly ? <span className="cs-rule-note">DM read-only resolution</span> : null}{newerHomebrew && homebrewRef?.source === "homebrew" && newerHomebrew.version.id !== homebrewRef.versionId ? <button type="button" className="cs-glass-btn" onClick={() => setUpgradeItem({ item, available: newerHomebrew, changes: describeItemUpgrade(resolvedHomebrew?.payload ?? newerHomebrew.payload, newerHomebrew.payload) })}>Preview v{newerHomebrew.version.ordinal} upgrade</button> : null}</div>
+                          {!isReadOnly ? <>
+                            <div className="cs-homebrew-controls">
+                              <label><input type="checkbox" checked={item.homebrew.equipped} onChange={(event) => updateHomebrewItem(item, { equipped: event.target.checked })} /> Equipped</label>
+                              {item.attunement ? <label><input type="checkbox" checked={item.homebrew.attuned} onChange={(event) => updateHomebrewItem(item, { attuned: event.target.checked })} /> Attuned</label> : null}
+                              <label>Body location<input value={item.homebrew.bodyLocation ?? ""} placeholder="Right hand, left ring…" onChange={(event) => updateHomebrewItem(item, { bodyLocation: event.target.value || undefined })} /></label>
+                              <label>Weight override<input type="number" min={0} value={item.homebrew.weightOverride ?? ""} onChange={(event) => updateHomebrewItem(item, { weightOverride: event.target.value === "" ? undefined : Number(event.target.value) })} /></label>
+                            </div>
+                            {resolvedHomebrew?.payload.toggles.map((toggle) => <label className="cs-homebrew-toggle" key={toggle.id}><input type="checkbox" checked={item.homebrew!.activeToggleIds.includes(toggle.id)} onChange={(event) => updateHomebrewItem(item, { activeToggleIds: event.target.checked ? [...item.homebrew!.activeToggleIds, toggle.id] : item.homebrew!.activeToggleIds.filter((id) => id !== toggle.id) })} /> {toggle.label}</label>)}
+                            <label className="cs-homebrew-notes">Instance notes<textarea value={item.homebrew.instanceNotes ?? ""} onChange={(event) => updateHomebrewItem(item, { instanceNotes: event.target.value || undefined })} /></label>
+                          </> : null}
                         </div> : null}
                       </div>
                       <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<div ref={quantityEditorId === item.id ? quantityControlRef : undefined} className={`cs-inv-quantity${quantityEditorId === item.id ? " is-open" : ""}`} aria-label={`${item.name} quantity`}>

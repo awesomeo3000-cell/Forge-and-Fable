@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
 import { createDefinition, deprecateVersion, publishVersion } from "@/lib/homebrew/homebrewStore";
-import { createCharacter, updateCharacter } from "@/lib/vaultStore";
+import { createCharacter, getCharacterForDmReadOnly, updateCharacter } from "@/lib/vaultStore";
+import { createCampaign, joinCampaign } from "@/lib/campaignStore";
 import { homebrewPayloadToInventory } from "@/lib/homebrew/itemIntegration";
 import { characterInput } from "./fixtures/character";
 import { plusTwoWeapon } from "./fixtures/homebrew";
@@ -58,5 +59,19 @@ describe("character homebrew item pinning", () => {
     await expect(updateCharacter("alice", character.id, {
       inventory: [...retained.inventory, { ...item, id: crypto.randomUUID() }],
     }, 1)).rejects.toThrow(/unavailable/);
+  });
+
+  it("resolves pinned items to a campaign DM without granting ordinary character access", async () => {
+    const created = createDefinition("bob", { kind: "item", ruleset: "2014", title: "Moonsteel", payload: plusTwoWeapon });
+    publishVersion("bob", created.definition.id, created.version.id);
+    const item = homebrewPayloadToInventory(created.definition.id, created.version.id, "2014", plusTwoWeapon);
+    const character = await createCharacter("bob", { ...characterInput("Bob"), inventory: [item] });
+    const campaign = createCampaign("alice", "DM Resolution Table");
+    joinCampaign("bob", campaign.code, character.id);
+
+    const resolvedRef = (await getCharacterForDmReadOnly("alice", character.id))?.inventory[0].homebrew?.contentRef;
+    expect(resolvedRef?.source).toBe("homebrew");
+    if (resolvedRef?.source === "homebrew") expect(resolvedRef.versionId).toBe(created.version.id);
+    expect(await getCharacterForDmReadOnly("bob", character.id)).toBeNull();
   });
 });

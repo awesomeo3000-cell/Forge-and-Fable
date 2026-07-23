@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookCopy, Check, FlaskConical, Plus, Save, Search, Send, Trash2, X } from "lucide-react";
 import { ITEM_CATALOG } from "@/lib/itemCatalog";
 import {
@@ -15,6 +15,8 @@ import type {
   ItemToggle,
   MechanicEffect,
   NumericBonusTarget,
+  Prerequisite,
+  RulesContentRef,
 } from "@/types/homebrew";
 import type { RulesetId } from "@/types/game";
 
@@ -58,6 +60,74 @@ function gateToggleId(gate: EffectGate): string | undefined {
   if (gate.type === "toggle") return gate.toggleId;
   if (gate.type === "all") return gate.gates.find((entry): entry is Extract<EffectGate, { type: "toggle" }> => entry.type === "toggle")?.toggleId;
   return undefined;
+}
+
+const ABILITIES = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const;
+const PREREQUISITE_OPS = [
+  "ability", "character-level", "class", "class-level", "species", "feat",
+  "spellcasting", "proficiency", "feature", "attunement", "all", "any", "not",
+] as const;
+
+function defaultContentRef(kind: "class" | "species" | "feat"): RulesContentRef {
+  return { source: "builtin", kind, id: kind === "class" ? "fighter" : kind === "species" ? "human" : "alert", ruleset: "2014" };
+}
+
+function newPrerequisite(op: Prerequisite["op"]): Prerequisite {
+  switch (op) {
+    case "ability": return { op, ability: "strength", minimum: 13 };
+    case "character-level": return { op, minimum: 1 };
+    case "class": return { op, classRef: defaultContentRef("class") };
+    case "class-level": return { op, classRef: defaultContentRef("class"), minimum: 1 };
+    case "species": return { op, speciesRef: defaultContentRef("species") };
+    case "feat": return { op, featRef: defaultContentRef("feat") };
+    case "spellcasting": return { op, mode: "any" };
+    case "proficiency": return { op, category: "armor", value: "medium armor" };
+    case "feature": return { op, featureId: "feature-id" };
+    case "attunement": return { op, required: true };
+    case "all": return { op, rules: [newPrerequisite("ability")] };
+    case "any": return { op, rules: [newPrerequisite("ability")] };
+    case "not": return { op, rule: newPrerequisite("ability") };
+  }
+}
+
+function builtinRefId(ref: RulesContentRef): string {
+  return ref.source === "builtin" ? ref.id : "";
+}
+
+function PrerequisiteEditor({
+  rule,
+  onChange,
+  onRemove,
+}: {
+  rule: Prerequisite;
+  onChange: (rule: Prerequisite) => void;
+  onRemove?: () => void;
+}) {
+  const updateRef = (id: string) => {
+    if ((rule.op === "class" || rule.op === "class-level") && rule.classRef.source === "builtin") onChange({ ...rule, classRef: { ...rule.classRef, id } });
+    if (rule.op === "species" && rule.speciesRef.source === "builtin") onChange({ ...rule, speciesRef: { ...rule.speciesRef, id } });
+    if (rule.op === "feat" && rule.featRef.source === "builtin") onChange({ ...rule, featRef: { ...rule.featRef, id } });
+  };
+  const updateOp = (op: Prerequisite["op"]) => onChange(newPrerequisite(op));
+  return (
+    <div className="hb-prerequisite-card">
+      <div className="hb-prerequisite-head">
+        <select aria-label="Prerequisite type" value={rule.op} onChange={(event) => updateOp(event.target.value as Prerequisite["op"])}>
+          {PREREQUISITE_OPS.map((op) => <option key={op} value={op}>{op.replaceAll("-", " ")}</option>)}
+        </select>
+        {onRemove ? <button type="button" className="hb-icon" onClick={onRemove} aria-label="Remove prerequisite"><Trash2 size={14} /></button> : null}
+      </div>
+      {rule.op === "ability" ? <div className="hb-prerequisite-fields"><label>Ability<select value={rule.ability} onChange={(event) => onChange({ ...rule, ability: event.target.value as typeof rule.ability })}>{ABILITIES.map((ability) => <option key={ability}>{ability}</option>)}</select></label><label>Minimum<input type="number" min={1} max={30} value={rule.minimum} onChange={(event) => onChange({ ...rule, minimum: Number(event.target.value) })} /></label></div> : null}
+      {rule.op === "character-level" ? <label>Minimum character level<input type="number" min={1} max={20} value={rule.minimum} onChange={(event) => onChange({ ...rule, minimum: Number(event.target.value) })} /></label> : null}
+      {rule.op === "proficiency" ? <div className="hb-prerequisite-fields"><label>Category<input value={rule.category} onChange={(event) => onChange({ ...rule, category: event.target.value })} /></label><label>Proficiency<input value={rule.value} onChange={(event) => onChange({ ...rule, value: event.target.value })} /></label></div> : null}
+      {rule.op === "feature" ? <label>Feature id<input value={rule.featureId} onChange={(event) => onChange({ ...rule, featureId: event.target.value })} /></label> : null}
+      {rule.op === "spellcasting" ? <label>Spellcasting<select value={rule.mode} onChange={(event) => onChange({ ...rule, mode: event.target.value as typeof rule.mode })}><option value="any">any</option><option value="full">full</option><option value="partial">partial</option><option value="pact">pact</option></select></label> : null}
+      {rule.op === "attunement" ? <label><input type="checkbox" checked={rule.required} onChange={(event) => onChange({ ...rule, required: event.target.checked })} /> Character must be attuned</label> : null}
+      {rule.op === "class" || rule.op === "species" || rule.op === "feat" || rule.op === "class-level" ? <div className="hb-prerequisite-fields"><label>{rule.op === "class" || rule.op === "class-level" ? "Class id" : `${rule.op} id`}<input value={rule.op === "species" ? builtinRefId(rule.speciesRef) : rule.op === "feat" ? builtinRefId(rule.featRef) : builtinRefId(rule.classRef)} onChange={(event) => updateRef(event.target.value)} /></label>{rule.op === "class-level" ? <label>Minimum class level<input type="number" min={1} max={20} value={rule.minimum} onChange={(event) => onChange({ ...rule, minimum: Number(event.target.value) })} /></label> : null}</div> : null}
+      {rule.op === "all" || rule.op === "any" ? <div className="hb-prerequisite-children">{rule.rules.map((child, index) => <PrerequisiteEditor key={index} rule={child} onChange={(next) => onChange({ ...rule, rules: rule.rules.map((entry, i) => i === index ? next : entry) })} onRemove={() => onChange({ ...rule, rules: rule.rules.filter((_, i) => i !== index) })} />)}<button type="button" className="hb-add-line" onClick={() => onChange({ ...rule, rules: [...rule.rules, newPrerequisite("ability")] })}><Plus size={14} /> Add rule</button></div> : null}
+      {rule.op === "not" ? <PrerequisiteEditor rule={rule.rule} onChange={(next) => onChange({ ...rule, rule: next })} /> : null}
+    </div>
+  );
 }
 
 function newEffect(type: MechanicEffect["type"], toggles: ItemToggle[]): MechanicEffect {
@@ -163,6 +233,10 @@ function EffectEditor({
 }
 
 export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const dirtyRef = useRef(false);
   const [definitions, setDefinitions] = useState<DefinitionDto[]>([]);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [version, setVersion] = useState<VersionDto | null>(null);
@@ -175,6 +249,38 @@ export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    dirtyRef.current = dirty;
+  }, [dirty, onClose]);
+
+  function closeStudio() {
+    if (!dirtyRef.current || window.confirm("Discard unsaved Item Studio changes?")) onCloseRef.current();
+  }
+
+  useEffect(() => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeStudio();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      returnFocusRef.current?.focus();
+    };
+  }, []);
 
   const filteredCatalog = useMemo(() => {
     const query = catalogQuery.trim().toLowerCase();
@@ -302,13 +408,13 @@ export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <div className="hb-studio" role="dialog" aria-modal="true" aria-labelledby="hb-title">
+    <div ref={dialogRef} className="hb-studio" role="dialog" aria-modal="true" aria-labelledby="hb-title" tabIndex={-1}>
       <header className="hb-topbar">
         <div><span className="hb-kicker">Creator workspace</span><h1 id="hb-title"><FlaskConical size={24} /> Item Studio</h1></div>
         <div className="hb-actions">
           <button type="button" className="ao-btn ao-btn-ghost" onClick={save} disabled={busy || !payload.name.trim()}><Save size={15} /> Save version</button>
           <button type="button" className="ao-btn ao-btn-brass" onClick={publish} disabled={busy || !version || version.status !== "draft" || dirty}><Send size={15} /> Publish</button>
-          <button type="button" className="hb-close" onClick={() => { if (!dirty || window.confirm("Discard unsaved Item Studio changes?")) onClose(); }} aria-label="Close Item Studio"><X /></button>
+          <button type="button" className="hb-close" onClick={closeStudio} aria-label="Close Item Studio"><X /></button>
         </div>
       </header>
 
@@ -355,7 +461,10 @@ export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
               <label>Slots<input value={payload.equipmentSlots.join(", ")} placeholder="hand, body, ring" onChange={(event) => edit({ ...payload, equipmentSlots: event.target.value.split(",").map((entry) => entry.trim()).filter(Boolean) })} /></label>
               <label className="hb-wide">Properties<input value={payload.properties ?? ""} onChange={(event) => edit({ ...payload, properties: event.target.value || undefined })} /></label>
               <label className="hb-check"><input type="checkbox" checked={payload.requiresAttunement} onChange={(event) => edit({ ...payload, requiresAttunement: event.target.checked })} /> Requires attunement</label>
-              {payload.requiresAttunement ? <label className="hb-wide">Attunement prerequisites<input value={payload.attunementPrerequisites?.displayText ?? ""} placeholder="e.g. Requires proficiency with martial weapons" onChange={(event) => edit({ ...payload, attunementPrerequisites: event.target.value ? { ...payload.attunementPrerequisites, displayText: event.target.value } : undefined })} /></label> : null}
+              {payload.requiresAttunement ? <>
+                <label className="hb-wide">Attunement prerequisites (display)<input value={payload.attunementPrerequisites?.displayText ?? ""} placeholder="Optional player-facing wording" onChange={(event) => edit({ ...payload, attunementPrerequisites: event.target.value ? { ...payload.attunementPrerequisites, displayText: event.target.value } : payload.attunementPrerequisites })} /></label>
+                <div className="hb-wide hb-prerequisite-editor"><div className="hb-subsection-title"><strong>Structured prerequisite rules</strong><span>These rules are validated and evaluated; display text alone never gates attunement.</span></div>{payload.attunementPrerequisites?.rules ? <PrerequisiteEditor rule={payload.attunementPrerequisites.rules} onChange={(rules) => edit({ ...payload, attunementPrerequisites: { ...payload.attunementPrerequisites, rules } })} onRemove={() => edit({ ...payload, attunementPrerequisites: payload.attunementPrerequisites?.displayText ? { displayText: payload.attunementPrerequisites.displayText } : undefined })} /> : <button type="button" className="hb-add-line" onClick={() => edit({ ...payload, attunementPrerequisites: { ...payload.attunementPrerequisites, rules: newPrerequisite("all") } })}><Plus size={14} /> Add structured rule</button>}</div>
+              </> : null}
               <label className="hb-wide">Description<textarea rows={5} value={payload.description} onChange={(event) => edit({ ...payload, description: event.target.value })} /></label>
               <label className="hb-wide">Creator notes <small>Never shown in the character library</small><textarea rows={3} value={payload.creatorNotes ?? ""} onChange={(event) => edit({ ...payload, creatorNotes: event.target.value || undefined })} /></label>
             </div>
