@@ -1,0 +1,25 @@
+uid=316_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="http://localhost:3000/"
+  uid=316_6 button "Open Next.js Dev Tools" expandable haspopup="menu"
+  uid=316_7 alert atomic live="assertive" relevant="additions text"
+  uid=319_0 main
+    uid=319_1 StaticText "A D&D CHARACTER BUILDER & DM TOOLKIT"
+    uid=319_2 heading "Dreamwright" level="1"
+    uid=319_3 form
+      uid=319_4 textbox "Email" value="dsqa-char1-a7b3@test.local"
+      uid=319_5 textbox "Password" value="•••••••••••••••"
+      uid=319_6 textbox "Display name" value="DSQA-CHAR2"
+      uid=319_7 textbox "Invite code (optional)"
+      uid=326_0 status atomic live="polite" relevant="additions text"
+        uid=326_1 StaticText "That email already has a vault."
+      uid=319_8 button "CREATE ACCOUNT" focusable focused
+    uid=319_9 navigation
+      uid=319_10 button "BACK TO LOGIN"
+    uid=319_11 navigation "Legal and support"
+      uid=319_12 link "PRIVACY" url="http://localhost:3000/privacy"
+        uid=319_13 StaticText "PRIVACY"
+      uid=319_14 link "TERMS" url="http://localhost:3000/terms"
+        uid=319_15 StaticText "TERMS"
+      uid=319_16 link "LICENSING" url="http://localhost:3000/legal"
+        uid=319_17 StaticText "LICENSING"
+      uid=319_18 link "SUPPORT" url="http://localhost:3000/support"
+        uid=319_19 StaticText "SUPPORT"

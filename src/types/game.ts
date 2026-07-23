@@ -525,6 +525,8 @@ export type DraftCharacter = {
   generalNotes: string;
   raceId: string;
   classId: string;
+  /** Name shown when classId is the manual homebrew class sentinel. */
+  customClassName?: string;
   /** Optional portrait selected during creation. Persisted as portraitUrl on the Character. */
   portraitUrl?: string;
   sourceIds: string[];

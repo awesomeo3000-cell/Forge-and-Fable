@@ -1,0 +1,47 @@
+uid=226_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="https://www.dreamwright.gg/"
+  uid=226_1 ignored
+    uid=226_2 generic
+      uid=226_3 generic
+        uid=226_4 alert atomic live="assertive" relevant="additions text"
+      uid=226_5 main
+        uid=226_6 ignored
+          uid=226_7 ignored
+            uid=226_8 StaticText "A D&D CHARACTER BUILDER & DM TOOLKIT"
+              uid=226_9 InlineTextBox "A D&D CHARACTER BUILDER & DM TOOLKIT"
+          uid=226_10 heading "Dreamwright" level="1"
+            uid=226_11 StaticText "Dreamwright"
+              uid=226_9 InlineTextBox "Dreamwright"
+          uid=226_12 ignored
+          uid=226_13 form
+            uid=226_14 textbox "Email"
+              uid=226_15 ignored
+              uid=226_16 generic
+            uid=226_17 textbox "Password"
+              uid=226_18 ignored
+              uid=226_19 generic
+            uid=226_20 textbox "Display name"
+              uid=226_21 ignored
+              uid=226_22 generic
+            uid=226_23 textbox "Invite code (optional)"
+              uid=226_24 ignored
+              uid=226_25 generic
+            uid=226_26 button "CREATE ACCOUNT"
+              uid=226_27 StaticText "CREATE ACCOUNT"
+                uid=226_9 InlineTextBox "CREATE ACCOUNT"
+          uid=226_28 navigation
+            uid=226_29 button "BACK TO LOGIN"
+              uid=226_30 StaticText "BACK TO LOGIN"
+                uid=226_9 InlineTextBox "BACK TO LOGIN"
+          uid=226_31 navigation "Legal and support"
+            uid=226_32 link "PRIVACY" url="https://www.dreamwright.gg/privacy"
+              uid=226_33 StaticText "PRIVACY"
+                uid=226_9 InlineTextBox "PRIVACY"
+            uid=226_34 link "TERMS" url="https://www.dreamwright.gg/terms"
+              uid=226_35 StaticText "TERMS"
+                uid=226_9 InlineTextBox "TERMS"
+            uid=226_36 link "LICENSING" url="https://www.dreamwright.gg/legal"
+              uid=226_37 StaticText "LICENSING"
+                uid=226_9 InlineTextBox "LICENSING"
+            uid=226_38 link "SUPPORT" url="https://www.dreamwright.gg/support"
+              uid=226_39 StaticText "SUPPORT"
+                uid=226_9 InlineTextBox "SUPPORT"

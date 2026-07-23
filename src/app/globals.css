@@ -14775,3 +14775,15 @@ button.dj-card {
 .dm-editor-pane .ed-head h3 { margin: 0; }
 .dm-editor-pane .ed-head-spacer { flex: 1; }
 .dm-draft-chip { padding: 3px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--paper, #e9dfc8) 20%, transparent); font-family: var(--font-label); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--paper, #e9dfc8) 70%, transparent); }
+
+/* Inventory quantities are compact stepper controls, not full-size sheet
+   fields. Keep the number visible and vertically aligned after the shared
+   sheet input rules apply. */
+.cs-sheet .cs-inv-quantity input {
+  min-height: 19px;
+  height: 19px;
+  width: 38px;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+}

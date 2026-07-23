@@ -353,6 +353,7 @@ export default memo(function HeroSheet(props: {
   const [manageFeatsOpen, setManageFeatsOpen] = useState(false);
   const [tourDismissed, setTourDismissed] = useState(true);
   const [prepareHintDismissed, setPrepareHintDismissed] = useState(true);
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
 
   const toggleSkillProficiency = (skillId: string) => {
     if (isBackgroundSkill(skillId)) return; // background-granted — cannot toggle
@@ -532,11 +533,29 @@ export default memo(function HeroSheet(props: {
     }
     props.onUpdate({ inventory: [...inventory, catalogInventoryItem] });
   };
-  const updateItemQuantity = (id: string, quantity: number) => {
-    const nextQuantity = Math.max(1, Math.min(999, Math.floor(quantity) || 1));
+  const commitItemQuantity = (id: string, rawQuantity: string | number) => {
+    const parsedQuantity = typeof rawQuantity === "number" ? rawQuantity : Number.parseInt(rawQuantity.trim(), 10);
+    const nextQuantity = Math.max(1, Math.min(999, Number.isFinite(parsedQuantity) ? Math.floor(parsedQuantity) : 1));
+    setQuantityDrafts((current) => {
+      if (!(id in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
     props.onUpdate({ inventory: inventory.map((item) => item.id === id ? { ...item, quantity: nextQuantity } : item) });
   };
+  const adjustItemQuantity = (id: string, delta: number) => {
+    const item = inventory.find((entry) => entry.id === id);
+    const currentQuantity = Number.parseInt(quantityDrafts[id] ?? String(item?.quantity ?? 1), 10);
+    commitItemQuantity(id, (Number.isFinite(currentQuantity) ? currentQuantity : 1) + delta);
+  };
   const removeItem = (id: string) => {
+    setQuantityDrafts((current) => {
+      if (!(id in current)) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
     props.onUpdate({
       inventory: inventory.filter((item) => item.id !== id),
       equipment: cleanEquipmentForRemovedItem(id),
@@ -1997,7 +2016,7 @@ export default memo(function HeroSheet(props: {
                           </details>
                         ) : null}
                       </div>
-                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<span className="cs-inv-quantity" aria-label={`${item.name} quantity`}><button type="button" onClick={() => updateItemQuantity(item.id, (item.quantity ?? 1) - 1)} aria-label={`Decrease ${item.name} quantity`}>−</button><input type="number" min={1} max={999} value={item.quantity ?? 1} onChange={(event) => updateItemQuantity(item.id, Number(event.target.value))} aria-label={`${item.name} quantity`} /><button type="button" onClick={() => updateItemQuantity(item.id, (item.quantity ?? 1) + 1)} aria-label={`Increase ${item.name} quantity`}>+</button></span><button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
+                      <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<span className="cs-inv-quantity" aria-label={`${item.name} quantity`}><button type="button" onClick={() => adjustItemQuantity(item.id, -1)} aria-label={`Decrease ${item.name} quantity`}>−</button><input type="number" min={1} max={999} value={quantityDrafts[item.id] ?? String(item.quantity ?? 1)} onChange={(event) => setQuantityDrafts((current) => ({ ...current, [item.id]: event.currentTarget.value }))} onBlur={(event) => commitItemQuantity(item.id, event.currentTarget.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.currentTarget.blur(); } }} aria-label={`${item.name} quantity`} /><button type="button" onClick={() => adjustItemQuantity(item.id, 1)} aria-label={`Increase ${item.name} quantity`}>+</button></span><button type="button" className="cs-inv-del" onClick={() => removeItem(item.id)} title="Remove item" aria-label={`Remove ${item.name}`}>&times;</button></div>
                     </div>
                   );
                 })}</div>

@@ -1,0 +1,22 @@
+uid=404_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="http://localhost:3000/"
+  uid=404_6 button "Open Next.js Dev Tools" expandable haspopup="menu"
+  uid=404_7 alert atomic live="assertive" relevant="additions text"
+  uid=405_0 main
+    uid=405_1 navigation "Primary"
+      uid=405_2 button "HOME"
+      uid=405_3 button "FORGE"
+      uid=405_4 button "CAMPAIGN"
+    uid=405_5 StaticText "DREAMWRIGHT"
+    uid=405_6 StaticText "The Forge"
+    uid=405_7 StaticText "DSQA-CHAR1DSQA-CHAR4-D8F2@TEST.LOCAL"
+    uid=405_8 button "CAMPAIGNS" description="Campaigns"
+    uid=405_9 button "MENU" description="Workspace menu" expandable haspopup="menu"
+    uid=405_10 button "Notifications" expandable
+    uid=405_11 button "Log out"
+    uid=413_46 StaticText "THE ROSTER IS EMPTY"
+    uid=413_47 heading "Commission a character" level="2"
+    uid=413_50 button "Standard the full commission, chapter by chapter CHOOSE THIS PATH" focusable focused
+    uid=413_59 button "Quickbuilder guided choices for a faster start CHOOSE THIS PATH"
+    uid=413_68 button "Premade archetypes awaiting a name CHOOSE THIS PATH"
+    uid=413_78 button "← BACK"
+    uid=413_81 StaticText "Every path ends at the Seal — review before the hero joins the roster."

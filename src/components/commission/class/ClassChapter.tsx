@@ -9,6 +9,7 @@ import ClassFeature from "./ClassFeature";
 import ClassMechanics from "./ClassMechanics";
 import ClassCommissionDetails, { type ClassHpSummary, type ClassSkillSummary } from "./ClassCommissionDetails";
 import { classCardDescription } from "./classPresentation";
+import { HOMEBREW_CLASS_ID } from "@/lib/homebrewIdentity";
 
 /**
  * What confirming this class will ask of the player — derived entirely from
@@ -65,6 +66,7 @@ export default function ClassChapter(props: {
   onRollStartingHp: () => void;
   onToggleSkill: (skillId: string) => void;
   onToggleTool: (tool: string, options: string[], count: number) => void;
+  onCustomClassNameChange: (name: string) => void;
 }) {
   const [previewedClassId, setPreviewedClassId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -107,6 +109,27 @@ export default function ClassChapter(props: {
                 }}
                 onInspect={() => props.onInspectClass(displayedClass.id)}
               />
+              {displayedClass.id === HOMEBREW_CLASS_ID && displayedClass.id === confirmedClassId ? (
+                <section className="ao-class-requirements" aria-label="Custom class details">
+                  <div className="ao-class-requirements-head">
+                    <h4 className="ao-class-section-title">Manual homebrew class</h4>
+                    <span className="ao-class-requirements-state">DM&apos;s honor</span>
+                  </div>
+                  <label className="ao-custom-class-name-field">
+                    <span>Class name</span>
+                    <input
+                      type="text"
+                      value={props.draft.customClassName ?? ""}
+                      maxLength={100}
+                      placeholder="e.g. Warden of the Glass Sea"
+                      onChange={(event) => props.onCustomClassNameChange(event.currentTarget.value)}
+                    />
+                  </label>
+                  <p className="ao-class-requirements-intro">
+                    This placeholder class has no automated features, subclasses, or level-up rules. Record and adjudicate its abilities with your DM.
+                  </p>
+                </section>
+              ) : null}
               <ClassMechanics heroClass={displayedClass} />
               {displayedClass.id === confirmedClassId ? (
                 <ClassCommissionDetails

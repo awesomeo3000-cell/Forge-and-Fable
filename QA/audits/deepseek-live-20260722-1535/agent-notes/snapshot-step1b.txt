@@ -1,0 +1,8 @@
+uid=277_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="http://localhost:3000/"
+  uid=277_3 main
+    uid=277_6 StaticText "A 5E CHARACTER BUILDER & DM TOOLKIT"
+    uid=277_8 heading "Dreamwright" level="1"
+    uid=277_11 status atomic live="polite" relevant="additions text"
+      uid=277_15 StaticText "PREPARING THE CHARACTER VAULT"
+  uid=277_23 button "Open Next.js Dev Tools" expandable haspopup="menu"
+  uid=277_31 alert atomic live="assertive" relevant="additions text"

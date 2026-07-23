@@ -51,6 +51,8 @@ export type ImportSpell = {
 
 export type ImportDraft = {
   source: ImportSource;
+  /** When true, preserve the typed class name as a manual DM-managed class. */
+  manualClass?: boolean;
 
   identity: {
     name: ImportField<string>;
@@ -117,6 +119,7 @@ export function emptyDraft(): ImportDraft {
 
   return {
     source: { kind: "generic-pdf", pages: 0 },
+    manualClass: false,
     identity: {
       name: missingField(),
       className: missingField(),

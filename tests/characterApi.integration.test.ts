@@ -13,6 +13,7 @@ import { GET as LIST, POST } from "@/app/api/characters/route";
 import { GET as HEALTH } from "@/app/api/health/route";
 import { characterInput } from "./fixtures/character";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
+import { HOMEBREW_CLASS_ID } from "@/lib/homebrewIdentity";
 
 let dataDir = "";
 
@@ -80,6 +81,29 @@ describe("character API persistence", () => {
     expect(await reloaded.json()).toMatchObject({ character: { currentHp: 9, revision: 1 } });
   });
 
+  it("persists inventory quantity changes", async () => {
+    const { character, cookie } = await seededCharacter();
+    const item = {
+      id: "item-torch",
+      name: "Torch",
+      quantity: 1,
+      rarity: "Common",
+      attunement: false,
+      notes: "",
+    };
+    const updatedResponse = await PUT(new Request(`http://local/api/characters/${character.id}`, {
+      method: "PUT",
+      headers: { cookie, "Content-Type": "application/json", "If-Match": "0" },
+      body: JSON.stringify({ inventory: [{ ...item, quantity: 12 }] }),
+    }), { params: Promise.resolve({ id: character.id }) });
+
+    expect(updatedResponse.status).toBe(200);
+    expect(await updatedResponse.json()).toMatchObject({ character: { inventory: [{ id: item.id, quantity: 12 }], revision: 1 } });
+
+    const reloaded = await GET(new Request(`http://local/api/characters/${character.id}`, { headers: { cookie } }), { params: Promise.resolve({ id: character.id }) });
+    expect(await reloaded.json()).toMatchObject({ character: { inventory: [{ id: item.id, quantity: 12 }] } });
+  });
+
   it("adopts an existing database and records the revision migration", () => {
     closeDb();
     mkdirSync(dataDir, { recursive: true });
@@ -132,6 +156,37 @@ describe("character API persistence", () => {
     expect(deleted.status).toBe(200);
     const missing = await GET(new Request(`http://local/api/characters/${created.id}`, { headers: { cookie } }), context);
     expect(missing.status).toBe(404);
+  });
+
+  it("persists manual homebrew classes without catalog progression rules", async () => {
+    const { cookie } = await seededUser();
+    const createdResponse = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...characterInput("Glass Warden"),
+        classId: HOMEBREW_CLASS_ID,
+        customClassName: "Warden of the Glass Sea",
+        level: 5,
+      }),
+    }));
+
+    expect(createdResponse.status).toBe(201);
+    const created = (await createdResponse.json()).character;
+    expect(created).toMatchObject({
+      name: "Glass Warden",
+      classId: HOMEBREW_CLASS_ID,
+      customClassName: "Warden of the Glass Sea",
+      level: 5,
+    });
+
+    const listedResponse = await LIST(new Request("http://local/api/characters", { headers: { cookie } }));
+    const listed = (await listedResponse.json()).characters;
+    expect(listed).toEqual([expect.objectContaining({
+      id: created.id,
+      classId: HOMEBREW_CLASS_ID,
+      customClassName: "Warden of the Glass Sea",
+    })]);
   });
 
   it("loads the full roster when a stored character references a retired catalog portrait", async () => {

@@ -79,7 +79,7 @@ import { BACKGROUND_SKILLS, SAVE_PROFICIENCIES, SKILLS } from "@/lib/srd";
 import type { CampaignEvent, CampaignSyncPayload, InitiativeState } from "@/types/campaign";
 import { CharacterApiError, createCharacter as createCharacterApi, updateCharacter as updateCharacterApi } from "@/lib/client/charactersApi";
 import { CharacterSaveCoordinator } from "@/lib/client/characterSaveCoordinator";
-import { resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
+import { HOMEBREW_CLASS_ID, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 import { patchFromSnapshot } from "@/lib/characterSnapshots";
 import { encodeCampaignCursor, type CampaignCursorState } from "@/lib/campaignCursor";
 import { formatCampaignHash, parseCampaignHash, type CampaignSection } from "@/lib/campaignRoute";
@@ -154,6 +154,7 @@ function draftFromCharacter(character: Character): DraftCharacter {
     generalNotes: character.generalNotes,
     raceId: character.raceId,
     classId: character.classId,
+    customClassName: character.customClassName,
     portraitUrl: character.portraitUrl ?? "",
     sourceIds: [...character.sourceIds],
     settings: { ...defaultCharacterSettings(), ...(character.settings ?? {}) },
@@ -1312,6 +1313,7 @@ export default function ForgeAndFableApp() {
       generalNotes: nextDraft.generalNotes,
       raceId: nextDraft.raceId,
       classId: nextDraft.classId,
+      customClassName: nextDraft.classId === HOMEBREW_CLASS_ID ? nextDraft.customClassName?.trim() : undefined,
       portraitUrl: nextDraft.portraitUrl,
       sourceIds: [...nextDraft.sourceIds],
       settings: nextDraft.settings,
@@ -1384,6 +1386,12 @@ export default function ForgeAndFableApp() {
 
     if (!draft.classId) {
       setStatus("Unable to forge: no class chosen");
+      return;
+    }
+
+    if (draft.classId === HOMEBREW_CLASS_ID && !draft.customClassName?.trim()) {
+      setStatus("Unable to forge: enter a name for the custom class");
+      setCreatorStep(2);
       return;
     }
 
@@ -2897,6 +2905,7 @@ export default function ForgeAndFableApp() {
                 }
               }}
               onCreate={createHero}
+              onCustomClassNameChange={(name) => setDraft((current) => current ? { ...current, customClassName: name } : current)}
               saving={forgeSaving}
               editing={Boolean(editingCharacterId)}
             />

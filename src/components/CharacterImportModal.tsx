@@ -490,6 +490,20 @@ export default memo(function CharacterImportModal({ onCreated, onClose }: Props)
               <h3>Identity</h3>
               <EditableTextRow label="Name" field={draft.identity.name} onChange={(value) => updateIdentityText("name", value)} />
               <EditableTextRow label="Class" field={draft.identity.className} onChange={(value) => updateIdentityText("className", value)} />
+              <label className="checkbox-row" style={{ margin: "8px 0 0" }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.manualClass)}
+                  onChange={(event) => setDraft((current) => current ? { ...current, manualClass: event.currentTarget.checked } : current)}
+                />
+                <span>
+                  <strong>Use as manual homebrew class</strong>
+                  <small>DM&apos;s honor: no automated features, subclasses, or level-up rules.</small>
+                </span>
+              </label>
+              <p className="import-field-note" style={{ margin: "4px 0 0 0" }}>
+                If the class name does not match the enabled catalog, it will be imported as a manual homebrew class with no automated level-up rules.
+              </p>
               <EditableNumberRow label="Level" field={draft.identity.level} min={1} max={20} onChange={updateIdentityLevel} />
               <EditableTextRow label="Species" field={draft.identity.species} onChange={(value) => updateIdentityText("species", value)} />
               <EditableTextRow label="Background" field={draft.identity.background} onChange={(value) => updateIdentityText("background", value)} />

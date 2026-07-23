@@ -104,6 +104,20 @@ describe("PDF character creation", () => {
     });
   });
 
+  it("allows an imported catalog-named class to remain manual when requested", { timeout: 15_000 }, async () => {
+    const draft = importDraft("Wizard", "Wood");
+    draft.manualClass = true;
+    const { response } = await createFromDraft(draft);
+    expect(response.status, JSON.stringify(await response.clone().json())).toBe(201);
+    const character = (await response.json()).character as Character;
+
+    expect(character).toMatchObject({
+      classId: HOMEBREW_CLASS_ID,
+      customClassName: "Wizard",
+      raceId: "wood-elf-legacy",
+    });
+  });
+
   it("asks for a more specific name when a partial standard match is ambiguous", { timeout: 15_000 }, async () => {
     const { response } = await createFromDraft(importDraft("Ranger", "Dwa"));
     expect(response.status).toBe(400);

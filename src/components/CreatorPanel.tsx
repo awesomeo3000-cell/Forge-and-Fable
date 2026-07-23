@@ -42,6 +42,7 @@ import {
   BACKGROUND_TOOL_CHOICES,
   BACKGROUND_LANGUAGE_CHOICES,
 } from "@/lib/srd";
+import { HOMEBREW_CLASS_ID, resolveCharacterClass } from "@/lib/homebrewIdentity";
 
 const ALL_CLASS_TOOL_OPTIONS = new Set(Object.values(CLASS_TOOL_CHOICES).flatMap((c) => c.options));
 const ALL_BACKGROUND_TOOL_OPTIONS = new Set(Object.values(BACKGROUND_TOOL_CHOICES).flatMap((c) => c.options));
@@ -86,6 +87,7 @@ export default memo(function CreatorPanel(props: {
   onBackToBuildModes?: () => void;
   saving?: boolean;
   editing?: boolean;
+  onCustomClassNameChange: (name: string) => void;
   onCreate: () => void;
 }) {
   const [inspectedClassId, setInspectedClassId] = useState<string | null>(null);
@@ -95,11 +97,17 @@ export default memo(function CreatorPanel(props: {
   const [portraitLinkOpen, setPortraitLinkOpen] = useState(false);
   const [portraitStyleTab, setPortraitStyleTab] = useState<PortraitStyle | "all">("dreamwright");
 
+  const customClass = resolveCharacterClass({
+    classId: HOMEBREW_CLASS_ID,
+    raceId: props.draft.raceId,
+    customClassName: props.draft.customClassName,
+  }, props.ruleset);
+  const availableClasses = [...props.ruleset.classes, customClass];
   const selectedClass = props.draft.classId
-    ? props.ruleset.classes.find((item) => item.id === props.draft.classId) ?? null
+    ? availableClasses.find((item) => item.id === props.draft.classId) ?? null
     : null;
   const race = props.ruleset.races.find((item) => item.id === props.draft.raceId) ?? null;
-  const inspectedClass = props.ruleset.classes.find((item) => item.id === inspectedClassId) ?? null;
+  const inspectedClass = availableClasses.find((item) => item.id === inspectedClassId) ?? null;
   const inspectedSpecies = props.ruleset.races.find((item) => item.id === inspectedSpeciesId) ?? null;
 
   const skillChoice = props.draft.classId ? CLASS_SKILL_CHOICES[props.draft.classId] : undefined;
@@ -124,7 +132,8 @@ export default memo(function CreatorPanel(props: {
   const startingHpDisplay =
     usesRolledStartingHp && !startingHpComplete ? `${firstLevelHP} + pending rolls` : `${startingHpPreview}`;
   const hpMethodLabel = props.draft.settings.hitPointType === "rolled" ? "rolled" : "fixed";
-  const classStepComplete = Boolean(props.draft.classId) && skillsComplete && startingHpComplete;
+  const customClassNameComplete = props.draft.classId !== HOMEBREW_CLASS_ID || Boolean(props.draft.customClassName?.trim());
+  const classStepComplete = Boolean(props.draft.classId) && customClassNameComplete && skillsComplete && startingHpComplete;
 
   const changeStartingLevel = (level: number) => {
     const nextLevel = Math.max(1, Math.min(20, Math.trunc(level)));
@@ -181,6 +190,7 @@ export default memo(function CreatorPanel(props: {
     props.onDraftChange({
       ...props.draft,
       classId,
+      customClassName: classId === HOMEBREW_CLASS_ID ? props.draft.customClassName : undefined,
       skillProficiencies: [],
       toolProficiencies: props.draft.toolProficiencies.filter((t) => !ALL_CLASS_TOOL_OPTIONS.has(t)),
       startingHpRolls: [],
@@ -248,6 +258,7 @@ export default memo(function CreatorPanel(props: {
     ...(props.draft.name.trim() ? [] : [{ label: "Character name", step: 0 }]),
     ...(props.draft.sourceIds.length > 0 ? [] : [{ label: "At least one source", step: 0 }]),
     ...(props.draft.classId ? [] : [{ label: "A class", step: 2 }]),
+    ...(customClassNameComplete ? [] : [{ label: "A custom class name", step: 2 }]),
     ...(props.draft.background ? [] : [{ label: "A background", step: 3 }]),
     ...(props.draft.raceId ? [] : [{ label: "A species", step: 4 }]),
     ...(rolledScoresComplete ? [] : [{ label: "Rolled ability scores", step: 5 }]),
@@ -544,7 +555,7 @@ export default memo(function CreatorPanel(props: {
 
             {props.step === 2 ? (
               <ClassChapter
-                classes={props.ruleset.classes}
+                classes={availableClasses}
                 draft={props.draft}
                 hp={{
                   firstLevelHP,
@@ -565,6 +576,7 @@ export default memo(function CreatorPanel(props: {
                 onRollStartingHp={rollStartingHp}
                 onToggleSkill={toggleSkillChoice}
                 onToggleTool={toggleToolChoice}
+                onCustomClassNameChange={props.onCustomClassNameChange}
               />
             ) : null}
 

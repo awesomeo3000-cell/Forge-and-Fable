@@ -161,6 +161,7 @@ export function createInitialDraft(ruleset: Ruleset) {
     generalNotes: "",
     raceId: "",
     classId: "",
+    customClassName: "",
     portraitUrl: "",
     sourceIds: [] as string[],
     settings: defaultCharacterSettings(),
@@ -219,6 +220,7 @@ export function characterPayload(
     generalNotes: string;
     raceId: string;
     classId: string;
+    customClassName?: string;
     portraitUrl?: string;
     sourceIds: string[];
     settings: CharacterSettings;
@@ -239,7 +241,12 @@ export function characterPayload(
   },
   ruleset: Ruleset,
 ): Omit<Character, "id" | "userId" | "createdAt"> {
-  const heroClass = ruleset.classes.find((item) => item.id === draft.classId) ?? ruleset.classes[0];
+  // Manual homebrew classes intentionally have no catalog progression. Keep
+  // their creation math predictable with the generic d8 fallback and no gear.
+  const heroClass = ruleset.classes.find((item) => item.id === draft.classId) ?? {
+    hitDie: 8,
+    startingGear: [],
+  };
   const race = ruleset.races.find((item) => item.id === draft.raceId) ?? ruleset.races[0];
   const grantedTools = new Set([
     ...(CLASS_TOOL_GRANTS[draft.classId] ?? []),

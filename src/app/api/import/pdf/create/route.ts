@@ -231,7 +231,7 @@ function draftToCharacterPayload(draft: ImportDraft): Omit<Character, "id" | "us
   const className = requireText(draft.identity.className.value, "Class");
   const species = requireText(draft.identity.species.value, "Species");
   const level = requireInteger(draft.identity.level.value, "Level", 1, 20);
-  const matchedClassId = findNamedId(ruleset.classes, className, "Class");
+  const matchedClassId = draft.manualClass ? null : findNamedId(ruleset.classes, className, "Class");
   const matchedRaceId = findNamedId(ruleset.races, species, "Species");
   const classId = matchedClassId ?? HOMEBREW_CLASS_ID;
   const raceId = matchedRaceId ?? HOMEBREW_RACE_ID;

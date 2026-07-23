@@ -1,0 +1,20 @@
+uid=50_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="https://www.dreamwright.gg/"
+  uid=50_1 ignored
+    uid=50_2 ignored
+      uid=50_3 main
+        uid=50_4 ignored
+          uid=50_5 ignored
+            uid=50_6 StaticText "A 5E CHARACTER BUILDER & DM TOOLKIT"
+              uid=50_7 InlineTextBox "A 5E CHARACTER BUILDER & DM TOOLKIT"
+          uid=50_8 heading "Dreamwright" level="1"
+            uid=50_9 StaticText "Dreamwright"
+              uid=50_7 InlineTextBox "Dreamwright"
+          uid=50_10 ignored
+          uid=50_11 status atomic live="polite" relevant="additions text"
+            uid=50_12 ignored
+              uid=50_13 ignored
+            uid=50_14 ignored
+              uid=50_15 StaticText "PREPARING THE CHARACTER VAULT"
+                uid=50_7 InlineTextBox "PREPARING THE CHARACTER VAULT"
+      uid=50_16 generic
+        uid=50_17 alert atomic live="assertive" relevant="additions text"

@@ -1,0 +1,6 @@
+uid=270_0 RootWebArea "Dreamwright | 5E Character Builder & DM Toolkit" url="http://localhost:3000/"
+  uid=270_1 main
+    uid=270_2 StaticText "A 5E CHARACTER BUILDER & DM TOOLKIT"
+    uid=270_3 heading "Dreamwright" level="1"
+    uid=270_4 status atomic live="polite" relevant="additions text"
+      uid=270_5 StaticText "PREPARING THE CHARACTER VAULT"
