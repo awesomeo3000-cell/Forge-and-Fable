@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import type { Character, FeedbackEntry, PublicUser } from "@/types/game";
 import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { getDb } from "@/lib/db";
-import { isAllowedPortraitReference, validateCharacterInput } from "@/lib/validateCharacter";
+import { isAllowedPortraitReference, normalizeStoredAbilities, validateCharacterInput } from "@/lib/validateCharacter";
 import { isAdminEmail } from "@/lib/adminEmail";
 import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
 import { validateCharacterProgression } from "@/lib/progression/validate";
@@ -81,6 +81,8 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export function displayNameFromEmail(email: string) {
   const localPart = email.split("@")[0] ?? "";
   const readableName = localPart.replace(/[._-]+/g, " ").trim();
@@ -101,6 +103,7 @@ export async function updateUserName(userId: string, input: { name?: string }): 
   if (!row) throw new Error("Vault session not found.");
 
   const name = input.name?.trim().slice(0, 80) || displayNameFromEmail(row.email);
+  if (/[<>]/.test(name)) throw new Error("Display name cannot contain HTML markup.");
   db.prepare("UPDATE users SET name = ? WHERE id = ?").run(name, userId);
   return publicUser(storedUserFromRow({ ...row, name }));
 }
@@ -122,6 +125,7 @@ function parseCharacter(row: JsonRow): Character {
   const character = {
     ...(parsed as Record<string, unknown>),
     ruleset: normalizeStoredRuleset((parsed as Record<string, unknown>).ruleset),
+    abilities: normalizeStoredAbilities((parsed as Record<string, unknown>).abilities),
   } as Character;
   // Built-in portrait catalogs change over time. Older characters can still
   // reference a retired opaque portrait ID whose asset no longer exists. That
@@ -170,9 +174,10 @@ export async function registerUser(input: {
   const email = normalizeEmail(input.email);
   const name = input.name?.trim() || displayNameFromEmail(email);
 
-  if (!email.includes("@") || input.password.length < MIN_PASSWORD_LENGTH) {
+  if (!EMAIL_PATTERN.test(email) || input.password.length < MIN_PASSWORD_LENGTH) {
     throw new Error(`Use an email address and a password with at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
+  if (/[<>]/.test(name)) throw new Error("Display name cannot contain HTML markup.");
 
   const user: StoredUser = {
     id: crypto.randomUUID(),

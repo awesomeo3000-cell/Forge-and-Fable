@@ -2,8 +2,18 @@ import { assertSnapshotCharacter } from "@/lib/characterSnapshots";
 import { isSupportedRuleset } from "@/lib/characterRuleset";
 import { isCatalogPortrait } from "@/data/portraits";
 import { HOMEBREW_CLASS_ID, HOMEBREW_RACE_ID } from "@/lib/homebrewIdentity";
+import { ruleset } from "@/lib/ruleset";
+import type { AbilityScores } from "@/types/game";
 
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+const ABILITY_ALIASES: Record<string, keyof AbilityScores> = {
+  strength: "strength", str: "strength",
+  dexterity: "dexterity", dex: "dexterity",
+  constitution: "constitution", con: "constitution",
+  intelligence: "intelligence", int: "intelligence",
+  wisdom: "wisdom", wis: "wisdom",
+  charisma: "charisma", cha: "charisma",
+};
 
 function assertString(val: unknown, name: string, maxLen?: number): asserts val is string {
   if (typeof val !== "string") throw new Error(`"${name}" must be a string.`);
@@ -43,6 +53,38 @@ export class CharacterValidationError extends Error {
     super(message);
     this.name = "CharacterValidationError";
   }
+}
+
+function assertPlainText(value: string, label: string) {
+  if (/[<>]/.test(value)) throw new Error(`"${label}" cannot contain HTML markup.`);
+}
+
+function normalizeAbilityPayload(value: unknown, isPatch: boolean): AbilityScores | Partial<AbilityScores> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`"abilities" must be an object.`);
+  const source = value as Record<string, unknown>;
+  const normalized: Partial<AbilityScores> = {};
+  for (const key of ABILITY_KEYS as Array<keyof AbilityScores>) {
+    const shortKey = Object.entries(ABILITY_ALIASES).find(([rawKey, canonical]) => canonical === key && rawKey !== key)?.[0];
+    const raw = source[key] ?? (shortKey ? source[shortKey] : undefined);
+    if (raw === undefined) {
+      if (!isPatch) throw new Error(`"abilities.${key}" is required.`);
+      continue;
+    }
+    assertInteger(raw, `abilities.${key}`, 1, 30);
+    normalized[key] = raw;
+  }
+  return normalized;
+}
+
+/** Defensive reader for legacy or manually edited records. */
+export function normalizeStoredAbilities(value: unknown): AbilityScores {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const normalized: AbilityScores = { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 };
+  for (const [rawKey, canonical] of Object.entries(ABILITY_ALIASES)) {
+    const raw = source[rawKey];
+    if (typeof raw === "number" && Number.isFinite(raw)) normalized[canonical] = Math.max(1, Math.min(30, Math.trunc(raw)));
+  }
+  return normalized;
 }
 
 export function isAllowedPortraitReference(value: string): boolean {
@@ -93,6 +135,7 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
       case "name":
         if (!isPatch) assertString(val, "name", 100);
         else if (val !== undefined) assertString(val, "name", 100);
+        if (typeof val === "string") assertPlainText(val, "name");
         break;
       case "portraitUrl":
         if (val !== undefined) {
@@ -108,11 +151,20 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
         break;
       case "raceId":
       case "classId":
-        if (!isPatch || val !== undefined) assertString(val, key, 80);
+        if (!isPatch || val !== undefined) {
+          assertString(val, key, 80);
+          const isKnown = key === "raceId"
+            ? val === HOMEBREW_RACE_ID || ruleset.races.some((race) => race.id === val)
+            : val === HOMEBREW_CLASS_ID || ruleset.classes.some((heroClass) => heroClass.id === val);
+          if (!isKnown) throw new Error(`"${key}" is not a recognized ruleset option.`);
+        }
         break;
       case "customRaceName":
       case "customClassName":
-        if (val !== undefined) assertString(val, key, 100);
+        if (val !== undefined) {
+          assertString(val, key, 100);
+          assertPlainText(val, key);
+        }
         break;
       case "customRaceSpeed":
         if (val !== undefined) assertString(val, key, 40);
@@ -125,18 +177,7 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
         if (val !== undefined) assertInteger(val, "maxHp", 1, 999);
         break;
       case "abilities":
-        if (val !== undefined) {
-          if (typeof val !== "object" || val === null) throw new Error(`"abilities" must be an object.`);
-          const abilities = val as Record<string, unknown>;
-          for (const a of ABILITY_KEYS) {
-            // Assert every present key is an integer 1–30 regardless of type.
-            // Previously we only checked if typeof === "number", which let
-            // non-number values (e.g. "cat") through silently.
-            if (a in abilities) {
-              assertInteger(abilities[a], `abilities.${a}`, 1, 30);
-            }
-          }
-        }
+        if (val !== undefined) normalizeAbilityPayload(val, isPatch);
         break;
       case "inventory":
         if (val !== undefined) {
@@ -415,7 +456,7 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
         break;
     }
 
-    sanitized[key] = val;
+    sanitized[key] = key === "abilities" && val !== undefined ? normalizeAbilityPayload(val, isPatch) : val;
   }
 
   // Full creation requires a name

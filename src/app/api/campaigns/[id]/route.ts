@@ -10,6 +10,13 @@ import { getCampaignDetail, deleteCampaign, updateCampaignAppearance, updateCamp
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function mutationErrorStatus(error: unknown, fallback = 400) {
+  const message = error instanceof Error ? error.message : "";
+  if (/Only the DM/i.test(message)) return 403;
+  if (/not found/i.test(message)) return 404;
+  return fallback;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -44,7 +51,7 @@ export async function DELETE(
     }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to delete campaign." },
-      { status: 400 },
+      { status: mutationErrorStatus(error) },
     );
   }
 }
@@ -67,7 +74,7 @@ export async function PATCH(
     }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update campaign appearance." },
-      { status: 400 },
+      { status: mutationErrorStatus(error) },
     );
   }
 }

@@ -14,6 +14,7 @@ import { GET as HEALTH } from "@/app/api/health/route";
 import { characterInput } from "./fixtures/character";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import { HOMEBREW_CLASS_ID } from "@/lib/homebrewIdentity";
+import type { Character } from "@/types/game";
 
 let dataDir = "";
 
@@ -102,6 +103,51 @@ describe("character API persistence", () => {
 
     const reloaded = await GET(new Request(`http://local/api/characters/${character.id}`, { headers: { cookie } }), { params: Promise.resolve({ id: character.id }) });
     expect(await reloaded.json()).toMatchObject({ character: { inventory: [{ id: item.id, quantity: 12 }] } });
+  });
+
+  it("normalizes legacy short-form ability keys before returning a character", async () => {
+    const { userId, cookie } = await seededUser();
+    await createCharacter(userId, {
+      ...characterInput("Legacy Ability Hero"),
+      abilities: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 } as unknown as Character["abilities"],
+    });
+
+    const listedResponse = await LIST(new Request("http://local/api/characters", { headers: { cookie } }));
+    expect(listedResponse.status).toBe(200);
+    expect((await listedResponse.json()).characters[0].abilities).toEqual({
+      strength: 16,
+      dexterity: 14,
+      constitution: 14,
+      intelligence: 10,
+      wisdom: 12,
+      charisma: 8,
+    });
+  });
+
+  it("keeps a malformed stored ability block from breaking roster hydration", async () => {
+    const { userId, cookie } = await seededUser();
+    const legacy = { ...characterInput("Malformed Ability Hero"), abilities: { strength: "oops" } };
+    const id = "malformed-ability-hero";
+    const now = new Date().toISOString();
+    getDb().prepare("INSERT INTO characters (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(id, userId, JSON.stringify({ ...legacy, id, userId, createdAt: now }), now, now);
+
+    const response = await LIST(new Request("http://local/api/characters", { headers: { cookie } }));
+    expect(response.status).toBe(200);
+    expect((await response.json()).characters[0].abilities).toEqual({
+      strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10,
+    });
+  });
+
+  it("rejects unknown race and class identifiers", async () => {
+    const { cookie } = await seededUser();
+    const response = await POST(new Request("http://local/api/characters", {
+      method: "POST",
+      headers: { cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ ...characterInput("Invalid Ruleset Hero"), raceId: "not-a-real-race" }),
+    }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: expect.stringMatching(/raceId.*recognized/i) });
   });
 
   it("adopts an existing database and records the revision migration", () => {

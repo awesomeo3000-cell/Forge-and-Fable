@@ -32,6 +32,13 @@ afterEach(() => {
 });
 
 describe("account data lifecycle", () => {
+  it("rejects malformed email addresses and markup in display names", async () => {
+    await expect(registerUser({ name: "<script>alert(1)</script>", email: "valid@example.com", password: "correct-password" }))
+      .rejects.toThrow(/HTML markup/);
+    await expect(registerUser({ name: "Valid", email: "missing@", password: "correct-password" }))
+      .rejects.toThrow(/email address/);
+  });
+
   it("exports personal data without password hashes or tokens", async () => {
     expect(exportAccountData(userId)).toMatchObject({ account: { id: userId }, characters: [] });
     const response = await EXPORT_ACCOUNT(new Request("http://local/api/auth/export", { headers: { cookie } }));

@@ -202,6 +202,7 @@ export default function ForgeAndFableApp() {
   });
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authPasswordConfirmation, setAuthPasswordConfirmation] = useState("");
   const [authDisplayName, setAuthDisplayName] = useState("");
   const [authInviteCode, setAuthInviteCode] = useState("");
   const [authResetToken, setAuthResetToken] = useState(() =>
@@ -889,6 +890,10 @@ export default function ForgeAndFableApp() {
     setStatus("");
 
     try {
+      if (authMode === "register" && authPassword !== authPasswordConfirmation) {
+        setStatus("Passwords do not match.");
+        return;
+      }
       const endpoint = authMode === "login"
         ? "/api/auth/login"
         : authMode === "register"
@@ -2384,12 +2389,14 @@ export default function ForgeAndFableApp() {
         mode={authMode}
         email={authEmail}
         password={authPassword}
+        passwordConfirmation={authPasswordConfirmation}
         displayName={authDisplayName}
         inviteCode={authInviteCode}
         status={status}
         onModeChange={setAuthMode}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
+        onPasswordConfirmationChange={setAuthPasswordConfirmation}
         onDisplayNameChange={setAuthDisplayName}
         onInviteCodeChange={setAuthInviteCode}
         resetToken={authResetToken}

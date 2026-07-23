@@ -10,6 +10,7 @@ export default memo(function AuthScreen(props: {
   mode: AuthMode;
   email: string;
   password: string;
+  passwordConfirmation: string;
   displayName: string;
   inviteCode: string;
   resetToken: string;
@@ -17,6 +18,7 @@ export default memo(function AuthScreen(props: {
   onModeChange: (mode: AuthMode) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onPasswordConfirmationChange: (value: string) => void;
   onDisplayNameChange: (value: string) => void;
   onInviteCodeChange: (value: string) => void;
   onResetTokenChange: (value: string) => void;
@@ -36,27 +38,49 @@ export default memo(function AuthScreen(props: {
         </div>
         <form className="ao-title-form" onSubmit={props.onSubmit}>
           <input
+            id="auth-email"
+            name="email"
             className="ao-input"
             type="email"
             placeholder="Email"
             aria-label="Email"
             autoComplete="email"
+            required
             value={props.email}
             onChange={(event) => props.onEmailChange(event.target.value)}
           />
           {!requestingReset ? (
             <input
+              id={resetting ? "auth-new-password" : "auth-password"}
+              name="password"
               className="ao-input"
               type="password"
               placeholder={resetting ? "New password" : "Password"}
               aria-label={resetting ? "New password" : "Password"}
               autoComplete={registering || resetting ? "new-password" : "current-password"}
+              required={!requestingReset}
               value={props.password}
               onChange={(event) => props.onPasswordChange(event.target.value)}
             />
           ) : null}
+          {registering ? (
+            <input
+              id="auth-password-confirmation"
+              name="passwordConfirmation"
+              className="ao-input"
+              type="password"
+              placeholder="Confirm password"
+              aria-label="Confirm password"
+              autoComplete="new-password"
+              value={props.passwordConfirmation}
+              required
+              onChange={(event) => props.onPasswordConfirmationChange(event.target.value)}
+            />
+          ) : null}
           {resetting ? (
             <input
+              id="auth-reset-token"
+              name="resetToken"
               className="ao-input"
               type="text"
               placeholder="Reset token"
@@ -68,6 +92,8 @@ export default memo(function AuthScreen(props: {
           {registering ? (
             <>
               <input
+                id="auth-display-name"
+                name="displayName"
                 className="ao-input"
                 type="text"
                 placeholder="Display name"
@@ -78,6 +104,8 @@ export default memo(function AuthScreen(props: {
                 onChange={(event) => props.onDisplayNameChange(event.target.value)}
               />
               <input
+                id="auth-invite-code"
+                name="inviteCode"
                 className="ao-input"
                 type="text"
                 placeholder="Invite code (optional)"
