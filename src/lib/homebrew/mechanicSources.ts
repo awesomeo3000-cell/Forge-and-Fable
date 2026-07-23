@@ -26,13 +26,14 @@ export function homebrewItemInstanceToSource(
   payload: HomebrewItemPayload,
   instance: HomebrewItemInstanceState,
   characterLevel: number,
+  sourceInstanceId = instanceRefId(instance.contentRef),
 ): MechanicSource {
   const stage = instance.currentStageId
     ? payload.stages.find((s) => s.id === instance.currentStageId)
     : undefined;
   const effects: MechanicEffect[] = [...payload.effects, ...(stage?.effects ?? [])];
   return {
-    sourceInstanceId: instanceRefId(instance.contentRef),
+    sourceInstanceId,
     sourceRef: instance.contentRef,
     label: payload.name,
     effects,
@@ -46,7 +47,7 @@ export function homebrewItemInstanceToSource(
   };
 }
 
-/** Stable per-instance id from a pinned ref (homebrew instances are 1:1 today). */
+/** Stable fallback id for callers that do not have a per-copy inventory id. */
 function instanceRefId(ref: RulesContentRef): string {
   return ref.source === "homebrew" ? `${ref.definitionId}:${ref.versionId}` : `${ref.kind}:${ref.id}`;
 }

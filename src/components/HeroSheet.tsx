@@ -55,6 +55,15 @@ import SheetSection from "@/components/SheetSection";
 import SheetRollButton, { D20Icon, DieIcon } from "@/components/SheetRollButton";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
 import { isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
+import { homebrewItemInstanceToSource } from "@/lib/homebrew/mechanicSources";
+import { resolveMechanics } from "@/lib/homebrew/mechanicsResolver";
+import {
+  describeItemUpgrade,
+  homebrewPayloadToInventory,
+  upgradeHomebrewInventoryItem,
+} from "@/lib/homebrew/itemIntegration";
+import type { DefinitionDto, VersionSummaryDto } from "@/lib/homebrew/homebrewDtos";
+import type { HomebrewItemPayload } from "@/types/homebrew";
 
 const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: false });
 
@@ -82,6 +91,18 @@ type RefTab = "features" | "traits" | "spells" | "spellbook" | "inventory";
 type SkinMenuPosition = { top: number; left: number; minWidth: number; maxHeight: number };
 type RollOutcome = { rolls: number[]; modifier: number; total: number };
 type RollD20Options = { forcedMode?: RollMode };
+type AvailableHomebrewItem = {
+  definition: DefinitionDto;
+  version: VersionSummaryDto;
+  payload: HomebrewItemPayload;
+};
+type ResolvedHomebrewItem = {
+  itemId: string;
+  definitionId: string;
+  versionId: string;
+  version: VersionSummaryDto;
+  payload: HomebrewItemPayload;
+};
 
 const REF_TABS: { id: RefTab; label: string }[] = [
   { id: "features", label: "Features" },
@@ -198,6 +219,28 @@ export default memo(function HeroSheet(props: {
   onRollModeChange?: (mode: RollMode) => void;
 }) {
   const isReadOnly = props.readOnly === true;
+  const [resolvedHomebrewItems, setResolvedHomebrewItems] = useState<ResolvedHomebrewItem[]>([]);
+  const [availableHomebrewItems, setAvailableHomebrewItems] = useState<AvailableHomebrewItem[]>([]);
+  const [homebrewLoadError, setHomebrewLoadError] = useState("");
+  const [upgradeItem, setUpgradeItem] = useState<{ item: InventoryItem; available: AvailableHomebrewItem; changes: string[] } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(`/api/characters/${props.character.id}/homebrew-items`)
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Pinned item versions could not be resolved.")))
+      .then((data: { items?: ResolvedHomebrewItem[] }) => { if (!cancelled) setResolvedHomebrewItems(data.items ?? []); })
+      .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
+    return () => { cancelled = true; };
+  }, [props.character.id, props.character.inventory]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(`/api/homebrew/library/items?ruleset=${props.character.ruleset}`)
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Homebrew item library could not be loaded.")))
+      .then((data: { items?: AvailableHomebrewItem[] }) => { if (!cancelled) setAvailableHomebrewItems(data.items ?? []); })
+      .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
+    return () => { cancelled = true; };
+  }, [props.character.ruleset]);
 
   const race = resolveCharacterRace(props.character, props.ruleset);
   const heroClass = resolveCharacterClass(props.character, props.ruleset);
@@ -210,14 +253,25 @@ export default memo(function HeroSheet(props: {
   const effectiveProficiencies = Array.from(new Set([...heroClass.proficiencies, ...armorProficienciesFromFeatures(subclassFeatures)]));
 
   const pb = proficiencyBonus(props.character.level);
-  const dexMod = abilityModifier(props.finalAbilities.dexterity);
   const equipment = props.character.equipment ?? {};
   const inventory = props.character.inventory ?? [];
   const customRules = props.character.customRules ?? [];
   const spellsKnownIds = props.character.spellsKnown ?? [];
   const settings = { ...defaultCharacterSettings(), ...(props.character.settings ?? {}) };
   const inventoryItems = inventory.map(catalogBackedInventoryItem);
-  const equipmentItemBonuses = getEquippedItemBonuses(inventoryItems, equipment, { includeAc: false });
+  const resolvedHomebrewByItemId = new Map(resolvedHomebrewItems.map((item) => [item.itemId, item]));
+  const homebrewSources = inventoryItems.flatMap((item) => {
+    const instance = item.homebrew;
+    const resolved = resolvedHomebrewByItemId.get(item.id);
+    return instance && resolved
+      ? [homebrewItemInstanceToSource(resolved.payload, instance, props.character.level, item.id)]
+      : [];
+  });
+  const homebrewMechanics = resolveMechanics(homebrewSources, props.finalAbilities);
+  const sheetAbilities = homebrewMechanics.effectiveAbilities ?? props.finalAbilities;
+  const homebrewNumeric = homebrewMechanics.numericTotals;
+  const dexMod = abilityModifier(sheetAbilities.dexterity);
+  const equipmentItemBonuses = getEquippedItemBonuses(inventoryItems.filter((item) => !item.homebrew), equipment, { includeAc: false });
 
   const effectsList = props.character.effects ?? [];
   const activeEffects = effectsList.filter((e) => e.active);
@@ -227,7 +281,11 @@ export default memo(function HeroSheet(props: {
   const effSaves = effectTotal(effectsList, "saves");
   const effChecks = effectTotal(effectsList, "checks");
   const effInit = effectTotal(effectsList, "initiative");
-  const d20Riders = activeD20Riders(effectsList);
+  const homebrewD20Riders = homebrewMechanics.d20Riders
+    .map((rider) => parseSimpleDice(rider.dice))
+    .filter((dice): dice is NonNullable<typeof dice> => Boolean(dice))
+    .map(({ sides, count }) => ({ sides, count }));
+  const d20Riders = [...activeD20Riders(effectsList), ...homebrewD20Riders];
   // Rider dice (e.g. Bless's 1d4) fly with every d20 roll while active.
   const rollD20 = (label: string, modifier: number, options?: RollD20Options) => {
     if (props.onRollD20) {
@@ -241,7 +299,7 @@ export default memo(function HeroSheet(props: {
   };
 
   const ruleAc = customRules.filter((r) => r.type === "ac").reduce((s, r) => s + r.value, 0);
-  const acInfo = computeArmorClass(props.finalAbilities, heroClass.id, equipment, inventoryItems);
+  const acInfo = computeArmorClass(sheetAbilities, heroClass.id, equipment, inventoryItems);
   const armorProficiencyIssue = getArmorProficiencyIssue(effectiveProficiencies, equipment, inventoryItems);
   const armorPenaltyReason = armorProficiencyIssue.hasIssue ? `Not proficient with ${armorProficiencyIssue.labels.join(" or ")}` : "";
   const d20OptionsForAbility = (ability?: AbilityKey): RollD20Options | undefined =>
@@ -249,15 +307,15 @@ export default memo(function HeroSheet(props: {
       ? { forcedMode: "disadvantage" }
       : undefined;
   const rollD20ForAbility = (label: string, modifier: number, ability?: AbilityKey) => rollD20(label, modifier, d20OptionsForAbility(ability));
-  const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc;
+  const armorClass = acInfo.total + ruleAc + (props.featAcBonus ?? 0) + effAc + (homebrewNumeric.ac ?? 0);
   const currency = props.character.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
   const carriedWeight = totalCarriedWeight(inventoryItems, equipment, currency, settings.ignoreCoinWeight);
-  const capacity = carryCapacity(props.finalAbilities.strength, settings.encumbranceType);
+  const capacity = carryCapacity(sheetAbilities.strength, settings.encumbranceType);
   const ruleInit = customRules.filter((r) => r.type === "initiative").reduce((s, r) => s + r.value, 0);
-  const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit;
-  const ruleAttack = customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack;
+  const initiative = dexMod + ruleInit + (props.featInitiativeBonus ?? 0) + effInit + (homebrewNumeric.initiative ?? 0);
+  const ruleAttack = customRules.filter((r) => r.type === "attack").reduce((s, r) => s + r.value, 0) + effAttack + (homebrewNumeric["weapon-attack"] ?? 0);
   const ruleSaveAll = customRules.filter((r) => r.type === "save").reduce((s, r) => s + r.value, 0);
-  const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves + effSaves;
+  const saveAllBonus = ruleSaveAll + equipmentItemBonuses.saves + effSaves + (homebrewNumeric["saving-throws"] ?? 0);
 
   const proficientSaves: AbilityKey[] =
     props.character.savingThrowProficiencies ?? SAVE_PROFICIENCIES[heroClass.id]?.abilities ?? [];
@@ -285,24 +343,25 @@ export default memo(function HeroSheet(props: {
   const hasJackOfAllTrades = featuresUpToLevel.some((f) => f.name === "Jack of All Trades");
   const halfPb = hasJackOfAllTrades ? Math.max(1, Math.floor(pb / 2)) : 0;
 
-  const saveBonus = (key: AbilityKey) => abilityModifier(props.finalAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
+  const saveBonus = (key: AbilityKey) => abilityModifier(sheetAbilities[key]) + (isSaveProficient(key) ? pb : 0) + saveAllBonus;
   const skillBonus = (s: SkillDef) => {
-    const mod = abilityModifier(props.finalAbilities[s.ability]);
+    const mod = abilityModifier(sheetAbilities[s.ability]);
     const prof = isSkillProficient(s.id);
     const expert = isSkillExpert(s.id);
     const joaT = hasJackOfAllTrades && !prof ? halfPb : 0;
-    return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT + effChecks;
+    return mod + (expert ? pb * 2 : prof ? pb : 0) + joaT + effChecks + (homebrewNumeric["ability-checks"] ?? 0);
   };
   const skillBonusForPassive = (s: SkillDef) => {
     const prof = isSkillProficient(s.id);
     const expert = isSkillExpert(s.id);
-    return passiveSkillScore({
-      abilityScore: props.finalAbilities[s.ability],
+    const basePassive = passiveSkillScore({
+      abilityScore: sheetAbilities[s.ability],
       proficiencyBonus: pb,
       proficient: prof,
       expertise: expert,
       jackOfAllTrades: hasJackOfAllTrades && !prof,
     });
+    return basePassive + (homebrewNumeric["ability-checks"] ?? 0);
   };
 
   const passiveInsight = skillBonusForPassive(SKILLS.find((s) => s.id === "insight")!);
@@ -478,6 +537,7 @@ export default memo(function HeroSheet(props: {
     ...customRules.filter((r) => r.type === "ac").map((r) => ({ label: r.label, value: r.value })),
     ...((props.featAcBonus ?? 0) !== 0 ? [{ label: "Feats", value: props.featAcBonus ?? 0 }] : []),
     ...activeEffects.filter((e) => e.ac).map((e) => ({ label: e.label, value: e.ac ?? 0 })),
+    ...homebrewMechanics.contributions.filter((entry) => entry.target === "ac" && entry.value).map((entry) => ({ label: entry.label, value: entry.value ?? 0 })),
   ];
 
   const updateEquipment = (patch: Partial<Equipment>) =>
@@ -515,7 +575,9 @@ export default memo(function HeroSheet(props: {
   const isBonusEquipmentItem = (item: InventoryItem) => itemHasPassiveBonus(item)
     || ["ring", "rod", "staff", "wand", "wondrous item", "wondrous items"].includes((item.category ?? "").toLowerCase());
   const toggleInventoryEquipment = (item: InventoryItem) => {
-    if (isArmorItem(item)) equipInventoryArmor(item);
+    if (item.homebrew) {
+      updateHomebrewItem(item, { equipped: !item.homebrew.equipped });
+    } else if (isArmorItem(item)) equipInventoryArmor(item);
     else if (isShieldItem(item)) equipInventoryShield(item);
     else if (isWeaponItem(item)) toggleInventoryWeapon(item.id);
     else if (isBonusEquipmentItem(item)) toggleBonusItem(item.id);
@@ -556,6 +618,62 @@ export default memo(function HeroSheet(props: {
       return;
     }
     props.onUpdate({ inventory: [...inventory, catalogInventoryItem] });
+  };
+  const addHomebrewItem = (available: AvailableHomebrewItem) => {
+    const item = homebrewPayloadToInventory(
+      available.definition.id,
+      available.version.id,
+      available.definition.ruleset,
+      available.payload,
+    );
+    props.onUpdate({ inventory: [...inventory, item] });
+    setResolvedHomebrewItems((current) => [...current, {
+      itemId: item.id,
+      definitionId: available.definition.id,
+      versionId: available.version.id,
+      version: available.version,
+      payload: available.payload,
+    }]);
+  };
+  const updateHomebrewItem = (item: InventoryItem, patch: Partial<NonNullable<InventoryItem["homebrew"]>>) => {
+    if (!item.homebrew) return;
+    const nextState = { ...item.homebrew, ...patch };
+    let nextEquipment = equipment;
+    if (patch.equipped !== undefined) {
+      nextEquipment = cleanEquipmentForRemovedItem(item.id);
+      if (patch.equipped) {
+        if (isArmorItem(item)) nextEquipment.armorItemId = item.id;
+        else if (isShieldItem(item)) nextEquipment.shieldItemId = item.id;
+        else if (isWeaponItem(item)) nextEquipment.weaponItemIds = [...(nextEquipment.weaponItemIds ?? []), item.id];
+        else nextEquipment.bonusItemIds = [...(nextEquipment.bonusItemIds ?? []), item.id];
+      }
+    }
+    props.onUpdate({
+      inventory: inventory.map((entry) => entry.id === item.id
+        ? { ...entry, notes: nextState.instanceNotes ?? entry.notes, weight: nextState.weightOverride ?? entry.weight, homebrew: nextState }
+        : entry),
+      ...(patch.equipped !== undefined ? { equipment: nextEquipment } : {}),
+    });
+  };
+  const confirmHomebrewUpgrade = () => {
+    if (!upgradeItem) return;
+    const { item, available } = upgradeItem;
+    const upgraded = upgradeHomebrewInventoryItem(
+      item,
+      available.definition.id,
+      available.version.id,
+      available.definition.ruleset,
+      available.payload,
+    );
+    props.onUpdate({ inventory: inventory.map((entry) => entry.id === item.id ? upgraded : entry) });
+    setResolvedHomebrewItems((current) => current.map((entry) => entry.itemId === item.id ? {
+      itemId: item.id,
+      definitionId: available.definition.id,
+      versionId: available.version.id,
+      version: available.version,
+      payload: available.payload,
+    } : entry));
+    setUpgradeItem(null);
   };
   const commitItemQuantity = (id: string, rawQuantity: string | number) => {
     const parsedQuantity = typeof rawQuantity === "number" ? rawQuantity : Number.parseInt(rawQuantity.trim(), 10);
@@ -775,6 +893,16 @@ export default memo(function HeroSheet(props: {
       </div>
       <div className="cs-item-results">{visibleItemMatches.map((item) => <div className="cs-item-result" key={item.id}><div><strong data-rarity={item.rarity}>{item.name}</strong><span>{equipmentCatalogCategory(item)} <i aria-hidden="true">|</i> <em data-rarity={item.rarity}>{item.rarity}</em>{itemMetaParts(item).map((part) => <Fragment key={part}> <i aria-hidden="true">|</i> {part}</Fragment>)}</span>{item.description ? <p>{item.description.slice(0, 180)}{item.description.length > 180 ? "…" : ""}</p> : null}</div><button type="button" className="cs-glass-btn" onClick={() => addCatalogItem(item)}>Add</button></div>)}{visibleItemMatches.length === 0 ? <p className="cs-muted">No matching items yet.</p> : null}</div>
       {itemMatches.length > visibleItemMatches.length ? <p className="cs-item-more">Showing {visibleItemMatches.length} of {itemMatches.length}. Narrow the search to find a specific item.</p> : null}
+      {availableHomebrewItems.length > 0 ? <div className="cs-homebrew-library">
+        <h4>Published homebrew</h4>
+        {availableHomebrewItems
+          .filter((entry) => !itemSearch.trim() || entry.payload.name.toLowerCase().includes(itemSearch.trim().toLowerCase()))
+          .map((entry) => <div className="cs-item-result" key={entry.version.id}>
+            <div><strong data-rarity={entry.payload.rarity}>{entry.payload.name}</strong><span>Homebrew · v{entry.version.ordinal} · {entry.payload.rarity}</span><p>{entry.payload.description.slice(0, 180)}{entry.payload.description.length > 180 ? "…" : ""}</p></div>
+            <button type="button" className="cs-glass-btn" onClick={() => addHomebrewItem(entry)}>Add pinned v{entry.version.ordinal}</button>
+          </div>)}
+      </div> : null}
+      {homebrewLoadError ? <p className="cs-rule-note cs-rule-warning">{homebrewLoadError}</p> : null}
       {showInvForm ? <div className="cs-inv-form"><input type="text" placeholder="Item name" aria-label="Item name" value={invName} onChange={(e) => setInvName(e.target.value)} maxLength={100} /><select value={invRarity} onChange={(e) => setInvRarity(e.target.value)}><option value="Mundane">Mundane</option><option value="Common">Common</option><option value="Uncommon">Uncommon</option><option value="Rare">Rare</option><option value="Very Rare">Very Rare</option><option value="Legendary">Legendary</option></select><input type="text" placeholder="Notes (optional)" aria-label="Item notes" value={invNotes} onChange={(e) => setInvNotes(e.target.value)} maxLength={200} /><input type="number" placeholder="Weight (lb, optional)" aria-label="Item weight in pounds" min={0} value={invWeight} onChange={(e) => setInvWeight(e.target.value)} /><div className="cs-inv-form-actions"><button type="button" className="cs-glass-btn" onClick={addItem}>Add custom item</button><button type="button" className="cs-glass-btn" onClick={() => setShowInvForm(false)}>Cancel</button></div></div> : <button type="button" className="cs-glass-btn cs-inv-add" onClick={() => setShowInvForm(true)}>+ Create custom item</button>}
     </div>
   ) : null;
@@ -783,14 +911,15 @@ export default memo(function HeroSheet(props: {
   // Split-panel header (AO-8): the portrait panel doubles as the picker trigger.
   const [portraitPickerOpen, setPortraitPickerOpen] = useState(false);
   const isPactCaster = casterType === "pact";
-  const slotMax = maxSlots(casterType, props.character.level, heroClass.id);
+  const slotMax = maxSlots(casterType, props.character.level, heroClass.id)
+    .map((maximum, index) => maximum + (homebrewMechanics.spellSlotDeltas[index + 1] ?? 0));
   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
   // Pact slots live at the first non-zero entry of slotMax (index = slotLevel - 1), not always [0].
   const pactMax = isPactCaster ? (slotMax.find((c) => c > 0) ?? 0) : 0;
   const pactUsed = Math.min(props.character.pactSlotsUsed ?? 0, pactMax);
   const slotsUsed = props.character.spellSlotsUsed ?? {};
-  const saveDC = spellAbility ? 8 + pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellSaveDc : 0;
-  const spellAttack = spellAbility ? pb + abilityModifier(props.finalAbilities[spellAbility]) + equipmentItemBonuses.spellAttack : 0;
+  const saveDC = spellAbility ? 8 + pb + abilityModifier(sheetAbilities[spellAbility]) + equipmentItemBonuses.spellSaveDc + (homebrewNumeric["spell-save-dc"] ?? 0) : 0;
+  const spellAttack = spellAbility ? pb + abilityModifier(sheetAbilities[spellAbility]) + equipmentItemBonuses.spellAttack + (homebrewNumeric["spell-attack"] ?? 0) : 0;
   const spellStatuses = useMemo(() => props.character.spellStatuses ?? {}, [props.character.spellStatuses]);
   const spellStatusesRef = useRef(spellStatuses);
   useEffect(() => {
@@ -849,7 +978,7 @@ export default memo(function HeroSheet(props: {
   const rollHitDie = () => {
     const available = props.character.level - (props.character.hitDiceSpent ?? 0);
     if (available <= 0) return;
-    const conMod = abilityModifier(props.finalAbilities.constitution);
+    const conMod = abilityModifier(sheetAbilities.constitution);
     const spent = props.character.hitDiceSpent ?? 0;
     props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => {
       const healed = Math.max(0, outcome.total);
@@ -884,7 +1013,7 @@ export default memo(function HeroSheet(props: {
     ? progressionPatchForCharacter(props.character).featureResources ?? props.character.featureResources ?? {}
     : props.character.featureResources ?? {};
   const prepLimit = _isPrepared && spellAbility
-    ? preparedSpellLimit(casterType, props.character.level, abilityModifier(props.finalAbilities[spellAbility]))
+    ? preparedSpellLimit(casterType, props.character.level, abilityModifier(sheetAbilities[spellAbility]))
     : 0;
   const togglePrepared = (spellId: string) => {
     if (preparedIds.includes(spellId)) {
@@ -1064,7 +1193,7 @@ export default memo(function HeroSheet(props: {
     }
     if (!window.confirm(`Revert to level ${newLevel}? This undoes the HP, feat, and subclass gains from the removed level.`)) return;
 
-    const conMod = abilityModifier(props.finalAbilities.constitution);
+    const conMod = abilityModifier(sheetAbilities.constitution);
     const hpResult = revertHpLevel(
       props.character.maxHp,
       props.character.currentHp,
@@ -1470,7 +1599,7 @@ export default memo(function HeroSheet(props: {
             {props.rollMode !== "normal" && props.rollModeIsFromEffect ? <span className="ao-dice-arm-hint">from effects</span> : null}
           </div>
         ) : null}
-        <div className="cs-abilities">{abilityKeys.map((key) => { const score = props.finalAbilities[key]; const mod = abilityModifier(score); const joaTBonus = hasJackOfAllTrades ? halfPb : 0; const totalMod = mod + effChecks + joaTBonus; return (<button type="button" className="cs-ability-cell cs-roll-target" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, totalMod, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(totalMod)}`} title={d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll"}><span className="cs-ability-mod cs-roll-chip"><D20Icon />{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
+        <div className="cs-abilities">{abilityKeys.map((key) => { const score = sheetAbilities[key]; const mod = abilityModifier(score); const joaTBonus = hasJackOfAllTrades ? halfPb : 0; const totalMod = mod + effChecks + joaTBonus + (homebrewNumeric["ability-checks"] ?? 0); return (<button type="button" className="cs-ability-cell cs-roll-target" key={key} onClick={() => rollD20ForAbility(`${abilityLabels[key]} check`, totalMod, key)} aria-label={`Roll ${abilityLabels[key]} check, ${signed(totalMod)}`} title={homebrewMechanics.abilityFloors[key] ? `Raised to ${score} by homebrew` : d20OptionsForAbility(key) ? "Armor proficiency penalty: rolls with disadvantage" : "Click to roll"}><span className="cs-ability-mod cs-roll-chip"><D20Icon />{signed(mod)}</span><span className="cs-ability-label">{abilityLabels[key]}</span><span className="cs-ability-score">{score}</span></button>); })}</div>
         </>
       );
       case "saves": return (
@@ -1611,6 +1740,22 @@ export default memo(function HeroSheet(props: {
         return (
           <section className="cs-block">
             <h3 className="cs-section-eyebrow">Effects &amp; Conditions</h3>
+            {homebrewMechanics.contributions.length > 0 ? (
+              <div className="cs-effect-list cs-homebrew-effects">
+                {homebrewMechanics.contributions.map((entry) => (
+                  <div className="cs-effect-row cs-effect-on" key={`${entry.sourceInstanceId}:${entry.effectId}`}>
+                    <span className="cs-prof-marker cs-prof" aria-hidden="true">●</span>
+                    <div className="cs-effect-text">
+                      <strong>{entry.label}</strong>
+                      <span>{entry.target}{entry.value != null ? ` ${signed(entry.value)}` : ""} — pinned homebrew</span>
+                    </div>
+                  </div>
+                ))}
+                {homebrewMechanics.senses.map((sense) => <p className="cs-rule-note" key={`${sense.sourceInstanceId}:${sense.text}`}>Sense: {sense.text}</p>)}
+                {homebrewMechanics.conditions.map((condition) => <p className="cs-rule-note" key={`${condition.sourceInstanceId}:${condition.conditionId}`}>Condition: {condition.label}</p>)}
+                {homebrewMechanics.auras.map((aura) => <p className="cs-rule-note" key={`${aura.sourceInstanceId}:${aura.radiusFeet}`}>Aura: {aura.radiusFeet} ft. · {aura.recipient}</p>)}
+              </div>
+            ) : null}
             {effectsList.length > 0 ? (
               <div className="cs-effect-list">
                 {effectsList.map((e) => (
@@ -1676,19 +1821,22 @@ export default memo(function HeroSheet(props: {
         const weaponDefs = [...staticWeaponDefs, ...inventoryWeaponDefs];
         const baseRows = weaponDefs.length > 0
           ? weaponDefs.map((w) => {
-              const ability = weaponAbility(w, props.finalAbilities);
-              const mod = abilityModifier(props.finalAbilities[ability]);
-              const itemBonus = w.bonus ?? 0;
-              const damageMod = mod + itemBonus + effDamage;
+              const ability = weaponAbility(w, sheetAbilities);
+              const mod = abilityModifier(sheetAbilities[ability]);
+              const inventoryItemId = w.id.startsWith("inventory:") ? w.id.slice("inventory:".length) : "";
+              const sourceBonuses = inventoryItemId ? homebrewMechanics.sourceItemBonuses[inventoryItemId] ?? {} : {};
+              const itemAttackBonus = (w.bonus ?? 0) + (sourceBonuses["weapon-attack"] ?? 0);
+              const itemDamageBonus = (w.bonus ?? 0) + (sourceBonuses["weapon-damage"] ?? 0);
+              const damageMod = mod + itemDamageBonus + effDamage + (homebrewNumeric["weapon-damage"] ?? 0);
               const dice = parseDamageDice(w.damage);
               const hasDice = dice.length > 0;
               const versatileDice = w.versatile ? parseDamageDice(w.versatile) : null;
               const damageType = w.damageType ? ` ${w.damageType}` : "";
-              return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemBonus, mod: damageMod, dice, hasDice, versatileDice, spellDamageDice: undefined, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
+              return { id: w.id, name: w.name, ability, toHit: mod + pb + ruleAttack + itemAttackBonus, mod: damageMod, dice, hasDice, versatileDice, spellDamageDice: undefined, damageLabel: `${w.damage}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${damageType}${w.versatile ? ` (${w.versatile} two-handed)` : ""}` };
             })
           : classActionsAtLevel(heroClass, props.character.level).map((action) => {
-              const mod = abilityModifier(props.finalAbilities[action.ability]);
-              const damageMod = mod + effDamage;
+              const mod = abilityModifier(sheetAbilities[action.ability]);
+              const damageMod = mod + effDamage + (homebrewNumeric["weapon-damage"] ?? 0);
               const dice = parseDamageDice(action.formula);
               const hasDice = dice.length > 0;
               return { id: action.name, name: action.name, ability: action.ability, toHit: mod + pb + ruleAttack, mod: damageMod, dice, hasDice, versatileDice: null, spellDamageDice: undefined, damageLabel: `${action.formula}${damageMod !== 0 ? ` ${signed(damageMod)}` : ""}${action.damageType ? ` ${action.damageType}` : ""}` };
@@ -2028,6 +2176,11 @@ export default memo(function HeroSheet(props: {
                   const equippedAsShield = equipment.shieldItemId === item.id;
                   const equippedAsWeapon = (equipment.weaponItemIds ?? []).includes(item.id);
                   const equippedAsBonus = (equipment.bonusItemIds ?? []).includes(item.id);
+                  const resolvedHomebrew = resolvedHomebrewByItemId.get(item.id);
+                  const homebrewRef = item.homebrew?.contentRef;
+                  const newerHomebrew = homebrewRef?.source === "homebrew"
+                    ? availableHomebrewItems.find((entry) => entry.definition.id === homebrewRef.definitionId)
+                    : undefined;
                   return (
                     <div className={`cs-inv-row${equippedAsArmor || equippedAsShield || equippedAsWeapon || equippedAsBonus ? " cs-inv-equipped" : ""}`} key={item.id}>
                       <div>
@@ -2040,6 +2193,17 @@ export default memo(function HeroSheet(props: {
                             <p>{item.description}</p>
                           </details>
                         ) : null}
+                        {item.homebrew ? <div className="cs-homebrew-instance">
+                          <div className="cs-homebrew-version"><span>Homebrew · pinned v{resolvedHomebrew?.version.ordinal ?? "?"}</span>{newerHomebrew && homebrewRef?.source === "homebrew" && newerHomebrew.version.id !== homebrewRef.versionId ? <button type="button" className="cs-glass-btn" onClick={() => setUpgradeItem({ item, available: newerHomebrew, changes: describeItemUpgrade(resolvedHomebrew?.payload ?? newerHomebrew.payload, newerHomebrew.payload) })}>Preview v{newerHomebrew.version.ordinal} upgrade</button> : null}</div>
+                          <div className="cs-homebrew-controls">
+                            <label><input type="checkbox" checked={item.homebrew.equipped} onChange={(event) => updateHomebrewItem(item, { equipped: event.target.checked })} /> Equipped</label>
+                            {item.attunement ? <label><input type="checkbox" checked={item.homebrew.attuned} onChange={(event) => updateHomebrewItem(item, { attuned: event.target.checked })} /> Attuned</label> : null}
+                            <label>Body location<input value={item.homebrew.bodyLocation ?? ""} placeholder="Right hand, left ring…" onChange={(event) => updateHomebrewItem(item, { bodyLocation: event.target.value || undefined })} /></label>
+                            <label>Weight override<input type="number" min={0} value={item.homebrew.weightOverride ?? ""} onChange={(event) => updateHomebrewItem(item, { weightOverride: event.target.value === "" ? undefined : Number(event.target.value) })} /></label>
+                          </div>
+                          {resolvedHomebrew?.payload.toggles.map((toggle) => <label className="cs-homebrew-toggle" key={toggle.id}><input type="checkbox" checked={item.homebrew!.activeToggleIds.includes(toggle.id)} onChange={(event) => updateHomebrewItem(item, { activeToggleIds: event.target.checked ? [...item.homebrew!.activeToggleIds, toggle.id] : item.homebrew!.activeToggleIds.filter((id) => id !== toggle.id) })} /> {toggle.label}</label>)}
+                          <label className="cs-homebrew-notes">Instance notes<textarea value={item.homebrew.instanceNotes ?? ""} onChange={(event) => updateHomebrewItem(item, { instanceNotes: event.target.value || undefined })} /></label>
+                        </div> : null}
                       </div>
                       <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<div ref={quantityEditorId === item.id ? quantityControlRef : undefined} className={`cs-inv-quantity${quantityEditorId === item.id ? " is-open" : ""}`} aria-label={`${item.name} quantity`}>
                         <button ref={quantityEditorId === item.id ? quantityToggleRef : undefined} type="button" className="cs-inv-quantity-toggle" aria-expanded={quantityEditorId === item.id} onClick={() => setQuantityEditorId((current) => current === item.id ? null : item.id)}>
@@ -2438,7 +2602,7 @@ export default memo(function HeroSheet(props: {
               Hit dice: {props.character.level - (props.character.hitDiceSpent ?? 0)}/{props.character.level} d{heroClass.hitDie} remaining
             </span>
             <div className="cs-hd-rest-actions">
-              <button className="cs-roll-btn cs-roll-btn--compact" type="button" title={`Roll a hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
+              <button className="cs-roll-btn cs-roll-btn--compact" type="button" title={`Roll a hit die: 1d${heroClass.hitDie}${signed(abilityModifier(sheetAbilities.constitution))} HP`} disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level} onClick={rollHitDie}>
                 <DieIcon />Roll d{heroClass.hitDie}
               </button>
               <button className="character-header__action" type="button" onClick={finishShortRest}>Done</button>
@@ -2459,7 +2623,7 @@ export default memo(function HeroSheet(props: {
             <div className="sheet-vital__hpfoot">
               <p className="character-header__hp-meta">
                 Hit Dice {props.character.level - (props.character.hitDiceSpent ?? 0)} / {props.character.level} d{heroClass.hitDie}
-                <button type="button" className="cs-roll-btn cs-roll-btn--compact character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(props.finalAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(props.finalAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}><DieIcon />Roll</button>
+                <button type="button" className="cs-roll-btn cs-roll-btn--compact character-header__hd-roll" disabled={(props.character.hitDiceSpent ?? 0) >= props.character.level || hitDiceRolling} title={`Spend 1 hit die: 1d${heroClass.hitDie}${signed(abilityModifier(sheetAbilities.constitution))} HP`} onClick={(e) => { e.stopPropagation(); if (hitDiceRolling) return; setHitDiceRolling(true); const conMod = abilityModifier(sheetAbilities.constitution); const spent = props.character.hitDiceSpent ?? 0; props.onRoll(`Hit Die d${heroClass.hitDie}`, heroClass.hitDie, 1, conMod, (outcome) => { const healed = Math.max(0, outcome.total); props.onUpdate({ currentHp: Math.min(props.character.maxHp, props.character.currentHp + healed), hitDiceSpent: spent + 1 }); setHitDiceRolling(false); }); }}><DieIcon />Roll</button>
               </p>
               <span className="character-header__hp-steppers">
                 <button type="button" aria-label="Decrease hit points" onClick={() => props.onUpdate({ currentHp: Math.max(0, props.character.currentHp - 1) })}><Minus size={10} /></button>
@@ -2701,10 +2865,24 @@ export default memo(function HeroSheet(props: {
           </div>
         </div>
       ) : null}
+      {upgradeItem ? (
+        <div className="cs-spell-detail-overlay" onClick={() => setUpgradeItem(null)}>
+          <div className="cs-spell-detail cs-homebrew-upgrade" onClick={(event) => event.stopPropagation()}>
+            <button className="cs-spell-detail-close" type="button" onClick={() => setUpgradeItem(null)} aria-label="Close">&times;</button>
+            <h3 className="cs-section-eyebrow">Upgrade {upgradeItem.item.name}</h3>
+            <p>This copy remains pinned until you confirm. Other copies and characters are unchanged.</p>
+            <ul>{upgradeItem.changes.map((change) => <li key={change}>{change}</li>)}</ul>
+            <div className="cs-effect-form-actions">
+              <button type="button" className="cs-glass-btn" onClick={confirmHomebrewUpgrade}>Pin v{upgradeItem.available.version.ordinal}</button>
+              <button type="button" className="cs-glass-btn" onClick={() => setUpgradeItem(null)}>Keep current version</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {manageFeatsOpen && !isReadOnly ? (
         <ManageFeatsModal
           character={props.character}
-          finalAbilities={props.finalAbilities}
+          finalAbilities={sheetAbilities}
           raceName={race.name}
           casterType={casterType}
           proficiencies={effectiveProficiencies}
@@ -2720,7 +2898,7 @@ export default memo(function HeroSheet(props: {
           characterName={props.character.name}
           gainedFeatures={heroClass.levelProgression.find((e) => e.level === levelUpTarget)?.features ?? []}
           newLevel={levelUpTarget}
-          finalAbilities={props.finalAbilities}
+          finalAbilities={sheetAbilities}
           classId={heroClass.id}
           className={heroClass.name}
           hitDie={heroClass.hitDie}

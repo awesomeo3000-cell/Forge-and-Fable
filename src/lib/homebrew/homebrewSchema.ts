@@ -641,6 +641,9 @@ function checkItemPayload(e: Errors, p: Record<string, unknown>): void {
   if (!isString(p.description)) e.push("description", "must be a string");
   e.requireString(p.category, "category");
   e.requireString(p.rarity, "rarity");
+  for (const field of ["classification", "imageUrl", "ac", "damage", "damageType", "properties", "cost"] as const) {
+    if (p[field] !== undefined && !isString(p[field])) e.push(field, "must be a string");
+  }
   e.requireBoolean(p.requiresAttunement, "requiresAttunement");
   if (p.baseWeight !== undefined && (typeof p.baseWeight !== "number" || p.baseWeight < 0)) {
     e.push("baseWeight", "must be a non-negative number");

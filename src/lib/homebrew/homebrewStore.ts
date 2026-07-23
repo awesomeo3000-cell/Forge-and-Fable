@@ -24,6 +24,7 @@ import {
   type ContentBaseline,
   type ContentVisibility,
   type HomebrewKind,
+  type HomebrewItemPayload,
   type HomebrewPayload,
 } from "@/types/homebrew";
 import type { RulesetId } from "@/types/game";
@@ -223,6 +224,83 @@ export function readPinnedVersionPayload(definitionId: string, versionId: string
     .prepare("SELECT payload_json FROM homebrew_versions WHERE id = ? AND definition_id = ?")
     .get(versionId, definitionId) as { payload_json: string } | undefined;
   return row ? (JSON.parse(row.payload_json) as HomebrewPayload) : null;
+}
+
+export function readPinnedItemVersion(
+  definitionId: string,
+  versionId: string,
+): { version: VersionSummaryDto; payload: HomebrewItemPayload } | null {
+  const row = getDb()
+    .prepare("SELECT * FROM homebrew_versions WHERE id = ? AND definition_id = ?")
+    .get(versionId, definitionId) as VersionRow | undefined;
+  if (!row) return null;
+  const payload = JSON.parse(row.payload_json) as HomebrewPayload;
+  if (payload.kind !== "item") return null;
+  return { version: toVersionSummaryDto(row), payload: publicItemPayload(payload) };
+}
+
+/** Resolve a version the viewer may newly select. Unlike pinned resolution this
+ * checks current access, and shared viewers may only select published content. */
+export function readSelectableVersionPayload(
+  viewerUserId: string,
+  definitionId: string,
+  versionId: string,
+): HomebrewPayload | null {
+  loadReadable(viewerUserId, definitionId);
+  const row = getDb()
+    .prepare("SELECT payload_json, status FROM homebrew_versions WHERE id = ? AND definition_id = ?")
+    .get(versionId, definitionId) as { payload_json: string; status: string } | undefined;
+  if (!row) return null;
+  // Characters only acquire immutable published versions. Owners can continue
+  // editing drafts in Studio, but drafts/deprecated versions are not new picks.
+  if (row.status !== "published") return null;
+  return JSON.parse(row.payload_json) as HomebrewPayload;
+}
+
+export type AvailableHomebrewItem = {
+  definition: DefinitionDto;
+  version: VersionSummaryDto;
+  payload: HomebrewItemPayload;
+};
+
+function publicItemPayload(payload: HomebrewItemPayload): HomebrewItemPayload {
+  const copy = deepCopyPayload(payload) as HomebrewItemPayload;
+  delete copy.creatorNotes;
+  return copy;
+}
+
+/** Latest published item versions the viewer can currently add to a character. */
+export function listAvailableItems(viewerUserId: string, ruleset?: RulesetId): AvailableHomebrewItem[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT DISTINCT definition.*
+         FROM homebrew_definitions definition
+         LEFT JOIN campaign_homebrew_access access
+           ON access.definition_id = definition.id AND access.revoked_at IS NULL
+         LEFT JOIN campaign_members member
+           ON member.campaign_id = access.campaign_id AND member.user_id = ?
+        WHERE definition.kind = 'item'
+          AND definition.archived_at IS NULL
+          AND definition.latest_published_version_id IS NOT NULL
+          AND (definition.owner_user_id = ? OR (definition.visibility = 'campaign' AND member.user_id IS NOT NULL))
+          ${ruleset ? "AND definition.ruleset = ?" : ""}
+        ORDER BY definition.updated_at DESC`,
+    )
+    .all(...(ruleset ? [viewerUserId, viewerUserId, ruleset] : [viewerUserId, viewerUserId])) as DefinitionRow[];
+
+  return rows.flatMap((definition) => {
+    const version = getDb()
+      .prepare("SELECT * FROM homebrew_versions WHERE id = ? AND definition_id = ? AND status = 'published'")
+      .get(definition.latest_published_version_id, definition.id) as VersionRow | undefined;
+    if (!version) return [];
+    const payload = JSON.parse(version.payload_json) as HomebrewPayload;
+    if (payload.kind !== "item") return [];
+    return [{
+      definition: toDefinitionDto(definition, viewerUserId),
+      version: toVersionSummaryDto(version),
+      payload: publicItemPayload(payload),
+    }];
+  });
 }
 
 // ── Writes ───────────────────────────────────────────────────────────────────

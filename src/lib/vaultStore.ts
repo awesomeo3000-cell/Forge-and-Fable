@@ -7,6 +7,7 @@ import { isAdminEmail } from "@/lib/adminEmail";
 import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRuleset";
 import { validateCharacterProgression } from "@/lib/progression/validate";
 import { sendNotificationEmail } from "@/lib/email";
+import { HomebrewNotFoundError, readSelectableVersionPayload } from "@/lib/homebrew/homebrewStore";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -28,6 +29,43 @@ type JsonRow = {
 };
 
 const DUMMY_PASSWORD_HASH = "$2b$10$.655b7GH.p0t6b3Br.o4ru23EaHryLhUOy5yWDiq1wsWPPRiz7Bne";
+
+function pinnedItemKey(item: Character["inventory"][number]): string | null {
+  const ref = item.homebrew?.contentRef;
+  return ref?.source === "homebrew" && ref.kind === "item" ? `${ref.definitionId}:${ref.versionId}` : null;
+}
+
+function validateNewHomebrewItems(
+  userId: string,
+  inventory: Character["inventory"],
+  characterRuleset: Character["ruleset"],
+  existingCounts = new Map<string, number>(),
+): void {
+  for (const item of inventory) {
+    const ref = item.homebrew?.contentRef;
+    if (!ref || ref.source !== "homebrew" || ref.kind !== "item") continue;
+    const key = `${ref.definitionId}:${ref.versionId}`;
+    const remainingExisting = existingCounts.get(key) ?? 0;
+    if (remainingExisting > 0) {
+      existingCounts.set(key, remainingExisting - 1);
+      continue;
+    }
+    let payload = null;
+    try {
+      payload = readSelectableVersionPayload(userId, ref.definitionId, ref.versionId);
+    } catch (error) {
+      // Character writes intentionally collapse private/missing content to the
+      // same validation error so definition ids cannot be probed.
+      if (!(error instanceof HomebrewNotFoundError)) throw error;
+    }
+    if (!payload || payload.kind !== "item") {
+      throw new Error(`Homebrew item "${item.name}" is unavailable or is not an item.`);
+    }
+    if (ref.ruleset !== characterRuleset) {
+      throw new Error(`Homebrew item "${item.name}" has an invalid content reference.`);
+    }
+  }
+}
 
 export class CharacterConflictError extends Error {
   current: Character;
@@ -257,6 +295,7 @@ export async function createCharacter(
     createdAt,
   };
   validateCharacterProgression(character, Boolean(character.progressionState));
+  validateNewHomebrewItems(userId, character.inventory ?? [], character.ruleset);
 
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -313,6 +352,11 @@ export async function updateCharacter(
       createdAt: current.createdAt,
     };
     if (updated.classId !== current.classId) throw new Error(`Character ${current.id} classId cannot change through an ordinary patch.`);
+    const existingHomebrewItemCounts = new Map<string, number>();
+    for (const key of (current.inventory ?? []).map(pinnedItemKey).filter((entry): entry is string => Boolean(entry))) {
+      existingHomebrewItemCounts.set(key, (existingHomebrewItemCounts.get(key) ?? 0) + 1);
+    }
+    validateNewHomebrewItems(userId, updated.inventory ?? [], updated.ruleset, existingHomebrewItemCounts);
     const progressionTouched = ["level", "classId", "subclassId", "featureChoices", "featureResources", "spellsKnown", "preparedSpells", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState"]
       .some((field) => Object.prototype.hasOwnProperty.call(patch, field));
     if (progressionTouched) validateCharacterProgression(updated, updated.level !== current.level || Boolean(updated.progressionState), current.level);

@@ -2,6 +2,7 @@
 
 import {
   ChevronDown,
+  FlaskConical,
   Hammer,
   Home,
   LogOut,
@@ -100,6 +101,7 @@ const LevelUpModal = dynamic(() => import("@/components/LevelUpModal"), { ssr: f
 const DiceRollOverlay = dynamic(() => import("@/components/DiceRollOverlay"), { ssr: false });
 const RollDrawer = dynamic(() => import("@/components/RollDrawer"), { ssr: false });
 const AccountDataModal = dynamic(() => import("@/components/AccountDataModal"), { ssr: false });
+const HomebrewStudio = dynamic(() => import("@/components/HomebrewStudio"), { ssr: false });
 
 function authHeaders(): Record<string, string> {
   return {
@@ -256,6 +258,7 @@ export default function ForgeAndFableApp() {
   );
   const [adminOpen, setAdminOpen] = useState(false);
   const [accountDataOpen, setAccountDataOpen] = useState(false);
+  const [homebrewStudioOpen, setHomebrewStudioOpen] = useState(false);
   const [charactersLoadedForUser, setCharactersLoadedForUser] = useState<string | null>(null);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(
     () => typeof window !== "undefined"
@@ -2561,6 +2564,7 @@ export default function ForgeAndFableApp() {
         }}
       />
     ) : null}
+    {homebrewStudioOpen ? <HomebrewStudio onClose={() => setHomebrewStudioOpen(false)} /> : null}
     {readOnlyViewChar ? (
       <div className="modal-scrim dm-sheet-overlay" role="presentation" onMouseDown={() => setReadOnlyViewChar(null)}>
         <div onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(1100px, 100%)", maxHeight: "90vh", overflow: "auto", position: "relative" }}>
@@ -2677,6 +2681,9 @@ export default function ForgeAndFableApp() {
                   ) : null}
                   <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); setImportOpen(true); }}>
                     <Upload size={14} /><span>Import character</span>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); setHomebrewStudioOpen(true); }}>
+                    <FlaskConical size={14} /><span>Item Studio</span>
                   </button>
                   <button type="button" role="menuitem" onClick={() => { setHeaderMenuOpen(false); openFeedback(); }}>
                     <MessageSquare size={14} /><span>Submit feedback</span>

@@ -55,6 +55,35 @@ export class CharacterValidationError extends Error {
   }
 }
 
+function assertHomebrewItemState(value: unknown, label: string): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`"${label}" must be an object.`);
+  const state = value as Record<string, unknown>;
+  const ref = state.contentRef;
+  if (!ref || typeof ref !== "object" || Array.isArray(ref)) throw new Error(`"${label}.contentRef" must be an object.`);
+  const contentRef = ref as Record<string, unknown>;
+  if (contentRef.source !== "homebrew" || contentRef.kind !== "item") {
+    throw new Error(`"${label}.contentRef" must pin a homebrew item.`);
+  }
+  for (const field of ["definitionId", "versionId"] as const) {
+    assertString(contentRef[field], `${label}.contentRef.${field}`, 128);
+    if (!(contentRef[field] as string).trim()) throw new Error(`"${label}.contentRef.${field}" is required.`);
+  }
+  if (contentRef.ruleset !== "2014" && contentRef.ruleset !== "2024") {
+    throw new Error(`"${label}.contentRef.ruleset" must be 2014 or 2024.`);
+  }
+  if (typeof state.equipped !== "boolean" || typeof state.attuned !== "boolean") {
+    throw new Error(`"${label}" must include equipped and attuned booleans.`);
+  }
+  assertArray(state.activeToggleIds, `${label}.activeToggleIds`);
+  if (state.activeToggleIds.length > 20) throw new Error(`"${label}.activeToggleIds" has too many entries.`);
+  for (const id of state.activeToggleIds) assertString(id, `${label}.activeToggleIds[]`, 64);
+  if (state.instanceNotes !== undefined) assertString(state.instanceNotes, `${label}.instanceNotes`, 1000);
+  if (state.bodyLocation !== undefined) assertString(state.bodyLocation, `${label}.bodyLocation`, 80);
+  if (state.weightOverride !== undefined && (typeof state.weightOverride !== "number" || !Number.isFinite(state.weightOverride) || state.weightOverride < 0 || state.weightOverride > 10000)) {
+    throw new Error(`"${label}.weightOverride" must be a non-negative number.`);
+  }
+}
+
 function assertPlainText(value: string, label: string) {
   if (/[<>]/.test(value)) throw new Error(`"${label}" cannot contain HTML markup.`);
 }
@@ -186,8 +215,10 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
           for (const entry of val) {
             assertPlainObjectOrString(entry, `${key}[]`);
             if (entry && typeof entry === "object" && !Array.isArray(entry)) {
-              const quantity = (entry as Record<string, unknown>).quantity;
+              const inventoryItem = entry as Record<string, unknown>;
+              const quantity = inventoryItem.quantity;
               if (quantity !== undefined) assertInteger(quantity, `${key}[].quantity`, 1, 999);
+              if (inventoryItem.homebrew !== undefined) assertHomebrewItemState(inventoryItem.homebrew, `${key}[].homebrew`);
             }
           }
         }

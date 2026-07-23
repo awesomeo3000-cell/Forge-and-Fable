@@ -1,3 +1,5 @@
+import type { HomebrewItemInstanceState } from "@/types/homebrew";
+
 export type AbilityKey =
   | "strength"
   | "dexterity"
@@ -201,6 +203,8 @@ export type InventoryItem = {
   /** Weight in pounds, for carrying-capacity math. Only populated for
       manually-added items and the static armor/weapon catalog for now. */
   weight?: number;
+  /** Exact immutable homebrew version plus per-copy runtime state. */
+  homebrew?: HomebrewItemInstanceState;
 };
 
 export type Currency = {

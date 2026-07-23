@@ -80,4 +80,5 @@ tmp/*.log
 /tmp/
 *.md
 !docs/ai-project-proposal-homebrew-studio.md
+!docs/CHANGES-HB-3.md
 AGENTS.md

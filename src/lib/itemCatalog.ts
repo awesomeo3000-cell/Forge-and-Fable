@@ -7,7 +7,7 @@ export type ItemLike = Pick<InventoryItem, "name"> &
   Partial<
     Pick<
       InventoryItem,
-      "category" | "classification" | "description" | "ac" | "damage" | "damageType" | "properties" | "cost" | "attunement"
+      "category" | "classification" | "description" | "ac" | "damage" | "damageType" | "properties" | "cost" | "attunement" | "homebrew"
     >
   >;
 
@@ -109,6 +109,7 @@ export function isWeaponItem(item: ItemLike) {
 }
 
 export function itemPassiveBonuses(item: ItemLike): ItemPassiveBonuses {
+  if (item.homebrew) return { ...emptyBonuses(), requiresUnarmoredNoShield: false };
   const bonuses: ItemPassiveBonuses = {
     ...emptyBonuses(),
     requiresUnarmoredNoShield: /wearing no armor and using no shield/i.test(itemText(item)),
@@ -133,11 +134,13 @@ export function itemHasPassiveBonus(item: ItemLike) {
 }
 
 export function itemWeaponBonus(item: ItemLike) {
+  if (item.homebrew) return 0;
   const text = itemText(item);
   return firstBonus(text, /\+([1-3])\s+bonus\s+to\s+attack\s+and\s+damage\s+rolls/i) || (isWeaponItem(item) ? nameEnhancementBonus(item) : 0);
 }
 
 export function itemArmorAcBonus(item: ItemLike, acAlreadyIncludesBonus = false) {
+  if (item.homebrew) return 0;
   if (acAlreadyIncludesBonus) return 0;
   const passive = itemPassiveBonuses(item);
   return passive.ac || ((isArmorItem(item) || isShieldItem(item)) ? nameEnhancementBonus(item) : 0);

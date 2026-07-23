@@ -319,6 +319,13 @@ export type HomebrewItemPayload = {
   classification?: string;
   rarity: string;
   imageUrl?: string;
+  /** Rules-facing equipment data copied from the built-in catalog when an item
+   *  is used as a baseline. These fields are intentionally structured rather
+   *  than inferred from creator prose at runtime. */
+  ac?: string;
+  damage?: string;
+  damageType?: string;
+  properties?: string;
   baseWeight?: number;
   cost?: string;
   requiresAttunement: boolean;
