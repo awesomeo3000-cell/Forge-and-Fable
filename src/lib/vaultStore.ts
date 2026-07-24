@@ -8,6 +8,7 @@ import { isSupportedRuleset, normalizeStoredRuleset } from "@/lib/characterRules
 import { validateCharacterProgression } from "@/lib/progression/validate";
 import { sendNotificationEmail } from "@/lib/email";
 import { HomebrewNotFoundError, readSelectableVersionPayload } from "@/lib/homebrew/homebrewStore";
+import { serverRulesContentRegistry } from "@/lib/homebrew/serverRegistry";
 
 type StoredUser = PublicUser & {
   passwordHash: string;
@@ -294,7 +295,7 @@ export async function createCharacter(
     revision: 0,
     createdAt,
   };
-  validateCharacterProgression(character, Boolean(character.progressionState));
+  validateCharacterProgression(character, Boolean(character.progressionState), 0, serverRulesContentRegistry);
   validateNewHomebrewItems(userId, character.inventory ?? [], character.ruleset);
 
   db.exec("BEGIN IMMEDIATE");
@@ -382,9 +383,9 @@ export async function updateCharacter(
       existingHomebrewItemCounts.set(key, (existingHomebrewItemCounts.get(key) ?? 0) + 1);
     }
     validateNewHomebrewItems(userId, updated.inventory ?? [], updated.ruleset, existingHomebrewItemCounts);
-    const progressionTouched = ["level", "classId", "subclassId", "featureChoices", "featureResources", "spellsKnown", "preparedSpells", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState"]
+    const progressionTouched = ["level", "classId", "subclassId", "classLevels", "featureChoices", "featureResources", "spellsKnown", "preparedSpells", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState"]
       .some((field) => Object.prototype.hasOwnProperty.call(patch, field));
-    if (progressionTouched) validateCharacterProgression(updated, updated.level !== current.level || Boolean(updated.progressionState), current.level);
+    if (progressionTouched) validateCharacterProgression(updated, updated.level !== current.level || Boolean(updated.progressionState), current.level, serverRulesContentRegistry);
 
     const result = db.prepare("UPDATE characters SET data = ?, revision = ?, updated_at = ? WHERE user_id = ? AND id = ? AND revision = ?")
       .run(serializedCharacter(updated), nextRevision, new Date().toISOString(), userId, id, expectedRevision);

@@ -61,10 +61,52 @@ through the *same* `buildLevelUpPlan` path built-in classes use (proposal §8.4:
   changes, and proficiency bonuses through `buildLevelUpPlan` via an injected
   registry; wrong-parent and no-registry rejections.
 
+## Sub-round 6c — server registry + homebrew multiclass resolution
+
+Makes the server *ready* to accept and validate a character whose `classLevels`
+include a pinned homebrew class — the class now flows through the same
+validation/aggregation path built-in classes use.
+
+- **`src/lib/homebrew/serverRegistry.ts`** (new): a `RulesContentRegistry` that
+  delegates built-in refs to the static adapter and resolves homebrew class /
+  subclass refs by reading their immutable pinned payloads
+  (`readPinnedVersionPayload`) and normalizing them (6b). Server-only (imports
+  the store/DB). Resolution is *pinned* — no access re-check, so a character
+  keeps resolving a version it already pins after campaign access changes (§11.2).
+- **`src/lib/progression/state.ts`**: `multiclassProgressionPatch` now passes
+  `classRef`/`subclassRef` into `buildLevelUpPlan` and resolves homebrew entries
+  through the injected registry instead of throwing. Still throws if a homebrew
+  ref appears with no registry.
+- **`src/lib/progression/validate.ts`**: `validateClassLevels` is
+  registry-aware — homebrew class/subclass refs resolve through the registry
+  (ruleset, duplicate, subclass-parentage, and selection-level checks all apply
+  to homebrew); with no registry, only built-in refs are accepted.
+- **`src/lib/vaultStore.ts`**: `createCharacter` and `updateCharacter` pass
+  `serverRulesContentRegistry` into `validateCharacterProgression`, and
+  `classLevels` joins the progression-touched field list.
+- Integration gate (`tests/homebrewMulticlassServer.integration.test.ts`): a
+  published homebrew class resolves through the server registry; a Fighter 3 /
+  homebrew-Runeweaver 2 character saves with its homebrew features aggregated
+  into `progressionState`; a ref to a non-existent version is rejected.
+
+### 6c deferral (the live-path gap)
+
+The **client** still computes the level-up progression patch without a registry
+(`LevelUpModal` → `multiclassLevelUpPatch` → `progressionPatchForCharacter`), so
+it cannot yet produce the progression state the server expects for a homebrew
+class. Nothing selects a homebrew class into `classLevels` from the UI yet
+(the 6a picker offers built-in classes only), so no live path sends this to the
+server — the server is *ready*, tested directly. Closing the loop needs the
+**client resolved-DTO registry** (§8.5: send the character's referenced class
+DTOs to the client) plus access enforcement for a newly-selected homebrew class
+(mirroring `validateNewHomebrewItems`). Both land with the selection sub-round.
+
 ## Test evidence (sub-rounds to date)
 
 - `npx vitest run tests/homebrewClassPacket.test.ts` — 10 passed.
-- `npx vitest run tests/progressionEngine.test.ts tests/progressionValidation.test.ts tests/multiclassFoundation.test.ts tests/homebrewClassProgression.test.ts tests/homebrewClassPacket.test.ts tests/classProgression.test.ts tests/homebrewRegistry.test.ts` — 7 files, 62 passed.
+- `npx vitest run tests/homebrewMulticlassServer.integration.test.ts` — 3 passed
+  (server registry resolution, homebrew-multiclass save + aggregation, missing-version rejection).
+- `npx vitest run tests/multiclassFoundation.test.ts tests/homebrewClassPacket.test.ts tests/progressionValidation.test.ts tests/progressionEngine.test.ts tests/homebrewClassProgression.test.ts tests/characterApi.integration.test.ts tests/homebrewItemPinning.integration.test.ts` — 64 passed after the Phase-5 gate message was updated to the new "requires a content registry" wording.
 - `npx tsc --noEmit` — clean. `npx eslint <touched files>` — clean.
 
 ## Deliberate deferrals within Phase 6 (documented, not silently dropped)
@@ -82,15 +124,15 @@ through the *same* `buildLevelUpPlan` path built-in classes use (proposal §8.4:
 
 ## Remaining Phase 6 sub-rounds
 
-1. **Server registry** resolving authorized homebrew class/subclass refs from
-   the store, threaded into `progressionPatchForCharacter` /
-   `validateCharacterProgression` and the multiclass aggregation (which still
-   throws "until Phase 6" for homebrew entries in `state.ts`).
-2. **Class & Subclass Studio editors** (foundation, proficiencies, spellcasting
+1. ~~Server registry~~ — **done (6c).**
+2. **Client resolved-DTO registry + homebrew-class selection**: send a
+   character's referenced class DTOs to the client so `LevelUpModal` /
+   `multiclassLevelUpPatch` compute the same progression the server expects;
+   extend the 6a picker to offer accessible homebrew classes; add
+   newly-selected-class access enforcement (mirroring `validateNewHomebrewItems`).
+3. **Class & Subclass Studio editors** (foundation, proficiencies, spellcasting
    simple + advanced, 1-20 level guide, prerequisites, preview) with built-in
    template cloning.
-3. **Creation & level-up selection** of homebrew classes (extend the 6a picker
-   to offer accessible homebrew classes).
 4. **Sheet integration**: homebrew features/resources/labels, homebrew caster
    slots, structured class choices.
 5. **Class/subclass version upgrade preview + snapshot rollback.**

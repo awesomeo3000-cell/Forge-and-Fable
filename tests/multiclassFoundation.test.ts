@@ -190,8 +190,9 @@ describe("gate: server progression validation", () => {
       level: 1,
       acquiredOrder: 1,
     };
+    // Without an injected registry, homebrew refs cannot be resolved.
     const character = baseCharacter({ classLevels: [fighter, homebrewRef], level: 3, classId: "fighter" });
-    expect(() => validateCharacterProgression(character, false)).toThrow(/Phase 6/);
+    expect(() => validateCharacterProgression(character, false)).toThrow(/requires a content registry/);
   });
 
   it("rejects duplicate acquiredOrder values (ambiguous primary class)", () => {

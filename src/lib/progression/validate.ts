@@ -4,7 +4,7 @@ import { progressionPatchForCharacter } from "@/lib/progression/state";
 import { classLevelMirrors, classRefKey } from "@/lib/multiclass";
 import type { LevelUpChoice } from "@/lib/progression/types";
 import type { Character, FeatureChoiceValue } from "@/types/game";
-import type { RulesContentRegistry } from "@/types/homebrew";
+import type { RulesContentRef, RulesContentRegistry } from "@/types/homebrew";
 import rawSpells from "@/data/spells.json";
 import { progressionChoiceOptions } from "@/lib/progression/choiceOptions";
 import { cantripsKnownAt } from "@/lib/spells";
@@ -90,12 +90,19 @@ function validateChoice(character: Character, choice: LevelUpChoice, expectedCou
 }
 
 /**
- * Structural validation for multiclass class-level records (Phase 5). Deep
+ * Structural validation for multiclass class-level records (Phase 5/6c). Deep
  * per-choice validation (cantrip/spell counts, ASI cadence) remains
- * single-class-only until Phase 6 generalizes the choice model; feature grants
- * are still fully validated through the aggregated progressionState below.
+ * single-class-only until the choice model generalizes; feature grants are
+ * still fully validated through the aggregated progressionState below.
+ *
+ * Homebrew class/subclass refs are resolved through the injected registry; with
+ * no registry, only built-in refs are accepted.
  */
-function validateClassLevels(character: Character): void {
+function refLabel(ref: RulesContentRef): string {
+  return ref.source === "builtin" ? ref.id : ref.definitionId;
+}
+
+function validateClassLevels(character: Character, registry?: RulesContentRegistry): void {
   const classLevels = character.classLevels ?? [];
   if (classLevels.length === 0) return;
   // acquiredOrder is the primary-class tiebreaker; duplicates would make the
@@ -106,37 +113,51 @@ function validateClassLevels(character: Character): void {
   }
   const seen = new Set<string>();
   for (const entry of classLevels) {
-    if (entry.classRef.source !== "builtin") {
-      throw new Error(`Character ${character.id} field classLevels violates progression: homebrew class references are not accepted until Phase 6.`);
+    const label = refLabel(entry.classRef);
+    if (entry.classRef.source !== "builtin" && !registry) {
+      throw new Error(`Character ${character.id} field classLevels violates progression: resolving homebrew class "${label}" requires a content registry.`);
     }
     if (entry.classRef.ruleset !== character.ruleset) {
-      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" is pinned to ruleset ${entry.classRef.ruleset}, not ${character.ruleset}.`);
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${label}" is pinned to ruleset ${entry.classRef.ruleset}, not ${character.ruleset}.`);
     }
     if (!Number.isInteger(entry.level) || entry.level < 1 || entry.level > 20) {
-      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" level must be an integer 1-20.`);
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${label}" level must be an integer 1-20.`);
     }
     const key = classRefKey(entry.classRef);
     if (seen.has(key)) {
-      throw new Error(`Character ${character.id} field classLevels violates progression: duplicate class "${entry.classRef.id}".`);
+      throw new Error(`Character ${character.id} field classLevels violates progression: duplicate class "${label}".`);
     }
     seen.add(key);
-    const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${entry.classRef.id}`);
+    let classPacket;
+    try {
+      classPacket = registry ? registry.getClassPacket(entry.classRef)
+        : entry.classRef.source === "builtin" ? progressionCatalog.classes.get(`${character.ruleset}:${entry.classRef.id}`) : undefined;
+    } catch {
+      classPacket = undefined;
+    }
     if (!classPacket) {
-      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" is invalid for ${character.ruleset}.`);
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${label}" is invalid for ${character.ruleset}.`);
     }
     if (entry.subclassRef) {
-      if (entry.subclassRef.source !== "builtin") {
-        throw new Error(`Character ${character.id} field classLevels violates progression: homebrew subclass references are not accepted until Phase 6.`);
+      const subLabel = refLabel(entry.subclassRef);
+      if (entry.subclassRef.source !== "builtin" && !registry) {
+        throw new Error(`Character ${character.id} field classLevels violates progression: resolving homebrew subclass "${subLabel}" requires a content registry.`);
       }
-      const subclass = progressionCatalog.subclasses.get(`${character.ruleset}:${entry.subclassRef.id}`);
+      let subclass;
+      try {
+        subclass = registry ? registry.getSubclassPacket(entry.subclassRef)
+          : entry.subclassRef.source === "builtin" ? progressionCatalog.subclasses.get(`${character.ruleset}:${entry.subclassRef.id}`) : undefined;
+      } catch {
+        subclass = undefined;
+      }
       if (!subclass) {
-        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" is unavailable for ${character.ruleset}.`);
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${subLabel}" is unavailable for ${character.ruleset}.`);
       }
       if (subclass.classId !== classPacket.id) {
-        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" belongs to ${subclass.classId}.`);
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${subLabel}" belongs to ${subclass.classId}.`);
       }
       if (entry.level < subclass.selectionLevel) {
-        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" requires ${classPacket.id} level ${subclass.selectionLevel}.`);
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${subLabel}" requires ${classPacket.id} level ${subclass.selectionLevel}.`);
       }
     }
   }
@@ -151,7 +172,7 @@ function validateClassLevels(character: Character): void {
 
 /** Multiclass characters validate feature state against the aggregated patch. */
 function validateMulticlassProgression(character: Character, registry?: RulesContentRegistry): void {
-  validateClassLevels(character);
+  validateClassLevels(character, registry);
   if (character.progressionState) {
     const expected = progressionPatchForCharacter(character, registry).progressionState!;
     const state = character.progressionState;
@@ -175,7 +196,7 @@ function validateCharacterProgressionUnchecked(character: Character, requireComp
   }
   // A single-entry classLevels array must still agree with its mirrors before
   // the ordinary single-class validation runs against those mirrors.
-  if ((character.classLevels?.length ?? 0) === 1) validateClassLevels(character);
+  if ((character.classLevels?.length ?? 0) === 1) validateClassLevels(character, registry);
   const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${character.classId}`);
   if (!classPacket && isHomebrewClass(character)) {
     if (!character.customClassName?.trim()) {

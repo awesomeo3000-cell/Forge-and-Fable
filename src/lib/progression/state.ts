@@ -120,15 +120,21 @@ function multiclassProgressionPatch(character: ProgressionCharacter, registry?: 
   const stateClasses: NonNullable<Character["progressionState"]>["classes"] = [];
 
   for (const entry of entries) {
-    if (entry.classRef.source !== "builtin") {
-      throw new Error("Homebrew classes cannot enter automated progression until Phase 6.");
+    if (entry.classRef.source !== "builtin" && !registry) {
+      throw new Error("Resolving a homebrew class in progression requires a content registry.");
     }
-    const classId = entry.classRef.id;
-    const subclassId = entry.subclassRef?.source === "builtin" ? entry.subclassRef.id : undefined;
+    // classId/subclassId are the display fallbacks; classRef/subclassRef are the
+    // authoritative resolution keys (a homebrew class resolves only by ref).
+    const classId = entry.classRef.source === "builtin" ? entry.classRef.id : `hb:${entry.classRef.definitionId}`;
+    const subclassId = entry.subclassRef
+      ? entry.subclassRef.source === "builtin" ? entry.subclassRef.id : `hb:${entry.subclassRef.definitionId}`
+      : undefined;
     const plan = buildLevelUpPlan({
       ruleset: character.ruleset,
       classId,
+      classRef: entry.classRef,
       subclassId,
+      subclassRef: entry.subclassRef,
       fromLevel: 0,
       toLevel: entry.level,
       featureChoices: character.featureChoices,
