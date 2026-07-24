@@ -59,7 +59,10 @@ import { homebrewItemInstanceToSource } from "@/lib/homebrew/mechanicSources";
 import { resolveMechanics } from "@/lib/homebrew/mechanicsResolver";
 import {
   describeItemUpgrade,
+  describeStageChange,
   homebrewPayloadToInventory,
+  sortedStages,
+  stageCounterIds,
   upgradeHomebrewInventoryItem,
 } from "@/lib/homebrew/itemIntegration";
 import type { DefinitionDto, VersionSummaryDto } from "@/lib/homebrew/homebrewDtos";
@@ -212,6 +215,9 @@ export default memo(function HeroSheet(props: {
   onConsoleInput: (value: string) => void;
   onConsoleSubmit: (event: FormEvent) => void;
   readOnly?: boolean;
+  /** Signed-in user's display name, recorded as the actor in item stage
+      history entries (§7.5 audit). Falls back to "player" when absent. */
+  actorName?: string;
   /** Armed d20 mode for the next sheet roll (effects can drive it); the
       toggle lives here, next to the roll targets it affects (proposal 35). */
   rollMode?: RollMode;
@@ -223,6 +229,8 @@ export default memo(function HeroSheet(props: {
   const [availableHomebrewItems, setAvailableHomebrewItems] = useState<AvailableHomebrewItem[]>([]);
   const [homebrewLoadError, setHomebrewLoadError] = useState("");
   const [upgradeItem, setUpgradeItem] = useState<{ item: InventoryItem; available: AvailableHomebrewItem; changes: string[] } | null>(null);
+  // Pending manual stage change awaiting its diff-preview confirmation (§7.5).
+  const [stageChange, setStageChange] = useState<{ itemId: string; toStageId: string; reason: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -658,6 +666,32 @@ export default memo(function HeroSheet(props: {
       ...(patch.equipped !== undefined ? { equipment: nextEquipment } : {}),
     });
   };
+  /** Apply a confirmed manual stage change: pin the new stage and append an
+      audit entry (actor, time, target stage, optional reason — §7.5). */
+  const confirmStageChange = (item: InventoryItem) => {
+    if (!stageChange || !item.homebrew || stageChange.itemId !== item.id) return;
+    const reason = stageChange.reason.trim();
+    updateHomebrewItem(item, {
+      currentStageId: stageChange.toStageId,
+      stageHistory: [
+        ...(item.homebrew.stageHistory ?? []),
+        {
+          stageId: stageChange.toStageId,
+          changedAt: new Date().toISOString(),
+          changedBy: props.actorName?.trim() || "player",
+          ...(reason ? { reason } : {}),
+        },
+      ].slice(-100),
+    });
+    setStageChange(null);
+  };
+
+  const setItemCounter = (item: InventoryItem, counterId: string, value: number) => {
+    if (!item.homebrew) return;
+    const bounded = Math.max(0, Math.min(9999, Math.trunc(value) || 0));
+    updateHomebrewItem(item, { counters: { ...(item.homebrew.counters ?? {}), [counterId]: bounded } });
+  };
+
   const confirmHomebrewUpgrade = () => {
     if (!upgradeItem) return;
     const { item, available } = upgradeItem;
@@ -2038,7 +2072,8 @@ export default memo(function HeroSheet(props: {
                   <span className="cs-spell-level-head">
                     {level === "0" ? "Cantrips" : `Level ${level}`}
                     {lvlNum > 0 && max > 0 ? (<span className="cs-slot-pips">{Array.from({length: max}, (_, i) => (<button key={i} type="button" className={`cs-slot-pip${i < used ? " cs-slot-used" : ""}`} aria-pressed={i < used} onClick={() => i < used ? recoverSlot(lvlNum) : spendSlot(lvlNum)} aria-label={i < used ? `Recover level ${lvlNum} slot` : `Spend level ${lvlNum} slot`} />))}</span>) : null}
-                    <span className="sr-only" aria-live="polite">{lvlNum > 0 ? `Level ${lvlNum} spells: ${max - used} of ${max} slots remaining` : ""}</span>
+                    {lvlNum > 0 && used > max ? <span className="cs-slot-overdrawn" title="More slots are spent than the current maximum — a bonus slot was removed. Casts are never erased; recover normally.">overdrawn +{used - max}</span> : null}
+                    <span className="sr-only" aria-live="polite">{lvlNum > 0 ? `Level ${lvlNum} spells: ${Math.max(0, max - used)} of ${max} slots remaining${used > max ? `, overdrawn by ${used - max}` : ""}` : ""}</span>
                   </span>
                   {shown.map((spell) => {
                     const status = spellStatuses[spell.id];
@@ -2208,6 +2243,71 @@ export default memo(function HeroSheet(props: {
                             {resolvedHomebrew?.payload.toggles.map((toggle) => <label className="cs-homebrew-toggle" key={toggle.id}><input type="checkbox" checked={item.homebrew!.activeToggleIds.includes(toggle.id)} onChange={(event) => updateHomebrewItem(item, { activeToggleIds: event.target.checked ? [...item.homebrew!.activeToggleIds, toggle.id] : item.homebrew!.activeToggleIds.filter((id) => id !== toggle.id) })} /> {toggle.label}</label>)}
                             <label className="cs-homebrew-notes">Instance notes<textarea value={item.homebrew.instanceNotes ?? ""} onChange={(event) => updateHomebrewItem(item, { instanceNotes: event.target.value || undefined })} /></label>
                           </> : null}
+                          {resolvedHomebrew && resolvedHomebrew.payload.stages.length > 0 ? (() => {
+                            const stages = sortedStages(resolvedHomebrew.payload);
+                            const currentStage = stages.find((stage) => stage.id === item.homebrew!.currentStageId);
+                            const counterIds = stageCounterIds(resolvedHomebrew.payload);
+                            const pending = !isReadOnly && stageChange?.itemId === item.id ? stageChange : null;
+                            const pendingStage = pending ? stages.find((stage) => stage.id === pending.toStageId) : null;
+                            const history = item.homebrew!.stageHistory ?? [];
+                            return <div className="cs-homebrew-stages">
+                              <div className="cs-homebrew-stage-row" role="group" aria-label={`${item.name} stages`}>
+                                <span className="cs-homebrew-stage-label">Stage</span>
+                                {stages.map((stage) => {
+                                  const isCurrent = stage.id === currentStage?.id;
+                                  const counterReady = stage.activation.type === "counter" && (item.homebrew!.counters?.[stage.activation.counterId] ?? 0) >= stage.activation.minimum;
+                                  return <button
+                                    key={stage.id}
+                                    type="button"
+                                    disabled={isCurrent || isReadOnly}
+                                    className={`cs-homebrew-stage-chip${isCurrent ? " is-current" : ""}${counterReady && !isCurrent ? " is-ready" : ""}`}
+                                    title={stage.activation.type === "counter" ? `Reached at ${stage.activation.counterId} ≥ ${stage.activation.minimum}` : stage.activation.type === "milestone" ? `Milestone: ${stage.activation.label}` : "Manual advancement"}
+                                    onClick={() => setStageChange({ itemId: item.id, toStageId: stage.id, reason: "" })}
+                                  >{stage.name}{counterReady && !isCurrent ? " ✦" : ""}</button>;
+                                })}
+                              </div>
+                              {currentStage?.description ? <p className="cs-rule-note">{currentStage.description}</p> : null}
+                              {!isReadOnly && counterIds.length > 0 ? <div className="cs-homebrew-counters">
+                                {counterIds.map((counterId) => {
+                                  const value = item.homebrew!.counters?.[counterId] ?? 0;
+                                  return <div className="cs-homebrew-counter" key={counterId}>
+                                    <span>{counterId}</span>
+                                    <button type="button" onClick={() => setItemCounter(item, counterId, value - 1)} aria-label={`Decrease ${counterId}`}>−</button>
+                                    <input type="number" min={0} max={9999} value={value} onChange={(event) => setItemCounter(item, counterId, Number(event.target.value))} aria-label={`${counterId} value`} />
+                                    <button type="button" onClick={() => setItemCounter(item, counterId, value + 1)} aria-label={`Increase ${counterId}`}>+</button>
+                                  </div>;
+                                })}
+                              </div> : null}
+                              {pending && pendingStage ? (() => {
+                                const diff = describeStageChange(resolvedHomebrew.payload, item.homebrew!.currentStageId, pending.toStageId);
+                                return <div className="cs-homebrew-stage-confirm" role="group" aria-label="Confirm stage change">
+                                  <strong>{currentStage ? `${currentStage.name} → ${pendingStage.name}` : `Enter ${pendingStage.name}`}</strong>
+                                  {diff.removed.length > 0 ? <div className="cs-homebrew-stage-diff"><span>Loses</span><ul>{diff.removed.map((line, i) => <li key={i}>{line}</li>)}</ul></div> : null}
+                                  {diff.added.length > 0 ? <div className="cs-homebrew-stage-diff"><span>Gains</span><ul>{diff.added.map((line, i) => <li key={i}>{line}</li>)}</ul></div> : null}
+                                  {diff.removed.length === 0 && diff.added.length === 0 ? <p className="cs-muted">No mechanical changes — story text only.</p> : null}
+                                  <label>Reason (optional)<input value={pending.reason} maxLength={200} placeholder="Slew the wyrm of Hollowmere" onChange={(event) => setStageChange({ ...pending, reason: event.target.value })} /></label>
+                                  <div className="cs-homebrew-stage-confirm-actions">
+                                    <button type="button" className="cs-glass-btn" onClick={() => confirmStageChange(item)}>Change stage</button>
+                                    <button type="button" className="cs-glass-btn" onClick={() => setStageChange(null)}>Cancel</button>
+                                  </div>
+                                </div>;
+                              })() : null}
+                              {history.length > 0 ? <details className="cs-homebrew-stage-history">
+                                <summary>Stage history ({history.length})</summary>
+                                <ul>
+                                  {history.map((entry, i) => {
+                                    const fromId = i > 0 ? history[i - 1].stageId : stages[0]?.id;
+                                    const from = fromId !== entry.stageId ? stages.find((stage) => stage.id === fromId) : undefined;
+                                    const to = stages.find((stage) => stage.id === entry.stageId);
+                                    return <li key={`${entry.changedAt}-${i}`}>
+                                      <strong>{from ? `${from.name} → ` : ""}{to?.name ?? entry.stageId}</strong>
+                                      <span>{new Date(entry.changedAt).toLocaleString()} · {entry.changedBy}{entry.reason ? ` — ${entry.reason}` : ""}</span>
+                                    </li>;
+                                  })}
+                                </ul>
+                              </details> : null}
+                            </div>;
+                          })() : null}
                         </div> : null}
                       </div>
                       <div className="cs-inv-meta"><span data-rarity={item.rarity}>{item.rarity}</span>{item.attunement ? <span className="cs-attune">Attunement</span> : null}<div ref={quantityEditorId === item.id ? quantityControlRef : undefined} className={`cs-inv-quantity${quantityEditorId === item.id ? " is-open" : ""}`} aria-label={`${item.name} quantity`}>

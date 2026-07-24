@@ -356,6 +356,33 @@ export type HomebrewItemInstanceState = {
   }>;
 };
 
+/**
+ * Auditable item combat events (§7.5, Phase 4 groundwork). Automatic stage
+ * advancement must be driven by explicit, attributable events like these —
+ * never inferred from dice rolls. No producer exists yet: Dreamwright does not
+ * currently have an authoritative "this weapon hit / this creature was
+ * defeated" signal, so stage changes remain manual until one does. The contract
+ * is frozen now so the later sub-round adds producers, not a new shape.
+ */
+export type ItemCombatEventType =
+  | "weapon-attack-hit"
+  | "weapon-critical-hit"
+  | "creature-defeated"
+  | "encounter-completed";
+
+export type ItemCombatEvent = {
+  type: ItemCombatEventType;
+  characterId: string;
+  /** The inventory row (per-copy instance), not the definition. */
+  itemInstanceId: string;
+  occurredAt: string;
+  /** Who reported the event: the acting player or the DM. */
+  reportedBy: string;
+  campaignId?: string;
+  sessionId?: string;
+  note?: string;
+};
+
 // ──────────────────────────────────────────────────────────────────────────
 // 8. Class and subclass model
 // ──────────────────────────────────────────────────────────────────────────

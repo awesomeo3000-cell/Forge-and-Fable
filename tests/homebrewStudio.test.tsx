@@ -58,6 +58,37 @@ describe("HomebrewStudio interactions", () => {
     expect(saved.payload.attunementPrerequisites?.rules).toEqual({ op: "ability", ability: "strength", minimum: 18 });
   });
 
+  it("authors ordered stages with counter activation and saves normalized orders", async () => {
+    const onClose = vi.fn();
+    render(<HomebrewStudio onClose={onClose} />);
+
+    // Two stages; orders must save as 1 and 2 regardless of insertion.
+    fireEvent.click(screen.getByRole("button", { name: /Add stage/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add stage/i }));
+    fireEvent.change(screen.getByLabelText("Stage 1 name"), { target: { value: "Dormant" } });
+    fireEvent.change(screen.getByLabelText("Stage 2 name"), { target: { value: "Stirring" } });
+
+    // Second stage is reached by a counter threshold.
+    const activationSelects = screen.getAllByLabelText(/Reached by/i);
+    fireEvent.change(activationSelects[1], { target: { value: "counter" } });
+    fireEvent.change(screen.getByLabelText("Counter id"), { target: { value: "kills" } });
+    fireEvent.change(screen.getByLabelText("Threshold"), { target: { value: "10" } });
+
+    fireEvent.change(screen.getByLabelText("Item name"), { target: { value: "Dawnbringer" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save version/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/homebrew", expect.objectContaining({ method: "POST" })));
+    const saveCall = fetchMock.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === "POST");
+    const saved = JSON.parse(String((saveCall?.[1] as RequestInit).body)) as {
+      payload: { stages: Array<{ name: string; order: number; activation: Record<string, unknown> }> };
+    };
+    expect(saved.payload.stages.map((stage) => ({ name: stage.name, order: stage.order }))).toEqual([
+      { name: "Dormant", order: 1 },
+      { name: "Stirring", order: 2 },
+    ]);
+    expect(saved.payload.stages[1].activation).toEqual({ type: "counter", counterId: "kills", minimum: 10 });
+  });
+
   it("traps Tab focus and restores the opener after Escape closes the dialog", async () => {
     const opener = document.createElement("button");
     opener.textContent = "Open Item Studio";

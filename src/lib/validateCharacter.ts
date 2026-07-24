@@ -82,6 +82,34 @@ function assertHomebrewItemState(value: unknown, label: string): void {
   if (state.weightOverride !== undefined && (typeof state.weightOverride !== "number" || !Number.isFinite(state.weightOverride) || state.weightOverride < 0 || state.weightOverride > 10000)) {
     throw new Error(`"${label}.weightOverride" must be a non-negative number.`);
   }
+  if (state.currentStageId !== undefined) assertString(state.currentStageId, `${label}.currentStageId`, 64);
+  if (state.counters !== undefined) {
+    if (!state.counters || typeof state.counters !== "object" || Array.isArray(state.counters)) {
+      throw new Error(`"${label}.counters" must be an object.`);
+    }
+    const entries = Object.entries(state.counters as Record<string, unknown>);
+    if (entries.length > 20) throw new Error(`"${label}.counters" has too many entries.`);
+    for (const [key, value] of entries) {
+      if (key.length === 0 || key.length > 64) throw new Error(`"${label}.counters" keys must be 1-64 characters.`);
+      if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 9999) {
+        throw new Error(`"${label}.counters.${key}" must be an integer 0-9999.`);
+      }
+    }
+  }
+  if (state.stageHistory !== undefined) {
+    assertArray(state.stageHistory, `${label}.stageHistory`);
+    if (state.stageHistory.length > 100) throw new Error(`"${label}.stageHistory" has too many entries.`);
+    for (const entry of state.stageHistory) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        throw new Error(`"${label}.stageHistory[]" must be an object.`);
+      }
+      const record = entry as Record<string, unknown>;
+      assertString(record.stageId, `${label}.stageHistory[].stageId`, 64);
+      assertString(record.changedAt, `${label}.stageHistory[].changedAt`, 40);
+      assertString(record.changedBy, `${label}.stageHistory[].changedBy`, 80);
+      if (record.reason !== undefined) assertString(record.reason, `${label}.stageHistory[].reason`, 200);
+    }
+  }
 }
 
 function assertPlainText(value: string, label: string) {

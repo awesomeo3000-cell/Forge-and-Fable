@@ -11,9 +11,30 @@ import type {
   ContentVisibility,
   HomebrewKind,
   HomebrewPayload,
+  MechanicEffect,
+  RulesContentRef,
   VersionStatus,
 } from "@/types/homebrew";
 import type { RulesetId } from "@/types/game";
+
+/**
+ * Campaign-facing aura resolution DTO (§7.5 / Phase 4 groundwork). Describes an
+ * active non-self aura a character is emitting so a later campaign round can
+ * propagate its inner effects to eligible nearby allies. `recipients` stays
+ * empty until campaign presence/range data exists — local resolution never
+ * guesses who is in range.
+ */
+export type AuraResolutionDto = {
+  ownerCharacterId: string;
+  sourceInstanceId: string;
+  sourceRef: RulesContentRef;
+  label: string;
+  radiusFeet: number;
+  recipient: "allies" | "all-creatures";
+  effects: Array<Exclude<MechanicEffect, { type: "aura" }>>;
+  /** Character ids the campaign layer resolved as inside the aura. */
+  recipients: string[];
+};
 
 /** Raw row shapes as stored in SQLite (snake_case columns mapped to camelCase). */
 export type DefinitionRow = {

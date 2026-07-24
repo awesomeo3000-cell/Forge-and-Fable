@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookCopy, Check, FlaskConical, Plus, Save, Search, Send, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, BookCopy, FlaskConical, Plus, Save, Search, Send, Trash2, X } from "lucide-react";
 import { ITEM_CATALOG } from "@/lib/itemCatalog";
 import {
   blankHomebrewItem,
@@ -12,6 +12,7 @@ import type { DefinitionDto, VersionDto, VersionSummaryDto } from "@/lib/homebre
 import type {
   EffectGate,
   HomebrewItemPayload,
+  ItemStage,
   ItemToggle,
   MechanicEffect,
   NumericBonusTarget,
@@ -232,6 +233,72 @@ function EffectEditor({
   );
 }
 
+const STAGE_EFFECT_TYPES: MechanicEffect["type"][] = [
+  "numeric-bonus", "ability-floor", "condition", "d20-rider",
+  "spell-slot-bonus", "resource-grant", "sense", "aura", "spell-grant",
+];
+
+function StageEditor({
+  stage,
+  index,
+  count,
+  toggles,
+  onChange,
+  onRemove,
+  onMove,
+}: {
+  stage: ItemStage;
+  index: number;
+  count: number;
+  toggles: ItemToggle[];
+  onChange: (stage: ItemStage) => void;
+  onRemove: () => void;
+  onMove: (delta: -1 | 1) => void;
+}) {
+  const activation = stage.activation;
+  const changeActivation = (type: "manual" | "counter" | "milestone") => {
+    if (type === "counter") onChange({ ...stage, activation: { type, counterId: activation.type === "counter" ? activation.counterId : "progress", minimum: activation.type === "counter" ? activation.minimum : 1 } });
+    else if (type === "milestone") onChange({ ...stage, activation: { type, label: activation.type === "milestone" ? activation.label : "" } });
+    else onChange({ ...stage, activation: { type: "manual" } });
+  };
+  return (
+    <article className="hb-stage-card">
+      <div className="hb-stage-head">
+        <span className="hb-stage-order" aria-hidden="true">{index + 1}</span>
+        <input value={stage.name} aria-label={`Stage ${index + 1} name`} onChange={(event) => onChange({ ...stage, name: event.target.value })} />
+        <div className="hb-stage-tools">
+          <button type="button" className="hb-icon" disabled={index === 0} onClick={() => onMove(-1)} aria-label="Move stage earlier"><ArrowUp size={14} /></button>
+          <button type="button" className="hb-icon" disabled={index === count - 1} onClick={() => onMove(1)} aria-label="Move stage later"><ArrowDown size={14} /></button>
+          <button type="button" className="hb-icon" onClick={onRemove} aria-label="Remove stage"><Trash2 size={14} /></button>
+        </div>
+      </div>
+      <label className="hb-wide">Description<textarea rows={2} value={stage.description} onChange={(event) => onChange({ ...stage, description: event.target.value })} /></label>
+      <div className="hb-stage-activation">
+        <label>Reached by
+          <select value={activation.type} onChange={(event) => changeActivation(event.target.value as "manual" | "counter" | "milestone")}>
+            <option value="manual">manual choice</option>
+            <option value="counter">counter threshold</option>
+            <option value="milestone">story milestone</option>
+          </select>
+        </label>
+        {activation.type === "counter" ? <>
+          <label>Counter id<input value={activation.counterId} maxLength={64} placeholder="souls-claimed" onChange={(event) => onChange({ ...stage, activation: { ...activation, counterId: event.target.value } })} /></label>
+          <label>Threshold<input type="number" min={1} max={9999} value={activation.minimum} onChange={(event) => onChange({ ...stage, activation: { ...activation, minimum: Number(event.target.value) } })} /></label>
+        </> : null}
+        {activation.type === "milestone" ? <label className="hb-wide">Milestone<input value={activation.label} placeholder="Defeat the usurper of Hollowmere" onChange={(event) => onChange({ ...stage, activation: { ...activation, label: event.target.value } })} /></label> : null}
+      </div>
+      <div className="hb-stage-effects">
+        <div className="hb-subsection-title"><strong>Stage effects</strong><span>Active only while this stage is current, on top of the item&apos;s base effects.</span></div>
+        <div className="hb-presets">
+          {STAGE_EFFECT_TYPES.map((type) => <button type="button" key={type} onClick={() => onChange({ ...stage, effects: [...stage.effects, newEffect(type, toggles)] })}>+ {type.replaceAll("-", " ")}</button>)}
+        </div>
+        {stage.effects.map((effect, effectIndex) => <EffectEditor key={effect.id} effect={effect} toggles={toggles} onChange={(next) => onChange({ ...stage, effects: stage.effects.map((entry, i) => i === effectIndex ? next : entry) })} onRemove={() => onChange({ ...stage, effects: stage.effects.filter((_, i) => i !== effectIndex) })} />)}
+        {!stage.effects.length ? <p className="hb-empty">No stage effects yet — this stage only changes the story text.</p> : null}
+      </div>
+    </article>
+  );
+}
+
 export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -399,6 +466,26 @@ export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
     }
   }
 
+  /** Stage list edits keep the array sorted and re-derive `order` as 1..n so
+      the payload can never hold duplicate or gapped stage orders. */
+  const updateStages = (stages: ItemStage[]) => edit({
+    ...payload,
+    stages: stages.map((stage, index) => ({ ...stage, order: index + 1 })),
+  });
+
+  const addStage = () => updateStages([
+    ...payload.stages,
+    { id: uid("stage"), name: `Stage ${payload.stages.length + 1}`, order: payload.stages.length + 1, description: "", activation: { type: "manual" }, effects: [] },
+  ]);
+
+  const moveStage = (index: number, delta: -1 | 1) => {
+    const next = [...payload.stages];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    updateStages(next);
+  };
+
   const addWeaponBonus = (value: number) => edit({
     ...payload,
     effects: [...payload.effects,
@@ -490,7 +577,29 @@ export default function HomebrewStudio({ onClose }: { onClose: () => void }) {
             </div>
             <div className="hb-effects">{payload.effects.map((effect, index) => <EffectEditor key={effect.id} effect={effect} toggles={payload.toggles} onChange={(next) => edit({ ...payload, effects: payload.effects.map((entry, i) => i === index ? next : entry) })} onRemove={() => edit({ ...payload, effects: payload.effects.filter((_, i) => i !== index) })} />)}</div>
             {!payload.effects.length ? <p className="hb-empty">No structured effects yet. Descriptive text never grants a hidden bonus.</p> : null}
-            <div className="hb-phase-note"><Check size={15} /> Staged item growth is intentionally locked to Phase 4; this slice stores an empty stages list without exposing partial controls.</div>
+          </section>
+
+          <section className="hb-panel">
+            <div className="hb-section-title"><div><span>04</span><h2>Stages</h2></div><p>Growing and sentient items: ordered forms the item moves through. A fresh copy starts in stage 1; advancement is always an explicit player or DM action.</p></div>
+            <div className="hb-stage-list">
+              {payload.stages
+                .map((stage, index) => ({ stage, index }))
+                .sort((a, b) => a.stage.order - b.stage.order)
+                .map(({ stage, index }, position, all) => (
+                  <StageEditor
+                    key={stage.id}
+                    stage={stage}
+                    index={position}
+                    count={all.length}
+                    toggles={payload.toggles}
+                    onChange={(next) => updateStages(payload.stages.map((entry, i) => i === index ? next : entry))}
+                    onRemove={() => updateStages(payload.stages.filter((_, i) => i !== index))}
+                    onMove={(delta) => moveStage(index, delta)}
+                  />
+                ))}
+              <button type="button" className="hb-add-line" onClick={addStage} disabled={payload.stages.length >= 20}><Plus size={14} /> Add stage</button>
+              {!payload.stages.length ? <p className="hb-empty">No stages — this item keeps one fixed form.</p> : null}
+            </div>
           </section>
 
           <section className="hb-save-panel">

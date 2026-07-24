@@ -2928,6 +2928,7 @@ export default function ForgeAndFableApp() {
               character={selected}
               finalAbilities={selectedFinalAbilities}
               ruleset={ruleset}
+              actorName={user.name}
               featInitiativeBonus={selectedFeatBonuses?.initiativeBonus}
               featAcBonus={selectedFeatBonuses?.acBonus}
               onRoll={pushRoll}

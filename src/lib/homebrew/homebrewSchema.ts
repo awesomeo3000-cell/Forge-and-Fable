@@ -40,6 +40,8 @@ export const HOMEBREW_LIMITS = {
   maxEffects: 100,
   maxToggles: 20,
   maxStages: 20,
+  /** Highest value a stage counter minimum (and a saved counter) may take. */
+  counterMax: 9_999,
   maxNestingDepth: 8,
   numericBonus: { min: -20, max: 20 },
   abilityFloor: { min: 1, max: 30 },
@@ -686,6 +688,7 @@ function checkItemPayload(e: Errors, p: Record<string, unknown>): void {
 
   if (Array.isArray(p.stages)) {
     const seenStage = new Set<string>();
+    const seenOrder = new Set<number>();
     (p.stages as unknown[]).forEach((s, i) => {
       const sp = `stages[${i}]`;
       if (!isObject(s)) {
@@ -697,13 +700,25 @@ function checkItemPayload(e: Errors, p: Record<string, unknown>): void {
         seenStage.add(s.id);
       }
       e.requireString(s.name, `${sp}.name`);
-      if (!isInt(s.order)) e.push(`${sp}.order`, "must be an integer");
+      if (!isInt(s.order)) {
+        e.push(`${sp}.order`, "must be an integer");
+      } else {
+        // Ordered stage validation: the order sequence is the authoritative
+        // progression, so it must be unambiguous.
+        if ((s.order as number) < 1) e.push(`${sp}.order`, "must be 1 or greater");
+        if (seenOrder.has(s.order as number)) e.push(`${sp}.order`, `duplicate stage order ${s.order}`);
+        seenOrder.add(s.order as number);
+      }
       if (!isString(s.description)) e.push(`${sp}.description`, "must be a string");
       if (!isObject(s.activation)) {
         e.push(`${sp}.activation`, "must be an activation object");
       } else if (s.activation.type === "counter") {
-        e.requireString(s.activation.counterId, `${sp}.activation.counterId`);
-        if (!isInt(s.activation.minimum)) e.push(`${sp}.activation.minimum`, "must be an integer");
+        if (e.requireString(s.activation.counterId, `${sp}.activation.counterId`) && isString(s.activation.counterId) && s.activation.counterId.length > 64) {
+          e.push(`${sp}.activation.counterId`, "must be 64 characters or fewer");
+        }
+        if (!intInRange(s.activation.minimum, 1, HOMEBREW_LIMITS.counterMax)) {
+          e.push(`${sp}.activation.minimum`, `must be an integer 1-${HOMEBREW_LIMITS.counterMax}`);
+        }
       } else if (s.activation.type === "milestone") {
         e.requireString(s.activation.label, `${sp}.activation.label`);
       } else if (s.activation.type !== "manual") {

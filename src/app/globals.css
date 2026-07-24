@@ -14980,7 +14980,15 @@ button.dj-card {
 .hb-prerequisite-children { display: grid; gap: 8px; padding-left: 13px; border-left: 1px solid rgba(211, 171, 91, .25); }
 .hb-prerequisite-children .hb-add-line { font-size: 11px; }
 .hb-empty { color: #7d8881; font-size: 12px; }
-.hb-phase-note { display: flex; align-items: center; gap: 8px; margin-top: 17px; padding-top: 14px; color: #829086; border-top: 1px solid rgba(230, 218, 188, .08); font-size: 11px; }
+.hb-stage-list { display: grid; gap: 12px; }
+.hb-stage-card { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(225, 211, 174, .12); border-radius: 8px; background: rgba(4, 8, 7, .25); }
+.hb-stage-head { display: flex; align-items: center; gap: 10px; }
+.hb-stage-head input { flex: 1; min-width: 0; }
+.hb-stage-order { display: grid; place-items: center; width: 26px; height: 26px; flex: none; color: #e8c572; border: 1px solid rgba(218, 176, 89, .4); border-radius: 50%; font-size: 12px; }
+.hb-stage-tools { display: flex; gap: 4px; }
+.hb-stage-activation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hb-stage-effects { display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(230, 218, 188, .08); }
+.hb-stage-effects .hb-presets { margin-bottom: 0; }
 .hb-save-panel { display: grid; gap: 15px; padding: 4px 2px; }
 .hb-history { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .hb-history button { padding: 3px 0; color: #9ba69d; border: 0; background: transparent; cursor: pointer; font-size: 11px; }
@@ -15015,6 +15023,29 @@ button.dj-card {
 .cs-homebrew-notes textarea { min-height: 52px; resize: vertical; }
 .cs-homebrew-upgrade ul { margin: 12px 0; padding-left: 20px; color: var(--ink-2); line-height: 1.6; }
 .cs-homebrew-effects { margin-bottom: 10px; }
+.cs-slot-overdrawn { margin-left: 7px; padding: 1px 7px; color: var(--danger, #b4552d); border: 1px solid color-mix(in srgb, var(--danger, #b4552d) 55%, transparent); border-radius: 999px; font-size: .62rem; letter-spacing: .05em; text-transform: uppercase; }
+.cs-homebrew-stages { display: grid; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, var(--doc-accent, #9b6a32) 22%, transparent); }
+.cs-homebrew-stage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cs-homebrew-stage-label { color: var(--ink-2); font-size: .62rem; letter-spacing: .11em; text-transform: uppercase; }
+.cs-homebrew-stage-chip { padding: 4px 9px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; background: transparent; cursor: pointer; font-size: .68rem; }
+.cs-homebrew-stage-chip.is-current { color: var(--paper, #f4ead2); border-color: var(--doc-accent, #9b6a32); background: var(--doc-accent, #9b6a32); cursor: default; }
+.cs-homebrew-stage-chip.is-ready:not(.is-current) { border-color: var(--gold, #c9a25a); color: var(--gold, #c9a25a); }
+.cs-homebrew-stage-chip:disabled:not(.is-current) { opacity: .6; cursor: default; }
+.cs-homebrew-counters { display: flex; flex-wrap: wrap; gap: 10px; }
+.cs-homebrew-counter { display: flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: .62rem; }
+.cs-homebrew-counter span { margin-right: 2px; letter-spacing: .06em; text-transform: uppercase; }
+.cs-homebrew-counter button { width: 22px; height: 22px; display: grid; place-items: center; color: var(--ink); border: 1px solid var(--line); border-radius: 5px; background: transparent; cursor: pointer; }
+.cs-homebrew-counter input { width: 54px; padding: 3px 5px; color: var(--ink); border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--paper) 82%, transparent); font: inherit; text-align: center; }
+.cs-homebrew-stage-confirm { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--gold, #c9a25a); border-radius: 7px; background: color-mix(in srgb, var(--gold, #c9a25a) 7%, transparent); font-size: .7rem; }
+.cs-homebrew-stage-diff span { color: var(--ink-2); font-size: .62rem; letter-spacing: .11em; text-transform: uppercase; }
+.cs-homebrew-stage-diff ul { margin: 3px 0 0; padding-left: 18px; color: var(--ink-2); }
+.cs-homebrew-stage-confirm label { display: grid; gap: 3px; color: var(--ink-2); font-size: .62rem; }
+.cs-homebrew-stage-confirm input { padding: 5px 7px; color: var(--ink); border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--paper) 82%, transparent); font: inherit; }
+.cs-homebrew-stage-confirm-actions { display: flex; gap: 8px; }
+.cs-homebrew-stage-history summary { color: var(--ink-2); cursor: pointer; font-size: .65rem; }
+.cs-homebrew-stage-history ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.cs-homebrew-stage-history li { display: grid; gap: 1px; font-size: .67rem; }
+.cs-homebrew-stage-history li span { color: var(--ink-faint, var(--ink-2)); font-size: .62rem; }
 @media (max-width: 700px) {
   .cs-homebrew-controls { grid-template-columns: 1fr 1fr; }
 }
