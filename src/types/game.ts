@@ -403,6 +403,12 @@ export type Character = {
   generalNotes: string;
   raceId: string;
   classId: string;
+  /** Multiclass-aware per-class levels (proposal HB §8.1, Phase 5). When absent,
+      the character is single-class and `classId`/`subclassId`/`level` are the
+      authority. When present, `level` mirrors the total and `classId`/
+      `subclassId` mirror the primary (first-acquired) class; the mirrors are
+      maintained on every write until all call sites migrate. */
+  classLevels?: import("@/types/homebrew").CharacterClassLevel[];
   /** Original identity labels for PDF imports that do not match the enabled catalog. */
   customRaceName?: string;
   customClassName?: string;
@@ -476,6 +482,9 @@ export type CharacterProgressionState = {
   appliedThroughLevel: number;
   featureIds: string[];
   featureGrants?: Array<{ featureId: string; level: number; source: "class" | "subclass"; sourcePacketId: string }>;
+  /** Per-class applied levels for multiclass characters (Phase 5). Absent on
+      single-class characters, whose state shape is unchanged. */
+  classes?: Array<{ classId: string; subclassId?: string; level: number }>;
   warnings?: string[];
   choiceHistory?: Array<{ choiceId: string; level: number; selections: string[] }>;
   spellHistory?: Array<{ level: number; spellIds: string[] }>;

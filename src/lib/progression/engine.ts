@@ -12,6 +12,7 @@ import type {
   SubclassProgressionPacket,
 } from "@/lib/progression/types";
 import type { FeatureChoiceValue } from "@/types/game";
+import type { RulesContentRegistry } from "@/types/homebrew";
 
 export type BuildClassLevelUpPlanInput = {
   ruleset: ProgressionRulesetId;
@@ -21,6 +22,10 @@ export type BuildClassLevelUpPlanInput = {
   mode?: "production" | "research";
   subclassId?: string;
   featureChoices?: Record<string, FeatureChoiceValue>;
+  /** Injected content registry (proposal §8.5). Defaults to the static
+      built-in adapter, so existing callers are unchanged; server callers pass
+      a registry that also resolves authorized homebrew content (Phase 6). */
+  registry?: RulesContentRegistry;
 };
 
 const SPELL_COUNT_TABLES = [
@@ -33,10 +38,6 @@ const SPELL_COUNT_TABLES = [
   ["pact-magic-slot-level", "pactMagicSlotLevelByClassLevel"],
 ] as const satisfies ReadonlyArray<readonly [string, keyof SpellcastingProgression]>;
 
-function catalogKey(ruleset: ProgressionRulesetId, id: string): string {
-  return `${ruleset}:${id}`;
-}
-
 const SUBCLASS_PLACEHOLDER_FEATURES = new Set([
   "archetype-feature", "circle-feature", "college-feature", "domain-feature", "oath-feature",
   "origin-feature", "path-feature", "patron-feature", "subclass-feature", "tradition-feature",
@@ -44,8 +45,20 @@ const SUBCLASS_PLACEHOLDER_FEATURES = new Set([
 
 function resolveSubclassPacket(input: BuildClassLevelUpPlanInput, classPacket: ClassProgressionPacket): SubclassProgressionPacket | undefined {
   if (!input.subclassId) return undefined;
-  const packet = progressionCatalog.subclasses.get(catalogKey(input.ruleset, input.subclassId));
-  if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for subclass "${input.subclassId}".`);
+  // No injected registry: the direct catalog lookup, byte-identical to the
+  // pre-registry behavior (including research-mode rulesets the built-in
+  // registry adapter's production gate would reject).
+  let packet: SubclassProgressionPacket | undefined;
+  if (!input.registry) {
+    packet = progressionCatalog.subclasses.get(`${input.ruleset}:${input.subclassId}`);
+    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for subclass "${input.subclassId}".`);
+  } else {
+    try {
+      packet = input.registry.getSubclassPacket({ source: "builtin", kind: "subclass", id: input.subclassId, ruleset: input.ruleset });
+    } catch {
+      throw new Error(`No ${input.ruleset} progression packet exists for subclass "${input.subclassId}".`);
+    }
+  }
   if (packet.classId !== classPacket.id) {
     throw new Error(`Subclass "${input.subclassId}" belongs to class "${packet.classId}", not "${classPacket.id}" in ruleset ${input.ruleset}.`);
   }
@@ -62,9 +75,16 @@ function resolveClassPacket(input: BuildClassLevelUpPlanInput): ClassProgression
   if ((input.mode ?? "production") === "production" && !isSupportedRuleset(input.ruleset)) {
     throw new Error(`Ruleset "${input.ruleset}" is research-only and is not enabled for production progression.`);
   }
-  const packet = progressionCatalog.classes.get(catalogKey(input.ruleset, input.classId));
-  if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for class "${input.classId}".`);
-  return packet;
+  if (!input.registry) {
+    const packet = progressionCatalog.classes.get(`${input.ruleset}:${input.classId}`);
+    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for class "${input.classId}".`);
+    return packet;
+  }
+  try {
+    return input.registry.getClassPacket({ source: "builtin", kind: "class", id: input.classId, ruleset: input.ruleset });
+  } catch {
+    throw new Error(`No ${input.ruleset} progression packet exists for class "${input.classId}".`);
+  }
 }
 
 function valueAtLevel(values: number[] | undefined, level: number): number {

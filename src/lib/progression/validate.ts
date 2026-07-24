@@ -1,8 +1,10 @@
 import { buildLevelUpPlan } from "@/lib/progression/engine";
 import { progressionCatalog } from "@/lib/progression/packets";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
+import { classLevelMirrors, classRefKey } from "@/lib/multiclass";
 import type { LevelUpChoice } from "@/lib/progression/types";
 import type { Character, FeatureChoiceValue } from "@/types/game";
+import type { RulesContentRegistry } from "@/types/homebrew";
 import rawSpells from "@/data/spells.json";
 import { progressionChoiceOptions } from "@/lib/progression/choiceOptions";
 import { cantripsKnownAt } from "@/lib/spells";
@@ -87,8 +89,87 @@ function validateChoice(character: Character, choice: LevelUpChoice, expectedCou
   }
 }
 
-function validateCharacterProgressionUnchecked(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
+/**
+ * Structural validation for multiclass class-level records (Phase 5). Deep
+ * per-choice validation (cantrip/spell counts, ASI cadence) remains
+ * single-class-only until Phase 6 generalizes the choice model; feature grants
+ * are still fully validated through the aggregated progressionState below.
+ */
+function validateClassLevels(character: Character): void {
+  const classLevels = character.classLevels ?? [];
+  if (classLevels.length === 0) return;
+  const seen = new Set<string>();
+  for (const entry of classLevels) {
+    if (entry.classRef.source !== "builtin") {
+      throw new Error(`Character ${character.id} field classLevels violates progression: homebrew class references are not accepted until Phase 6.`);
+    }
+    if (entry.classRef.ruleset !== character.ruleset) {
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" is pinned to ruleset ${entry.classRef.ruleset}, not ${character.ruleset}.`);
+    }
+    if (!Number.isInteger(entry.level) || entry.level < 1 || entry.level > 20) {
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" level must be an integer 1-20.`);
+    }
+    const key = classRefKey(entry.classRef);
+    if (seen.has(key)) {
+      throw new Error(`Character ${character.id} field classLevels violates progression: duplicate class "${entry.classRef.id}".`);
+    }
+    seen.add(key);
+    const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${entry.classRef.id}`);
+    if (!classPacket) {
+      throw new Error(`Character ${character.id} field classLevels violates progression: class "${entry.classRef.id}" is invalid for ${character.ruleset}.`);
+    }
+    if (entry.subclassRef) {
+      if (entry.subclassRef.source !== "builtin") {
+        throw new Error(`Character ${character.id} field classLevels violates progression: homebrew subclass references are not accepted until Phase 6.`);
+      }
+      const subclass = progressionCatalog.subclasses.get(`${character.ruleset}:${entry.subclassRef.id}`);
+      if (!subclass) {
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" is unavailable for ${character.ruleset}.`);
+      }
+      if (subclass.classId !== classPacket.id) {
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" belongs to ${subclass.classId}.`);
+      }
+      if (entry.level < subclass.selectionLevel) {
+        throw new Error(`Character ${character.id} field classLevels violates progression: subclass "${entry.subclassRef.id}" requires ${classPacket.id} level ${subclass.selectionLevel}.`);
+      }
+    }
+  }
+  const mirrors = classLevelMirrors(classLevels);
+  if (mirrors.level !== character.level) {
+    throw new Error(`Character ${character.id} field classLevels violates progression: class levels total ${mirrors.level} but the character level mirror is ${character.level}.`);
+  }
+  if (mirrors.classId !== character.classId || mirrors.subclassId !== (character.subclassId || undefined)) {
+    throw new Error(`Character ${character.id} field classLevels violates progression: the primary-class mirror does not match classId/subclassId.`);
+  }
+}
+
+/** Multiclass characters validate feature state against the aggregated patch. */
+function validateMulticlassProgression(character: Character, registry?: RulesContentRegistry): void {
+  validateClassLevels(character);
+  if (character.progressionState) {
+    const expected = progressionPatchForCharacter(character, registry).progressionState!;
+    const state = character.progressionState;
+    if (state.ruleset !== character.ruleset || state.appliedThroughLevel !== character.level) {
+      throw new Error(`Character ${character.id} level ${character.level} field progressionState violates progression identity or level.`);
+    }
+    if (state.featureIds.length !== expected.featureIds.length || state.featureIds.some((id, index) => id !== expected.featureIds[index])) {
+      throw new Error(`Character ${character.id} level ${character.level} field progressionState.featureIds violates the expected feature set.`);
+    }
+  }
+  for (const spellId of [...character.spellsKnown, ...(character.preparedSpells ?? []), ...(character.alwaysPreparedSpells ?? []), ...(character.spellbookSpells ?? [])]) {
+    if (!SPELLS.has(spellId)) throw new Error(`Character ${character.id} level ${character.level} field spells violates progression: spell "${spellId}" is invalid.`);
+  }
+}
+
+function validateCharacterProgressionUnchecked(character: Character, requireComplete: boolean, choicesFromLevel = 0, registry?: RulesContentRegistry): void {
   const normalizedSubclassId = character.subclassId || undefined;
+  if ((character.classLevels?.length ?? 0) > 1) {
+    validateMulticlassProgression(character, registry);
+    return;
+  }
+  // A single-entry classLevels array must still agree with its mirrors before
+  // the ordinary single-class validation runs against those mirrors.
+  if ((character.classLevels?.length ?? 0) === 1) validateClassLevels(character);
   const classPacket = progressionCatalog.classes.get(`${character.ruleset}:${character.classId}`);
   if (!classPacket && isHomebrewClass(character)) {
     if (!character.customClassName?.trim()) {
@@ -120,6 +201,7 @@ function validateCharacterProgressionUnchecked(character: Character, requireComp
     fromLevel: 0,
     toLevel: character.level,
     featureChoices: character.featureChoices,
+    registry,
   });
   if (requireComplete && character.raceId === "high-elf-legacy") {
     const hasWizardCantrip = [...character.spellsKnown, ...(character.spellbookSpells ?? [])].some((id) => {
@@ -156,7 +238,7 @@ function validateCharacterProgressionUnchecked(character: Character, requireComp
   }
 
   if (character.progressionState) {
-    const expected = progressionPatchForCharacter(character).progressionState!;
+    const expected = progressionPatchForCharacter(character, registry).progressionState!;
     const state = character.progressionState;
     if (state.ruleset !== character.ruleset || state.classId !== character.classId || state.subclassId !== normalizedSubclassId || state.appliedThroughLevel !== character.level) {
       throw new Error(`Character ${character.id} level ${character.level} field progressionState violates progression identity or level.`);
@@ -169,7 +251,7 @@ function validateCharacterProgressionUnchecked(character: Character, requireComp
   }
 
   if (character.featureResources) {
-    const expected = progressionPatchForCharacter(character).featureResources ?? {};
+    const expected = progressionPatchForCharacter(character, registry).featureResources ?? {};
     for (const [resourceId, resource] of Object.entries(character.featureResources)) {
       const expectedResource = expected[resourceId];
       if (!expectedResource) throw new Error(`Character ${character.id} level ${character.level} field featureResources.${resourceId} is not granted by progression.`);
@@ -181,9 +263,9 @@ function validateCharacterProgressionUnchecked(character: Character, requireComp
 }
 
 /** Progression mismatches are client input errors, not database outages. */
-export function validateCharacterProgression(character: Character, requireComplete: boolean, choicesFromLevel = 0): void {
+export function validateCharacterProgression(character: Character, requireComplete: boolean, choicesFromLevel = 0, registry?: RulesContentRegistry): void {
   try {
-    validateCharacterProgressionUnchecked(character, requireComplete, choicesFromLevel);
+    validateCharacterProgressionUnchecked(character, requireComplete, choicesFromLevel, registry);
   } catch (error) {
     if (error instanceof CharacterValidationError) throw error;
     throw new CharacterValidationError(error instanceof Error ? error.message : "Invalid character progression.");

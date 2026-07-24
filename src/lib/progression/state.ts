@@ -1,7 +1,9 @@
 import { buildLevelUpPlan } from "@/lib/progression/engine";
 import type { LevelUpPlan } from "@/lib/progression/types";
 import { isHomebrewClass } from "@/lib/homebrewIdentity";
+import { getClassLevels, isMulticlass } from "@/lib/multiclass";
 import type { Character, CharacterPatch, FeatureResourceState } from "@/types/game";
+import type { RulesContentRegistry } from "@/types/homebrew";
 
 function abilityModifier(score: number | undefined) {
   return Math.floor(((score ?? 10) - 10) / 2);
@@ -59,11 +61,19 @@ function expandedSpellLists(plan: LevelUpPlan): Record<string, string[]> {
     .filter(([, spells]) => spells.length > 0));
 }
 
-export function progressionPatchForCharacter(character: Pick<Character, "ruleset" | "classId" | "subclassId" | "level" | "featureChoices" | "featureResources" | "progressionState"> & { abilities?: Character["abilities"] }): CharacterPatch {
+type ProgressionCharacter = Pick<Character, "ruleset" | "classId" | "subclassId" | "level" | "featureChoices" | "featureResources" | "progressionState"> & { abilities?: Character["abilities"]; classLevels?: Character["classLevels"] };
+
+export function progressionPatchForCharacter(character: ProgressionCharacter, registry?: RulesContentRegistry): CharacterPatch {
   // Manual homebrew classes intentionally have no catalog progression packet, so
   // there is no plan to build. Return an empty patch (never a progressionState —
   // validateCharacterProgression rejects catalog progression on a homebrew class).
   if (isHomebrewClass(character)) return {};
+
+  // Multiclass: aggregate one per-class plan per class level entry (proposal
+  // §8.1). The single-class path below is byte-identical to the pre-Phase-5
+  // output, so existing characters and their stored progressionState never
+  // change shape.
+  if (isMulticlass(character)) return multiclassProgressionPatch(character, registry);
 
   const plan = buildLevelUpPlan({
     ruleset: character.ruleset,
@@ -72,6 +82,7 @@ export function progressionPatchForCharacter(character: Pick<Character, "ruleset
     fromLevel: 0,
     toLevel: character.level,
     featureChoices: character.featureChoices,
+    registry,
   });
   return {
     featureResources: latestResources(plan, character, character.featureResources),
@@ -87,6 +98,71 @@ export function progressionPatchForCharacter(character: Pick<Character, "ruleset
       warnings: plan.automaticFeatures
         .filter((feature) => (feature.parentInteractions?.length ?? 0) > 0)
         .map((feature) => `${feature.featureId}: rules text is tracked; some combat interactions remain manual.`),
+      choiceHistory: character.progressionState?.choiceHistory ?? [],
+      spellHistory: character.progressionState?.spellHistory ?? [],
+    },
+  };
+}
+
+/**
+ * Multiclass aggregation: build one plan per class at that class's own level.
+ * Resource maximum formulas that read "level" resolve against the granting
+ * class's level (Lay on Hands scales with paladin levels, not total level).
+ * Resource-id collisions keep the first-acquired class's grant.
+ */
+function multiclassProgressionPatch(character: ProgressionCharacter, registry?: RulesContentRegistry): CharacterPatch {
+  const entries = getClassLevels(character);
+  const featureResources: Record<string, FeatureResourceState> = {};
+  const always = new Set<string>();
+  const expanded: Record<string, string[]> = {};
+  const featureGrants: Array<{ featureId: string; level: number; source: "class" | "subclass"; sourcePacketId: string }> = [];
+  const warnings: string[] = [];
+  const stateClasses: NonNullable<Character["progressionState"]>["classes"] = [];
+
+  for (const entry of entries) {
+    if (entry.classRef.source !== "builtin") {
+      throw new Error("Homebrew classes cannot enter automated progression until Phase 6.");
+    }
+    const classId = entry.classRef.id;
+    const subclassId = entry.subclassRef?.source === "builtin" ? entry.subclassRef.id : undefined;
+    const plan = buildLevelUpPlan({
+      ruleset: character.ruleset,
+      classId,
+      subclassId,
+      fromLevel: 0,
+      toLevel: entry.level,
+      featureChoices: character.featureChoices,
+      registry,
+    });
+    const classView = { level: entry.level, abilities: character.abilities };
+    const resources = latestResources(plan, classView, character.featureResources);
+    for (const [resourceId, resource] of Object.entries(resources)) {
+      if (!(resourceId in featureResources)) featureResources[resourceId] = resource;
+    }
+    for (const spell of automaticSpells(plan)) always.add(spell);
+    Object.assign(expanded, expandedSpellLists(plan));
+    for (const { featureId, level, source, sourcePacketId } of plan.automaticFeatures) {
+      featureGrants.push({ featureId, level, source, sourcePacketId });
+    }
+    warnings.push(...plan.automaticFeatures
+      .filter((feature) => (feature.parentInteractions?.length ?? 0) > 0)
+      .map((feature) => `${feature.featureId}: rules text is tracked; some combat interactions remain manual.`));
+    stateClasses.push({ classId, ...(subclassId ? { subclassId } : {}), level: entry.level });
+  }
+
+  return {
+    featureResources,
+    alwaysPreparedSpells: [...always],
+    expandedSpellLists: expanded,
+    progressionState: {
+      ruleset: character.ruleset,
+      classId: character.classId,
+      subclassId: character.subclassId,
+      appliedThroughLevel: character.level,
+      featureIds: featureGrants.map((grant) => grant.featureId),
+      featureGrants,
+      classes: stateClasses,
+      warnings,
       choiceHistory: character.progressionState?.choiceHistory ?? [],
       spellHistory: character.progressionState?.spellHistory ?? [],
     },

@@ -159,7 +159,7 @@ export const ALLOWED_PATCH_FIELDS = new Set([
   "toolProficiencies", "languages", "currency",
   "deathSaves", "theme", "sheetLayout",
   "spellSlotsUsed", "pactSlotsUsed", "concentratingOn",
-  "subclassId", "asiChoices", "hpRolls", "hitDiceSpent",
+  "subclassId", "asiChoices", "hpRolls", "hitDiceSpent", "classLevels",
   "featureChoices", "featureResources", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState",
   "equipment", "preparedSpells", "spellStatuses", "heroicInspiration", "effects", "pages", "snapshots",
 ]);
@@ -225,6 +225,36 @@ function validateCharacterInputUnchecked(raw: unknown, isPatch: boolean): Record
         break;
       case "customRaceSpeed":
         if (val !== undefined) assertString(val, key, 40);
+        break;
+      case "classLevels":
+        // Field-shape validation only; cross-field rules (totals match the
+        // level mirror, packets exist, subclass parentage) run in
+        // validateCharacterProgression, which sees the merged character.
+        if (val !== undefined) {
+          assertArray(val, key);
+          if (val.length > 5) throw new Error(`"${key}" must have at most 5 entries.`);
+          for (const entry of val) {
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error(`"${key}[]" must be an object.`);
+            const record = entry as Record<string, unknown>;
+            assertInteger(record.level, `${key}[].level`, 1, 20);
+            assertInteger(record.acquiredOrder, `${key}[].acquiredOrder`, 0, 20);
+            const ref = record.classRef as Record<string, unknown> | undefined;
+            if (!ref || typeof ref !== "object" || Array.isArray(ref)) throw new Error(`"${key}[].classRef" must be an object.`);
+            if (ref.source !== "builtin" && ref.source !== "homebrew") throw new Error(`"${key}[].classRef.source" must be builtin or homebrew.`);
+            if (ref.kind !== "class") throw new Error(`"${key}[].classRef.kind" must be "class".`);
+            if (ref.source === "builtin") assertString(ref.id, `${key}[].classRef.id`, 80);
+            else { assertString(ref.definitionId, `${key}[].classRef.definitionId`, 128); assertString(ref.versionId, `${key}[].classRef.versionId`, 128); }
+            if (ref.ruleset !== "2014" && ref.ruleset !== "2024") throw new Error(`"${key}[].classRef.ruleset" must be 2014 or 2024.`);
+            const subclassRef = record.subclassRef as Record<string, unknown> | undefined;
+            if (subclassRef !== undefined) {
+              if (!subclassRef || typeof subclassRef !== "object" || Array.isArray(subclassRef)) throw new Error(`"${key}[].subclassRef" must be an object.`);
+              if (subclassRef.kind !== "subclass") throw new Error(`"${key}[].subclassRef.kind" must be "subclass".`);
+              if (subclassRef.source === "builtin") assertString(subclassRef.id, `${key}[].subclassRef.id`, 80);
+              else if (subclassRef.source === "homebrew") { assertString(subclassRef.definitionId, `${key}[].subclassRef.definitionId`, 128); assertString(subclassRef.versionId, `${key}[].subclassRef.versionId`, 128); }
+              else throw new Error(`"${key}[].subclassRef.source" must be builtin or homebrew.`);
+            }
+          }
+        }
         break;
       case "currentHp":
       case "tempHp":
