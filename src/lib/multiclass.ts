@@ -13,7 +13,7 @@
  *    migrated.
  */
 import type { AbilityScores, Character, RulesetId } from "@/types/game";
-import type { CharacterClassLevel, RulesContentRef } from "@/types/homebrew";
+import type { CharacterClassLevel, RulesContentRef, RulesContentRegistry } from "@/types/homebrew";
 import { HOMEBREW_CLASS_ID } from "@/lib/homebrewIdentity";
 import { FULL_CASTER_SLOTS, maxSlots } from "@/lib/spellSlots";
 
@@ -152,9 +152,23 @@ export type CasterContribution = {
   pactLevels: number;
 };
 
-export function casterContribution(entry: CharacterClassLevel): CasterContribution {
+export function casterContribution(
+  entry: CharacterClassLevel,
+  registry?: RulesContentRegistry,
+): CasterContribution {
   const base = { classRef: entry.classRef, casterLevels: 0, pactLevels: 0 };
-  if (entry.classRef.source !== "builtin") return base; // homebrew casting lands in Phase 6
+  if (entry.classRef.source === "homebrew") {
+    if (!registry) return base;
+    const castingType = registry.getClassPacket(entry.classRef).spellcasting?.type;
+    if (castingType === "pact") return { ...base, pactLevels: entry.level };
+    if (castingType === "full") return { ...base, casterLevels: entry.level };
+    if (castingType === "half") return { ...base, casterLevels: Math.floor(entry.level / 2) };
+    if (castingType === "third") return { ...base, casterLevels: Math.floor(entry.level / 3) };
+    // Custom slot tables have no safe shared-caster contribution contract. They
+    // use their authored table while single-class and contribute zero when
+    // multiclassed until the payload grows an explicit contribution rule.
+    return base;
+  }
   const id = entry.classRef.id;
   if (id === "warlock") return { ...base, pactLevels: entry.level };
   if (FULL_CASTERS.has(id)) return { ...base, casterLevels: entry.level };
@@ -184,9 +198,12 @@ export type CombinedSpellSlots = {
  * separate. A single-class character reads its native table (so a level-1
  * paladin correctly has no slots, rather than the multiclass table's rounding).
  */
-export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSlots {
+export function combinedSpellSlots(
+  character: ClassLevelSource,
+  registry?: RulesContentRegistry,
+): CombinedSpellSlots {
   const levels = getClassLevels(character);
-  const contributions = levels.map(casterContribution);
+  const contributions = levels.map((entry) => casterContribution(entry, registry));
   const pactLevels = contributions.reduce((sum, c) => sum + c.pactLevels, 0);
   const pact = pactLevels > 0
     ? {
@@ -198,7 +215,19 @@ export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSl
   if (levels.length === 1) {
     // Single-class: defer to the native per-class table (existing behavior).
     const entry = levels[0];
-    if (entry.classRef.source !== "builtin") return { slots: [], casterLevel: 0, pact };
+    if (entry.classRef.source === "homebrew") {
+      if (!registry) return { slots: [], casterLevel: 0, pact };
+      const casting = registry.getClassPacket(entry.classRef).spellcasting;
+      if (!casting) return { slots: [], casterLevel: 0, pact };
+      if (casting.type === "pact") {
+        const count = casting.pactMagicSlotsByLevel?.[entry.level] ?? 0;
+        const slotLevel = casting.pactMagicSlotLevelByClassLevel?.[entry.level] ?? 0;
+        return { slots: [], casterLevel: 0, pact: count > 0 && slotLevel > 0 ? { count, slotLevel } : null };
+      }
+      const native = [...(casting.spellSlotsByLevel?.[String(entry.level)] ?? [])];
+      while (native.length < 9) native.push(0);
+      return { slots: native, casterLevel: casterContribution(entry, registry).casterLevels, pact };
+    }
     const id = entry.classRef.id;
     if (id === "warlock") return { slots: [], casterLevel: 0, pact };
     const casterType = FULL_CASTERS.has(id) ? "full"
@@ -208,7 +237,7 @@ export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSl
     // does not model today) keep their existing no-slot behavior single-class.
     if (!casterType) return { slots: [], casterLevel: 0, pact };
     const native = maxSlots(casterType, entry.level, id).filter((_, i) => i < 9);
-    return { slots: native, casterLevel: casterContribution(entry).casterLevels, pact };
+    return { slots: native, casterLevel: casterContribution(entry, registry).casterLevels, pact };
   }
 
   const casterLevel = contributions.reduce((sum, c) => sum + c.casterLevels, 0);
