@@ -98,6 +98,12 @@ function validateChoice(character: Character, choice: LevelUpChoice, expectedCou
 function validateClassLevels(character: Character): void {
   const classLevels = character.classLevels ?? [];
   if (classLevels.length === 0) return;
+  // acquiredOrder is the primary-class tiebreaker; duplicates would make the
+  // classId mirror ambiguous.
+  const orders = new Set(classLevels.map((entry) => entry.acquiredOrder));
+  if (orders.size !== classLevels.length) {
+    throw new Error(`Character ${character.id} field classLevels violates progression: acquiredOrder values must be unique.`);
+  }
   const seen = new Set<string>();
   for (const entry of classLevels) {
     if (entry.classRef.source !== "builtin") {

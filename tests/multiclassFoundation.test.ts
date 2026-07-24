@@ -194,6 +194,15 @@ describe("gate: server progression validation", () => {
     expect(() => validateCharacterProgression(character, false)).toThrow(/Phase 6/);
   });
 
+  it("rejects duplicate acquiredOrder values (ambiguous primary class)", () => {
+    const classLevels: CharacterClassLevel[] = [
+      { classRef: builtinClassRef("2014", "fighter"), level: 2, acquiredOrder: 0 },
+      { classRef: builtinClassRef("2014", "wizard"), level: 1, acquiredOrder: 0 },
+    ];
+    const character = baseCharacter({ classLevels, level: 3, classId: "fighter" });
+    expect(() => validateCharacterProgression(character, false)).toThrow(/acquiredOrder/);
+  });
+
   it("rejects a subclass belonging to another class", () => {
     // Built without the aggregated patch: the mismatch must be caught by the
     // validator itself, not only by plan construction.

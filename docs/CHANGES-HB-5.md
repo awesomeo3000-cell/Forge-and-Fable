@@ -136,6 +136,24 @@ Unchanged from HB-4. Nothing new claims automation.
   rollback would strand. `progressionState.classes` is optional and ignored by
   prior code.
 
+## 9a. Post-phase review round (proposal §14 Phase 5)
+
+A dedicated review pass re-examined the three flagged risk areas after the
+checkpoint commit (`b510e50`):
+
+- **Mirror invariants** — verified: a homebrew primary subclass mirrors to
+  `undefined`; a stale `subclassId` on a multiclass character is rejected; a
+  single-entry `classLevels` array must agree with its mirrors before the
+  legacy single-class validation runs against them.
+- **Aggregation collision policy** — verified: first-acquired class wins a
+  `featureResources` id collision, and `current` values carry over from
+  existing state per class.
+- **Registry default-path parity** — verified by test (identical plans, and
+  the research-mode 2024 path stays on the direct catalog lookup).
+- **One defect found and fixed**: duplicate `acquiredOrder` values were
+  accepted, leaving the primary-class mirror ambiguous under sort ties. Now
+  rejected in `validateClassLevels` with a gate test (18-test suite green).
+
 ## 10. Next-phase blockers
 
 - **Independent review round required before Phase 6** (proposal §14 Phase 5).
