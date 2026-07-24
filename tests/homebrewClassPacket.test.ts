@@ -124,3 +124,27 @@ describe("resolves through buildLevelUpPlan via the injected registry", () => {
       .toThrow(/requires a content registry/);
   });
 });
+
+describe("client resolved-DTO registry (§8.5)", () => {
+  it("normalizes provided homebrew payloads and delegates built-in refs", async () => {
+    const { createResolvedRegistry } = await import("@/lib/homebrew/resolvedRegistry");
+    const registry = createResolvedRegistry([
+      { kind: "class", ref: classRef, payload: fullCasterClass },
+      { kind: "subclass", ref: subclassRef, payload: emberSubclass },
+    ]);
+    expect(registry.getClassPacket(classRef).name).toBe("Runeweaver");
+    expect(registry.getSubclassPacket(subclassRef).name).toBe("Order of Runes");
+    // Built-in refs delegate to the static adapter.
+    expect(registry.getClassPacket({ source: "builtin", kind: "class", id: "fighter", ruleset: "2014" }).id).toBe("fighter");
+    // Unknown homebrew ref fails closed.
+    expect(() => registry.getClassPacket({ ...classRef, definitionId: "ghost" })).toThrow(/no resolved homebrew class/);
+  });
+
+  it("computes the same plan client-side as the server registry does", async () => {
+    const { createResolvedRegistry } = await import("@/lib/homebrew/resolvedRegistry");
+    const clientRegistry = createResolvedRegistry([{ kind: "class", ref: classRef, payload: fullCasterClass }]);
+    const clientPlan = buildLevelUpPlan({ ruleset: "2014", classId: "runeweaver", classRef, fromLevel: 0, toLevel: 2, registry: clientRegistry });
+    const serverPlan = buildLevelUpPlan({ ruleset: "2014", classId: "runeweaver", classRef, fromLevel: 0, toLevel: 2, registry: registryFor() });
+    expect(clientPlan).toEqual(serverPlan);
+  });
+});

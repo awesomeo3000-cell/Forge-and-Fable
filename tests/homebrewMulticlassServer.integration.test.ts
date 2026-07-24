@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
-import { createDefinition, publishVersion } from "@/lib/homebrew/homebrewStore";
+import { createDefinition, listAvailableClasses, publishVersion } from "@/lib/homebrew/homebrewStore";
 import { createCharacter } from "@/lib/vaultStore";
 import { serverRulesContentRegistry } from "@/lib/homebrew/serverRegistry";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
@@ -92,6 +92,43 @@ describe("server-side homebrew multiclass resolution", () => {
       { classId: "fighter", level: 3 },
       { classId: `hb:${classRef.source === "homebrew" ? classRef.definitionId : ""}`, level: 2 },
     ]);
+  });
+
+  it("lists an owned published class as available, and hides it from other users", () => {
+    seedUser("bob");
+    const classRef = publishRuneweaver();
+    const owner = listAvailableClasses("alice", "2014");
+    expect(owner).toHaveLength(1);
+    expect(owner[0].payload.name).toBe("Runeweaver");
+    expect(owner[0].version.id).toBe(classRef.source === "homebrew" ? classRef.versionId : "");
+    // Alice's class is private; Bob (no ownership, no shared campaign) sees none.
+    expect(listAvailableClasses("bob", "2014")).toHaveLength(0);
+  });
+
+  it("rejects a homebrew class newly selected without access (another user's private class)", async () => {
+    seedUser("bob");
+    const classRef = publishRuneweaver();
+    const classLevels: CharacterClassLevel[] = [
+      { classRef: builtinClassRef("2014", "fighter"), level: 3, acquiredOrder: 0 },
+      { classRef, level: 2, acquiredOrder: 1 },
+    ];
+    const mirrors = classLevelMirrors(classLevels);
+    await expect(createCharacter("bob", {
+      ...characterInput("Bob"), classLevels, level: mirrors.level, classId: mirrors.classId, maxHp: 30, currentHp: 30,
+    })).rejects.toThrow(/unavailable|invalid/);
+  });
+
+  it("rejects a draft (unpublished) class even for its owner (drafts are not selectable)", async () => {
+    const created = createDefinition("alice", { kind: "class", ruleset: "2014", title: "Draft Class", payload: fullCasterClass });
+    const draftRef: RulesContentRef = { source: "homebrew", kind: "class", definitionId: created.definition.id, versionId: created.version.id, ruleset: "2014" };
+    const classLevels: CharacterClassLevel[] = [
+      { classRef: builtinClassRef("2014", "fighter"), level: 3, acquiredOrder: 0 },
+      { classRef: draftRef, level: 2, acquiredOrder: 1 },
+    ];
+    const mirrors = classLevelMirrors(classLevels);
+    await expect(createCharacter("alice", {
+      ...characterInput("Alice"), classLevels, level: mirrors.level, classId: mirrors.classId, maxHp: 30, currentHp: 30,
+    })).rejects.toThrow(/unavailable/);
   });
 
   it("rejects a classLevels ref whose homebrew version does not exist", async () => {

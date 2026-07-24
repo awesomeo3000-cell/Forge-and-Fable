@@ -68,6 +68,56 @@ function validateNewHomebrewItems(
   }
 }
 
+/** Homebrew class/subclass refs a character already pins, so an update only
+ *  re-checks access for newly added ones (matches the item policy). */
+function homebrewClassLevelKeys(classLevels: Character["classLevels"]): string[] {
+  const keys: string[] = [];
+  for (const entry of classLevels ?? []) {
+    for (const ref of [entry.classRef, entry.subclassRef]) {
+      if (ref && ref.source === "homebrew") keys.push(`${ref.definitionId}:${ref.versionId}`);
+    }
+  }
+  return keys;
+}
+
+/**
+ * Access enforcement for homebrew classes newly referenced in `classLevels`
+ * (mirrors `validateNewHomebrewItems`). A newly selected homebrew class or
+ * subclass must resolve to a published version the viewer may select; an
+ * already-pinned ref is grandfathered (§11.2). Missing/private content collapses
+ * to one error so definition ids cannot be probed.
+ */
+function validateNewHomebrewClasses(
+  userId: string,
+  classLevels: Character["classLevels"],
+  characterRuleset: Character["ruleset"],
+  existingKeys = new Set<string>(),
+): void {
+  for (const entry of classLevels ?? []) {
+    const refs: Array<{ ref: NonNullable<typeof entry.subclassRef>; kind: "class" | "subclass" }> = [
+      { ref: entry.classRef, kind: "class" },
+      ...(entry.subclassRef ? [{ ref: entry.subclassRef, kind: "subclass" as const }] : []),
+    ];
+    for (const { ref, kind } of refs) {
+      if (ref.source !== "homebrew") continue;
+      const key = `${ref.definitionId}:${ref.versionId}`;
+      if (existingKeys.has(key)) continue;
+      let payload = null;
+      try {
+        payload = readSelectableVersionPayload(userId, ref.definitionId, ref.versionId);
+      } catch (error) {
+        if (!(error instanceof HomebrewNotFoundError)) throw error;
+      }
+      if (!payload || payload.kind !== kind) {
+        throw new Error(`Homebrew ${kind} is unavailable or is not a ${kind}.`);
+      }
+      if (ref.ruleset !== characterRuleset) {
+        throw new Error(`Homebrew ${kind} has an invalid content reference.`);
+      }
+    }
+  }
+}
+
 export class CharacterConflictError extends Error {
   current: Character;
 
@@ -297,6 +347,7 @@ export async function createCharacter(
   };
   validateCharacterProgression(character, Boolean(character.progressionState), 0, serverRulesContentRegistry);
   validateNewHomebrewItems(userId, character.inventory ?? [], character.ruleset);
+  validateNewHomebrewClasses(userId, character.classLevels, character.ruleset);
 
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -383,6 +434,7 @@ export async function updateCharacter(
       existingHomebrewItemCounts.set(key, (existingHomebrewItemCounts.get(key) ?? 0) + 1);
     }
     validateNewHomebrewItems(userId, updated.inventory ?? [], updated.ruleset, existingHomebrewItemCounts);
+    validateNewHomebrewClasses(userId, updated.classLevels, updated.ruleset, new Set(homebrewClassLevelKeys(current.classLevels)));
     const progressionTouched = ["level", "classId", "subclassId", "classLevels", "featureChoices", "featureResources", "spellsKnown", "preparedSpells", "alwaysPreparedSpells", "expandedSpellLists", "spellbookSpells", "progressionState"]
       .some((field) => Object.prototype.hasOwnProperty.call(patch, field));
     if (progressionTouched) validateCharacterProgression(updated, updated.level !== current.level || Boolean(updated.progressionState), current.level, serverRulesContentRegistry);

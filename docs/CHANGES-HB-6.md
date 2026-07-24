@@ -101,6 +101,49 @@ server — the server is *ready*, tested directly. Closing the loop needs the
 DTOs to the client) plus access enforcement for a newly-selected homebrew class
 (mirroring `validateNewHomebrewItems`). Both land with the selection sub-round.
 
+## Sub-round 6d — available-classes listing, client registry, access enforcement
+
+The plumbing the picker/modal need so a homebrew class can be selected onto a
+character, and the server can trust it — everything except the interactive UI
+wiring (that is 6e).
+
+- **`src/lib/homebrew/homebrewStore.ts`**: `listAvailableClasses(userId,
+  ruleset)` — latest published class versions the viewer owns or has via a
+  shared campaign (mirrors `listAvailableItems`; the shared SQL is now
+  `listAvailableDefinitionRows(userId, kind, ruleset)`).
+- **`src/lib/homebrew/resolvedRegistry.ts`** (new, client-safe): `createResolvedRegistry(entries)`
+  builds a `RulesContentRegistry` from homebrew class/subclass payloads the
+  server sends — built-in refs delegate to the static adapter, homebrew refs
+  normalize the provided payload with the *same* function the server uses, so
+  client and server compute identical packets and therefore identical
+  progression (§8.5). Imports no DB code.
+- **`src/lib/levelUpMulticlass.ts`**: `multiclassLevelUpPatch` takes an optional
+  registry and threads it into `progressionPatchForCharacter`, so the 6a
+  translation works for homebrew classes once the client passes the resolved
+  registry.
+- **`src/lib/vaultStore.ts`**: `validateNewHomebrewClasses` — access enforcement
+  for homebrew class/subclass refs newly added to `classLevels` (mirrors
+  `validateNewHomebrewItems`): a newly selected ref must resolve to a *published*
+  version the viewer may select; already-pinned refs are grandfathered (§11.2);
+  missing/private content collapses to one error. Wired into `createCharacter`
+  and `updateCharacter`. This is the security boundary — progression validation
+  resolves *pinned* content (any version), so access is enforced separately here.
+- **`src/app/api/homebrew/library/classes/route.ts`** (new): `GET` returns
+  `listAvailableClasses` for the picker (mirrors the items library route).
+- Tests: client-registry normalization + client↔server plan **parity**
+  (`tests/homebrewClassPacket.test.ts`, +2); available-classes listing
+  (owner sees it, non-owner does not), and three access denials — another user's
+  private class, an owner's *draft* (drafts are not selectable), and a
+  non-existent version (`tests/homebrewMulticlassServer.integration.test.ts`, +3).
+
+### 6d deferral
+
+Still no interactive path: the 6a picker offers built-in classes only, and
+neither the picker nor `LevelUpModal` fetches `listAvailableClasses` or builds a
+client registry yet. That UI wiring — offer homebrew classes in the picker, run
+the modal with the homebrew class's facts, pass the resolved registry into
+`multiclassLevelUpPatch` — is sub-round 6e.
+
 ## Test evidence (sub-rounds to date)
 
 - `npx vitest run tests/homebrewClassPacket.test.ts` — 10 passed.
@@ -125,11 +168,11 @@ DTOs to the client) plus access enforcement for a newly-selected homebrew class
 ## Remaining Phase 6 sub-rounds
 
 1. ~~Server registry~~ — **done (6c).**
-2. **Client resolved-DTO registry + homebrew-class selection**: send a
-   character's referenced class DTOs to the client so `LevelUpModal` /
-   `multiclassLevelUpPatch` compute the same progression the server expects;
-   extend the 6a picker to offer accessible homebrew classes; add
-   newly-selected-class access enforcement (mirroring `validateNewHomebrewItems`).
+2. ~~Client resolved-DTO registry, available-classes listing, class access
+   enforcement~~ — **done (6d).** Remaining from this item: the interactive
+   **6e** wiring — extend the 6a picker to offer accessible homebrew classes and
+   run `LevelUpModal` with a homebrew class's facts + the resolved client
+   registry.
 3. **Class & Subclass Studio editors** (foundation, proficiencies, spellcasting
    simple + advanced, 1-20 level guide, prerequisites, preview) with built-in
    template cloning.

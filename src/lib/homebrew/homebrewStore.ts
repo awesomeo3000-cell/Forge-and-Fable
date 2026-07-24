@@ -24,6 +24,7 @@ import {
   type ContentBaseline,
   type ContentVisibility,
   type HomebrewKind,
+  type HomebrewClassPayload,
   type HomebrewItemPayload,
   type HomebrewPayload,
 } from "@/types/homebrew";
@@ -269,9 +270,10 @@ function publicItemPayload(payload: HomebrewItemPayload): HomebrewItemPayload {
   return copy;
 }
 
-/** Latest published item versions the viewer can currently add to a character. */
-export function listAvailableItems(viewerUserId: string, ruleset?: RulesetId): AvailableHomebrewItem[] {
-  const rows = getDb()
+/** Definitions of one kind whose latest published version the viewer may add to
+ *  a character (owned, or campaign-shared to a campaign they belong to). */
+function listAvailableDefinitionRows(viewerUserId: string, kind: HomebrewKind, ruleset?: RulesetId): DefinitionRow[] {
+  return getDb()
     .prepare(
       `SELECT DISTINCT definition.*
          FROM homebrew_definitions definition
@@ -279,14 +281,43 @@ export function listAvailableItems(viewerUserId: string, ruleset?: RulesetId): A
            ON access.definition_id = definition.id AND access.revoked_at IS NULL
          LEFT JOIN campaign_members member
            ON member.campaign_id = access.campaign_id AND member.user_id = ?
-        WHERE definition.kind = 'item'
+        WHERE definition.kind = ?
           AND definition.archived_at IS NULL
           AND definition.latest_published_version_id IS NOT NULL
           AND (definition.owner_user_id = ? OR (definition.visibility = 'campaign' AND member.user_id IS NOT NULL))
           ${ruleset ? "AND definition.ruleset = ?" : ""}
         ORDER BY definition.updated_at DESC`,
     )
-    .all(...(ruleset ? [viewerUserId, viewerUserId, ruleset] : [viewerUserId, viewerUserId])) as DefinitionRow[];
+    .all(...(ruleset ? [viewerUserId, kind, viewerUserId, ruleset] : [viewerUserId, kind, viewerUserId])) as DefinitionRow[];
+}
+
+export type AvailableHomebrewClass = {
+  definition: DefinitionDto;
+  version: VersionSummaryDto;
+  payload: HomebrewClassPayload;
+};
+
+/** Latest published class versions the viewer can currently select on a
+ *  character (owned or campaign-shared). */
+export function listAvailableClasses(viewerUserId: string, ruleset?: RulesetId): AvailableHomebrewClass[] {
+  return listAvailableDefinitionRows(viewerUserId, "class", ruleset).flatMap((definition) => {
+    const version = getDb()
+      .prepare("SELECT * FROM homebrew_versions WHERE id = ? AND definition_id = ? AND status = 'published'")
+      .get(definition.latest_published_version_id, definition.id) as VersionRow | undefined;
+    if (!version) return [];
+    const payload = JSON.parse(version.payload_json) as HomebrewPayload;
+    if (payload.kind !== "class") return [];
+    return [{
+      definition: toDefinitionDto(definition, viewerUserId),
+      version: toVersionSummaryDto(version),
+      payload: deepCopyPayload(payload) as HomebrewClassPayload,
+    }];
+  });
+}
+
+/** Latest published item versions the viewer can currently add to a character. */
+export function listAvailableItems(viewerUserId: string, ruleset?: RulesetId): AvailableHomebrewItem[] {
+  const rows = listAvailableDefinitionRows(viewerUserId, "item", ruleset);
 
   return rows.flatMap((definition) => {
     const version = getDb()

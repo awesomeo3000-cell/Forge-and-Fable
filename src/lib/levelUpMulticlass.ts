@@ -10,7 +10,7 @@
  * — the modal's single-class progression output is never passed through.
  */
 import type { Character, CharacterProgressionState } from "@/types/game";
-import type { RulesContentRef } from "@/types/homebrew";
+import type { RulesContentRef, RulesContentRegistry } from "@/types/homebrew";
 import {
   addClassLevel,
   builtinSubclassRef,
@@ -40,6 +40,7 @@ export function multiclassLevelUpPatch(
   character: Character,
   targetRef: RulesContentRef,
   modalData: Record<string, unknown>,
+  registry?: RulesContentRegistry,
 ): Record<string, unknown> {
   const leveled = addClassLevel(character, targetRef);
   // A subclass picked during this level-up belongs to the leveled class, not
@@ -63,7 +64,7 @@ export function multiclassLevelUpPatch(
     subclassId: mirrors.subclassId,
     classLevels,
   } as Character;
-  const progression = progressionPatchForCharacter(merged);
+  const progression = progressionPatchForCharacter(merged, registry);
 
   // History entries the modal appended are in class-level space; rewrite the
   // appended tail to the new total level so level filtering stays coherent.
