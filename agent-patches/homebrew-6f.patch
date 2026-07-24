@@ -1,0 +1,224 @@
+diff --git a/docs/CHANGES-HB-6.md b/docs/CHANGES-HB-6.md
+index 2103fcd..d5730b3 100644
+--- a/docs/CHANGES-HB-6.md
++++ b/docs/CHANGES-HB-6.md
+@@ -239,3 +239,21 @@ Revert the listed files; no migrations, no stored-data changes. No shipped UI
+ writes homebrew `classLevels` refs, so no character can hold state a rollback
+ would strand. The 6a picker only writes built-in multiclass state, which the
+ Phase-5 foundation already supports.
++
++## Sub-round 6f — homebrew caster slots on the live sheet
++
++Homebrew class spellcasting now reaches the character sheet rather than stopping
++at packet normalization.
++
++- `src/lib/multiclass.ts` accepts an optional `RulesContentRegistry` when
++  calculating caster contributions and combined slots. Homebrew full, half,
++  third, and pact casters use their pinned class packet. A single-class
++  homebrew caster uses its authored native slot table. Custom tables remain
++  native-only because the payload has no explicit multiclass contribution rule.
++- `src/components/HeroSheet.tsx` builds the resolved class registry before sheet
++  calculations and uses `combinedSpellSlots` for slot maxima, preserving pact
++  slots as a separate pool.
++- `tests/multiclassFoundation.test.ts` covers native homebrew full-caster slots
++  plus combined full and half homebrew caster contributions.
++
++This closes the previously documented sheet-level homebrew caster-slot deferral.
+diff --git a/src/components/HeroSheet.tsx b/src/components/HeroSheet.tsx
+index 6852281..0806a46 100644
+--- a/src/components/HeroSheet.tsx
++++ b/src/components/HeroSheet.tsx
+@@ -55,7 +55,7 @@ import SheetSection from "@/components/SheetSection";
+ import SheetRollButton, { D20Icon, DieIcon } from "@/components/SheetRollButton";
+ import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
+ import { HOMEBREW_CLASS_ID, isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
+-import { builtinClassRef, eligibleMulticlassOptions, getClassLevels } from "@/lib/multiclass";
++import { builtinClassRef, combinedSpellSlots, eligibleMulticlassOptions, getClassLevels } from "@/lib/multiclass";
+ import { classScopedCharacterView, multiclassLevelUpPatch } from "@/lib/levelUpMulticlass";
+ import { createResolvedRegistry, type ResolvedContentEntry } from "@/lib/homebrew/resolvedRegistry";
+ import type { HomebrewClassPayload as HbClassPayload, RulesContentRef } from "@/types/homebrew";
+@@ -288,6 +288,18 @@ export default memo(function HeroSheet(props: {
+     return () => { cancelled = true; };
+   }, [props.character.id, props.character.classLevels, isReadOnly]);
+ 
++  // Client resolved-DTO registry (§8.5): seeded with the character's pinned
++  // homebrew classes plus the accessible picker options, so client-side
++  // progression recompute matches the server for the same content.
++  const clientClassRegistry = useMemo(() => {
++    const availableEntries: ResolvedContentEntry[] = availableHomebrewClasses.map((entry) => ({
++      kind: "class" as const,
++      ref: { source: "homebrew" as const, kind: "class" as const, definitionId: entry.definition.id, versionId: entry.version.id, ruleset: props.character.ruleset },
++      payload: entry.payload,
++    }));
++    return createResolvedRegistry([...pinnedClassEntries, ...availableEntries]);
++  }, [availableHomebrewClasses, pinnedClassEntries, props.character.ruleset]);
++
+   const race = resolveCharacterRace(props.character, props.ruleset);
+   const heroClass = resolveCharacterClass(props.character, props.ruleset);
+   const hasHomebrewClass = isHomebrewClass(props.character);
+@@ -987,8 +999,12 @@ export default memo(function HeroSheet(props: {
+   const [showHitDiceRest, setShowHitDiceRest] = useState(false);
+   // Split-panel header (AO-8): the portrait panel doubles as the picker trigger.
+   const [portraitPickerOpen, setPortraitPickerOpen] = useState(false);
+-  const isPactCaster = casterType === "pact";
+-  const slotMax = maxSlots(casterType, props.character.level, heroClass.id)
++  const combinedCasting = combinedSpellSlots(props.character, clientClassRegistry);
++  const isPactCaster = combinedCasting.pact !== null && combinedCasting.slots.every((count) => count === 0);
++  const nativeSlotMax = isPactCaster && combinedCasting.pact
++    ? Array.from({ length: 9 }, (_, index) => index + 1 === combinedCasting.pact!.slotLevel ? combinedCasting.pact!.count : 0)
++    : combinedCasting.slots;
++  const slotMax = nativeSlotMax
+     .map((maximum, index) => maximum + (homebrewMechanics.spellSlotDeltas[index + 1] ?? 0));
+   // Pact casters track spent slots as a simple count (0..max), others use the level-keyed map.
+   // Pact slots live at the first non-zero entry of slotMax (index = slotLevel - 1), not always [0].
+@@ -1259,18 +1275,6 @@ export default memo(function HeroSheet(props: {
+     setLayOnHandsSpend(1);
+   };
+ 
+-  // Client resolved-DTO registry (§8.5): seeded with the character's pinned
+-  // homebrew classes plus the accessible picker options, so client-side
+-  // progression recompute matches the server for the same content.
+-  const clientClassRegistry = useMemo(() => {
+-    const availableEntries: ResolvedContentEntry[] = availableHomebrewClasses.map((entry) => ({
+-      kind: "class" as const,
+-      ref: { source: "homebrew" as const, kind: "class" as const, definitionId: entry.definition.id, versionId: entry.version.id, ruleset: props.character.ruleset },
+-      payload: entry.payload,
+-    }));
+-    return createResolvedRegistry([...pinnedClassEntries, ...availableEntries]);
+-  }, [availableHomebrewClasses, pinnedClassEntries, props.character.ruleset]);
+-
+   /** Phase 6e minimal homebrew-class level-up: fixed HP + progression recompute
+       through the client registry. Homebrew spell/subclass/rolled-HP selection is
+       a documented follow-up; built-in classes keep the full LevelUpModal. */
+diff --git a/src/lib/multiclass.ts b/src/lib/multiclass.ts
+index 0ffb6ce..61f7619 100644
+--- a/src/lib/multiclass.ts
++++ b/src/lib/multiclass.ts
+@@ -13,7 +13,7 @@
+  *    migrated.
+  */
+ import type { AbilityScores, Character, RulesetId } from "@/types/game";
+-import type { CharacterClassLevel, RulesContentRef } from "@/types/homebrew";
++import type { CharacterClassLevel, RulesContentRef, RulesContentRegistry } from "@/types/homebrew";
+ import { HOMEBREW_CLASS_ID } from "@/lib/homebrewIdentity";
+ import { FULL_CASTER_SLOTS, maxSlots } from "@/lib/spellSlots";
+ 
+@@ -152,9 +152,23 @@ export type CasterContribution = {
+   pactLevels: number;
+ };
+ 
+-export function casterContribution(entry: CharacterClassLevel): CasterContribution {
++export function casterContribution(
++  entry: CharacterClassLevel,
++  registry?: RulesContentRegistry,
++): CasterContribution {
+   const base = { classRef: entry.classRef, casterLevels: 0, pactLevels: 0 };
+-  if (entry.classRef.source !== "builtin") return base; // homebrew casting lands in Phase 6
++  if (entry.classRef.source === "homebrew") {
++    if (!registry) return base;
++    const castingType = registry.getClassPacket(entry.classRef).spellcasting?.type;
++    if (castingType === "pact") return { ...base, pactLevels: entry.level };
++    if (castingType === "full") return { ...base, casterLevels: entry.level };
++    if (castingType === "half") return { ...base, casterLevels: Math.floor(entry.level / 2) };
++    if (castingType === "third") return { ...base, casterLevels: Math.floor(entry.level / 3) };
++    // Custom slot tables have no safe shared-caster contribution contract. They
++    // use their authored table while single-class and contribute zero when
++    // multiclassed until the payload grows an explicit contribution rule.
++    return base;
++  }
+   const id = entry.classRef.id;
+   if (id === "warlock") return { ...base, pactLevels: entry.level };
+   if (FULL_CASTERS.has(id)) return { ...base, casterLevels: entry.level };
+@@ -184,9 +198,12 @@ export type CombinedSpellSlots = {
+  * separate. A single-class character reads its native table (so a level-1
+  * paladin correctly has no slots, rather than the multiclass table's rounding).
+  */
+-export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSlots {
++export function combinedSpellSlots(
++  character: ClassLevelSource,
++  registry?: RulesContentRegistry,
++): CombinedSpellSlots {
+   const levels = getClassLevels(character);
+-  const contributions = levels.map(casterContribution);
++  const contributions = levels.map((entry) => casterContribution(entry, registry));
+   const pactLevels = contributions.reduce((sum, c) => sum + c.pactLevels, 0);
+   const pact = pactLevels > 0
+     ? {
+@@ -198,7 +215,19 @@ export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSl
+   if (levels.length === 1) {
+     // Single-class: defer to the native per-class table (existing behavior).
+     const entry = levels[0];
+-    if (entry.classRef.source !== "builtin") return { slots: [], casterLevel: 0, pact };
++    if (entry.classRef.source === "homebrew") {
++      if (!registry) return { slots: [], casterLevel: 0, pact };
++      const casting = registry.getClassPacket(entry.classRef).spellcasting;
++      if (!casting) return { slots: [], casterLevel: 0, pact };
++      if (casting.type === "pact") {
++        const count = casting.pactMagicSlotsByLevel?.[entry.level] ?? 0;
++        const slotLevel = casting.pactMagicSlotLevelByClassLevel?.[entry.level] ?? 0;
++        return { slots: [], casterLevel: 0, pact: count > 0 && slotLevel > 0 ? { count, slotLevel } : null };
++      }
++      const native = [...(casting.spellSlotsByLevel?.[String(entry.level)] ?? [])];
++      while (native.length < 9) native.push(0);
++      return { slots: native, casterLevel: casterContribution(entry, registry).casterLevels, pact };
++    }
+     const id = entry.classRef.id;
+     if (id === "warlock") return { slots: [], casterLevel: 0, pact };
+     const casterType = FULL_CASTERS.has(id) ? "full"
+@@ -208,7 +237,7 @@ export function combinedSpellSlots(character: ClassLevelSource): CombinedSpellSl
+     // does not model today) keep their existing no-slot behavior single-class.
+     if (!casterType) return { slots: [], casterLevel: 0, pact };
+     const native = maxSlots(casterType, entry.level, id).filter((_, i) => i < 9);
+-    return { slots: native, casterLevel: casterContribution(entry).casterLevels, pact };
++    return { slots: native, casterLevel: casterContribution(entry, registry).casterLevels, pact };
+   }
+ 
+   const casterLevel = contributions.reduce((sum, c) => sum + c.casterLevels, 0);
+diff --git a/tests/multiclassFoundation.test.ts b/tests/multiclassFoundation.test.ts
+index 6e899d2..3faf691 100644
+--- a/tests/multiclassFoundation.test.ts
++++ b/tests/multiclassFoundation.test.ts
+@@ -21,6 +21,8 @@ import { progressionPatchForCharacter } from "@/lib/progression/state";
+ import { validateCharacterProgression } from "@/lib/progression/validate";
+ import { validateCharacterInput } from "@/lib/validateCharacter";
+ import { builtinRulesContentRegistry } from "@/lib/homebrew/builtinRegistry";
++import { createResolvedRegistry } from "@/lib/homebrew/resolvedRegistry";
++import { fullCasterClass, partialCasterClass } from "./fixtures/homebrew";
+ import type { Character } from "@/types/game";
+ import type { CharacterClassLevel } from "@/types/homebrew";
+ import { characterInput } from "./fixtures/character";
+@@ -114,6 +116,34 @@ describe("gate: Paladin / Warlock pact separation", () => {
+   });
+ });
+ 
++describe("gate: homebrew caster slot integration", () => {
++  const fullRef = { source: "homebrew", kind: "class", definitionId: "runeweaver", versionId: "rw-v1", ruleset: "2014" } as const;
++  const halfRef = { source: "homebrew", kind: "class", definitionId: "spellblade", versionId: "sb-v1", ruleset: "2014" } as const;
++  const registry = createResolvedRegistry([
++    { kind: "class", ref: fullRef, payload: fullCasterClass },
++    { kind: "class", ref: halfRef, payload: partialCasterClass },
++  ]);
++
++  it("uses a pinned homebrew class native slot table when single-class", () => {
++    const classLevels: CharacterClassLevel[] = [{ classRef: fullRef, level: 5, acquiredOrder: 0 }];
++    const character = baseCharacter({ classLevels, level: 5, classId: "homebrew" });
++    const slots = combinedSpellSlots(character, registry);
++    expect(slots.casterLevel).toBe(5);
++    expect(slots.slots.slice(0, 4)).toEqual([4, 3, 2, 0]);
++  });
++
++  it("adds homebrew full and half caster contributions to multiclass slots", () => {
++    const classLevels: CharacterClassLevel[] = [
++      { classRef: fullRef, level: 3, acquiredOrder: 0 },
++      { classRef: halfRef, level: 4, acquiredOrder: 1 },
++    ];
++    const character = baseCharacter({ classLevels, level: 7, classId: "homebrew" });
++    const slots = combinedSpellSlots(character, registry);
++    expect(slots.casterLevel).toBe(5);
++    expect(slots.slots.slice(0, 4)).toEqual([4, 3, 2, 0]);
++  });
++});
++
+ describe("gate: multiclass prerequisites", () => {
+   it("a prerequisite toggle changes the eligible options", () => {
+     const character = baseCharacter({ level: 3, classId: "fighter" });
