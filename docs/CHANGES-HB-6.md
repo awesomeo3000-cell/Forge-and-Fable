@@ -144,6 +144,44 @@ client registry yet. That UI wiring — offer homebrew classes in the picker, ru
 the modal with the homebrew class's facts, pass the resolved registry into
 `multiclassLevelUpPatch` — is sub-round 6e.
 
+## Sub-round 6e — interactive homebrew-class multiclass selection
+
+A character can now actually multiclass into a homebrew class from the sheet,
+end to end. Built-in classes keep the full `LevelUpModal`; homebrew classes use
+a minimal, correct apply path (that modal is deeply built-in-coupled, so it is
+left untouched).
+
+- **`src/app/api/characters/[id]/homebrew-classes/route.ts`** (new): pinned
+  resolution of a character's `classLevels` homebrew class/subclass payloads
+  (no access re-check, §11.2) so the client registry can resolve classes the
+  character already holds even if later unshared.
+- **`src/components/HeroSheet.tsx`**:
+  - Fetches `/api/homebrew/library/classes` (picker options) and the pinned
+    payloads above, and builds a client `createResolvedRegistry` from both.
+  - The class picker lists accessible homebrew classes under "Begin a new class"
+    and "Continue {name}" for homebrew classes already held.
+  - Selecting a homebrew class runs `applyHomebrewClassLevel`: fixed HP from the
+    payload's hit die, then `multiclassLevelUpPatch(character, ref, hp,
+    clientRegistry)` — the same translation the built-in path uses, now with the
+    resolved registry so client progression matches the server.
+- Integration gate (`tests/homebrewMulticlassServer.integration.test.ts`): a
+  saved single-class fighter multiclasses into a published homebrew class via the
+  exact client apply path (client registry + `multiclassLevelUpPatch`), and
+  `updateCharacter` persists it with the homebrew class in `classLevels` and its
+  features aggregated into `progressionState`.
+
+### 6e deferrals
+
+- **Homebrew spell / subclass / rolled-HP selection at level-up** — the minimal
+  apply is fixed-HP only and offers no choice steps (homebrew classes emit no
+  structured choices yet, 6b). A homebrew caster's spells and a homebrew
+  subclass pick need the modal generalized for homebrew; that is a later
+  sub-round.
+- **Homebrew multiclass prerequisite enforcement** — the picker offers homebrew
+  classes ungated (the payload's `multiclassPrerequisites` is authored but not
+  yet evaluated); the server likewise does not enforce it. Deferred with the
+  choice-model generalization.
+
 ## Test evidence (sub-rounds to date)
 
 - `npx vitest run tests/homebrewClassPacket.test.ts` — 10 passed.
@@ -172,7 +210,8 @@ the modal with the homebrew class's facts, pass the resolved registry into
    enforcement~~ — **done (6d).** Remaining from this item: the interactive
    **6e** wiring — extend the 6a picker to offer accessible homebrew classes and
    run `LevelUpModal` with a homebrew class's facts + the resolved client
-   registry.
+   registry. — **done (6e)**, minimal apply; homebrew spell/subclass/rolled-HP
+   selection + multiclass-prereq enforcement remain deferred.
 3. **Class & Subclass Studio editors** (foundation, proficiencies, spellcasting
    simple + advanced, 1-20 level guide, prerequisites, preview) with built-in
    template cloning.
@@ -185,8 +224,14 @@ the modal with the homebrew class's facts, pass the resolved registry into
 
 ## Browser/runtime evidence
 
-Deferred, as with HB-4/5 — the engine-level work here has no UI surface yet, and
-the Phase 3-5 build/Playwright/browser debt still stands.
+**Owed.** 6e is the first Phase-6 sub-round with a real UI surface (the class
+picker now offers homebrew classes and applies a level). It was implemented and
+verified by unit + integration tests, but not yet exercised in a running app:
+the in-app browser tooling was classifier-blocked this session, and the
+Phase 3-5 build/Playwright/browser debt still stands. To close: stop the
+production server, `npm run build`, then manually author a homebrew class in
+Class Studio (once its editor lands) or seed one, and multiclass a character
+into it from the sheet; add a Playwright spec for the picker flow.
 
 ## Rollback notes
 

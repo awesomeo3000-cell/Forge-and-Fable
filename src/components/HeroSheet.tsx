@@ -37,7 +37,7 @@ import { ARMORS, carryCapacity, computeArmorClass, getArmorProficiencyIssue, get
 import { ITEM_CATALOG, ITEM_RARITIES, catalogItemToInventory, getEquippedItemBonuses, isArmorItem, isShieldItem, isWeaponItem, itemHasPassiveBonus, itemMetaParts } from "@/lib/itemCatalog";
 import { maxSlots } from "@/lib/spellSlots";
 import { activeD20Riders, describeEffect, effectTotal, D20_DICE_RE, EFFECT_NUMERIC_FIELDS, EFFECT_PRESETS } from "@/lib/effects";
-import { revertHpLevel } from "@/lib/hitPoints";
+import { fixedHpGain, revertHpLevel } from "@/lib/hitPoints";
 import { passiveSkillScore } from "@/lib/derivedStats";
 import type { CharacterEffect } from "@/types/game";
 import { getClassData, subclassFeaturesForLevel, subclassesForClass } from "@/lib/subclasses";
@@ -57,6 +57,8 @@ import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
 import { HOMEBREW_CLASS_ID, isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
 import { builtinClassRef, eligibleMulticlassOptions, getClassLevels } from "@/lib/multiclass";
 import { classScopedCharacterView, multiclassLevelUpPatch } from "@/lib/levelUpMulticlass";
+import { createResolvedRegistry, type ResolvedContentEntry } from "@/lib/homebrew/resolvedRegistry";
+import type { HomebrewClassPayload as HbClassPayload, RulesContentRef } from "@/types/homebrew";
 import { homebrewItemInstanceToSource } from "@/lib/homebrew/mechanicSources";
 import { resolveMechanics } from "@/lib/homebrew/mechanicsResolver";
 import {
@@ -231,6 +233,11 @@ export default memo(function HeroSheet(props: {
   const [availableHomebrewItems, setAvailableHomebrewItems] = useState<AvailableHomebrewItem[]>([]);
   const [homebrewLoadError, setHomebrewLoadError] = useState("");
   const [upgradeItem, setUpgradeItem] = useState<{ item: InventoryItem; available: AvailableHomebrewItem; changes: string[] } | null>(null);
+  // Phase 6e: accessible homebrew classes for the picker, and the pinned
+  // payloads for classes the character already holds — together they seed the
+  // client registry that computes homebrew progression on the sheet.
+  const [availableHomebrewClasses, setAvailableHomebrewClasses] = useState<Array<{ definition: DefinitionDto; version: VersionSummaryDto; payload: HbClassPayload }>>([]);
+  const [pinnedClassEntries, setPinnedClassEntries] = useState<ResolvedContentEntry[]>([]);
   // Pending manual stage change awaiting its diff-preview confirmation (§7.5).
   const [stageChange, setStageChange] = useState<{ itemId: string; toStageId: string; reason: string } | null>(null);
 
@@ -254,6 +261,32 @@ export default memo(function HeroSheet(props: {
       .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
     return () => { cancelled = true; };
   }, [props.character.ruleset, isReadOnly]);
+
+  // Phase 6e: accessible homebrew classes for the picker (skipped in read-only).
+  useEffect(() => {
+    if (isReadOnly) return;
+    let cancelled = false;
+    void fetch(`/api/homebrew/library/classes?ruleset=${props.character.ruleset}`)
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Homebrew class library could not be loaded.")))
+      .then((data: { classes?: Array<{ definition: DefinitionDto; version: VersionSummaryDto; payload: HbClassPayload }> }) => { if (!cancelled) setAvailableHomebrewClasses(data.classes ?? []); })
+      .catch(() => { /* the picker simply omits homebrew classes if this fails */ });
+    return () => { cancelled = true; };
+  }, [props.character.ruleset, isReadOnly]);
+
+  // Pinned payloads for homebrew classes the character already holds, so the
+  // client registry can resolve them for progression recompute.
+  useEffect(() => {
+    // Only characters with homebrew class refs need pinned resolution; for
+    // others, any prior entries are keyed by definitionId and never read.
+    const hasHomebrewClass = (props.character.classLevels ?? []).some((entry) => entry.classRef.source === "homebrew" || entry.subclassRef?.source === "homebrew");
+    if (!hasHomebrewClass) return;
+    let cancelled = false;
+    void fetch(`/api/characters/${props.character.id}/homebrew-classes${isReadOnly ? "?mode=dm-readonly" : ""}`)
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Pinned class versions could not be resolved.")))
+      .then((data: { classes?: ResolvedContentEntry[] }) => { if (!cancelled) setPinnedClassEntries(data.classes ?? []); })
+      .catch((error: Error) => { if (!cancelled) setHomebrewLoadError(error.message); });
+    return () => { cancelled = true; };
+  }, [props.character.id, props.character.classLevels, isReadOnly]);
 
   const race = resolveCharacterRace(props.character, props.ruleset);
   const heroClass = resolveCharacterClass(props.character, props.ruleset);
@@ -1224,6 +1257,35 @@ export default memo(function HeroSheet(props: {
     adjustFeatureResource(capability.resourceId, -amount);
     props.onNotify?.(`Lay on Hands: spend ${amount} point${amount === 1 ? "" : "s"} on the chosen creature.`);
     setLayOnHandsSpend(1);
+  };
+
+  // Client resolved-DTO registry (§8.5): seeded with the character's pinned
+  // homebrew classes plus the accessible picker options, so client-side
+  // progression recompute matches the server for the same content.
+  const clientClassRegistry = useMemo(() => {
+    const availableEntries: ResolvedContentEntry[] = availableHomebrewClasses.map((entry) => ({
+      kind: "class" as const,
+      ref: { source: "homebrew" as const, kind: "class" as const, definitionId: entry.definition.id, versionId: entry.version.id, ruleset: props.character.ruleset },
+      payload: entry.payload,
+    }));
+    return createResolvedRegistry([...pinnedClassEntries, ...availableEntries]);
+  }, [availableHomebrewClasses, pinnedClassEntries, props.character.ruleset]);
+
+  /** Phase 6e minimal homebrew-class level-up: fixed HP + progression recompute
+      through the client registry. Homebrew spell/subclass/rolled-HP selection is
+      a documented follow-up; built-in classes keep the full LevelUpModal. */
+  const applyHomebrewClassLevel = (definitionId: string, versionId: string, payload: HbClassPayload) => {
+    const ref: RulesContentRef = { source: "homebrew", kind: "class", definitionId, versionId, ruleset: props.character.ruleset };
+    const conMod = abilityModifier(sheetAbilities.constitution);
+    const hpGain = Math.max(1, fixedHpGain(payload.hitDie, conMod));
+    const modalData: Record<string, unknown> = {
+      maxHp: props.character.maxHp + hpGain,
+      currentHp: props.character.currentHp + hpGain,
+      hpRolls: [...(props.character.hpRolls ?? []), hpGain],
+    };
+    props.onUpdate(multiclassLevelUpPatch(props.character, ref, modalData, clientClassRegistry));
+    setClassPickerOpen(false);
+    props.onNotify?.(`${payload.name} gains a level (+${hpGain} HP).`);
   };
 
   const handleLevelDown = () => {
@@ -3020,6 +3082,12 @@ export default memo(function HeroSheet(props: {
         const options = eligibleMulticlassOptions(props.character, candidateIds, sheetAbilities, settings.useFeatPrerequisites);
         const className = (id: string) => props.ruleset.classes.find((c) => c.id === id)?.name ?? id;
         const classLevel = (id: string) => entries.find((entry) => entry.classRef.source === "builtin" && entry.classRef.id === id)?.level ?? 0;
+        // Homebrew classes the character already holds (continue) and accessible
+        // new ones (multiclass into). Names come from the pinned/available payloads.
+        const homebrewEntries = entries.filter((entry) => entry.classRef.source === "homebrew");
+        const heldHomebrewDefIds = new Set(homebrewEntries.map((entry) => entry.classRef.source === "homebrew" ? entry.classRef.definitionId : ""));
+        const pinnedClassPayload = (defId: string) => pinnedClassEntries.find((p) => p.kind === "class" && p.ref.source === "homebrew" && p.ref.definitionId === defId)?.payload as HbClassPayload | undefined;
+        const newHomebrewClasses = availableHomebrewClasses.filter((c) => !heldHomebrewDefIds.has(c.definition.id));
         const pick = (classId: string) => {
           setClassPickerOpen(false);
           // A pure single-class character continuing its own class keeps the
@@ -3042,6 +3110,18 @@ export default memo(function HeroSheet(props: {
                     <span>{className(id)} {classLevel(id)} → {classLevel(id) + 1}</span>
                   </button>
                 ))}
+                {homebrewEntries.map((entry) => {
+                  const defId = entry.classRef.source === "homebrew" ? entry.classRef.definitionId : "";
+                  const versionId = entry.classRef.source === "homebrew" ? entry.classRef.versionId : "";
+                  const payload = pinnedClassPayload(defId);
+                  if (!payload) return null;
+                  return (
+                    <button key={defId} type="button" className="cs-class-picker-option is-current" onClick={() => applyHomebrewClassLevel(defId, versionId, payload)}>
+                      <strong>Continue {payload.name}</strong>
+                      <span>Homebrew · {payload.name} {entry.level} → {entry.level + 1}</span>
+                    </button>
+                  );
+                })}
               </div>
               <h3 className="cs-section-eyebrow">Begin a new class</h3>
               <div className="cs-class-picker-list">
@@ -3056,6 +3136,12 @@ export default memo(function HeroSheet(props: {
                   >
                     <strong>{className(option.classId)} 1</strong>
                     <span>{option.eligibility.eligible ? "Multiclass into a new path" : option.eligibility.unmet.join("; ")}</span>
+                  </button>
+                ))}
+                {newHomebrewClasses.map((entry) => (
+                  <button key={entry.definition.id} type="button" className="cs-class-picker-option" onClick={() => applyHomebrewClassLevel(entry.definition.id, entry.version.id, entry.payload)}>
+                    <strong>{entry.payload.name} 1</strong>
+                    <span>Homebrew · multiclass into a new path</span>
                   </button>
                 ))}
               </div>

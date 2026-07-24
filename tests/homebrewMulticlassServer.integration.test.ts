@@ -8,8 +8,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, getDb } from "@/lib/db";
 import { createDefinition, listAvailableClasses, publishVersion } from "@/lib/homebrew/homebrewStore";
-import { createCharacter } from "@/lib/vaultStore";
+import { createCharacter, updateCharacter } from "@/lib/vaultStore";
 import { serverRulesContentRegistry } from "@/lib/homebrew/serverRegistry";
+import { createResolvedRegistry } from "@/lib/homebrew/resolvedRegistry";
+import { multiclassLevelUpPatch } from "@/lib/levelUpMulticlass";
 import { progressionPatchForCharacter } from "@/lib/progression/state";
 import { builtinClassRef, classLevelMirrors } from "@/lib/multiclass";
 import { characterInput } from "./fixtures/character";
@@ -129,6 +131,31 @@ describe("server-side homebrew multiclass resolution", () => {
     await expect(createCharacter("alice", {
       ...characterInput("Alice"), classLevels, level: mirrors.level, classId: mirrors.classId, maxHp: 30, currentHp: 30,
     })).rejects.toThrow(/unavailable/);
+  });
+
+  it("end-to-end 6e: a built-in character multiclasses into a homebrew class via the client apply path", async () => {
+    const classRef = publishRuneweaver();
+    // Start as a plain single-class fighter (no classLevels).
+    const fighter = await createCharacter("alice", { ...characterInput("Alice"), level: 3, classId: "fighter", maxHp: 28, currentHp: 28 });
+
+    // Simulate the sheet: build the client registry from the "available" payload
+    // and compute the level-up patch exactly as applyHomebrewClassLevel does.
+    const clientRegistry = createResolvedRegistry([{
+      kind: "class",
+      ref: classRef,
+      payload: fullCasterClass,
+    }]);
+    const patch = multiclassLevelUpPatch(fighter, classRef, { maxHp: 34, currentHp: 34, hpRolls: [6] }, clientRegistry);
+
+    const saved = await updateCharacter("alice", fighter.id, patch, fighter.revision ?? 0);
+    expect(saved.level).toBe(4);
+    expect(saved.classId).toBe("fighter");
+    expect(saved.classLevels).toEqual([
+      expect.objectContaining({ classRef: expect.objectContaining({ id: "fighter" }), level: 3 }),
+      expect.objectContaining({ classRef: expect.objectContaining({ source: "homebrew" }), level: 1 }),
+    ]);
+    expect(saved.progressionState!.featureIds).toContain("rw-spellcasting");
+    expect(saved.maxHp).toBe(34);
   });
 
   it("rejects a classLevels ref whose homebrew version does not exist", async () => {
