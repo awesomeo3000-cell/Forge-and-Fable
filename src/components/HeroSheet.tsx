@@ -54,7 +54,9 @@ import ManageFeatsModal from "@/components/ManageFeatsModal";
 import SheetSection from "@/components/SheetSection";
 import SheetRollButton, { D20Icon, DieIcon } from "@/components/SheetRollButton";
 import { longRestRecovery, recoverFeatureResources } from "@/lib/restRecovery";
-import { isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
+import { HOMEBREW_CLASS_ID, isHomebrewClass, isHomebrewRace, resolveCharacterClass, resolveCharacterRace } from "@/lib/homebrewIdentity";
+import { builtinClassRef, eligibleMulticlassOptions, getClassLevels } from "@/lib/multiclass";
+import { classScopedCharacterView, multiclassLevelUpPatch } from "@/lib/levelUpMulticlass";
 import { homebrewItemInstanceToSource } from "@/lib/homebrew/mechanicSources";
 import { resolveMechanics } from "@/lib/homebrew/mechanicsResolver";
 import {
@@ -420,6 +422,11 @@ export default memo(function HeroSheet(props: {
   const spellsByLevel = knownSpells.reduce((acc, spell) => { const lv = spell.level; if (!acc[lv]) acc[lv] = []; acc[lv].push(spell); return acc; }, {} as Record<number, SpellData[]>);
   const availableSubclasses = subclassesForClass(heroClass.id);
   const [levelUpTarget, setLevelUpTarget] = useState<number | null>(null);
+  // Phase 6a class picker: which class gains the next level. `classPickerOpen`
+  // shows the chooser; a non-null `levelUpClassId` runs the modal in
+  // class-level space and translates its patch via multiclassLevelUpPatch.
+  const [classPickerOpen, setClassPickerOpen] = useState(false);
+  const [levelUpClassId, setLevelUpClassId] = useState<string | null>(null);
   const [manageFeatsOpen, setManageFeatsOpen] = useState(false);
   const [tourDismissed, setTourDismissed] = useState(true);
   const [prepareHintDismissed, setPrepareHintDismissed] = useState(true);
@@ -1222,6 +1229,13 @@ export default memo(function HeroSheet(props: {
   const handleLevelDown = () => {
     const level = props.character.level;
     if (level <= 1) return;
+    // The single-class revert below unwinds history in total-level space; a
+    // multiclass unwind needs the per-class revert that ships with the class
+    // studio. Snapshots (auto-created on level-up) remain the undo path.
+    if ((props.character.classLevels?.length ?? 0) > 1) {
+      props.onNotify?.("Multiclass level-down arrives with the class studio — restore a snapshot to undo this level.");
+      return;
+    }
     const newLevel = level - 1;
     if (hasHomebrewClass) {
       if (!window.confirm(`Change this homebrew character to level ${newLevel}? Class features and hit points will not be adjusted automatically.`)) return;
@@ -2652,7 +2666,7 @@ export default memo(function HeroSheet(props: {
                     if (window.confirm(`Change this homebrew character to level ${nextLevel}? Class features and hit points will not be adjusted automatically.`)) props.onUpdate({ level: nextLevel });
                     return;
                   }
-                  setLevelUpTarget(nextLevel);
+                  setClassPickerOpen(true);
                 }}><Plus size={11} /></button>
               </div>
               <h1 className="character-header__name" id="cs-char-name">{props.character.name}</h1>
@@ -2997,6 +3011,95 @@ export default memo(function HeroSheet(props: {
           onClose={() => setManageFeatsOpen(false)}
         />
       ) : null}
+      {classPickerOpen && !hasHomebrewClass ? (() => {
+        const entries = getClassLevels(props.character);
+        const currentIds = entries
+          .map((entry) => entry.classRef.source === "builtin" ? entry.classRef.id : null)
+          .filter((id): id is string => id !== null);
+        const candidateIds = props.ruleset.classes.map((c) => c.id).filter((id) => id !== HOMEBREW_CLASS_ID);
+        const options = eligibleMulticlassOptions(props.character, candidateIds, sheetAbilities, settings.useFeatPrerequisites);
+        const className = (id: string) => props.ruleset.classes.find((c) => c.id === id)?.name ?? id;
+        const classLevel = (id: string) => entries.find((entry) => entry.classRef.source === "builtin" && entry.classRef.id === id)?.level ?? 0;
+        const pick = (classId: string) => {
+          setClassPickerOpen(false);
+          // A pure single-class character continuing its own class keeps the
+          // unchanged legacy path (no classLevels write).
+          if (!props.character.classLevels?.length && classId === props.character.classId) {
+            setLevelUpTarget(props.character.level + 1);
+          } else {
+            setLevelUpClassId(classId);
+          }
+        };
+        return (
+          <div className="modal-scrim" role="presentation" onMouseDown={() => setClassPickerOpen(false)}>
+            <section className="cs-class-picker" role="dialog" aria-modal="true" aria-labelledby="cs-class-picker-title" onMouseDown={(event) => event.stopPropagation()}>
+              <h2 id="cs-class-picker-title">Advance to level {props.character.level + 1}</h2>
+              <p className="cs-muted">Choose which class gains this level.</p>
+              <div className="cs-class-picker-list">
+                {currentIds.map((id) => (
+                  <button key={id} type="button" className="cs-class-picker-option is-current" onClick={() => pick(id)}>
+                    <strong>Continue {className(id)}</strong>
+                    <span>{className(id)} {classLevel(id)} → {classLevel(id) + 1}</span>
+                  </button>
+                ))}
+              </div>
+              <h3 className="cs-section-eyebrow">Begin a new class</h3>
+              <div className="cs-class-picker-list">
+                {options.filter((option) => option.isNew).map((option) => (
+                  <button
+                    key={option.classId}
+                    type="button"
+                    className="cs-class-picker-option"
+                    disabled={!option.eligibility.eligible}
+                    title={option.eligibility.eligible ? undefined : option.eligibility.unmet.join("; ")}
+                    onClick={() => pick(option.classId)}
+                  >
+                    <strong>{className(option.classId)} 1</strong>
+                    <span>{option.eligibility.eligible ? "Multiclass into a new path" : option.eligibility.unmet.join("; ")}</span>
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="cs-glass-btn" onClick={() => setClassPickerOpen(false)}>Cancel</button>
+            </section>
+          </div>
+        );
+      })() : null}
+      {levelUpClassId != null && !hasHomebrewClass ? (() => {
+        const targetRef = builtinClassRef(props.character.ruleset, levelUpClassId);
+        const targetClass = props.ruleset.classes.find((c) => c.id === levelUpClassId);
+        if (!targetClass) return null;
+        const view = classScopedCharacterView(props.character, targetRef);
+        const nextClassLevel = view.level + 1;
+        return (
+          <LevelUpModal
+            character={view}
+            characterName={props.character.name}
+            gainedFeatures={targetClass.levelProgression.find((e) => e.level === nextClassLevel)?.features ?? []}
+            newLevel={nextClassLevel}
+            finalAbilities={sheetAbilities}
+            classId={targetClass.id}
+            className={targetClass.name}
+            hitDie={targetClass.hitDie}
+            asiLevels={targetClass.asiLevels ?? [4, 8, 12, 16, 19]}
+            subclassLevel={getClassData(targetClass.id)?.subclassLevel}
+            casterType={targetClass.casterType}
+            raceName={race.name}
+            proficiencies={targetClass.proficiencies}
+            useFeatPrerequisites={settings.useFeatPrerequisites}
+            hitPointType={settings.hitPointType}
+            onHpRoll={({ label, sides, modifier, onResult }) => {
+              props.onRoll(label, sides, 1, modifier, ({ rolls, total }) => {
+                onResult({ roll: rolls[0] ?? 1, total });
+              });
+            }}
+            onConfirm={(data) => {
+              props.onUpdate(multiclassLevelUpPatch(props.character, targetRef, data));
+              setLevelUpClassId(null);
+            }}
+            onCancel={() => setLevelUpClassId(null)}
+          />
+        );
+      })() : null}
       {levelUpTarget != null && !hasHomebrewClass ? (
         <LevelUpModal
           character={props.character}

@@ -15024,6 +15024,14 @@ button.dj-card {
 .cs-homebrew-upgrade ul { margin: 12px 0; padding-left: 20px; color: var(--ink-2); line-height: 1.6; }
 .cs-homebrew-effects { margin-bottom: 10px; }
 .cs-slot-overdrawn { margin-left: 7px; padding: 1px 7px; color: var(--danger, #b4552d); border: 1px solid color-mix(in srgb, var(--danger, #b4552d) 55%, transparent); border-radius: 999px; font-size: .62rem; letter-spacing: .05em; text-transform: uppercase; }
+.cs-class-picker { display: grid; gap: 12px; width: min(440px, calc(100vw - 32px)); max-height: min(80vh, 640px); overflow-y: auto; padding: 20px; color: var(--ink); border: 1px solid var(--line); border-radius: 12px; background: var(--paper, #f4ead2); }
+.cs-class-picker h2 { margin: 0; font-size: 1.05rem; }
+.cs-class-picker-list { display: grid; gap: 7px; }
+.cs-class-picker-option { display: grid; gap: 2px; padding: 10px 12px; text-align: left; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: transparent; cursor: pointer; font: inherit; }
+.cs-class-picker-option:hover:not(:disabled) { border-color: var(--doc-accent, #9b6a32); }
+.cs-class-picker-option.is-current { border-color: var(--doc-accent, #9b6a32); background: color-mix(in srgb, var(--doc-accent, #9b6a32) 7%, transparent); }
+.cs-class-picker-option span { color: var(--ink-2); font-size: .7rem; }
+.cs-class-picker-option:disabled { opacity: .55; cursor: not-allowed; }
 .cs-homebrew-stages { display: grid; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, var(--doc-accent, #9b6a32) 22%, transparent); }
 .cs-homebrew-stage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .cs-homebrew-stage-label { color: var(--ink-2); font-size: .62rem; letter-spacing: .11em; text-transform: uppercase; }

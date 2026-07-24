@@ -12,7 +12,7 @@ import type {
   SubclassProgressionPacket,
 } from "@/lib/progression/types";
 import type { FeatureChoiceValue } from "@/types/game";
-import type { RulesContentRegistry } from "@/types/homebrew";
+import type { RulesContentRef, RulesContentRegistry } from "@/types/homebrew";
 
 export type BuildClassLevelUpPlanInput = {
   ruleset: ProgressionRulesetId;
@@ -26,6 +26,13 @@ export type BuildClassLevelUpPlanInput = {
       built-in adapter, so existing callers are unchanged; server callers pass
       a registry that also resolves authorized homebrew content (Phase 6). */
   registry?: RulesContentRegistry;
+  /** Full content reference for the class being resolved (Phase 6). When set,
+      the registry is asked for this exact ref — the only way to resolve a
+      homebrew class, since `classId` alone always implies a built-in. When
+      absent, a built-in ref is derived from `classId` (unchanged behavior). */
+  classRef?: RulesContentRef;
+  /** Full content reference for the subclass, mirroring `classRef`. */
+  subclassRef?: RulesContentRef;
 };
 
 const SPELL_COUNT_TABLES = [
@@ -44,23 +51,28 @@ const SUBCLASS_PLACEHOLDER_FEATURES = new Set([
 ]);
 
 function resolveSubclassPacket(input: BuildClassLevelUpPlanInput, classPacket: ClassProgressionPacket): SubclassProgressionPacket | undefined {
-  if (!input.subclassId) return undefined;
+  if (!input.subclassId && !input.subclassRef) return undefined;
+  const label = input.subclassRef?.source === "homebrew" ? input.subclassRef.definitionId : input.subclassId;
   // No injected registry: the direct catalog lookup, byte-identical to the
   // pre-registry behavior (including research-mode rulesets the built-in
   // registry adapter's production gate would reject).
   let packet: SubclassProgressionPacket | undefined;
   if (!input.registry) {
+    if (input.subclassRef && input.subclassRef.source !== "builtin") {
+      throw new Error(`Resolving a homebrew subclass requires a content registry.`);
+    }
     packet = progressionCatalog.subclasses.get(`${input.ruleset}:${input.subclassId}`);
-    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for subclass "${input.subclassId}".`);
+    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for subclass "${label}".`);
   } else {
+    const ref = input.subclassRef ?? { source: "builtin" as const, kind: "subclass" as const, id: input.subclassId!, ruleset: input.ruleset };
     try {
-      packet = input.registry.getSubclassPacket({ source: "builtin", kind: "subclass", id: input.subclassId, ruleset: input.ruleset });
+      packet = input.registry.getSubclassPacket(ref);
     } catch {
-      throw new Error(`No ${input.ruleset} progression packet exists for subclass "${input.subclassId}".`);
+      throw new Error(`No ${input.ruleset} progression packet exists for subclass "${label}".`);
     }
   }
   if (packet.classId !== classPacket.id) {
-    throw new Error(`Subclass "${input.subclassId}" belongs to class "${packet.classId}", not "${classPacket.id}" in ruleset ${input.ruleset}.`);
+    throw new Error(`Subclass "${label}" belongs to class "${packet.classId}", not "${classPacket.id}" in ruleset ${input.ruleset}.`);
   }
   return packet;
 }
@@ -75,15 +87,20 @@ function resolveClassPacket(input: BuildClassLevelUpPlanInput): ClassProgression
   if ((input.mode ?? "production") === "production" && !isSupportedRuleset(input.ruleset)) {
     throw new Error(`Ruleset "${input.ruleset}" is research-only and is not enabled for production progression.`);
   }
+  const label = input.classRef?.source === "homebrew" ? input.classRef.definitionId : input.classId;
   if (!input.registry) {
+    if (input.classRef && input.classRef.source !== "builtin") {
+      throw new Error(`Resolving a homebrew class requires a content registry.`);
+    }
     const packet = progressionCatalog.classes.get(`${input.ruleset}:${input.classId}`);
-    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for class "${input.classId}".`);
+    if (!packet) throw new Error(`No ${input.ruleset} progression packet exists for class "${label}".`);
     return packet;
   }
+  const ref = input.classRef ?? { source: "builtin" as const, kind: "class" as const, id: input.classId, ruleset: input.ruleset };
   try {
-    return input.registry.getClassPacket({ source: "builtin", kind: "class", id: input.classId, ruleset: input.ruleset });
+    return input.registry.getClassPacket(ref);
   } catch {
-    throw new Error(`No ${input.ruleset} progression packet exists for class "${input.classId}".`);
+    throw new Error(`No ${input.ruleset} progression packet exists for class "${label}".`);
   }
 }
 

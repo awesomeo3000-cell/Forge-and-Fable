@@ -223,6 +223,83 @@ describe("gate: server progression validation", () => {
   });
 });
 
+describe("level-up patch translation (Phase 6a)", () => {
+  it("translates a new-class level-up from class space to whole-character space", async () => {
+    const { multiclassLevelUpPatch, classScopedCharacterView } = await import("@/lib/levelUpMulticlass");
+    const fighter = baseCharacter({
+      level: 3,
+      classId: "fighter",
+      featureChoices: { "choose-fighting-style": ["defense"] },
+    });
+    const withState = { ...fighter, ...progressionPatchForCharacter(fighter) } as Character;
+
+    // The modal sees wizard level 0 → 1, not the fighter's subclass or level.
+    const view = classScopedCharacterView(withState, builtinClassRef("2014", "wizard"));
+    expect(view.level).toBe(0);
+    expect(view.subclassId).toBeUndefined();
+
+    // Modal confirm payload in class space: wizard reaches class level 1.
+    const modalData: Record<string, unknown> = {
+      level: 1,
+      spellsKnown: ["fire-bolt", "magic-missile"],
+      progressionState: {
+        ...withState.progressionState!,
+        choiceHistory: withState.progressionState!.choiceHistory ?? [],
+        spellHistory: [
+          ...(withState.progressionState!.spellHistory ?? []),
+          { level: 1, spellIds: ["fire-bolt", "magic-missile"] },
+        ],
+      },
+    };
+    const patch = multiclassLevelUpPatch(withState, builtinClassRef("2014", "wizard"), modalData);
+
+    expect(patch.level).toBe(4);
+    expect(patch.classId).toBe("fighter");
+    expect(patch.classLevels).toEqual([
+      expect.objectContaining({ level: 3, classRef: expect.objectContaining({ id: "fighter" }) }),
+      expect.objectContaining({ level: 1, classRef: expect.objectContaining({ id: "wizard" }) }),
+    ]);
+    const state = patch.progressionState as Character["progressionState"];
+    expect(state!.classes).toEqual([
+      { classId: "fighter", level: 3 },
+      { classId: "wizard", level: 1 },
+    ]);
+    expect(state!.featureIds.some((id) => id.includes("spellcasting") || id.includes("arcane"))).toBe(true);
+    // The appended spell-history entry moved from class space (1) to total (4).
+    expect(state!.spellHistory!.at(-1)).toEqual({ level: 4, spellIds: ["fire-bolt", "magic-missile"] });
+
+    // The translated patch validates server-side end to end.
+    const next = { ...withState, ...patch } as Character;
+    expect(() => validateCharacterProgression(next, false)).not.toThrow();
+  });
+
+  it("stores a subclass picked mid-level-up on the leveled class, not the mirror", async () => {
+    const { multiclassLevelUpPatch } = await import("@/lib/levelUpMulticlass");
+    const classLevels: CharacterClassLevel[] = [
+      { classRef: builtinClassRef("2014", "fighter"), level: 3, subclassRef: builtinSubclassRef("2014", "battle-master"), acquiredOrder: 0 },
+      { classRef: builtinClassRef("2014", "wizard"), level: 2, acquiredOrder: 1 },
+    ];
+    const mirrors = classLevelMirrors(classLevels);
+    const base = baseCharacter({
+      classLevels, level: mirrors.level, classId: mirrors.classId, subclassId: mirrors.subclassId,
+      featureChoices: { "choose-fighting-style": ["defense"], "choose-3-maneuvers": ["parry", "precision-attack", "trip-attack"], "choose-artisans-tool": ["smiths-tools"] },
+    });
+    const character = { ...base, ...progressionPatchForCharacter(base) } as Character;
+
+    // Wizard 2 → 3 picks its school; the character-wide mirror must stay
+    // battle-master (the primary class's subclass).
+    const patch = multiclassLevelUpPatch(character, builtinClassRef("2014", "wizard"), {
+      level: 3,
+      subclassId: "school-of-evocation",
+    });
+    expect(patch.subclassId).toBe("battle-master");
+    const wizardEntry = (patch.classLevels as CharacterClassLevel[]).find((entry) => entry.classRef.source === "builtin" && entry.classRef.id === "wizard");
+    expect(wizardEntry).toMatchObject({ level: 3, subclassRef: expect.objectContaining({ id: "school-of-evocation" }) });
+    const next = { ...character, ...patch } as Character;
+    expect(() => validateCharacterProgression(next, false)).not.toThrow();
+  });
+});
+
 describe("registry injection", () => {
   it("builds identical plans through the injected built-in registry", () => {
     const direct = buildLevelUpPlan({ ruleset: "2014", classId: "fighter", fromLevel: 0, toLevel: 3 });
